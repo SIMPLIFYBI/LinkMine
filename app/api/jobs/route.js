@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { supabaseServer } from "@/lib/supabaseServer";
 
+export const runtime = "nodejs";
+
 function userClient() {
   const jar = cookies();
   return createServerClient(
