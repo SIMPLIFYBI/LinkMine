@@ -1,0 +1,7 @@
+ames\supa-login\MineLink\MineLink\postcss.config.js
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};

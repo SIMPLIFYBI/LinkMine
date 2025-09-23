@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+/* Selection + thin scrollbar */
+::selection { background: rgba(56,189,248,.25); }
+.scrollbar-thin { scrollbar-width: thin; }
+.scrollbar-thin::-webkit-scrollbar { height: 8px; width: 8px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(148,163,184,.35); border-radius: 9999px; }
+
+/* Box sizing + prevent horizontal overflow */
+*,*::before,*::after{ box-sizing:border-box; }
+html,body{ width:100%; max-width:100%; }
+body{ overflow-x:hidden; }
+
+/* Media defaults */
+img,video{ max-width:100%; height:auto; display:block; }
+
+/* Auth page: ensure single, body-level gradient */
+.auth-shell :is(.bg-gradient-to-r,.bg-gradient-to-l,.bg-gradient-to-b,.bg-gradient-to-t){ background-image:none !important; }
+
+/* Consultant profile: make text dark inside light pills only on that page */
+@layer base {
+  .consultant-profile :is(.bg-white,.bg-gray-50,.bg-gray-100,.bg-slate-50,.bg-slate-100,.bg-zinc-50,.bg-zinc-100) {
+    color: rgb(15 23 42) !important; /* slate-900 */
+  }
+}
+
+/* Hide scrollbar */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "commonjs",
+    "baseUrl": ".",
+    "paths": { "@/*": ["./*"] },
+    "jsx": "preserve",
+    "allowJs": true,
+    "checkJs": false,
+    "strict": true,
+    "moduleResolution": "node"
+  },
+  "include": ["app/**/*", "components/**/*", "lib/**/*"],
+  "exclude": ["node_modules", ".next"]
+}
