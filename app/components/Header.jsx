@@ -4,12 +4,15 @@ import { usePathname } from "next/navigation";
 import navTabs from "./navTabs";
 import UserPill from "./UserPill";
 import DirectoryTab from "@/app/components/directory/DirectoryTab";
+import Logo from "@/app/components/Logo";
 
 export default function Header() {
   const pathname = usePathname();
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-900/70 backdrop-blur">
+    <header className="sticky top-0 z-40 bg-slate-900/70 backdrop-blur border-b border-white/10">
       <div className="mx-auto max-w-screen-xl px-4 h-14 flex items-center justify-between">
+        {/* Left: brand */}
+        <Logo />
         <nav className="flex items-center gap-1">
           <Link href="/" className="text-lg font-semibold tracking-tight">MineLink</Link>
           <div className="hidden md:block">

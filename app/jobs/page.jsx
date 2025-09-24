@@ -1,7 +1,7 @@
 import JobsBuilder from "@/app/components/jobs/JobsBuilder";
 import JobsTable from "@/app/components/jobs/JobsTable";
 
-export const metadata = { title: "Jobs · MineLink" };
+export const metadata = { title: "Jobs · LinkMine" };
 
 export default function JobsPage() {
   return (

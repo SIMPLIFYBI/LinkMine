@@ -1,7 +1,8 @@
 {
-  "name": "minelink",
+  "name": "linkmine",
   "version": "0.1.0",
   "private": true,
+  "description": "LinkMine web app",
   "scripts": {
     "dev": "next dev -p 3004",
     "build": "next build",

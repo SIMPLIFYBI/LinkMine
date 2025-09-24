@@ -8,7 +8,10 @@ import MobileNav from "./components/MobileNav";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata = {
-  title: "MineLink",
+  title: {
+    default: "LinkMine",
+    template: "%s · LinkMine",
+  },
   viewport: {
     width: "device-width",
     initialScale: 1,

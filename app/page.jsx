@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 
-export default function HomePage() {
+export default async function HomePage() {
   const [showPreview] = useState(true);
 
   const sampleListings = [
@@ -12,7 +12,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-[calc(100vh-56px)]">
+    <main className="mx-auto max-w-screen-xl px-4 py-6">
       {/* Hero */}
       <section className="bg-gradient-to-r from-sky-900/40 via-slate-900/40 to-indigo-900/40 border-b border-white/10">
         <div className="mx-auto max-w-screen-md px-4 py-6 md:py-8">
@@ -119,7 +119,25 @@ export default function HomePage() {
           </div>
         </section>
       )}
-    </div>
+
+      {/* Make the three boxes clickable */}
+      <div className="mt-6 grid gap-4 grid-cols-1 sm:grid-cols-3">
+        <Link href="/consultants" className="group rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition">
+          <div className="text-base font-semibold">Browse Consultants</div>
+          <div className="text-sm text-slate-400">Find contractors by service and location.</div>
+        </Link>
+
+        <Link href="/listings" className="group rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition">
+          <div className="text-base font-semibold">View Listings</div>
+          <div className="text-sm text-slate-400">Explore open listings and opportunities.</div>
+        </Link>
+
+        <Link href="/favourites" className="group rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition">
+          <div className="text-base font-semibold">Favourites</div>
+          <div className="text-sm text-slate-400">Quick access to saved consultants.</div>
+        </Link>
+      </div>
+    </main>
   );
 }
 

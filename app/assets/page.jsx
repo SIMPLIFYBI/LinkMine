@@ -1,3 +1,5 @@
+export const metadata = { title: "Assets · LinkMine" };
+
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabaseBrowser } from "../../lib/supabaseClient";
