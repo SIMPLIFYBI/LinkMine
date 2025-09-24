@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { supabaseBrowser } from "../../lib/supabaseClient";
 import { Fragment } from "react";
 import ActivityTypesTab from "./ActivityTypesTab";
-import { useOrg } from "../../lib/OrgContext";
+import { OrgProvider, useOrg } from "@/lib/OrgContext";
 import { AssetIcon } from "../components/icons";
 
 const TABS = [
