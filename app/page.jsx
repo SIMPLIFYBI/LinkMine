@@ -122,17 +122,28 @@ export default async function HomePage() {
 
       {/* Make the three boxes clickable */}
       <div className="mt-6 grid gap-4 grid-cols-1 sm:grid-cols-3">
-        <Link href="/consultants" className="group rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition">
+        <Link
+          href="/consultants"
+          className="group block rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition"
+        >
           <div className="text-base font-semibold">Browse Consultants</div>
-          <div className="text-sm text-slate-400">Find contractors by service and location.</div>
+          <div className="text-sm text-slate-400">
+            Discover experts across geotech, planning, environmental and more.
+          </div>
         </Link>
 
-        <Link href="/listings" className="group rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition">
+        <Link
+          href="/listings"
+          className="group block rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition"
+        >
           <div className="text-base font-semibold">View Listings</div>
           <div className="text-sm text-slate-400">Explore open listings and opportunities.</div>
         </Link>
 
-        <Link href="/favourites" className="group rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition">
+        <Link
+          href="/favourites"
+          className="group block rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition"
+        >
           <div className="text-base font-semibold">Favourites</div>
           <div className="text-sm text-slate-400">Quick access to saved consultants.</div>
         </Link>

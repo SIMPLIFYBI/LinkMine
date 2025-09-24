@@ -11,10 +11,12 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 bg-slate-900/70 backdrop-blur border-b border-white/10">
       <div className="mx-auto max-w-screen-xl px-4 h-14 flex items-center justify-between">
-        {/* Left: brand */}
-        <Logo />
+        <Link href="/" aria-label="Home" className="select-none">
+          <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-sky-500 to-indigo-500 bg-clip-text text-transparent">
+            LinkMine
+          </span>
+        </Link>
         <nav className="flex items-center gap-1">
-          <Link href="/" className="text-lg font-semibold tracking-tight">MineLink</Link>
           <div className="hidden md:block">
             <DirectoryTab variant="desktop" />
           </div>
