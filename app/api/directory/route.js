@@ -1,17 +1,25 @@
 export const runtime = "nodejs";
-import { supabaseServer } from "@/lib/supabaseServer";
+
+import { NextResponse } from "next/server";
+import { supabaseAnonServer } from "@/lib/supabaseAnonServer";
 
 export async function GET() {
-  const sb = supabaseServer();
-  const { data, error } = await sb
-    .from("service_categories_with_children")
-    .select("*")
-  if (error) return new Response(JSON.stringify({ ok: false, error: error.message }), { status: 500 });
-  const categories = (data || []).map((c) => ({
-    id: c.id,
-    name: c.name,
-    slug: c.slug,
-    services: Array.isArray(c.services) ? c.services : [],
-  }));
-  return new Response(JSON.stringify({ ok: true, categories }), { headers: { "content-type": "application/json" } });
+  try {
+    const sb = supabaseAnonServer();
+
+    // Adjust to your schema. Fallback returns an empty list on error.
+    const { data, error } = await sb
+      .from("service_categories")
+      .select("id, name, slug, services:services(id, name, slug)")
+      .order("name", { ascending: true });
+
+    if (error) {
+      console.error("directory error:", error.message);
+      return NextResponse.json({ ok: true, categories: [] });
+    }
+    return NextResponse.json({ ok: true, categories: data || [] });
+  } catch (e) {
+    console.error("directory fatal:", e);
+    return NextResponse.json({ ok: true, categories: [] });
+  }
 }

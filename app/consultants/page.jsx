@@ -2,10 +2,11 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseAnonServer } from "@/lib/supabaseAnonServer";
+import AddConsultantButton from "@/app/components/consultants/AddConsultantButton";
 
 async function getConsultantsByServiceSlug(serviceSlug) {
-  const sb = supabaseServer();
+  const sb = supabaseAnonServer();
 
   if (!serviceSlug) {
     const { data } = await sb
@@ -45,17 +46,15 @@ async function getConsultantsByServiceSlug(serviceSlug) {
   return { consultants: consultants || [], activeService: svc };
 }
 
-export default async function ConsultantsIndex({ searchParams }) {
+export default async function ConsultantsPage({ searchParams }) {
   const serviceSlug = searchParams?.service || "";
   const { consultants, activeService } = await getConsultantsByServiceSlug(serviceSlug);
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Consultants</h1>
-        <Link href="/consultants" className="text-sm text-sky-300 hover:underline">
-          Clear filters
-        </Link>
+        <h1 className="text-2xl font-semibold">Consultants</h1>
+        <AddConsultantButton />
       </div>
 
       {activeService ? (

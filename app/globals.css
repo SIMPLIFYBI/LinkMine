@@ -27,3 +27,13 @@ img,video{ max-width:100%; height:auto; display:block; }
 /* Hide scrollbar */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background: linear-gradient(135deg, #0a1b3f 0%, #2f3a52 60%, #f97316 100%);
+  color: #e2e8f0;
+}

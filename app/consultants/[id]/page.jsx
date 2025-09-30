@@ -3,20 +3,17 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import { fetchPlaceDetails } from "@/lib/googlePlaces";
 import ConsultantServicesManager from "@/app/components/ConsultantServicesManager";
 
 async function getConsultant(id) {
-  const sb = supabaseServer();
+  const sb = supabaseServerClient();
 
-  const { data: c } = await sb
-    .from("consultants")
-    .select("id, display_name, headline, bio, company, location, contact_email, visibility, place_id")
-    .eq("id", id)
-    .single();
+  // const { data, error } = await supabaseServer().from("consultants")...
+  const { data, error } = await sb.from("consultants").select("*").eq("id", id).maybeSingle();
 
-  if (!c || c.visibility !== "public") return null;
+  if (!data || data.visibility !== "public") return null;
 
   const { data: svc } = await sb
     .from("consultant_services")
@@ -30,14 +27,14 @@ async function getConsultant(id) {
     .order("created_at", { ascending: false });
 
   return {
-    c,
+    c: data,
     services: (svc || []).map((r) => r.service).filter(Boolean),
     ports: ports || [],
   };
 }
 
 export default async function ConsultantProfilePage({ params }) {
-  const sb = supabaseServer();
+  const sb = supabaseServerClient();
   const consultantId = params.id;
 
   // Load consultant and check ownership (adjust fields to your schema)

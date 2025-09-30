@@ -1,64 +1,93 @@
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer"; // must use SERVICE_ROLE key
+import { supabaseFromRequest } from "@/lib/supabaseRequestClient";
 
-export async function GET(_req, { params }) {
-  const sb = supabaseServer();
-  const { data, error } = await sb
-    .from("consultant_services")
-    .select("services:service_id(id, name, slug, category_id)")
-    .eq("consultant_id", params.consultantId);
-
-  if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true, services: (data || []).map((r) => r.services) });
+function getBearer(req) {
+  const m = (req.headers.get("authorization") || "").match(/^Bearer\s+(.+)$/i);
+  return m ? m[1] : null;
 }
 
+// List services
+export async function GET(req, { params }) {
+  try {
+    const sb = supabaseFromRequest(req);
+    const consultantId = params.consultantId;
+    const { data: rows, error: e1 } = await sb
+      .from("consultant_services")
+      .select("service_id")
+      .eq("consultant_id", consultantId);
+    if (e1) return NextResponse.json({ ok: false, error: e1.message }, { status: 500 });
+
+    const ids = (rows || []).map(r => r.service_id);
+    if (!ids.length) return NextResponse.json({ ok: true, services: [] });
+
+    const { data: services, error: e2 } = await sb
+      .from("services")
+      .select("id, name, slug")
+      .in("id", ids);
+    if (e2) return NextResponse.json({ ok: false, error: e2.message }, { status: 500 });
+    return NextResponse.json({ ok: true, services: services || [] });
+  } catch (e) {
+    return NextResponse.json({ ok: false, error: e.message || String(e) }, { status: 500 });
+  }
+}
+
+// Add services
 export async function POST(req, { params }) {
-  const sb = supabaseServer(); // service role bypasses RLS
-  const { service_id, service_slug } = await req.json().catch(() => ({}));
+  try {
+    const sb = supabaseFromRequest(req);
+    const token = getBearer(req);
+    const { data: auth } = await sb.auth.getUser(token);
+    if (!auth?.user) return NextResponse.json({ ok: false, error: "Not signed in" }, { status: 401 });
 
-  let sid = service_id || null;
-  if (!sid && service_slug) {
-    const { data: svc, error } = await sb.from("services").select("id").eq("slug", service_slug).maybeSingle();
+    const consultantId = params.consultantId;
+    const body = await req.json().catch(() => ({}));
+    let add = Array.isArray(body.add)
+      ? body.add
+      : Array.isArray(body.service_ids)
+      ? body.service_ids
+      : body.service_id
+      ? [body.service_id]
+      : [];
+    add = add.filter(Boolean);
+    if (!add.length) return NextResponse.json({ ok: false, error: "No services to add" }, { status: 400 });
+
+    const rows = add.map((sid) => ({ consultant_id: consultantId, service_id: sid }));
+    const { error } = await sb
+      .from("consultant_services")
+      .upsert(rows, { onConflict: "consultant_id,service_id", ignoreDuplicates: true });
     if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-    if (!svc) return NextResponse.json({ ok: false, error: "Service not found" }, { status: 404 });
-    sid = svc.id;
+    return NextResponse.json({ ok: true, added: add.length });
+  } catch (e) {
+    return NextResponse.json({ ok: false, error: e.message || String(e) }, { status: 500 });
   }
-  if (!sid) return NextResponse.json({ ok: false, error: "service_id or service_slug required" }, { status: 400 });
-
-  // Insert; ignore duplicates to avoid UPDATE path
-  const { error: insErr } = await sb
-    .from("consultant_services")
-    .upsert(
-      { consultant_id: params.consultantId, service_id: sid },
-      { onConflict: "consultant_id,service_id", ignoreDuplicates: true }
-    );
-
-  if (insErr) return NextResponse.json({ ok: false, error: insErr.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
 }
 
+// Remove services
 export async function DELETE(req, { params }) {
-  const sb = supabaseServer(); // service role
-  const { searchParams } = new URL(req.url);
-  let sid = searchParams.get("service_id");
-  const slug = searchParams.get("service_slug");
+  try {
+    const sb = supabaseFromRequest(req);
+    const token = getBearer(req);
+    const { data: auth } = await sb.auth.getUser(token);
+    if (!auth?.user) return NextResponse.json({ ok: false, error: "Not signed in" }, { status: 401 });
 
-  if (!sid && slug) {
-    const { data: svc, error } = await sb.from("services").select("id").eq("slug", slug).maybeSingle();
+    const consultantId = params.consultantId;
+    const body = await req.json().catch(() => ({}));
+    let remove = Array.isArray(body.remove)
+      ? body.remove
+      : Array.isArray(body.service_ids)
+      ? body.service_ids
+      : body.service_id
+      ? [body.service_id]
+      : [];
+    remove = remove.filter(Boolean);
+    if (!remove.length) return NextResponse.json({ ok: false, error: "No services to remove" }, { status: 400 });
+
+    const { error } = await sb.from("consultant_services").delete().eq("consultant_id", consultantId).in("service_id", remove);
     if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-    if (!svc) return NextResponse.json({ ok: false, error: "Service not found" }, { status: 404 });
-    sid = svc.id;
+    return NextResponse.json({ ok: true, removed: remove.length });
+  } catch (e) {
+    return NextResponse.json({ ok: false, error: e.message || String(e) }, { status: 500 });
   }
-  if (!sid) return NextResponse.json({ ok: false, error: "service_id or service_slug required" }, { status: 400 });
-
-  const { error: delErr } = await sb
-    .from("consultant_services")
-    .delete()
-    .eq("consultant_id", params.consultantId)
-    .eq("service_id", sid);
-
-  if (delErr) return NextResponse.json({ ok: false, error: delErr.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
 }

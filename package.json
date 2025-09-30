@@ -11,7 +11,8 @@
   "dependencies": {
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.40.0",
-    "next": "13.4.8",
+    "next": "^15.5.4",
+    "postmark": "^4.0.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-hot-toast": "^2.6.0"

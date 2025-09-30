@@ -1,97 +1,82 @@
 "use client";
-
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { authedFetch } from "@/lib/authedFetch";
 
 export default function ConsultantServicesManager({ consultantId, canEdit = false }) {
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [assigned, setAssigned] = useState([]); // [{id,name,slug}]
-  const [categories, setCategories] = useState([]); // [{id,name,services:[{id,name,slug}]}]
   const [query, setQuery] = useState("");
+  const [assigned, setAssigned] = useState([]);      // [{ id, name, slug }]
+  const [categories, setCategories] = useState([]);  // [{ id, name, services: [{ id, name, slug }] }]
 
-  // Safe JSON parser that tolerates empty responses
-  async function safeFetchJson(input, init) {
-    const res = await fetch(input, init);
-    const text = await res.text().catch(() => "");
-    let data = {};
-    try {
-      data = text ? JSON.parse(text) : {};
-    } catch {
-      data = {};
-    }
-    return { res, data };
-  }
-
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      try {
-        const [a, b] = await Promise.all([
-          safeFetchJson(`/api/consultants/${consultantId}/services`, { cache: "no-store" }),
-          safeFetchJson(`/api/directory`, { cache: "no-store" }),
-        ]);
-
-        if (!cancelled) {
-          if (!a.res.ok) console.warn("Services load failed", a.res.status, a.data?.error);
-          if (!b.res.ok) console.warn("Directory load failed", b.res.status, b.data?.error);
-          setAssigned(a.data?.services || []);
-          setCategories(b.data?.categories || []);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-    return () => { cancelled = true; };
-  }, [consultantId]);
-
-  const assignedIds = useMemo(() => new Set(assigned.map((s) => s.id)), [assigned]);
+  const assignedIds = useMemo(() => new Set(assigned.map(s => s.id)), [assigned]);
 
   const filteredCategories = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return categories;
-    return categories
-      .map((c) => ({
+    return (categories || [])
+      .map(c => ({
         ...c,
-        services: (c.services || []).filter((s) => s.name.toLowerCase().includes(q) || s.slug.includes(q)),
+        services: (c.services || []).filter(s =>
+          s.name?.toLowerCase().includes(q) || s.slug?.toLowerCase().includes(q)
+        ),
       }))
-      .filter((c) => (c.services || []).length > 0);
+      .filter(c => (c.services || []).length > 0);
   }, [categories, query]);
 
-  async function addServiceBySlug(slug) {
-    if (!canEdit) return;
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/consultants/${consultantId}/services`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ service_slug: slug }),
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok || !json.ok) throw new Error(json.error || `HTTP ${res.status}`);
-      const svc = categories.flatMap((c) => c.services || []).find((s) => s.slug === slug);
-      if (svc && !assignedIds.has(svc.id)) setAssigned((prev) => [...prev, svc]);
-    } catch (e) {
-      alert(e.message || "Failed to add");
-    } finally {
-      setSaving(false);
-    }
+  async function fetchJson(input, init) {
+    const res = await authedFetch(input, init);
+    const text = await res.text().catch(() => "");
+    let json = {};
+    try { json = text ? JSON.parse(text) : {}; } catch {}
+    return { res, json };
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const [a, b] = await Promise.all([
+          fetchJson(`/api/consultants/${consultantId}/services`, { cache: "no-store" }),
+          fetchJson(`/api/directory`, { cache: "no-store" }),
+        ]);
+        if (!cancelled) {
+          setAssigned(a.json?.services || []);
+          setCategories(b.json?.categories || []);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [consultantId]);
+
+  async function addService(id) {
+    if (!canEdit || assignedIds.has(id)) return;
+    const res = await authedFetch(`/api/consultants/${consultantId}/services`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ add: [id] }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.ok) return alert(json.error || "Failed to add");
+    const svc = categories.flatMap(c => c.services || []).find(s => s.id === id);
+    if (svc && !assignedIds.has(id)) setAssigned(prev => [...prev, svc]);
   }
 
   async function removeService(id) {
     if (!canEdit) return;
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/consultants/${consultantId}/services?service_id=${id}`, { method: "DELETE" });
-      const json = await res.json();
-      if (!json.ok) throw new Error(json.error || "Failed to remove");
-      setAssigned((prev) => prev.filter((s) => s.id !== id));
-    } finally {
-      setSaving(false);
-    }
+    const res = await authedFetch(`/api/consultants/${consultantId}/services`, {
+      method: "DELETE",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ remove: [id] }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.ok) return alert(json.error || "Failed to remove");
+    setAssigned(prev => prev.filter(s => s.id !== id));
   }
 
   return (
@@ -175,7 +160,7 @@ export default function ConsultantServicesManager({ consultantId, canEdit = fals
                             <li key={s.id}>
                               <button
                                 disabled={selected || saving}
-                                onClick={() => addServiceBySlug(s.slug)}
+                                onClick={() => addService(s.id)}
                                 className={`w-full text-left rounded-md px-2 py-1.5 text-sm ${
                                   selected
                                     ? "text-slate-400 bg-white/5 cursor-not-allowed"

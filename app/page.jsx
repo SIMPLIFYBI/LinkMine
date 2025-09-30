@@ -1,9 +1,11 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 
-export default async function HomePage() {
-  const [showPreview] = useState(true);
+const heroImage = "/Pictures/pexels-urtimud-89-76108288-14263363.jpg";
+
+export default function HomePage() {
+  const showPreview = true;
 
   const sampleListings = [
     { id: 1, name: "Acme Drilling", services: "Drilling • Sampling", location: "Kalgoorlie, WA" },
@@ -12,14 +14,33 @@ export default async function HomePage() {
   ];
 
   return (
-    <main className="mx-auto max-w-screen-xl px-4 py-6">
+    <main className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-10">
       {/* Hero */}
-      <section className="bg-gradient-to-r from-sky-900/40 via-slate-900/40 to-indigo-900/40 border-b border-white/10">
-        <div className="mx-auto max-w-screen-md px-4 py-6 md:py-8">
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">MineLink</h1>
-          <p className="mt-2 text-slate-300">
-            Connect mining projects with consultants and services.
+      <section className="relative left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw] overflow-hidden min-h-[340px]">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${heroImage})` }}
+        />
+        <div className="relative z-10 flex h-full flex-col items-center justify-center gap-6 bg-slate-900/30 px-8 py-16 text-center sm:px-16">
+          <h1 className="max-w-3xl text-5xl font-bold tracking-tight sm:text-6xl">
+            Stop searching, start mining: match with the right expert today.
+          </h1>
+          <p className="max-w-2xl text-lg text-slate-200 sm:text-xl">
+            {/* existing subheading text if any */}
           </p>
+
+          <div className="flex flex-wrap gap-3">
+            <Link href="/signup" className="inline-flex">
+              <button className="rounded-md px-4 py-2 bg-slate-700 text-white hover:bg-slate-600 transition">
+                Get started — it's free
+              </button>
+            </Link>
+            <Link href="/explore" className="inline-flex">
+              <button className="rounded-md border border-white/10 bg-white/5 px-4 py-2 text-slate-100 hover:border-white/20 hover:bg-white/10 transition">
+                Explore listings
+              </button>
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -148,6 +169,22 @@ export default async function HomePage() {
           <div className="text-sm text-slate-400">Quick access to saved consultants.</div>
         </Link>
       </div>
+
+      <section className="space-y-10">
+        <div className="relative overflow-hidden rounded-3xl border border-white/10 min-h-[260px]">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${heroImage})` }}
+          >
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
+          </div>
+          <div className="relative z-10 px-6 py-12 sm:px-10 sm:py-16">
+            {/* existing headline/CTA content stays here */}
+          </div>
+        </div>
+
+        {/* rest of the homepage content */}
+      </section>
     </main>
   );
 }

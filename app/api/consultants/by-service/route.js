@@ -1,10 +1,10 @@
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseFromRequest } from "@/lib/supabaseRequestClient";
 
 export async function GET(req) {
-  const sb = supabaseServer();
+  const sb = supabaseFromRequest(req);
   const { searchParams } = new URL(req.url);
   const slug = searchParams.get("service") || searchParams.get("service_slug");
   if (!slug) return NextResponse.json({ ok: true, consultants: [] });
