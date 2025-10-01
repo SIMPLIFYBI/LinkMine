@@ -5,7 +5,6 @@ import { Toaster } from "react-hot-toast";
 import Header from "./components/Header";
 import MobileNav from "./components/MobileNav";
 import AuthProvider from "@/app/components/AuthProvider";
-import AuthStatusPill from "@/app/components/AuthStatusPill";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -22,7 +21,6 @@ export default function RootLayout({ children }) {
           <Header />
           <main>{children}</main>
           <MobileNav />
-          <AuthStatusPill />
           <Toaster position="top-right" />
         </AuthProvider>
       </body>
