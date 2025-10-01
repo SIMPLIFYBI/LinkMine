@@ -1,10 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
   const sp = useSearchParams();
   const redirectTo = sp.get("redirect") || "/account";
@@ -83,5 +83,15 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <main className="mx-auto max-w-md px-6 py-12">
+      <Suspense fallback={null}>
+        <SignupForm />
+      </Suspense>
+    </main>
   );
 }
