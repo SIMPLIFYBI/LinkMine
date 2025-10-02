@@ -20,7 +20,6 @@ export default function MyJobsClient() {
   const [preferredPaymentType, setPreferredPaymentType] = useState("");
   const [urgency, setUrgency] = useState("");
   const [status, setStatus] = useState("idle");
-  const [result, setResult] = useState(null);
   const [error, setError] = useState("");
 
   const [currentUser, setCurrentUser] = useState(null);
@@ -178,7 +177,6 @@ export default function MyJobsClient() {
 
     setStatus("creating");
     setError("");
-    setResult(null);
 
     const res = await fetch("/api/jobs", {
       method: "POST",
@@ -201,7 +199,6 @@ export default function MyJobsClient() {
     if (!res.ok) {
       setError(body.error || `Failed (${res.status})`);
     } else {
-      setResult(body.job || body);
       setTitle("");
       setDesc("");
       setLocation("");
@@ -462,11 +459,6 @@ export default function MyJobsClient() {
             {status === "creating" ? "Creating..." : "Post job"}
           </button>
           {error && <div className="text-sm text-red-500">{error}</div>}
-          {result && (
-            <pre className="border border-green-400/40 bg-green-500/10 p-3 text-sm text-green-200">
-              {JSON.stringify(result, null, 2)}
-            </pre>
-          )}
         </form>
       </section>
 
