@@ -31,6 +31,9 @@ export async function POST(req) {
     "title",
     "description",
     "location",
+    "preferred_payment_type",
+    "urgency",
+    "listing_type",
     "service_id",
     "recipient_ids",
     "company",
@@ -56,7 +59,7 @@ export async function POST(req) {
     .from("jobs")
     .insert(insert)
     .select(
-      "id, title, description, location, service_id, recipient_ids, company, budget, close_date, contact_name, contact_email, created_by, created_at"
+      "id, title, description, location, preferred_payment_type, urgency, listing_type, service_id, recipient_ids, company, budget, close_date, contact_name, contact_email, created_by, created_at"
     )
     .single();
 
