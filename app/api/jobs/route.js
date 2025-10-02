@@ -50,9 +50,19 @@ export async function POST(req) {
       { status: 400 }
     );
   }
-  if (!payload.recipient_ids || payload.recipient_ids.length === 0) {
-    return NextResponse.json({ ok: false, error: "recipient_ids required" }, { status: 400 });
+  const listingType = payload.listing_type ?? "Private";
+  const recipientIds = Array.isArray(payload.recipient_ids) ? payload.recipient_ids : [];
+  const requiresRecipients = listingType === "Private" || listingType === "Both";
+
+  if (requiresRecipients && recipientIds.length === 0) {
+    return NextResponse.json(
+      { error: "recipient_ids required" },
+      { status: 400 }
+    );
   }
+
+  payload.listing_type = listingType;
+  payload.recipient_ids = recipientIds;
 
   const insert = { ...payload, created_by: user.id };
   const { data, error } = await sb

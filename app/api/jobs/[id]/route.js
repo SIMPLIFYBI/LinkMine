@@ -22,7 +22,7 @@ export async function PATCH(req, { params }) {
   if (!user) return NextResponse.json({ ok: false, error: "Not signed in" }, { status: 401 });
 
   const patch = await req.json().catch(() => ({}));
-  const allowed = ["title", "description", "location", "service_slug", "consultant_ids", "status"];
+  const allowed = ["title", "description", "location", "service_slug", "recipient_ids", "status"];
   const update = Object.fromEntries(Object.entries(patch).filter(([k, v]) => allowed.includes(k)));
   if (Object.keys(update).length === 0) return NextResponse.json({ ok: false, error: "No changes" }, { status: 400 });
 
@@ -31,7 +31,7 @@ export async function PATCH(req, { params }) {
     .update(update)
     .eq("id", params.id)
     .eq("created_by", user.id)
-    .select("id, title, description, location, service_slug, consultant_ids, status, created_at")
+    .select("id, title, description, location, service_slug, recipient_ids, status, created_at")
     .single();
 
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
