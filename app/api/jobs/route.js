@@ -63,6 +63,7 @@ export async function POST(req) {
 
   payload.listing_type = listingType;
   payload.recipient_ids = recipientIds;
+  payload.contact_email ??= user.email;
 
   const insert = { ...payload, created_by: user.id };
   const { data, error } = await sb

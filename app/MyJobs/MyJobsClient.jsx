@@ -29,6 +29,7 @@ export default function MyJobsClient() {
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [location, setLocation] = useState("");
+  const [company, setCompany] = useState("");
   const [preferredPaymentType, setPreferredPaymentType] = useState("");
   const [urgency, setUrgency] = useState("");
   const [status, setStatus] = useState("idle");
@@ -214,6 +215,7 @@ export default function MyJobsClient() {
           title,
           description: desc,
           location,
+          company: company || null,
           preferred_payment_type: preferredPaymentType || null,
           urgency: urgency || null,
           listing_type: listingType,
@@ -231,6 +233,7 @@ export default function MyJobsClient() {
       setTitle("");
       setDesc("");
       setLocation("");
+      setCompany("");
       setPreferredPaymentType("");
       setUrgency("");
       if (currentUser?.id) loadJobs(currentUser.id);
@@ -512,6 +515,15 @@ export default function MyJobsClient() {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. Kalgoorlie, WA"
+              />
+            </label>
+            <label className="grid gap-1">
+              <span className="text-sm">Company <span className="opacity-60">(optional)</span></span>
+              <input
+                className="rounded border border-white/10 bg-white/10 px-3 py-2"
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                placeholder="Optional"
               />
             </label>
             <label className="grid gap-1">
