@@ -14,7 +14,7 @@ export default function HomePage() {
   ];
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-10">
+    <main className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pb-10">
       {/* Hero */}
       <section className="relative left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw] overflow-hidden min-h-[340px]">
         <div
