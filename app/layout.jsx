@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import Header from "./components/Header";
 import MobileNav from "./components/MobileNav";
 import AuthProvider from "@/app/components/AuthProvider";
+import TradingViewTicker from "@/app/components/TradingViewTicker";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -18,6 +19,7 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${inter.variable} dark`}>
       <body className="min-h-screen bg-gradient-to-b from-[#0a1b3f] to-[#0b234f] text-slate-100 antialiased">
         <AuthProvider>
+          <TradingViewTicker />
           <Header />
           <main>{children}</main>
           <MobileNav />
