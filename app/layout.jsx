@@ -19,8 +19,8 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${inter.variable} dark`}>
       <body className="min-h-screen bg-gradient-to-b from-[#0a1b3f] to-[#0b234f] text-slate-100 antialiased">
         <AuthProvider>
-          <TradingViewTicker />
           <Header />
+          <TradingViewTicker />
           <main>{children}</main>
           <MobileNav />
           <Toaster position="top-right" />
