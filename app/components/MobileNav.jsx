@@ -8,8 +8,6 @@ export default function MobileNav() {
   const pathname = usePathname();
   const scrollerRef = useRef(null);
 
-  const accountTab = navTabs.find((t) => t.href === "/account");
-  const tabs = navTabs.filter((t) => t.href !== "/account");
   const isActive = (href) => pathname === href || pathname?.startsWith(href + "/");
 
   function onWheel(e) {
@@ -25,38 +23,25 @@ export default function MobileNav() {
         <div
           ref={scrollerRef}
           onWheel={onWheel}
-          className="
-            flex items-center h-full gap-1 px-2 flex-1
-            overflow-x-auto whitespace-nowrap no-scrollbar
-          "
+          className="flex items-center h-full gap-2 px-3 flex-1 overflow-x-auto whitespace-nowrap no-scrollbar"
         >
-          {tabs.map((t) => (
-            <Link
-              key={t.href}
-              href={t.href}
-              className={`
-                inline-flex items-center justify-center shrink-0
-                px-3 py-2 text-sm rounded-md
-                ${isActive(t.href) ? "text-sky-200 bg-white/5" : "text-slate-300 hover:text-white hover:bg-white/5"}
-              `}
-            >
-              {t.label}
-            </Link>
-          ))}
+          {navTabs.map((tab) => {
+            const active = isActive(tab.href);
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className={`rounded-full border px-3 py-2 text-sm transition ${
+                  active
+                    ? "border-sky-400/30 bg-sky-500/10 text-sky-200"
+                    : "border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10"
+                }`}
+              >
+                {tab.label}
+              </Link>
+            );
+          })}
         </div>
-
-        {accountTab && (
-          <Link
-            href={accountTab.href}
-            className={`
-              inline-flex items-center justify-center h-full px-4 border-l border-white/10 shrink-0
-              ${isActive(accountTab.href) ? "text-sky-200 bg-white/5" : "text-slate-300 hover:text-white hover:bg-white/5"}
-            `}
-            aria-label="Account"
-          >
-            {accountTab.label}
-          </Link>
-        )}
       </div>
       <div className="pb-[env(safe-area-inset-bottom)]" />
     </nav>

@@ -37,9 +37,6 @@ export default function Header() {
           </div>
         </nav>
         <div className="flex items-center gap-2">
-          <div className="block md:hidden">
-            <DirectoryTab variant="mobile" />
-          </div>
           <UserPill />
         </div>
       </div>
