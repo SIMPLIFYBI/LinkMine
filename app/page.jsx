@@ -44,6 +44,33 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* How it works directly under hero */}
+      <section className="mx-auto w-full max-w-5xl -mt-6 rounded-3xl border border-white/10 bg-white/[0.08] px-6 py-6 shadow-lg ring-1 ring-white/10">
+        <h2 className="text-center text-2xl font-semibold text-slate-50">
+          How YouMine works
+        </h2>
+        <div className="mt-5 grid gap-4 text-sm text-slate-200 sm:grid-cols-3">
+          <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
+            <div className="text-lg font-semibold">① List your job</div>
+            <p className="mt-1">
+              Create a public or private listing with project details and contact preferences.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
+            <div className="text-lg font-semibold">② Invite specialists</div>
+            <p className="mt-1">
+              Pick up to five consultants for private briefs or let the marketplace respond.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
+            <div className="text-lg font-semibold">③ Connect & deliver</div>
+            <p className="mt-1">
+              Interested consultants contact you directly to scope, quote, and start the work.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Split section: stack on mobile, 2 cols on md+ */}
       <section className="mx-auto max-w-screen-md px-4 py-6 md:py-8">
         <div className="grid gap-7 items-center md:grid-cols-2">
@@ -145,32 +172,6 @@ export default function HomePage() {
           <div className="text-sm text-slate-400">Quick access to saved consultants.</div>
         </Link>
       </div>
-
-      <section className="mx-auto w-full max-w-5xl -mt-6 rounded-3xl border border-white/10 bg-white/[0.08] px-6 py-6 shadow-lg ring-1 ring-white/10">
-        <h2 className="text-center text-2xl font-semibold text-slate-50">
-          How YouMine works
-        </h2>
-        <div className="mt-5 grid gap-4 text-sm text-slate-200 sm:grid-cols-3">
-          <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
-            <div className="text-lg font-semibold">① List your job</div>
-            <p className="mt-1">
-              Create a public or private listing with project details and contact preferences.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
-            <div className="text-lg font-semibold">② Invite specialists</div>
-            <p className="mt-1">
-              Pick up to five consultants for private briefs or let the marketplace respond.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
-            <div className="text-lg font-semibold">③ Connect & deliver</div>
-            <p className="mt-1">
-              Interested consultants contact you directly to scope, quote, and start the work.
-            </p>
-          </div>
-        </div>
-      </section>
     </main>
   );
 }

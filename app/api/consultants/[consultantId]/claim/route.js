@@ -1,29 +1,61 @@
+import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
-function sb() {
+async function supabaseFromCookies() {
+  const jar = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    { cookies }
+    {
+      cookies: {
+        get: (name) => jar.get(name)?.value,
+        set() {},
+        remove() {},
+      },
+    }
   );
 }
 
-export async function POST(_req, { params }) {
-  const supa = sb();
-  const { data: { user } = {} } = await supa.auth.getUser();
-  if (!user) return new Response(JSON.stringify({ ok: false, error: "Not signed in" }), { status: 401 });
+export async function POST(req, { params }) {
+  const { token } = await req.json().catch(() => ({}));
+  if (!token)
+    return NextResponse.json({ error: "Claim token missing." }, { status: 400 });
 
-  const { data, error } = await supa
+  const consultantId = params.consultantId;
+  const sb = await supabaseFromCookies();
+  const {
+    data: { user },
+  } = await sb.auth.getUser();
+  if (!user)
+    return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
+
+  const { data: consultant, error } = await sb
     .from("consultants")
-    .update({ user_id: user.id })
-    .eq("id", params.consultantId)
-    .is("user_id", null)
-    .select("id, user_id")
+    .select("id, claim_token, claimed_by, claimed_at")
+    .eq("id", consultantId)
     .maybeSingle();
+  if (error || !consultant)
+    return NextResponse.json({ error: "Consultant not found." }, { status: 404 });
+  if (!consultant.claim_token || consultant.claim_token !== token)
+    return NextResponse.json({ error: "Invalid or expired claim token." }, { status: 400 });
+  if (consultant.claimed_by && consultant.claimed_by !== user.id)
+    return NextResponse.json(
+      { error: "Profile already claimed by another account." },
+      { status: 409 }
+    );
 
-  if (error) return new Response(JSON.stringify({ ok: false, error: error.message }), { status: 500 });
-  if (!data) return new Response(JSON.stringify({ ok: false, error: "Already claimed or not found" }), { status: 409 });
+  const { error: updateError } = await sb
+    .from("consultants")
+    .update({
+      claimed_by: user.id,
+      claimed_at: new Date().toISOString(),
+      claim_token: null,
+    })
+    .eq("id", consultant.id)
+    .eq("claim_token", token);
+  if (updateError)
+    return NextResponse.json({ error: "Could not complete claim." }, { status: 500 });
 
-  return new Response(JSON.stringify({ ok: true, consultant: data }), { status: 200 });
+  return NextResponse.json({ ok: true });
 }

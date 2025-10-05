@@ -3,7 +3,9 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { supabaseAnonServer } from "@/lib/supabaseAnonServer";
+import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import AddConsultantButton from "@/app/components/consultants/AddConsultantButton";
+import ConsultantFavouriteButton from "@/app/components/ConsultantFavouriteButton";
 
 async function getConsultantsByServiceSlug(serviceSlug) {
   const sb = supabaseAnonServer();
@@ -50,6 +52,22 @@ export default async function ConsultantsPage({ searchParams }) {
   const serviceSlug = searchParams?.service || "";
   const { consultants, activeService } = await getConsultantsByServiceSlug(serviceSlug);
 
+  const sb = supabaseServerClient();
+  const {
+    data: { user },
+  } = await sb.auth.getUser();
+
+  const userId = user?.id ?? null;
+  let favouriteIds = new Set();
+  if (userId) {
+    const { data: favRows } = await sb
+      .from("consultant_favourites")
+      .select("consultant_id")
+      .eq("user_id", userId);
+
+    favouriteIds = new Set(favRows?.map((row) => row.consultant_id) ?? []);
+  }
+
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-6">
       <div className="flex items-center justify-between">
@@ -70,8 +88,19 @@ export default async function ConsultantsPage({ searchParams }) {
           <div className="text-slate-400 text-sm">No consultants found for this service.</div>
         ) : (
           consultants.map((c) => (
-            <article key={c.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-4 ring-1 ring-white/5">
-              <h3 className="text-base font-semibold text-white">{c.display_name}</h3>
+            <article
+              key={c.id}
+              className="relative rounded-xl border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/5 transition hover:border-white/20"
+            >
+              <div className="absolute right-4 top-4">
+                <ConsultantFavouriteButton
+                  consultantId={c.id}
+                  initialFavourite={favouriteIds.has(c.id)}
+                />
+              </div>
+              <h3 className="text-lg font-semibold text-white">
+                {c.display_name}
+              </h3>
               {c.headline ? <p className="mt-1 text-sm text-slate-300">{c.headline}</p> : null}
               {c.location ? <div className="mt-1 text-xs text-slate-400">{c.location}</div> : null}
               <div className="mt-3">

@@ -6,6 +6,8 @@ import { notFound } from "next/navigation";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import { fetchPlaceDetails } from "@/lib/googlePlaces";
 import ConsultantServicesManager from "@/app/components/ConsultantServicesManager";
+import ConsultantClaimButton from "@/app/components/ConsultantClaimButton";
+import ConsultantFavouriteButton from "@/app/components/ConsultantFavouriteButton";
 
 async function getConsultant(id) {
   const sb = supabaseServerClient();
@@ -39,30 +41,73 @@ export default async function ConsultantProfilePage({ params }) {
 
   // Load consultant and check ownership (adjust fields to your schema)
   const [{ data: consultantRow }, { data: authData }] = await Promise.all([
-    sb.from("consultants").select("id, display_name, owner, user_id").eq("id", consultantId).maybeSingle(),
+    sb
+      .from("consultants")
+      .select("id, display_name, owner, user_id, claimed_by")
+      .eq("id", consultantId)
+      .maybeSingle(),
     sb.auth.getUser(),
   ]);
 
   const userId = authData?.user?.id || null;
-  const canEdit = !!userId && (consultantRow?.owner === userId || consultantRow?.user_id === userId);
+  const canEdit =
+    !!userId &&
+    (consultantRow?.owner === userId ||
+      consultantRow?.user_id === userId ||
+      consultantRow?.claimed_by === userId);
+
+  let initialFavourite = false;
+  if (userId) {
+    const { data: favRow } = await sb
+      .from("consultant_favourites")
+      .select("consultant_id")
+      .eq("consultant_id", consultantId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    initialFavourite = Boolean(favRow);
+  }
 
   const data = await getConsultant(params.id);
   if (!data) return notFound();
 
-  // Avoid reusing `c`; alias to `consultant`
   const { c: consultant, services, ports } = data;
-
-  // Fetch Google rating/reviews
   const place = consultant.place_id ? await fetchPlaceDetails(consultant.place_id) : null;
+
+  const debugInfo =
+    process.env.NODE_ENV === "development"
+      ? {
+          userId,
+          consultantId,
+          consultantOwner: consultantRow?.owner ?? null,
+          consultantUserId: consultantRow?.user_id ?? null,
+          consultantClaimedBy: consultantRow?.claimed_by ?? null,
+          canEdit,
+        }
+      : null;
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-6">
-      <Link href="/consultants" className="text-sky-300 hover:underline">← Back</Link>
+      {debugInfo ? (
+        <pre className="mb-4 rounded-lg border border-white/10 bg-black/40 p-3 text-xs text-slate-200/80">
+          {JSON.stringify(debugInfo, null, 2)}
+        </pre>
+      ) : null}
+      <Link href="/consultants" className="text-sky-300 hover:underline">
+        ← Back
+      </Link>
 
-      <header className="mt-2">
-        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">{consultant.display_name}</h1>
-        {consultant.headline ? <p className="mt-1 text-slate-300">{consultant.headline}</p> : null}
-        {consultant.location ? <div className="text-slate-400 text-sm mt-1">{consultant.location}</div> : null}
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold text-slate-50">
+            {consultant.display_name}
+          </h1>
+          <p className="mt-1 text-sm text-slate-300">{consultant.headline}</p>
+        </div>
+        <ConsultantFavouriteButton
+          consultantId={consultantId}
+          initialFavourite={initialFavourite}
+        />
       </header>
 
       {consultant.place_id ? (
@@ -161,7 +206,13 @@ export default async function ConsultantProfilePage({ params }) {
         )}
       </section>
 
-      <ConsultantServicesManager consultantId={consultantId} canEdit={true} />
+      <ConsultantServicesManager consultantId={consultantId} canEdit={canEdit} />
+      <ConsultantClaimButton
+        consultantId={consultantId}
+        isClaimed={Boolean(consultant.claimed_by)}
+        canEdit={canEdit}
+        contactEmail={consultant.contact_email}
+      />
     </main>
   );
 }
