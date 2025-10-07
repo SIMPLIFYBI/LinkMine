@@ -29,7 +29,13 @@ function SignupForm() {
     setError("");
     setMessage("");
     const sb = supabaseBrowser();
-    const { data, error } = await sb.auth.signUp({ email: email.trim(), password });
+    const { data, error } = await sb.auth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/onboarding`,
+      },
+    });
     setSubmitting(false);
     if (error) return setError(error.message || "Unable to sign up.");
     setMessage("Check your email to confirm your account, then sign in.");

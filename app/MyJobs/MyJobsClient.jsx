@@ -1,5 +1,11 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 
 const listingSummaries = {
@@ -256,6 +262,9 @@ export default function MyJobsClient() {
 
   const listingLabel = listingType ? `${listingType} job` : "Not selected";
 
+  const openListingModal = useCallback(() => setListingModalOpen(true), []);
+  const closeListingModal = useCallback(() => setListingModalOpen(false), []);
+
   return (
     <div className="relative">
       {listingModalOpen && (
@@ -306,7 +315,7 @@ export default function MyJobsClient() {
           </div>
           <button
             type="button"
-            onClick={() => setListingModalOpen(true)}
+            onClick={openListingModal}
             className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-slate-100 hover:border-sky-300/60 hover:bg-sky-500/10"
           >
             Change listing type
@@ -575,75 +584,23 @@ export default function MyJobsClient() {
           </form>
         </section>
 
-        <section className="space-y-3">
-          <h3 className="text-lg font-semibold">Jobs you’ve requested</h3>
-          {!currentUser && (
-            <p className="text-sm opacity-70">
-              Sign in to view the jobs you’ve requested.
-            </p>
-          )}
-          {currentUser && jobsStatus === "loading" && (
-            <p className="text-sm opacity-70">Loading your jobs…</p>
-          )}
-          {currentUser && jobsError && (
-            <p className="text-sm text-red-400">Error: {jobsError}</p>
-          )}
-          {currentUser && jobsStatus === "idle" && !jobsError && (
-            <>
-              {jobs.length === 0 ? (
-                <p className="text-sm opacity-70">
-                  You haven’t requested any quotes yet.
-                </p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-white/10 text-sm">
-                    <thead>
-                      <tr className="bg-white/5 text-left">
-                        <th className="px-4 py-3 font-medium">Title</th>
-                        <th className="px-4 py-3 font-medium">Listing</th>
-                        <th className="px-4 py-3 font-medium">Location</th>
-                        <th className="px-4 py-3 font-medium">Payment</th>
-                        <th className="px-4 py-3 font-medium">Urgency</th>
-                        <th className="px-4 py-3 font-medium">Consultants</th>
-                        <th className="px-4 py-3 font-medium">Requested</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/10 bg-white/5">
-                      {jobs.map((job) => (
-                        <tr key={job.id}>
-                          <td className="px-4 py-3 font-medium text-slate-100">
-                            {job.title}
-                          </td>
-                          <td className="px-4 py-3 text-slate-200">
-                            {job.listing_type || "—"}
-                          </td>
-                          <td className="px-4 py-3 text-slate-200">
-                            {job.location || "—"}
-                          </td>
-                          <td className="px-4 py-3 text-slate-200">
-                            {job.preferred_payment_type || "—"}
-                          </td>
-                          <td className="px-4 py-3 text-slate-200">
-                            {job.urgency || "—"}
-                          </td>
-                          <td className="px-4 py-3 text-slate-200">
-                            {Array.isArray(job.recipient_ids)
-                              ? job.recipient_ids.length
-                              : 0}
-                          </td>
-                          <td className="px-4 py-3 text-slate-200">
-                            {job.created_at
-                              ? new Date(job.created_at).toLocaleDateString()
-                              : "—"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </>
-          )}
+        <section className="space-y-4">
+          <header className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-white">
+              Jobs you’ve requested
+            </h2>
+            <button
+              type="button"
+              onClick={openListingModal}
+              className="rounded-full border border-sky-400/60 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-100 hover:border-sky-300 hover:bg-sky-500/20"
+            >
+              Post a new job
+            </button>
+          </header>
+
+          <p className="text-sm text-slate-300">
+            You haven’t requested any jobs yet.
+          </p>
         </section>
       </div>
     </div>

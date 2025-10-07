@@ -17,33 +17,43 @@ async function supabaseFromCookies() {
   );
 }
 
-export async function POST(req, { params }) {
+export async function POST(req, context) {
+  const { consultantId } = await context.params;
   const { token } = await req.json().catch(() => ({}));
-  if (!token)
-    return NextResponse.json({ error: "Claim token missing." }, { status: 400 });
 
-  const consultantId = params.consultantId;
+  if (!token) {
+    return NextResponse.json({ error: "Claim token missing." }, { status: 400 });
+  }
+
   const sb = await supabaseFromCookies();
   const {
     data: { user },
   } = await sb.auth.getUser();
-  if (!user)
+  if (!user) {
     return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
+  }
 
   const { data: consultant, error } = await sb
     .from("consultants")
     .select("id, claim_token, claimed_by, claimed_at")
     .eq("id", consultantId)
     .maybeSingle();
-  if (error || !consultant)
+
+  if (error || !consultant) {
     return NextResponse.json({ error: "Consultant not found." }, { status: 404 });
-  if (!consultant.claim_token || consultant.claim_token !== token)
-    return NextResponse.json({ error: "Invalid or expired claim token." }, { status: 400 });
-  if (consultant.claimed_by && consultant.claimed_by !== user.id)
+  }
+  if (!consultant.claim_token || consultant.claim_token !== token) {
+    return NextResponse.json(
+      { error: "Invalid or expired claim token." },
+      { status: 400 }
+    );
+  }
+  if (consultant.claimed_by && consultant.claimed_by !== user.id) {
     return NextResponse.json(
       { error: "Profile already claimed by another account." },
       { status: 409 }
     );
+  }
 
   const { error: updateError } = await sb
     .from("consultants")
@@ -54,8 +64,13 @@ export async function POST(req, { params }) {
     })
     .eq("id", consultant.id)
     .eq("claim_token", token);
-  if (updateError)
-    return NextResponse.json({ error: "Could not complete claim." }, { status: 500 });
+
+  if (updateError) {
+    return NextResponse.json(
+      { error: "Could not complete claim." },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({ ok: true });
 }

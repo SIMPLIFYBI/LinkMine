@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
-import { supabaseAdminClient } from "@/lib/supabaseAdminClient";
 import ConsultantClaimConfirm from "@/app/components/ConsultantClaimConfirm";
 
 export const runtime = "nodejs";
@@ -19,7 +18,7 @@ export default async function ConsultantClaimPage({ params, searchParams }) {
   const sb = supabaseServerClient();
   const [{ data: authData }, { data: consultant, error }] = await Promise.all([
     sb.auth.getUser(),
-    supabaseAdminClient()
+    sb
       .from("consultants")
       .select(
         "id, display_name, contact_email, claim_token, claimed_at, claimed_by"

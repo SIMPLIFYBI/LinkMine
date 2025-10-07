@@ -1,7 +1,7 @@
-import MyJobsClient from "./MyJobsClient";
+import { redirect } from "next/navigation";
 
-export const viewport = { width: "device-width", initialScale: 1 };
+export const runtime = "nodejs";
 
-export default function MyJobsPage() {
-  return <MyJobsClient />;
+export default function LegacyMyJobsPage() {
+  redirect("/jobs?tab=my-jobs");
 }

@@ -5,15 +5,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import { fetchPlaceDetails } from "@/lib/googlePlaces";
-import ConsultantServicesManager from "@/app/components/ConsultantServicesManager";
 import ConsultantClaimButton from "@/app/components/ConsultantClaimButton";
 import ConsultantFavouriteButton from "@/app/components/ConsultantFavouriteButton";
 
 async function getConsultant(id) {
   const sb = supabaseServerClient();
-
-  // const { data, error } = await supabaseServer().from("consultants")...
-  const { data, error } = await sb.from("consultants").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await sb
+    .from("consultants")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
 
   if (!data || data.visibility !== "public") return null;
 
@@ -39,7 +40,6 @@ export default async function ConsultantProfilePage({ params }) {
   const sb = supabaseServerClient();
   const consultantId = params.id;
 
-  // Load consultant and check ownership (adjust fields to your schema)
   const [{ data: consultantRow }, { data: authData }] = await Promise.all([
     sb
       .from("consultants")
@@ -64,45 +64,39 @@ export default async function ConsultantProfilePage({ params }) {
       .eq("consultant_id", consultantId)
       .eq("user_id", userId)
       .maybeSingle();
-
     initialFavourite = Boolean(favRow);
   }
 
-  const data = await getConsultant(params.id);
+  const data = await getConsultant(consultantId);
   if (!data) return notFound();
 
   const { c: consultant, services, ports } = data;
-  const place = consultant.place_id ? await fetchPlaceDetails(consultant.place_id) : null;
+  const place = consultant.place_id
+    ? await fetchPlaceDetails(consultant.place_id)
+    : null;
 
-  const debugInfo =
-    process.env.NODE_ENV === "development"
-      ? {
-          userId,
-          consultantId,
-          consultantOwner: consultantRow?.owner ?? null,
-          consultantUserId: consultantRow?.user_id ?? null,
-          consultantClaimedBy: consultantRow?.claimed_by ?? null,
-          canEdit,
-        }
-      : null;
+  const rating = place?.rating ?? null;
+  const reviewCount = place?.user_ratings_total ?? null;
+  const topReviews = Array.isArray(place?.reviews)
+    ? place.reviews.slice(0, 3)
+    : [];
 
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-6">
-      {debugInfo ? (
-        <pre className="mb-4 rounded-lg border border-white/10 bg-black/40 p-3 text-xs text-slate-200/80">
-          {JSON.stringify(debugInfo, null, 2)}
-        </pre>
-      ) : null}
       <Link href="/consultants" className="text-sky-300 hover:underline">
         ← Back
       </Link>
 
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <header className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-slate-50">
             {consultant.display_name}
           </h1>
-          <p className="mt-1 text-sm text-slate-300">{consultant.headline}</p>
+          {consultant.headline ? (
+            <p className="mt-1 text-sm text-slate-300">
+              {consultant.headline}
+            </p>
+          ) : null}
         </div>
         <ConsultantFavouriteButton
           consultantId={consultantId}
@@ -110,109 +104,221 @@ export default async function ConsultantProfilePage({ params }) {
         />
       </header>
 
-      {consultant.place_id ? (
-        <section className="mt-4">
-          <h3 className="text-base font-semibold">Ratings</h3>
+      <div className="mt-8 grid gap-6 lg:grid-cols-[2fr,1fr]">
+        <section className="space-y-6">
+          <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-slate-100 shadow-sm ring-1 ring-white/5">
+            <h2 className="text-lg font-semibold text-white">About</h2>
+            {consultant.bio ? (
+              <p className="mt-3 whitespace-pre-line text-sm text-slate-200">
+                {consultant.bio}
+              </p>
+            ) : (
+              <p className="mt-3 text-sm text-slate-400">
+                This consultant hasn’t added a bio yet.
+              </p>
+            )}
+          </article>
 
-          {!place ? (
-            <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm ring-1 ring-white/5 text-slate-300">
-              Loading Google rating…
-            </div>
-          ) : place.ok && place.rating ? (
-            <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm ring-1 ring-white/5">
-              <span className="text-amber-400">★ {place.rating.toFixed(1)}</span>
-              <span className="text-slate-300">({place.userRatingCount ?? 0})</span>
-              <span className="text-slate-400">on Google</span>
-            </div>
-          ) : place.ok && !place.rating ? (
-            <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm ring-1 ring-white/5 text-slate-300">
-              No Google rating available.
-            </div>
-          ) : (
-            <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
-              Google Places error: {place?.error || "Unknown error"}
-            </div>
-          )}
+          <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-slate-100 shadow-sm ring-1 ring-white/5">
+            <h2 className="text-lg font-semibold text-white">
+              Services offered
+            </h2>
+            {services.length ? (
+              <ul className="mt-3 flex flex-wrap gap-2 text-sm">
+                {services.map((svc) => (
+                  <li
+                    key={svc.slug ?? svc.name}
+                    className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-slate-200"
+                  >
+                    {svc.name}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 text-sm text-slate-400">
+                No services listed yet.
+              </p>
+            )}
+          </article>
 
-          {place?.ok && place?.reviews?.length ? (
-            <ul className="mt-3 space-y-2">
-              {place.reviews.slice(0, 3).map((r, i) => (
-                <li key={i} className="rounded-lg border border-white/10 bg-white/[0.03] p-3 text-sm ring-1 ring-white/5">
-                  <div className="flex items-center justify-between">
-                    <strong className="text-slate-100">
-                      {r.authorAttribution?.displayName || "Google user"}
-                    </strong>
-                    {typeof r.rating === "number" && (
-                      <span className="text-amber-400 text-xs">★ {r.rating.toFixed(1)}</span>
-                    )}
-                  </div>
-                  {r.text?.text ? <p className="mt-1 text-slate-300">{r.text.text}</p> : null}
-                  {r.publishTime ? (
-                    <div className="mt-1 text-xs text-slate-400">
-                      {new Date(r.publishTime).toLocaleDateString()}
+          {ports.length ? (
+            <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-slate-100 shadow-sm ring-1 ring-white/5">
+              <h2 className="text-lg font-semibold text-white">
+                Portfolio highlights
+              </h2>
+              <div className="mt-4 space-y-5">
+                {ports.map((port) => (
+                  <div
+                    key={port.id}
+                    className="rounded-2xl border border-white/10 bg-white/[0.06] p-4"
+                  >
+                    <div className="text-sm font-semibold text-white">
+                      {port.title}
                     </div>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
+                    {port.description ? (
+                      <p className="mt-2 text-sm text-slate-300">
+                        {port.description}
+                      </p>
+                    ) : null}
+                    {Array.isArray(port.links) && port.links.length ? (
+                      <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                        {port.links.map((link) => (
+                          <Link
+                            key={link}
+                            href={link}
+                            target="_blank"
+                            className="rounded-full border border-sky-400/50 bg-sky-500/10 px-3 py-1 text-sky-100 hover:border-sky-300 hover:bg-sky-500/20"
+                          >
+                            View link
+                          </Link>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </article>
           ) : null}
 
-          <div className="mt-2 text-[11px] text-slate-400">
-            Powered by Google • <a className="text-sky-300 hover:underline" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(consultant.display_name)}&query_place_id=${encodeURIComponent(consultant.place_id)}`} target="_blank" rel="noreferrer">View on Google Maps</a>
-          </div>
+          {rating ? (
+            <article className="rounded-3xl border border-amber-400/20 bg-amber-400/10 p-6 text-slate-100 shadow-sm">
+              <h2 className="text-lg font-semibold text-white">
+                Google rating
+              </h2>
+              <div className="mt-4 flex items-center gap-3 text-xl font-semibold text-amber-200">
+                <span>{rating.toFixed(1)}</span>
+                <div className="flex gap-0.5">
+                  {Array.from({ length: 5 }).map((_, idx) => (
+                    <span key={idx}>★</span>
+                  ))}
+                </div>
+              </div>
+              {typeof reviewCount === "number" ? (
+                <p className="mt-2 text-sm text-amber-100/80">
+                  Based on {reviewCount} Google review
+                  {reviewCount === 1 ? "" : "s"}.
+                </p>
+              ) : null}
+              {topReviews.length ? (
+                <ul className="mt-4 space-y-4">
+                  {topReviews.map((rev, idx) => {
+                    const reviewText =
+                      typeof rev?.text === "string"
+                        ? rev.text
+                        : rev?.text?.text ?? "";
+
+                    if (!reviewText) return null;
+
+                    return (
+                      <li
+                        key={rev?.time || rev?.author_url || idx}
+                        className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-white">
+                            {rev?.author_name ?? "Anonymous reviewer"}
+                          </span>
+                          {rev?.rating ? (
+                            <span className="text-amber-200">
+                              {rev.rating} ★
+                            </span>
+                          ) : null}
+                        </div>
+                        <p className="mt-2 text-slate-200">{reviewText}</p>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : null}
+            </article>
+          ) : null}
         </section>
-      ) : null}
 
-      <section className="mt-6">
-        <h3 className="text-base font-semibold">About</h3>
-        <p className="mt-1 text-slate-300">{consultant.bio || "No description provided."}</p>
-
-        {services?.length ? (
-          <ul className="mt-3 flex flex-wrap gap-2">
-            {services.map((s) => (
-              <li key={s.slug}>
-                <span className="inline-flex items-center rounded-full bg-gradient-to-r from-sky-600 to-indigo-600 text-white px-3 py-1 text-xs font-medium shadow-sm ring-1 ring-white/10 hover:from-sky-500 hover:to-indigo-500">
-                  {s.name}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </section>
-
-      <section className="mt-6">
-        <h3 className="text-base font-semibold">Portfolio</h3>
-        {ports.length === 0 ? (
-          <div className="mt-2 text-slate-400">No portfolio items yet.</div>
-        ) : (
-          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {ports.map((p) => (
-              <article key={p.id} className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] ring-1 ring-white/5">
-                <div className="h-40 bg-slate-800/40">
-                  {Array.isArray(p.media_urls) && p.media_urls[0] ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.media_urls[0]} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="grid h-full w-full place-items-center text-slate-400 text-sm">No image</div>
-                  )}
+        <aside className="space-y-6">
+          <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-sm text-slate-200 shadow-sm ring-1 ring-white/5">
+            <h2 className="text-lg font-semibold text-white">Contact</h2>
+            <dl className="mt-3 space-y-3">
+              {consultant.contact_email ? (
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-slate-400">
+                    Email
+                  </dt>
+                  <dd>
+                    <a
+                      href={`mailto:${consultant.contact_email}`}
+                      className="text-sky-300 hover:underline"
+                    >
+                      {consultant.contact_email}
+                    </a>
+                  </dd>
                 </div>
-                <div className="p-3">
-                  <strong className="text-slate-100">{p.title}</strong>
-                  {p.description ? <p className="mt-1 text-slate-300 text-sm">{p.description}</p> : null}
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
+              ) : null}
 
-      <ConsultantServicesManager consultantId={consultantId} canEdit={canEdit} />
-      <ConsultantClaimButton
-        consultantId={consultantId}
-        isClaimed={Boolean(consultant.claimed_by)}
-        canEdit={canEdit}
-        contactEmail={consultant.contact_email}
-      />
+              {consultant.phone ? (
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-slate-400">
+                    Phone
+                  </dt>
+                  <dd>{consultant.phone}</dd>
+                </div>
+              ) : null}
+
+              {consultant.website_url ? (
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-slate-400">
+                    Website
+                  </dt>
+                  <dd>
+                    <Link
+                      href={consultant.website_url}
+                      target="_blank"
+                      className="text-sky-300 hover:underline"
+                    >
+                      {consultant.website_url.replace(/^https?:\/\//, "")}
+                    </Link>
+                  </dd>
+                </div>
+              ) : null}
+
+              {consultant.location ? (
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-slate-400">
+                    Location
+                  </dt>
+                  <dd>{consultant.location}</dd>
+                </div>
+              ) : null}
+            </dl>
+          </article>
+
+          {place?.formatted_address ? (
+            <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-sm text-slate-200 shadow-sm ring-1 ring-white/5">
+              <h2 className="text-lg font-semibold text-white">
+                Google location
+              </h2>
+              <p className="mt-2">{place.formatted_address}</p>
+              {place?.url ? (
+                <Link
+                  href={place.url}
+                  target="_blank"
+                  className="mt-3 inline-flex items-center rounded-full border border-sky-400/60 bg-sky-500/10 px-3 py-1.5 text-xs font-semibold text-sky-100 hover:border-sky-300 hover:bg-sky-500/20"
+                >
+                  View on Google Maps
+                </Link>
+              ) : null}
+            </article>
+          ) : null}
+        </aside>
+      </div>
+
+      <div className="mt-10">
+        <ConsultantClaimButton
+          consultantId={consultantId}
+          isClaimed={Boolean(consultant.claimed_by)}
+          canEdit={canEdit}
+          contactEmail={consultant.contact_email}
+        />
+      </div>
     </main>
   );
 }

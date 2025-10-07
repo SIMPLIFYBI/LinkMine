@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { supabaseServer } from "@/lib/supabaseServer";
-import { redirect } from "next/navigation";
 
 export const revalidate = 120;
 export const runtime = "nodejs";
 
 async function loadPublicJobs() {
   const sb = supabaseServer();
-  const { data, error } = await sb
+  const { data } = await sb
     .from("jobs")
     .select(
       `
@@ -26,15 +25,14 @@ async function loadPublicJobs() {
     .or("listing_type.eq.Public,listing_type.eq.Both")
     .order("created_at", { ascending: false });
 
-  if (error) throw error;
   return data ?? [];
 }
 
-export default async function JobsBoardPage() {
+export default async function JobsBoardSection() {
   const jobs = await loadPublicJobs();
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-6 py-10 space-y-8">
+    <section className="space-y-8">
       <header className="space-y-2 text-center">
         <h1 className="text-3xl font-semibold text-slate-50">Jobs board</h1>
         <p className="text-sm text-slate-300">
@@ -47,7 +45,7 @@ export default async function JobsBoardPage() {
           No public jobs available right now. Check back soon.
         </p>
       ) : (
-        <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {jobs.map((job) => (
             <article
               key={job.id}
@@ -91,9 +89,9 @@ export default async function JobsBoardPage() {
               </div>
             </article>
           ))}
-        </section>
+        </div>
       )}
-    </main>
+    </section>
   );
 }
 
@@ -106,8 +104,4 @@ function Detail({ label, value }) {
       </span>
     </div>
   );
-}
-
-export default function LegacyJobsBoardPage() {
-  redirect("/jobs?tab=board");
 }

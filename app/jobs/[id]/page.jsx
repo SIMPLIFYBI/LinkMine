@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServerClient } from "@/lib/supabaseServerClient";
 
-export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-async function loadJob(sb, id) {
-  const { data, error } = await sb
+async function getJob(id) {
+  const sb = supabaseServerClient();
+  const { data: authData } = await sb.auth.getUser();
+  const user = authData?.user ?? null;
+
+  const { data: job } = await sb
     .from("jobs")
     .select(
       `
@@ -29,19 +33,21 @@ async function loadJob(sb, id) {
     .eq("id", id)
     .single();
 
-  if (error || !data) return null;
-  return data;
+  if (!job) return null;
+
+  return {
+    ...job,
+    isSaved: false,
+    isApplied: false,
+    user,
+  };
 }
 
 export default async function JobDetailPage({ params }) {
-  const sb = supabaseServer();
-  const job = await loadJob(sb, params.id);
+  const job = await getJob(params.id);
   if (!job) notFound();
 
-  const {
-    data: { user } = { user: null },
-  } = await sb.auth.getUser();
-  const isLoggedIn = Boolean(user);
+  const isLoggedIn = Boolean(job.user);
 
   return (
     <main className="mx-auto w-full max-w-4xl px-6 py-12 space-y-8">

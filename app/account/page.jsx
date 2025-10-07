@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -7,30 +7,130 @@ export default function AccountPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
+  const [consultants, setConsultants] = useState([]);
+  const [profileError, setProfileError] = useState("");
 
   useEffect(() => {
     let mounted = true;
-    supabase.auth.getSession().then(({ data }) => {
+
+    async function init() {
+      const { data } = await supabase.auth.getSession();
       if (!mounted) return;
-      setSession(data.session ?? null);
+
+      const currentSession = data.session ?? null;
+      setSession(currentSession);
       setLoading(false);
-      if (!data.session) router.replace("/auth");
+
+      if (!currentSession) {
+        router.replace("/signup");
+        return;
+      }
+
+      const userId = currentSession.user.id;
+      const { data: consultantRows, error } = await supabase
+        .from("consultants")
+        .select("id, display_name, owner, user_id, claimed_by")
+        .or(
+          `owner.eq.${userId},user_id.eq.${userId},claimed_by.eq.${userId}`
+        )
+        .order("display_name");
+
+      if (!mounted) return;
+      if (error) {
+        setProfileError(error.message);
+        setConsultants([]);
+      } else {
+        setConsultants(consultantRows ?? []);
+      }
+    }
+
+    init();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!mounted) return;
+      setSession(nextSession);
+      if (!nextSession) router.replace("/signup");
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      setSession(s);
-      if (!s) router.replace("/auth");
-    });
-    return () => { mounted = false; sub?.subscription?.unsubscribe?.(); };
+
+    return () => {
+      mounted = false;
+      sub?.subscription?.unsubscribe?.();
+    };
   }, [router]);
 
-  const signOut = async () => { await supabase.auth.signOut(); router.replace("/auth"); };
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    router.replace("/signup");
+  };
 
-  if (loading) return <main style={{ padding: 36 }}>Loading…</main>;
+  const userEmail = session?.user?.email ?? "Unknown";
+  const ownedConsultants = useMemo(() => {
+    if (!session?.user?.id) return [];
+    const userId = session.user.id;
+    return consultants.map((row) => ({
+      id: row.id,
+      name: row.display_name,
+      isOwner: row.owner === userId,
+      isAssigned: row.user_id === userId,
+      isClaimed: row.claimed_by === userId,
+    }));
+  }, [consultants, session?.user?.id]);
+
+  if (loading) {
+    return (
+      <main style={{ padding: 36 }}>
+        Loading…
+      </main>
+    );
+  }
+
   return (
-    <main style={{ padding: 36 }}>
-      <h1>Account</h1>
-      <p>You are signed in as {session?.user?.email}</p>
-      <button onClick={signOut} style={{ marginTop: 16, padding: "10px 14px", borderRadius: 6, border: "1px solid #ddd" }}>Sign out</button>
+    <main style={{ padding: 36, display: "grid", gap: 24 }}>
+      <section>
+        <h1 style={{ fontSize: 24, marginBottom: 8 }}>Account</h1>
+        <p style={{ marginBottom: 16 }}>Signed in as <strong>{userEmail}</strong></p>
+        <button
+          onClick={signOut}
+          style={{
+            marginTop: 8,
+            padding: "10px 14px",
+            borderRadius: 6,
+            border: "1px solid #ddd",
+            background: "white",
+            cursor: "pointer",
+          }}
+        >
+          Sign out
+        </button>
+      </section>
+
+      <section>
+        <h2 style={{ fontSize: 20, marginBottom: 12 }}>Consultant ownership</h2>
+        {profileError ? (
+          <p style={{ color: "#e64545" }}>{profileError}</p>
+        ) : ownedConsultants.length === 0 ? (
+          <p>You don’t own or manage any consultant pages yet.</p>
+        ) : (
+          <ul style={{ display: "grid", gap: 12, listStyle: "none", padding: 0 }}>
+            {ownedConsultants.map((item) => (
+              <li
+                key={item.id}
+                style={{
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  borderRadius: 12,
+                  padding: 16,
+                  background: "rgba(255,255,255,0.04)",
+                }}
+              >
+                <strong>{item.name}</strong>
+                <div style={{ fontSize: 13, marginTop: 4, color: "#555" }}>
+                  {item.isOwner ? "Owner" : item.isAssigned ? "Assigned manager" : "Claimed profile"}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </main>
   );
 }
