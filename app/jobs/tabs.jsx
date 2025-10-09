@@ -4,12 +4,12 @@ import { useState, useMemo } from "react";
 import JobsBoardSection from "@/app/jobs/JobsBoardSection";
 import JobsTableSection from "@/app/jobs/JobsTableSection";
 import JobsRequestedTable from "@/app/jobs/JobsRequestedTable";
-import MyJobsClient from "@/app/MyJobs/MyJobsClient";
+import MyJobsClient from "./MyJobsClient";
 
 const tabs = [
   { key: "board", label: "Jobs board" },
-  { key: "table", label: "Jobs table" },
-  { key: "my-jobs", label: "My jobs" },
+  { key: "table", label: "My jobs" },
+  { key: "my-jobs", label: "Create job" },
 ];
 
 export default function JobsPageTabs({ initialTab = "board", boardJobs = [] }) {

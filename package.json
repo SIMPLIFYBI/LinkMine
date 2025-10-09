@@ -9,6 +9,7 @@
     "start": "next start -p 3004"
   },
   "dependencies": {
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.40.0",
     "lucide-react": "^0.544.0",

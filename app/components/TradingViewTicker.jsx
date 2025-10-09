@@ -17,9 +17,12 @@ function TradingViewTicker() {
     script.innerHTML = `
       {
         "symbols": [
-          { "proName": "FX_IDC:EURUSD", "title": "EUR to USD" },
-          { "proName": "BITSTAMP:BTCUSD", "title": "Bitcoin" },
-          { "proName": "ASX:RIO", "title": "RIO TINTO" },
+            { "proName": "ASX:MQG", "title": "Macquarie" },
+            { "proName": "NYSE:AA", "title": "Alcoa" },
+            { "proName": "ASX:S32", "title": "South32" }, 
+            { "proName": "ASX:WPL", "title": "Woodside" },
+            { "proName": "ASX:RIO", "title": "RIO TINTO" },
+          { "proName": "ASX:LYC", "title": "Lynas" },
           { "proName": "ASX:BHP", "title": "BHP" },
           { "proName": "OANDA:AUDUSD", "title": "AUD to USD" },
           { "proName": "ASX:FMG", "title": "FMG" },
@@ -28,7 +31,8 @@ function TradingViewTicker() {
           { "proName": "MIL:1SAND", "title": "Sandvik" },
           { "proName": "ASX:IGO", "title": "IGO" },
           { "proName": "NYSE:AU", "title": "AngloGold" },
-          { "proName": "ASX:SFR", "title": "Sandfire" }
+          { "proName": "ASX:SFR", "title": "Sandfire" },
+            { "proName": "ASX:AGL", "title": "AGL" }
         ],
         "colorTheme": "dark",
         "isTransparent": true,

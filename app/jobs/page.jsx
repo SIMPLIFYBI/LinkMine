@@ -7,7 +7,8 @@ export const dynamic = "force-dynamic";
 export default async function JobsRootPage({ searchParams }) {
   const initialTab = searchParams?.tab === "my-jobs" ? "my-jobs" : "board";
 
-  const sb = supabaseServerClient();
+  const sb = await supabaseServerClient();
+
   const { data: jobs = [] } = await sb
     .from("jobs")
     .select(

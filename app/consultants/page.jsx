@@ -52,7 +52,8 @@ export default async function ConsultantsPage({ searchParams }) {
   const serviceSlug = searchParams?.service || "";
   const { consultants, activeService } = await getConsultantsByServiceSlug(serviceSlug);
 
-  const sb = supabaseServerClient();
+  const sb = await supabaseServerClient();
+
   const {
     data: { user },
   } = await sb.auth.getUser();
@@ -69,11 +70,18 @@ export default async function ConsultantsPage({ searchParams }) {
   }
 
   return (
-    <main className="mx-auto max-w-screen-xl px-4 py-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Consultants</h1>
-        <AddConsultantButton />
-      </div>
+    <main className="mx-auto w-full max-w-6xl px-6 py-10 space-y-8">
+      <section className="rounded-3xl border border-sky-400/30 bg-sky-500/10 p-6 text-slate-100 shadow-lg ring-1 ring-sky-400/20">
+        <h1 className="text-2xl font-semibold text-white">
+          Want to join MineHub and add your consultancy?
+        </h1>
+        <p className="mt-2 text-sm text-slate-200">
+          Showcase your services to potential clients and manage your profile directly on MineLink.
+        </p>
+        <div className="mt-4 inline-flex items-center">
+          <AddConsultantButton className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-900 shadow hover:bg-slate-100" />
+        </div>
+      </section>
 
       {activeService ? (
         <div className="mt-2 text-sm text-slate-300">
@@ -115,6 +123,10 @@ export default async function ConsultantsPage({ searchParams }) {
           ))
         )}
       </section>
+
+      <div className="mt-4 inline-flex items-center">
+        <AddConsultantButton className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-900 shadow hover:bg-slate-100" />
+      </div>
     </main>
   );
 }

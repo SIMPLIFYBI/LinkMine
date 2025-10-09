@@ -37,8 +37,8 @@ async function getConsultant(id) {
 }
 
 export default async function ConsultantProfilePage({ params }) {
+  const { id: consultantId } = await params;
   const sb = supabaseServerClient();
-  const consultantId = params.id;
 
   const [{ data: consultantRow }, { data: authData }] = await Promise.all([
     sb

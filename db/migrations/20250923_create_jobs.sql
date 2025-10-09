@@ -5,7 +5,7 @@ create table if not exists public.jobs (
   description text null,
   location text null,
   service_slug text not null,
-  consultant_ids uuid[] not null default '{}',
+ recipient_ids  uuid[] not null default '{}',
   status text not null default 'open', -- open | fulfilled | cancelled
   created_at timestamptz not null default now()
 );

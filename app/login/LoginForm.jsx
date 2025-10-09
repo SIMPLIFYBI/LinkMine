@@ -9,7 +9,7 @@ export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get("redirect");
-  const defaultRedirect = redirectParam || "/";
+  const defaultRedirect = redirectParam || "/jobs?tab=board";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -50,7 +50,7 @@ export default function LoginForm() {
       return;
     }
 
-    router.replace(profile ? "/home" : "/onboarding");
+    router.replace(profile ? defaultRedirect : "/onboarding");
   }
 
   return (

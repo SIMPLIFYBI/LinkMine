@@ -268,8 +268,15 @@ export default function MyJobsClient() {
   return (
     <div className="relative">
       {listingModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-3xl rounded-3xl border border-white/15 bg-white/10 p-8 text-slate-100 shadow-2xl backdrop-blur-2xl">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
+          <div className="relative w-full max-w-3xl rounded-3xl border border-white/15 bg-white/10/80 p-8 text-slate-100 shadow-2xl backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-white/10 supports-[backdrop-filter]:backdrop-blur-2xl supports-[backdrop-filter]:backdrop-saturate-150">
+            <button
+              type="button"
+              onClick={() => setListingModalOpen(false)}
+              className="absolute right-4 top-4 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:bg-white/20"
+            >
+              Close
+            </button>
             <h2 className="text-2xl font-semibold text-center mb-6">
               Choose how you want to share this job
             </h2>
@@ -368,7 +375,7 @@ export default function MyJobsClient() {
         )}
 
         {servicePickerOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6">
             <div className="relative w-full max-w-5xl overflow-hidden rounded-2xl border border-white/10 bg-slate-900/95 ring-1 ring-white/10 shadow-2xl">
               <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
                 <h2 className="text-lg font-semibold">Select a service</h2>
@@ -538,21 +545,21 @@ export default function MyJobsClient() {
             <label className="grid gap-1">
               <span className="text-sm">Preferred payment type</span>
               <select
-                className="rounded border border-white/10 bg-white/10 px-3 py-2"
+                className="rounded-lg border border-white/15 bg-slate-900/70 pl-3 pr-10 py-2 text-sm text-slate-100 shadow-inner outline-none transition appearance-none focus:border-sky-400 focus:bg-slate-900 focus:ring-2 focus:ring-sky-500/40"
                 value={preferredPaymentType}
                 onChange={(e) => setPreferredPaymentType(e.target.value)}
               >
                 <option value="">Select an option</option>
                 <option value="Ongoing Hourly">Ongoing Hourly</option>
                 <option value="Fixed-Term Hourly">Fixed-Term Hourly</option>
-                <option value="Fixed Price">Fixed Price</option>
+                <option value="Fixed Budget">Fixed Budget</option>
                 <option value="Cost Plus">Cost Plus</option>
               </select>
             </label>
             <label className="grid gap-1">
               <span className="text-sm">Urgency</span>
               <select
-                className="rounded border border-white/10 bg-white/10 px-3 py-2"
+                className="rounded-lg border border-white/15 bg-slate-900/70 pl-3 pr-10 py-2 text-sm text-slate-100 shadow-inner outline-none transition appearance-none focus:border-sky-400 focus:bg-slate-900 focus:ring-2 focus:ring-sky-500/40"
                 value={urgency}
                 onChange={(e) => setUrgency(e.target.value)}
               >
@@ -582,25 +589,6 @@ export default function MyJobsClient() {
             </button>
             {error && <div className="text-sm text-red-500">{error}</div>}
           </form>
-        </section>
-
-        <section className="space-y-4">
-          <header className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-white">
-              Jobs you’ve requested
-            </h2>
-            <button
-              type="button"
-              onClick={openListingModal}
-              className="rounded-full border border-sky-400/60 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-100 hover:border-sky-300 hover:bg-sky-500/20"
-            >
-              Post a new job
-            </button>
-          </header>
-
-          <p className="text-sm text-slate-300">
-            You haven’t requested any jobs yet.
-          </p>
         </section>
       </div>
     </div>
