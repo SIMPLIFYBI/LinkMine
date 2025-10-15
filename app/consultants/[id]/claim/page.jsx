@@ -75,17 +75,8 @@ export default async function ConsultantClaimPage({ params, searchParams }) {
     });
   }
 
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "http://localhost:3004";
-
-  const claimUrl = `${siteUrl}/consultants/${consultant.id}/claim?token=${consultant.claim_token}`;
-
-  // pass `claimUrl` into the email template payload
-  await sendClaimEmail({
-    to: consultant.contact_email,
-    displayName: consultant.display_name,
-    claimUrl,
-  });
+  const debugInfo =
+    process.env.NODE_ENV !== "production" ? { user, consultant, token } : null;
 
   return (
     <main className="mx-auto mt-12 w-full max-w-2xl space-y-6 rounded-3xl border border-white/10 bg-white/[0.05] px-6 py-8 text-slate-100">
@@ -97,11 +88,19 @@ export default async function ConsultantClaimPage({ params, searchParams }) {
           You requested to manage this consultant profile. Confirm below to take ownership.
         </p>
       </header>
-      <ConsultantClaimConfirm
-        consultant={consultant}
-        user={user}
-        token={token}
-      />
+
+      <ConsultantClaimConfirm consultant={consultant} user={user} token={token} />
+
+      {debugInfo && (
+        <details className="rounded-xl border border-sky-500/30 bg-sky-500/5 p-4 text-xs text-sky-100">
+          <summary className="cursor-pointer font-semibold text-sky-200">
+            Claim debug
+          </summary>
+          <pre className="mt-3 whitespace-pre-wrap break-words text-[11px] text-sky-100/90">
+            {JSON.stringify(debugInfo, null, 2)}
+          </pre>
+        </details>
+      )}
     </main>
   );
 }

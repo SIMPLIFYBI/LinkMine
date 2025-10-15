@@ -102,7 +102,22 @@ export async function POST(_req, context) {
             </tr>
             <tr>
               <td align="center" style="padding-bottom:28px;">
-                <a href="${claimUrl}" style="display:inline-block;background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#0f172a;font-weight:600;padding:14px 28px;border-radius:999px;text-decoration:none;">
+                <a
+                  href="${claimUrl}"
+                  style="
+                    display:inline-block;
+                    padding:14px 32px;
+                    border-radius:999px;
+                    border:2px solid transparent;
+                    background-image:linear-gradient(#0f172a,#0f172a),linear-gradient(135deg,#0ea5e9,#6366f1);
+                    background-origin:border-box;
+                    background-clip:content-box,border-box;
+                    color:#e2e8f0;
+                    font-weight:600;
+                    text-decoration:none;
+                    letter-spacing:0.02em;
+                  "
+                >
                   Claim profile
                 </a>
               </td>
