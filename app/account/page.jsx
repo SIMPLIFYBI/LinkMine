@@ -82,7 +82,7 @@ export default function AccountPage() {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    router.replace("/signup");
+    router.push("/login"); // Change from "/signup" to "/login"
   };
 
   const userEmail = session?.user?.email ?? "Unknown";

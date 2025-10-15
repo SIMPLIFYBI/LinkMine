@@ -7,9 +7,8 @@ import { supabaseBrowser } from "@/lib/supabaseBrowser";
 
 export default function LoginForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectParam = searchParams.get("redirect");
-  const defaultRedirect = redirectParam || "/jobs?tab=board";
+  const sp = useSearchParams();
+  const redirectTo = sp.get("redirect") || "/account";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -50,7 +49,8 @@ export default function LoginForm() {
       return;
     }
 
-    router.replace(profile ? defaultRedirect : "/onboarding");
+    router.replace(profile ? redirectTo : "/onboarding");
+    router.refresh();
   }
 
   return (

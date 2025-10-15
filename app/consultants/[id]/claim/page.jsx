@@ -15,7 +15,7 @@ export default async function ConsultantClaimPage({ params, searchParams }) {
     });
   }
 
-  const sb = supabaseServerClient();
+  const sb = await supabaseServerClient();
   const [{ data: authData }, { data: consultant, error }] = await Promise.all([
     sb.auth.getUser(),
     sb
@@ -57,7 +57,7 @@ export default async function ConsultantClaimPage({ params, searchParams }) {
       heading: "Sign in to complete the claim",
       body: `You must be logged in to finish claiming ${consultant.display_name}.`,
       extra: (
-        <div className="mt-4 flex gap-3 text-sm">
+        <div className="mt-4 flex justify-center gap-3 text-sm">
           <Link
             href={`/login?redirect=${redirect}`}
             className="inline-flex items-center rounded-full border border-sky-400/60 bg-sky-500/10 px-4 py-2 font-semibold text-sky-100 hover:border-sky-300 hover:bg-sky-500/20"
@@ -75,6 +75,18 @@ export default async function ConsultantClaimPage({ params, searchParams }) {
     });
   }
 
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "http://localhost:3004";
+
+  const claimUrl = `${siteUrl}/consultants/${consultant.id}/claim?token=${consultant.claim_token}`;
+
+  // pass `claimUrl` into the email template payload
+  await sendClaimEmail({
+    to: consultant.contact_email,
+    displayName: consultant.display_name,
+    claimUrl,
+  });
+
   return (
     <main className="mx-auto mt-12 w-full max-w-2xl space-y-6 rounded-3xl border border-white/10 bg-white/[0.05] px-6 py-8 text-slate-100">
       <header className="space-y-2 text-center">
@@ -85,7 +97,11 @@ export default async function ConsultantClaimPage({ params, searchParams }) {
           You requested to manage this consultant profile. Confirm below to take ownership.
         </p>
       </header>
-      <ConsultantClaimConfirm consultantId={consultant.id} token={token} />
+      <ConsultantClaimConfirm
+        consultant={consultant}
+        user={user}
+        token={token}
+      />
     </main>
   );
 }
@@ -96,14 +112,6 @@ function renderMessage({ heading, body, extra = null }) {
       <h1 className="text-2xl font-semibold">{heading}</h1>
       <p className="text-sm text-slate-300">{body}</p>
       {extra}
-      <div className="pt-4 text-sm">
-        <Link
-          href="/consultants"
-          className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-4 py-2 font-semibold hover:border-white/40 hover:bg-white/20"
-        >
-          Back to consultants
-        </Link>
-      </div>
     </main>
   );
 }

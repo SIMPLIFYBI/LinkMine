@@ -37,7 +37,23 @@ function SignupForm() {
       },
     });
     setSubmitting(false);
+
+    // If error, show it
     if (error) return setError(error.message || "Unable to sign up.");
+
+    // Try sign-in to check if account exists
+    const { error: signInError } = await sb.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+    if (
+      signInError &&
+      signInError.message?.toLowerCase().includes("invalid login credentials")
+    ) {
+      setError("You already have an account. Reset your password.");
+      return;
+    }
+
     setMessage("Check your email to confirm your account, then sign in.");
   }
 
