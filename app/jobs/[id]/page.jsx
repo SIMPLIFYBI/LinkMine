@@ -141,8 +141,3 @@ function ContactEmail({ email, jobId, isLoggedIn }) {
     </div>
   );
 }
-
-export async function supabaseServerClient() {
-  const cookieStore = await cookies();
-  …
-}

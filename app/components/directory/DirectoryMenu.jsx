@@ -1,4 +1,4 @@
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabaseServerClient";
 import DirectoryDropdown from "./DirectoryDropdown";
 import DirectoryMobileSheet from "./DirectoryMobileSheet";
 
