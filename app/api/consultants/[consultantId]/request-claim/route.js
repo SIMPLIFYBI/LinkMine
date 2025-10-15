@@ -68,7 +68,7 @@ export async function POST(_req, context) {
   }
 
   const fromEmail = process.env.EMAIL_FROM;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://link-mine.vercel.app").replace(/\/$/, "");
 
   if (!fromEmail || !siteUrl) {
     return NextResponse.json(
@@ -79,12 +79,53 @@ export async function POST(_req, context) {
 
   const claimUrl = `${siteUrl}/consultants/${consultant.id}/claim?token=${token}`;
 
+  const htmlBody = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;padding:32px 0;font-family:'Inter',system-ui,sans-serif;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#111827;border:1px solid rgba(148,163,184,0.2);border-radius:24px;padding:32px;">
+            <tr>
+              <td align="center" style="padding-bottom:16px;">
+                <p style="margin:0;font-size:13px;letter-spacing:0.18em;color:#38bdf8;text-transform:uppercase;">MINE LINK</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="color:#e2e8f0;font-size:20px;font-weight:600;text-align:center;padding-bottom:12px;">
+                Confirm consultant ownership
+              </td>
+            </tr>
+            <tr>
+              <td style="color:#94a3b8;font-size:15px;line-height:1.6;text-align:center;padding-bottom:24px;">
+                You requested to manage <strong style="color:#e2e8f0;">${consultant.display_name}</strong>.
+                Click the button below to finish claiming the profile.
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding-bottom:28px;">
+                <a href="${claimUrl}" style="display:inline-block;background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#0f172a;font-weight:600;padding:14px 28px;border-radius:999px;text-decoration:none;">
+                  Claim profile
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td style="color:#64748b;font-size:13px;line-height:1.5;text-align:center;">
+                If the button doesn’t work, copy and paste this URL into your browser:<br>
+                <span style="color:#94a3b8;word-break:break-all;">${claimUrl}</span>
+              </td>
+            </tr>
+          </table>
+          <p style="margin-top:20px;font-size:12px;color:#475569;">© ${new Date().getFullYear()} Mine Link</p>
+        </td>
+      </tr>
+    </table>
+  `;
+
   await postmarkClient().sendEmail({
     From: fromEmail,
     To: consultant.contact_email,
     Subject: `Confirm ownership of ${consultant.display_name}`,
-    HtmlBody: `<p>Confirm ownership:</p><p><a href="${claimUrl}">${claimUrl}</a></p>`,
-    TextBody: `Confirm ownership: ${claimUrl}`,
+    HtmlBody: htmlBody,
+    TextBody: `Confirm ownership:\n${claimUrl}`,
     MessageStream: "outbound",
   });
 
