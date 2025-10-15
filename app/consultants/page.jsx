@@ -8,7 +8,7 @@ import AddConsultantButton from "@/app/components/consultants/AddConsultantButto
 import ConsultantFavouriteButton from "@/app/components/ConsultantFavouriteButton";
 
 async function getConsultantsByServiceSlug(serviceSlug) {
-  const sb = supabaseAnonServer();
+  const sb = await supabaseServerClient();
 
   if (!serviceSlug) {
     const { data } = await sb
@@ -49,10 +49,10 @@ async function getConsultantsByServiceSlug(serviceSlug) {
 }
 
 export default async function ConsultantsPage({ searchParams }) {
+  const sb = await supabaseServerClient();
+
   const serviceSlug = searchParams?.service || "";
   const { consultants, activeService } = await getConsultantsByServiceSlug(serviceSlug);
-
-  const sb = await supabaseServerClient();
 
   const {
     data: { user },

@@ -9,7 +9,7 @@ import ConsultantClaimButton from "@/app/components/ConsultantClaimButton";
 import ConsultantFavouriteButton from "@/app/components/ConsultantFavouriteButton";
 
 async function getConsultant(id) {
-  const sb = supabaseServerClient();
+  const sb = await supabaseServerClient();
   const { data, error } = await sb
     .from("consultants")
     .select("*")
@@ -37,8 +37,8 @@ async function getConsultant(id) {
 }
 
 export default async function ConsultantProfilePage({ params }) {
-  const { id: consultantId } = await params;
-  const sb = supabaseServerClient();
+  const { id: consultantId } = params;
+  const sb = await supabaseServerClient();
 
   const [{ data: consultantRow }, { data: authData }] = await Promise.all([
     sb

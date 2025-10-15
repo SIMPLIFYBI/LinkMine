@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 async function getJob(id) {
-  const sb = supabaseServerClient();
+  const sb = await supabaseServerClient();
   const { data: authData } = await sb.auth.getUser();
   const user = authData?.user ?? null;
 
@@ -140,4 +140,9 @@ function ContactEmail({ email, jobId, isLoggedIn }) {
       </p>
     </div>
   );
+}
+
+export async function supabaseServerClient() {
+  const cookieStore = await cookies();
+  …
 }

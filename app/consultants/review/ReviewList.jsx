@@ -19,34 +19,41 @@ export default function ReviewList({ initialConsultants }) {
   async function updateStatus(id, status, reviewerNotes = "") {
     setError("");
     setSubmittingId(id);
+
     try {
       const sb = supabaseBrowser();
       const {
         data: { session },
+        error: sessionError,
       } = await sb.auth.getSession();
 
-      const token = session?.access_token;
-      if (!token) {
-        throw new Error("You must be signed in to approve requests.");
+      if (sessionError) {
+        throw new Error(sessionError.message);
       }
 
-      const res = await fetch(`/api/consultants/${id}/status`, {
+      const response = await fetch(`/api/consultants/${id}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          ...(session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : {}),
         },
-        body: JSON.stringify({ status, reviewerNotes }),
+        credentials: "include",
+        body: JSON.stringify({
+          status,
+          reviewer_notes: reviewerNotes,
+        }),
       });
 
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok || !body.ok) {
-        throw new Error(body.error || "Failed to update status.");
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok || body?.ok === false) {
+        throw new Error(body?.error || "Failed to update status.");
       }
 
       setItems((prev) => prev.filter((item) => item.id !== id));
     } catch (err) {
-      setError(err.message || "Unable to update consultancy status.");
+      setError(err.message || "Unable to update consultant status.");
     } finally {
       setSubmittingId(null);
     }
@@ -88,6 +95,7 @@ export default function ReviewList({ initialConsultants }) {
           </header>
 
           <dl className="mt-5 grid gap-4 sm:grid-cols-2 text-sm">
+            <Info label="Consultant ID" value={consultant.id} />
             <Info label="Company" value={consultant.company || "—"} />
             <Info label="Headline" value={consultant.headline || "—"} />
             <Info label="Location" value={consultant.location || "—"} />
