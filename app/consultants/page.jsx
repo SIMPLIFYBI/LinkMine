@@ -15,6 +15,7 @@ async function getConsultantsByServiceSlug(serviceSlug) {
       .from("consultants")
       .select("id, display_name, headline, location, visibility")
       .eq("visibility", "public")
+      .eq("status", "approved") // only approved consultants
       .order("display_name", { ascending: true });
     return { consultants: data || [], activeService: null };
   }
@@ -43,6 +44,7 @@ async function getConsultantsByServiceSlug(serviceSlug) {
     .select("id, display_name, headline, location, visibility")
     .in("id", ids)
     .eq("visibility", "public")
+    .eq("status", "approved") // only approved consultants
     .order("display_name", { ascending: true });
 
   return { consultants: consultants || [], activeService: svc };
