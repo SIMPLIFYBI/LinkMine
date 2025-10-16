@@ -1,0 +1,30 @@
+[33mbdc4abd[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Update jobs page
+[33md969317[m Update Claim Email
+[33m5e607a6[m Update Claim Email
+[33mc6c9b45[m Update Claim Email
+[33m7d96a1a[m Fix consultant review auth and RLS policy
+[33mc823b1c[m Fix consultant review auth and RLS policy
+[33mab28282[m Align Supabase helpers and clean up jobs pages
+[33mb394199[m Email Flow + Home Page
+[33me44f1fb[m Favourite button
+[33m12fe101[m Mobile Nav Fix
+[33mef7b023[m Mobile Nav Fix
+[33m04a71df[m Stock Ticker
+[33me4ad9a1[m Stock Ticker
+[33mdb23b2e[m Blur and Jobs Page
+[33mdc12372[m Add job emails, public job view, UI updates
+[33m6373d72[m Add job emails, public job view, UI updates
+[33mb5220c9[m Add job emails, public job view, UI updates
+[33m2e80691[m Add job emails, public job view, UI updates
+[33m623e8b1[m Add job emails, public job view, UI updates
+[33ma77461f[m Add job emails, public job view, UI updates
+[33m638941f[m Add job emails, public job view, UI updates
+[33mbbb8105[m chore: remove unused Assets page and components
+[33m6441446[m chore: rebrand header to LinkMine
+[33m0833f57[m fix(assets): split client UI from page to allow metadata export
+[33mc024db0[m fix: add /api/env route and ESLint setup
+[33m9a2863b[m chore: rebrand to LinkMine (remove MineLink/Minelink)
+[33m59fd758[m feat: add OrgContext, fix assets page; jobs UI + APIs; ignore env files
+[33m9f18590[m chore: add @supabase/ssr
+[33m278bfc1[m chore: ignore env files
+[33mf1eb821[m chore: initial commit

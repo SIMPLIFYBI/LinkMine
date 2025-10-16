@@ -89,12 +89,13 @@ export default function ConsultantFavouriteButton({
   }
 
   return (
-    <div className="relative flex items-center gap-2">
+    <div className="absolute right-3 top-3 flex flex-col items-end gap-1">
       <button
         type="button"
         onClick={toggleFavourite}
         disabled={isLoading}
-        className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+        aria-label={label}
+        className={`group inline-flex h-9 w-9 items-center justify-center rounded-full border transition ${
           isFavourite
             ? "border-amber-400/60 bg-amber-400/10 text-amber-200 hover:border-amber-300 hover:bg-amber-400/20"
             : "border-white/15 bg-white/5 text-slate-200 hover:border-white/25 hover:bg-white/10"
@@ -103,10 +104,11 @@ export default function ConsultantFavouriteButton({
       >
         <Star
           className={`h-4 w-4 transition ${
-            isFavourite ? "fill-amber-400 text-amber-300" : "text-slate-400"
+            isFavourite
+              ? "fill-amber-400 text-amber-300"
+              : "text-slate-300 group-hover:text-amber-200"
           }`}
         />
-        {label}
       </button>
       {error && (
         <span className="text-[10px] text-rose-300">{error}</span>
