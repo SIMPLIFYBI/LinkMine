@@ -91,8 +91,16 @@ export default async function ConsultantProfilePage({ params }) {
         </Link>
 
         {isOwner && (
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300/70 bg-emerald-500/15 px-4 py-1.5 text-sm md:text-base font-semibold text-emerald-100 shadow-sm ring-1 ring-emerald-300/30">
-            You are the owner of this page
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/70 bg-emerald-500/15 px-4 py-1.5 text-sm md:text-base font-semibold text-emerald-100 shadow-sm ring-1 ring-emerald-300/30">
+              You are the owner of this page
+            </span>
+            <Link
+              href={`/consultants/${consultantId}/edit`}
+              className="inline-flex items-center gap-2 rounded-full border border-sky-400/60 bg-sky-500/15 px-4 py-1.5 text-sm font-semibold text-sky-100 hover:border-sky-300 hover:bg-sky-500/25"
+            >
+              Edit profile
+            </Link>
           </div>
         )}
       </div>

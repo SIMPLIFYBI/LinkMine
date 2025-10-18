@@ -1,12 +1,13 @@
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 import { redirect } from "next/navigation";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import EditConsultantForm from "./EditConsultantForm";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
 export default async function ConsultantEditPage({ params }) {
   const sb = await supabaseServerClient();
+
   const [{ data: auth }, { data: consultant, error }] = await Promise.all([
     sb.auth.getUser(),
     sb
@@ -21,25 +22,28 @@ export default async function ConsultantEditPage({ params }) {
         location,
         contact_email,
         metadata,
-        claimed_by,
-        user_id,
-        owner
+        claimed_by
       `
       )
       .eq("id", params.id)
       .maybeSingle(),
   ]);
 
-  if (error || !consultant) redirect("/consultants");
+  if (error || !consultant) {
+    redirect("/consultants");
+  }
 
-  const userId = auth?.user?.id;
-  const ownsProfile =
-    userId &&
-    (consultant.claimed_by === userId ||
-      consultant.user_id === userId ||
-      consultant.owner === userId);
+  const userId = auth?.user?.id || null;
 
-  if (!ownsProfile) redirect(`/consultants/${params.id}`);
+  // Must be logged in
+  if (!userId) {
+    redirect(`/login?redirect=/consultants/${params.id}/edit`);
+  }
+
+  // Simple ownership check: only the user who claimed the profile can edit
+  if (consultant.claimed_by !== userId) {
+    redirect(`/consultants/${params.id}`);
+  }
 
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-10">
