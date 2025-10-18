@@ -81,11 +81,21 @@ export default async function ConsultantProfilePage({ params }) {
     ? place.reviews.slice(0, 3)
     : [];
 
+  const isOwner = Boolean(userId && consultant.claimed_by === userId);
+
   return (
     <main className="mx-auto max-w-screen-xl px-4 py-6">
-      <Link href="/consultants" className="text-sky-300 hover:underline">
-        ← Back
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link href="/consultants" className="text-sky-300 hover:underline">
+          ← Back
+        </Link>
+
+        {isOwner && (
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300/70 bg-emerald-500/15 px-4 py-1.5 text-sm md:text-base font-semibold text-emerald-100 shadow-sm ring-1 ring-emerald-300/30">
+            You are the owner of this page
+          </div>
+        )}
+      </div>
 
       <header className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -319,6 +329,24 @@ export default async function ConsultantProfilePage({ params }) {
           contactEmail={consultant.contact_email}
         />
       </div>
+
+      {process.env.NODE_ENV !== "production" && (
+        <details className="mt-4 rounded-xl border border-sky-400/30 bg-sky-500/10 p-4 text-xs text-sky-100">
+          <summary className="cursor-pointer font-semibold">Claim debug</summary>
+          <pre className="mt-2 whitespace-pre-wrap break-words">
+            {JSON.stringify(
+              {
+                userId,
+                claimedBy: consultant.claimed_by || null,
+                isClaimed: Boolean(consultant.claimed_by),
+                canEdit,
+              },
+              null,
+              2
+            )}
+          </pre>
+        </details>
+      )}
     </main>
   );
 }
