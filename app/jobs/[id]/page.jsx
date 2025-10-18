@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
+import ContactEmailClient from "./ContactEmailClient"; // added
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -75,13 +76,21 @@ export default async function JobDetailPage({ params }) {
       <section className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4">
         <h2 className="text-lg font-medium text-slate-100">Job description</h2>
         <p className="whitespace-pre-line text-slate-200">{job.description}</p>
-        <ContactEmail email={job.contact_email} jobId={job.id} isLoggedIn={isLoggedIn} />
+        <ContactEmailClient
+          email={job.contact_email}
+          jobId={job.id}
+          initialIsLoggedIn={isLoggedIn}
+        />
       </section>
 
       <section className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-3">
         <h2 className="text-lg font-medium text-slate-100">Contact</h2>
         <p className="text-slate-200">{job.contact_name || "Not supplied"}</p>
-        <ContactEmail email={job.contact_email} jobId={job.id} isLoggedIn={isLoggedIn} />
+        <ContactEmailClient
+          email={job.contact_email}
+          jobId={job.id}
+          initialIsLoggedIn={isLoggedIn}
+        />
         <Link
           href="/"
           className="inline-flex items-center justify-center rounded-lg border border-white/20 bg-slate-900/60 px-4 py-2 text-sm font-medium text-slate-100 hover:border-slate-200/60 hover:bg-slate-800"
@@ -98,46 +107,6 @@ function Info({ label, value }) {
     <div className="space-y-1">
       <div className="text-xs uppercase tracking-wide text-slate-400">{label}</div>
       <div className="text-sm text-slate-200">{value || "Not provided"}</div>
-    </div>
-  );
-}
-
-function ContactEmail({ email, jobId, isLoggedIn }) {
-  if (!email) return null;
-
-  if (isLoggedIn) {
-    return (
-      <p className="text-sm text-slate-300">
-        Interested? Reach out at{" "}
-        <a href={`mailto:${email}`} className="font-semibold text-sky-300 hover:text-sky-200">
-          {email}
-        </a>
-        .
-      </p>
-    );
-  }
-
-  const redirect = encodeURIComponent(`/jobs/${jobId}`);
-
-  return (
-    <div className="space-y-2 text-sm text-slate-300">
-      <div className="inline-flex items-center gap-2">
-        <span className="rounded bg-slate-900/80 px-3 py-1 font-semibold text-slate-100/70 blur-sm select-none">
-          {email}
-        </span>
-        <span className="text-xs text-slate-400 uppercase tracking-wide">Hidden</span>
-      </div>
-      <p>
-        Log in or{" "}
-        <Link href={`/signup?redirect=${redirect}`} className="font-semibold text-sky-300 hover:text-sky-200">
-          create an account
-        </Link>{" "}
-        (free) to view contact details.{" "}
-        <Link href={`/login?redirect=${redirect}`} className="font-semibold text-sky-300 hover:text-sky-200">
-          Log in
-        </Link>
-        .
-      </p>
     </div>
   );
 }

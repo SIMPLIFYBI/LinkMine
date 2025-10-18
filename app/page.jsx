@@ -172,15 +172,101 @@ export default function HomePage() {
           <div className="text-sm text-slate-400">Quick access to saved consultants.</div>
         </Link>
       </div>
+
+      {/* For clients */}
+      <section className="mt-12 rounded-3xl border border-white/10 bg-white/[0.04] p-6">
+        <header className="mb-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-sky-300">For clients</p>
+          <h2 className="mt-1 text-2xl font-semibold text-white">How YouMine works</h2>
+          <p className="mt-1 text-sm text-slate-300">
+            Post your job, compare specialists, and hire with confidence.
+          </p>
+        </header>
+        <ol className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <li className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-4 ring-1 ring-white/5 transition hover:border-sky-300/40 hover:bg-white/[0.05]">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-sky-400/40 bg-sky-500/15 px-3 py-1 text-xs font-semibold text-sky-100">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-sky-500/20 text-sky-200">1</span>
+              Step 1
+            </div>
+            <h3 className="text-base font-semibold text-white">Post your job</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              Describe your project, location, timeline, and budget to attract the right consultants.
+            </p>
+          </li>
+
+          <li className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-4 ring-1 ring-white/5 transition hover:border-sky-300/40 hover:bg-white/[0.05]">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-sky-400/40 bg-sky-500/15 px-3 py-1 text-xs font-semibold text-sky-100">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-sky-500/20 text-sky-200">2</span>
+              Step 2
+            </div>
+            <h3 className="text-base font-semibold text-white">Review matches</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              Compare profiles, experience, and proposals. Shortlist favourites and start a conversation.
+            </p>
+          </li>
+
+          <li className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-4 ring-1 ring-white/5 transition hover:border-sky-300/40 hover:bg-white/[0.05]">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-sky-400/40 bg-sky-500/15 px-3 py-1 text-xs font-semibold text-sky-100">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-sky-500/20 text-sky-200">3</span>
+              Step 3
+            </div>
+            <h3 className="text-base font-semibold text-white">Hire and deliver</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              Select the best fit and kick off quickly. Stay in touch and keep momentum through delivery.
+            </p>
+          </li>
+        </ol>
+      </section>
+
+      {/* For consultants (keep directly below) */}
+      <section className="mt-12 rounded-3xl border border-white/10 bg-white/[0.04] p-6">
+        <header className="mb-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-sky-300">For consultants</p>
+          <h2 className="mt-1 text-2xl font-semibold text-white">How YouMine works for Consultants</h2>
+          <p className="mt-1 text-sm text-slate-300">Customize your profile, connect with clients, and get hired.</p>
+        </header>
+        <ol className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <li className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-4 ring-1 ring-white/5 transition hover:border-sky-300/40 hover:bg-white/[0.05]">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-sky-400/40 bg-sky-500/15 px-3 py-1 text-xs font-semibold text-sky-100">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-sky-500/20 text-sky-200">1</span>
+              Step 1
+            </div>
+            <h3 className="text-base font-semibold text-white">Customize your profile</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              Highlight your services, experience, locations, and a compelling bio. Keep it fresh to rank well in searches.
+            </p>
+          </li>
+          <li className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-4 ring-1 ring-white/5 transition hover:border-sky-300/40 hover:bg-white/[0.05]">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-sky-400/40 bg-sky-500/15 px-3 py-1 text-xs font-semibold text-sky-100">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-sky-500/20 text-sky-200">2</span>
+              Step 2
+            </div>
+            <h3 className="text-base font-semibold text-white">Find and contact clients</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              Browse posted jobs that match your skills and reach out directly with tailored proposals.
+            </p>
+          </li>
+          <li className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-4 ring-1 ring-white/5 transition hover:border-sky-300/40 hover:bg-white/[0.05]">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-sky-400/40 bg-sky-500/15 px-3 py-1 text-xs font-semibold text-sky-100">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-sky-500/20 text-sky-200">3</span>
+              Step 3
+            </div>
+            <h3 className="text-base font-semibold text-white">Get discovered and hired</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              Clients can contact you directly from the directory. Reply fast to turn enquiries into engagements.
+            </p>
+          </li>
+        </ol> {/* fixed: was </ol */}
+      </section>
     </main>
   );
 }
 
 function Feature({ title, desc }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 ring-1 ring-white/5">
-      <strong className="text-slate-100">{title}</strong>
-      <div className="mt-1 text-slate-300 text-sm">{desc}</div>
+    <div className="rounded-lg border border-white/10 bg-white/5 p-4 text-center">
+      <h4 className="text-lg font-semibold text-white">{title}</h4>
+      <p className="mt-2 text-sm text-slate-300">{desc}</p>
     </div>
   );
 }
