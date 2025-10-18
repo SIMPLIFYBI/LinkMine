@@ -46,17 +46,15 @@ export default function AccountPage() {
             .maybeSingle(),
           supabase
             .from("consultants")
-            .select("id, display_name, owner, user_id, claimed_by")
-            .or(`owner.eq.${userId},user_id.eq.${userId},claimed_by.eq.${userId}`)
+            .select("id, display_name, claimed_by") // removed owner,user_id
+            .eq("claimed_by", userId)               // filter by claimant
             .order("display_name"),
         ]);
 
       if (!mounted) return;
 
       setIsAppAdmin(Boolean(adminRow?.user_id));
-      setIsAdmin(
-        Boolean(adminRow) || (email && adminEmails.includes(email))
-      );
+      setIsAdmin(Boolean(adminRow) || (email && adminEmails.includes(email)));
 
       if (error) {
         setProfileError(error.message);
@@ -92,9 +90,7 @@ export default function AccountPage() {
     return consultants.map((row) => ({
       id: row.id,
       name: row.display_name,
-      isOwner: row.owner === userId,
-      isAssigned: row.user_id === userId,
-      isClaimed: row.claimed_by === userId,
+      isOwner: row.claimed_by === userId, // ownership via claimed_by
     }));
   }, [consultants, session?.user?.id]);
 
@@ -147,15 +143,18 @@ export default function AccountPage() {
         </p>
         <button
           onClick={signOut}
-          style={{
-            marginTop: 8,
-            padding: "10px 14px",
-            borderRadius: 6,
-            border: "1px solid #ddd",
-            background: "white",
-            cursor: "pointer",
-          }}
+          className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 via-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/20 ring-1 ring-white/10 transition hover:from-sky-400 hover:via-cyan-400 hover:to-blue-500 hover:shadow-sky-500/30 focus:outline-none focus:ring-2 focus:ring-sky-400/60 disabled:opacity-60"
         >
+          <svg
+            className="h-4 w-4 opacity-90 transition group-hover:opacity-100"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M18 12H9m9 0-3-3m3 3-3 3" />
+          </svg>
           Sign out
         </button>
       </section>
@@ -193,11 +192,7 @@ export default function AccountPage() {
                     color: "#555",
                   }}
                 >
-                  {item.isOwner
-                    ? "Owner"
-                    : item.isAssigned
-                    ? "Assigned manager"
-                    : "Claimed profile"}
+                  {item.isOwner ? "Owner (claimed by you)" : "—"}
                 </div>
               </li>
             ))}
