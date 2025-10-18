@@ -1,23 +1,30 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const viewport = { width: "device-width", initialScale: 1 };
 
 import Link from "next/link";
-import { supabaseAnonServer } from "@/lib/supabaseAnonServer";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import AddConsultantButton from "@/app/components/consultants/AddConsultantButton";
 import ConsultantFavouriteButton from "@/app/components/ConsultantFavouriteButton";
 
-async function getConsultantsByServiceSlug(serviceSlug) {
+const PAGE_SIZE = 15;
+
+const CARD_SELECT = "id, slug, display_name, headline, location, visibility, status";
+
+async function getConsultantsByServiceSlug(serviceSlug, page) {
   const sb = await supabaseServerClient();
+  const offset = (page - 1) * PAGE_SIZE;
 
   if (!serviceSlug) {
-    const { data } = await sb
+    const { data, count } = await sb
       .from("consultants")
-      .select("id, display_name, headline, location, visibility")
+      .select(CARD_SELECT, { count: "exact" })
       .eq("visibility", "public")
-      .eq("status", "approved") // only approved consultants
-      .order("display_name", { ascending: true });
-    return { consultants: data || [], activeService: null };
+      .eq("status", "approved")
+      .order("display_name", { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    return { consultants: data || [], activeService: null, total: count || 0 };
   }
 
   // Resolve service id + name by slug
@@ -25,36 +32,42 @@ async function getConsultantsByServiceSlug(serviceSlug) {
     .from("services")
     .select("id, name, slug")
     .eq("slug", serviceSlug)
-    .limit(1)
     .maybeSingle();
 
-  if (!svc) return { consultants: [], activeService: null };
+  if (!svc) return { consultants: [], activeService: null, total: 0 };
 
-  // Find consultant ids offering this service
-  const { data: links } = await sb
+  // Join via consultant_services with pagination + total count
+  const { data: linkRows, count } = await sb
     .from("consultant_services")
-    .select("consultant_id")
-    .eq("service_id", svc.id);
+    .select(
+      "consultant:consultant_id (id, slug, display_name, headline, location, visibility, status)",
+      { count: "exact" }
+    )
+    .eq("service_id", svc.id)
+    .eq("consultant.visibility", "public", { foreignTable: "consultant" })
+    .eq("consultant.status", "approved", { foreignTable: "consultant" })
+    .order("display_name", { ascending: true, foreignTable: "consultant" })
+    .range(offset, offset + PAGE_SIZE - 1);
 
-  const ids = (links || []).map((x) => x.consultant_id);
-  if (ids.length === 0) return { consultants: [], activeService: svc };
+  const consultants = (linkRows || [])
+    .map((r) => r.consultant)
+    .filter(Boolean);
 
-  const { data: consultants } = await sb
-    .from("consultants")
-    .select("id, display_name, headline, location, visibility")
-    .in("id", ids)
-    .eq("visibility", "public")
-    .eq("status", "approved") // only approved consultants
-    .order("display_name", { ascending: true });
-
-  return { consultants: consultants || [], activeService: svc };
+  return { consultants, activeService: svc, total: count || 0 };
 }
 
 export default async function ConsultantsPage({ searchParams }) {
-  const sb = await supabaseServerClient();
+  const sp = await searchParams; // Next.js dynamic API: await before use
+  const serviceSlug = sp?.service || "";
+  const requestedPage = Number.parseInt(sp?.page ?? "1", 10);
+  const page = Number.isNaN(requestedPage) ? 1 : Math.max(1, requestedPage);
 
-  const serviceSlug = searchParams?.service || "";
-  const { consultants, activeService } = await getConsultantsByServiceSlug(serviceSlug);
+  const sb = await supabaseServerClient();
+  const { consultants, activeService, total } =
+    await getConsultantsByServiceSlug(serviceSlug, page);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
 
   const {
     data: { user },
@@ -67,9 +80,16 @@ export default async function ConsultantsPage({ searchParams }) {
       .from("consultant_favourites")
       .select("consultant_id")
       .eq("user_id", userId);
-
-    favouriteIds = new Set(favRows?.map((row) => row.consultant_id) ?? []);
+    favouriteIds = new Set(favRows?.map((r) => r.consultant_id) ?? []);
   }
+
+  const buildPageHref = (targetPage) => {
+    const params = new URLSearchParams();
+    if (serviceSlug) params.set("service", serviceSlug);
+    if (targetPage > 1) params.set("page", String(targetPage));
+    const q = params.toString();
+    return `/consultants${q ? `?${q}` : ""}`;
+  };
 
   return (
     <main className="mx-auto w-full max-w-6xl px-6 py-10 space-y-8">
@@ -95,7 +115,9 @@ export default async function ConsultantsPage({ searchParams }) {
 
       <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {consultants.length === 0 ? (
-          <div className="text-slate-400 text-sm">No consultants found for this service.</div>
+          <div className="text-slate-400 text-sm sm:col-span-2 lg:col-span-3">
+            No consultants found for this selection.
+          </div>
         ) : (
           consultants.map((c) => (
             <article
@@ -125,6 +147,58 @@ export default async function ConsultantsPage({ searchParams }) {
           ))
         )}
       </section>
+
+      <nav className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-200">
+        <span>
+          Showing {(safePage - 1) * PAGE_SIZE + 1}–
+          {Math.min(safePage * PAGE_SIZE, total)} of {total || 0}
+        </span>
+        <div className="flex items-center gap-2">
+          <Link
+            href={buildPageHref(Math.max(1, safePage - 1))}
+            className={`inline-flex h-9 items-center rounded-full px-3 ${
+              safePage === 1
+                ? "cursor-not-allowed text-slate-500"
+                : "border border-white/15 bg-white/10 text-slate-100 hover:border-sky-300/60 hover:bg-sky-500/10"
+            }`}
+            aria-disabled={safePage === 1}
+            tabIndex={safePage === 1 ? -1 : 0}
+          >
+            Prev
+          </Link>
+
+          {Array.from({ length: totalPages }).slice(0, 5).map((_, i) => {
+            const p = i + 1;
+            const active = p === safePage;
+            return (
+              <Link
+                key={p}
+                href={buildPageHref(p)}
+                className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold ${
+                  active
+                    ? "bg-gradient-to-r from-sky-500 to-indigo-500 text-slate-900"
+                    : "border border-white/15 bg-white/5 text-slate-200 hover:border-sky-300/60 hover:bg-sky-500/10"
+                }`}
+              >
+                {p}
+              </Link>
+            );
+          })}
+
+          <Link
+            href={buildPageHref(Math.min(totalPages, safePage + 1))}
+            className={`inline-flex h-9 items-center rounded-full px-3 ${
+              safePage === totalPages
+                ? "cursor-not-allowed text-slate-500"
+                : "border border-white/15 bg-white/10 text-slate-100 hover:border-sky-300/60 hover:bg-sky-500/10"
+            }`}
+            aria-disabled={safePage === totalPages}
+            tabIndex={safePage === totalPages ? -1 : 0}
+          >
+            Next
+          </Link>
+        </div>
+      </nav>
 
       <div className="mt-4 inline-flex items-center">
         <AddConsultantButton className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-900 shadow hover:bg-slate-100" />
