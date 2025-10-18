@@ -5,6 +5,7 @@ import ConsultantClaimConfirm from "@/app/components/ConsultantClaimConfirm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 function isUuid(v) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -13,16 +14,14 @@ function isUuid(v) {
 }
 
 export default async function ConsultantClaimPage({ params, searchParams }) {
-  const token = searchParams?.token ?? "";
-  const debugEnabled =
-    process.env.NODE_ENV !== "production" || searchParams?.debug === "1";
+  // Await dynamic APIs before using
+  const p = await params;
+  const sp = await searchParams;
 
-  if (!token) {
-    return renderMessage({
-      heading: "Missing claim token",
-      body: "This link is incomplete. Please use the claim link from your email.",
-    });
-  }
+  const id = p?.id || "";
+  const token = sp?.token || "";
+  const debugEnabled =
+    process.env.NODE_ENV !== "production" || sp?.debug === "1";
 
   const sb = await supabaseServerClient();
   const [{ data: authData }, { data: consultant, error: selectError }] =
@@ -33,11 +32,11 @@ export default async function ConsultantClaimPage({ params, searchParams }) {
         .select(
           "id, display_name, contact_email, claim_token, claimed_at, claimed_by"
         )
-        .eq("id", params.id)
+        .eq("id", id)
         .maybeSingle(),
     ]);
 
-  const user = authData?.user || null;
+  const user = authData?.user ?? null;
 
   // Build rich debug info early
   const projectRef =
