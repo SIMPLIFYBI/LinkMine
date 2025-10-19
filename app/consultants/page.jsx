@@ -1,6 +1,3 @@
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
@@ -8,14 +5,17 @@ import AddConsultantButton from "@/app/components/consultants/AddConsultantButto
 import ConsultantFavouriteButton from "@/app/components/ConsultantFavouriteButton";
 import ServiceFilter from "./ServiceFilter.client.jsx";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const PAGE_SIZE = 15;
 const CARD_SELECT = "id, slug, display_name, headline, location, visibility, status";
 
-// Replace multi-select helper with single-select
-async function getConsultantsByServiceSlug(sb, serviceSlug, page) {
+// New: fetch by service category slug
+async function getConsultantsByCategorySlug(sb, categorySlug, page) {
   const offset = (page - 1) * PAGE_SIZE;
 
-  if (!serviceSlug) {
+  if (!categorySlug) {
     const { data, count } = await sb
       .from("consultants")
       .select(CARD_SELECT, { count: "exact" })
@@ -24,56 +24,82 @@ async function getConsultantsByServiceSlug(sb, serviceSlug, page) {
       .order("display_name", { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1);
 
-    return { consultants: data || [], activeService: null, total: count || 0 };
+    return { consultants: data || [], activeCategory: null, total: count || 0 };
   }
 
-  const { data: svc } = await sb
-    .from("services")
+  const { data: category } = await sb
+    .from("service_categories")
     .select("id, name, slug")
-    .eq("slug", serviceSlug)
+    .eq("slug", categorySlug)
     .maybeSingle();
 
-  if (!svc) return { consultants: [], activeService: null, total: 0 };
+  if (!category) {
+    return { consultants: [], activeCategory: null, total: 0 };
+  }
 
-  const { data: linkRows, count } = await sb
+  // Join consultant_services -> services (filter on services.category_id)
+  const { data: linkRows = [] } = await sb
     .from("consultant_services")
     .select(
-      "consultant:consultant_id (id, slug, display_name, headline, location, visibility, status)",
-      { count: "exact" }
+      "consultant:consultant_id (id, slug, display_name, headline, location, visibility, status), service:service_id (category_id)"
     )
-    .eq("service_id", svc.id)
+    .eq("service.category_id", category.id, { foreignTable: "service" })
     .eq("consultant.visibility", "public", { foreignTable: "consultant" })
-    .eq("consultant.status", "approved", { foreignTable: "consultant" })
-    .order("display_name", { ascending: true, foreignTable: "consultant" })
-    .range(offset, offset + PAGE_SIZE - 1);
+    .eq("consultant.status", "approved", { foreignTable: "consultant" });
 
-  const consultants = (linkRows || []).map((r) => r.consultant).filter(Boolean);
-  return { consultants, activeService: svc, total: count || 0 };
+  // De-duplicate consultants (a consultant may have multiple services in the same category)
+  const unique = new Map();
+  for (const row of linkRows) {
+    const c = row.consultant;
+    if (c && !unique.has(c.id)) unique.set(c.id, c);
+  }
+  const all = Array.from(unique.values());
+  const total = all.length;
+
+  // Paginate in memory (simple and correct for de-duplicated results)
+  const consultants = all
+    .sort((a, b) => a.display_name.localeCompare(b.display_name))
+    .slice(offset, offset + PAGE_SIZE);
+
+  return { consultants, activeCategory: category, total };
 }
 
 export default async function ConsultantsPage({ searchParams }) {
   const sp = await searchParams;
-  const serviceSlug = sp?.service || "";
+  const categorySlug = sp?.category || "";
   const requestedPage = Number.parseInt(sp?.page ?? "1", 10);
   const page = Number.isNaN(requestedPage) ? 1 : Math.max(1, requestedPage);
 
   const sb = await supabaseServerClient();
 
   const [
-    { consultants, activeService, total },
-    { data: allServices = [] },
+    { consultants, activeCategory, total },
+    { data: allCategories = [] },
   ] = await Promise.all([
-    getConsultantsByServiceSlug(sb, serviceSlug, page),
-    sb.from("services").select("id, name, slug").order("name", { ascending: true }),
+    getConsultantsByCategorySlug(sb, categorySlug, page),
+    sb
+      .from("service_categories")
+      .select("id, name, slug")
+      .order("position", { ascending: true })
+      .order("name", { ascending: true }),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
 
-  const sbAuthCookies = await cookies();
-  const hasSbAuth = sbAuthCookies.getAll().some((c) => c.name.includes("auth-token"));
-  let favouriteIds = new Set();
+  // Preserve selection in pagination links
+  const buildPageHref = (targetPage) => {
+    const params = new URLSearchParams();
+    if (categorySlug) params.set("category", categorySlug);
+    if (targetPage > 1) params.set("page", String(targetPage));
+    const q = params.toString();
+    return `/consultants${q ? `?${q}` : ""}`;
+  };
 
+  // Favourites (auth optional)
+  const jar = await cookies();
+  const hasSbAuth = jar.getAll().some((c) => c.name.includes("auth-token"));
+  let favouriteIds = new Set();
   if (hasSbAuth) {
     const { data: auth } = await sb.auth.getUser();
     const userId = auth?.user?.id || null;
@@ -86,35 +112,26 @@ export default async function ConsultantsPage({ searchParams }) {
     }
   }
 
-  // Build pagination href preserving current service filter
-  const buildPageHref = (targetPage) => {
-    const params = new URLSearchParams();
-    if (serviceSlug) params.set("service", serviceSlug);
-    if (targetPage > 1) params.set("page", String(targetPage));
-    const q = params.toString();
-    return `/consultants${q ? `?${q}` : ""}`;
-  };
-
   return (
     <main className="mx-auto w-full max-w-6xl px-6 py-10 space-y-8">
       <section className="rounded-3xl border border-sky-400/30 bg-sky-500/10 p-6 text-slate-100 shadow-lg ring-1 ring-sky-400/20">
         <h1 className="text-2xl font-semibold text-white">
-          Want to join MineHub and add your consultancy?
+          Want to join MineHub?
         </h1>
         <p className="mt-2 text-sm text-slate-200">
-          Showcase your services to potential clients and manage your profile directly on MineLink.
+          Add your consultancy to showcase your services to potential clients and manage your profile directly on MineLink.
         </p>
         <div className="mt-4 inline-flex items-center">
           <AddConsultantButton className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-900 shadow hover:bg-slate-100" />
         </div>
       </section>
 
-      {/* Services filter (single select) */}
+      {/* Category filter (single select) */}
       <section className="mt-2 space-y-2">
-        <ServiceFilter services={allServices} activeSlug={activeService?.slug || ""} />
-        {activeService ? (
+        <ServiceFilter categories={allCategories} activeSlug={activeCategory?.slug || ""} />
+        {activeCategory ? (
           <div className="text-sm text-slate-300">
-            Filtering by: <span className="font-medium text-white">{activeService.name}</span>
+            Filtering by category: <span className="font-medium text-white">{activeCategory.name}</span>
           </div>
         ) : (
           <div className="text-sm text-slate-400">Browse all consultants.</div>
