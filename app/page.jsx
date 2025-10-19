@@ -31,19 +31,42 @@ export default function HomePage() {
 
           <div className="flex flex-wrap gap-3">
             <Link href="/signup" className="inline-flex">
-              <button
-                className="rounded-2xl px-4 py-2 bg-slate-700 text-white hover:bg-slate-600 transition"
-              >
+              <button className="rounded-md px-4 py-2 bg-slate-700 text-white hover:bg-slate-600 transition">
                 Get started — it's free
               </button>
             </Link>
-            <Link href="/consultants" className="inline-flex">
-              <button
-                className="rounded-2xl border border-white/25 bg-white/10 px-4 py-2 text-slate-50 shadow-lg shadow-sky-500/10 ring-1 ring-white/10 backdrop-blur-md supports-[backdrop-filter]:backdrop-blur-md transition hover:bg-white/15 hover:border-white/40 hover:shadow-sky-500/20 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
-              >
-                Explore consultants
+            <Link href="/explore" className="inline-flex">
+              <button className="rounded-md border border-white/10 bg-white/5 px-4 py-2 text-slate-100 hover:border-white/20 hover:bg-white/10 transition">
+                Explore listings
               </button>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* How it works directly under hero */}
+      <section className="mx-auto w-full max-w-5xl -mt-6 rounded-3xl border border-white/10 bg-white/[0.08] px-6 py-6 shadow-lg ring-1 ring-white/10">
+        <h2 className="text-center text-2xl font-semibold text-slate-50">
+          How YouMine works
+        </h2>
+        <div className="mt-5 grid gap-4 text-sm text-slate-200 sm:grid-cols-3">
+          <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
+            <div className="text-lg font-semibold">① List your job</div>
+            <p className="mt-1">
+              Create a public or private listing with project details and contact preferences.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
+            <div className="text-lg font-semibold">② Invite specialists</div>
+            <p className="mt-1">
+              Pick up to five consultants for private briefs or let the marketplace respond.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
+            <div className="text-lg font-semibold">③ Connect & deliver</div>
+            <p className="mt-1">
+              Interested consultants contact you directly to scope, quote, and start the work.
+            </p>
           </div>
         </div>
       </section>
@@ -61,17 +84,13 @@ export default function HomePage() {
 
             <div className="flex flex-wrap gap-3">
               <Link href="/signup" className="inline-flex">
-                <button
-                  className="rounded-2xl border border-white/30 bg-gradient-to-r from-sky-500/25 via-cyan-500/20 to-blue-600/25 px-4 py-2 text-slate-50 shadow-lg shadow-sky-500/20 ring-1 ring-white/10 backdrop-blur-md supports-[backdrop-filter]:backdrop-blur-md transition hover:from-sky-500/35 hover:via-cyan-500/30 hover:to-blue-600/35 hover:border-white/50 hover:shadow-sky-500/30 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
-                >
+                <button className="rounded-md px-4 py-2 bg-slate-700 text-white hover:bg-slate-600 transition">
                   Get started — it's free
                 </button>
               </Link>
-              <Link href="/consultants" className="inline-flex">
-                <button
-                  className="rounded-2xl border border-white/25 bg-white/10 px-4 py-2 text-slate-50 shadow-lg shadow-sky-500/10 ring-1 ring-white/10 backdrop-blur-md supports-[backdrop-filter]:backdrop-blur-md transition hover:bg-white/15 hover:border-white/40 hover:shadow-sky-500/20 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
-                >
-                  Explore consultants
+              <Link href="/explore" className="inline-flex">
+                <button className="rounded-md border border-white/10 bg-white/5 px-4 py-2 text-slate-100 hover:border-white/20 hover:bg-white/10 transition">
+                  Explore listings
                 </button>
               </Link>
             </div>
@@ -97,7 +116,21 @@ export default function HomePage() {
             </div>
           </aside>
         </div>
-      </section> {/* end split section */}
+      </section>
+
+      <section className="mx-auto max-w-screen-md px-4 pb-6">
+        <h3 className="text-lg font-semibold mb-2">For Clients</h3>
+        <p className="text-slate-300">
+          Find contractors by service, browse portfolios, and contact providers directly. Save favourites and track projects.
+        </p>
+      </section>
+
+      <section className="mx-auto max-w-screen-md px-4 pb-6">
+        <h3 className="text-lg font-semibold mb-2">For Consultants</h3>
+        <p className="text-slate-300">
+          Create a profile, upload portfolio items, list services, and monitor profile views and enquiries.
+        </p>
+      </section>
 
       {showPreview && (
         <section className="mx-auto max-w-screen-md px-4 pb-8">
@@ -110,6 +143,35 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      {/* Make the three boxes clickable */}
+      <div className="mt-6 grid gap-4 grid-cols-1 sm:grid-cols-3">
+        <Link
+          href="/consultants"
+          className="group block rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition"
+        >
+          <div className="text-base font-semibold">Browse Consultants</div>
+          <div className="text-sm text-slate-400">
+            Discover experts across geotech, planning, environmental and more.
+          </div>
+        </Link>
+
+        <Link
+          href="/listings"
+          className="group block rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition"
+        >
+          <div className="text-base font-semibold">View Listings</div>
+          <div className="text-sm text-slate-400">Explore open listings and opportunities.</div>
+        </Link>
+
+        <Link
+          href="/favourites"
+          className="group block rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition"
+        >
+          <div className="text-base font-semibold">Favourites</div>
+          <div className="text-sm text-slate-400">Quick access to saved consultants.</div>
+        </Link>
+      </div>
 
       {/* For clients */}
       <section className="mt-12 rounded-3xl border border-white/10 bg-white/[0.04] p-6">
@@ -196,99 +258,15 @@ export default function HomePage() {
           </li>
         </ol> {/* fixed: was </ol */}
       </section>
-
-      {/* Footer (full-width strip) */}
-      <footer className="relative left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw] border-t border-white/10 bg-gradient-to-r from-slate-900/70 to-slate-900/50 backdrop-blur-md supports-[backdrop-filter]:backdrop-blur-md">
-        <div className="mx-auto max-w-6xl px-4 py-10">
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <div className="inline-flex items-center gap-2">
-                <span className="h-8 w-8 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 ring-1 ring-white/20" />
-                <span className="text-xl font-semibold tracking-tight">MineLink</span>
-              </div>
-              <p className="mt-3 text-sm text-slate-300">
-                Connect mining clients with trusted consultants and contractors.
-              </p>
-            </div>
-
-            <nav>
-              <h4 className="text-sm font-semibold text-slate-100">Explore</h4>
-              <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                <li><Link href="/consultants" className="hover:text-sky-300">Consultants</Link></li>
-                <li><Link href="/jobs" className="hover:text-sky-300">Jobs</Link></li>
-                <li><Link href="/signup" className="hover:text-sky-300">Create account</Link></li>
-              </ul>
-            </nav>
-
-            <nav>
-              <h4 className="text-sm font-semibold text-slate-100">Company</h4>
-              <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                <li><Link href="/about" className="hover:text-sky-300">About</Link></li>
-                <li><a href="mailto:hello@minelink.app" className="hover:text-sky-300">Contact</a></li>
-                <li><Link href="/pricing" className="hover:text-sky-300">Pricing</Link></li>
-              </ul>
-            </nav>
-
-            <nav>
-              <h4 className="text-sm font-semibold text-slate-100">Legal</h4>
-              <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                <li><Link href="/terms" className="hover:text-sky-300">Terms</Link></li>
-                <li><Link href="/privacy" className="hover:text-sky-300">Privacy</Link></li>
-              </ul>
-
-              <div className="mt-4 flex items-center gap-3 text-slate-300">
-                <a
-                  href="https://www.linkedin.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/10 hover:bg-white/20"
-                  aria-label="LinkedIn"
-                >
-                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
-                    <path d="M6.94 7.5A1.94 1.94 0 1 1 5 5.56 1.94 1.94 0 0 1 6.94 7.5ZM5.5 9h2.9v9.5H5.5zM13 9a3.92 3.92 0 0 0-3.5 1.94V9H6.6v9.5h2.9v-5c0-1.33.77-2.2 2-2.2s1.9.87 1.9 2.2v5h2.9v-5.6C16.3 10.67 14.97 9 13 9z" />
-                  </svg>
-                </a>
-                <a
-                  href="https://x.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/10 hover:bg-white/20"
-                  aria-label="X"
-                >
-                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
-                    <path d="M18.9 3H16.3l-4 5-4-5H5.7l5.2 6.5L5 21h2.6l4.5-5.9 4.5 5.9h2.6L13.1 9.5 18.9 3z" />
-                  </svg>
-                </a>
-                <a
-                  href="https://github.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/10 hover:bg-white/20"
-                  aria-label="GitHub"
-                >
-                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
-                    <path fillRule="evenodd" clipRule="evenodd" d="M12 .5a11.5 11.5 0 0 0-3.64 22.43c.58.1.79-.25.79-.56 0-.27-.01-1.16-.02-2.11-3.2.69-3.87-1.37-3.87-1.37-.53-1.35-1.3-1.7-1.3-1.7-1.07-.74.08-.73.08-.73 1.18.08 1.8 1.22 1.8 1.22 1.05 1.8 2.76 1.28 3.43.98.11-.77.41-1.28.75-1.57-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.28 1.2-3.08-.12-.29-.52-1.48.11-3.08 0 0 .98-.31 3.2 1.18.93-.26 1.93-.39 2.93-.39 1 0 2 .13 2.93.39 2.22-1.5 3.2-1.18 3.2-1.18.63 1.6.23 2.8.11 3.08.75.8 1.2 1.82 1.2 3.08 0 4.43-2.7 5.4-5.26 5.68.42.37.8 1.1.8 2.22 0 1.6-.02 2.88-.02 3.27 0 .31.21.66.8.55A11.5 11.5 0 0 0 12 .5z" />
-                  </svg>
-                </a>
-              </div>
-            </nav>
-          </div>
-
-          <div className="mt-8 border-t border-white/10 pt-4 text-xs text-slate-400 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <span>© {new Date().getFullYear()} MineLink. All rights reserved.</span>
-            <span className="text-slate-500">Built for the mining industry.</span>
-          </div>
-        </div>
-      </footer>
     </main>
   );
 }
 
 function Feature({ title, desc }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 ring-1 ring-white/5">
-      <div className="text-sm font-semibold text-slate-100">{title}</div>
-      <div className="mt-1 text-sm text-slate-300">{desc}</div>
+    <div className="rounded-lg border border-white/10 bg-white/5 p-4 text-center">
+      <h4 className="text-lg font-semibold text-white">{title}</h4>
+      <p className="mt-2 text-sm text-slate-300">{desc}</p>
     </div>
   );
 }
