@@ -90,32 +90,35 @@ export default async function ConsultantPage({ params }) {
       {/* Track page view */}
       <TrackView consultantId={consultantId} source="consultant_profile" />
 
-      {/* Views badge (top-right) */}
-      <div className="absolute right-6 top-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-200 ring-1 ring-white/10">
-        <svg viewBox="0 0 24 24" className="h-4 w-4 text-slate-300" fill="currentColor" aria-hidden="true">
-          <path d="M12 5c4.5 0 8.3 2.9 10 7-1.7 4.1-5.5 7-10 7S3.7 16.1 2 12c1.7-4.1 5.5-7 10-7zm0 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
-        </svg>
-        <span>{viewsCount.toLocaleString()} views</span>
-      </div>
-
-      <div className="flex items-center justify-between">
+      {/* Toolbar: Back + right-side stack (views above owner controls) */}
+      <div className="flex items-start justify-between">
         <Link href="/consultants" className="text-sky-300 hover:underline">
           ← Back
         </Link>
 
-        {isOwner && (
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/70 bg-emerald-500/15 px-4 py-1.5 text-sm md:text-base font-semibold text-emerald-100 shadow-sm ring-1 ring-emerald-300/30">
-              You are the owner of this page
-            </span>
-            <Link
-              href={`/consultants/${consultantId}/edit`}
-              className="inline-flex items-center gap-2 rounded-full border border-sky-400/60 bg-sky-500/15 px-4 py-1.5 text-sm font-semibold text-sky-100 hover:border-sky-300 hover:bg-sky-500/25"
-            >
-              Edit profile
-            </Link>
+        <div className="flex flex-col items-end gap-2">
+          {/* Views badge (moved here, no longer absolute) */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-200 ring-1 ring-white/10">
+            <svg viewBox="0 0 24 24" className="h-4 w-4 text-slate-300" fill="currentColor" aria-hidden="true">
+              <path d="M12 5c4.5 0 8.3 2.9 10 7-1.7 4.1-5.5 7-10 7S3.7 16.1 2 12c1.7-4.1 5.5-7 10-7zm0 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
+            </svg>
+            <span>{viewsCount.toLocaleString()} views</span>
           </div>
-        )}
+
+          {isOwner && (
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/70 bg-emerald-500/15 px-4 py-1.5 text-sm md:text-base font-semibold text-emerald-100 shadow-sm ring-1 ring-emerald-300/30">
+                You are the owner of this page
+              </span>
+              <Link
+                href={`/consultants/${consultantId}/edit`}
+                className="inline-flex items-center gap-2 rounded-full border border-sky-400/60 bg-sky-500/15 px-4 py-1.5 text-sm font-semibold text-sky-100 hover:border-sky-300 hover:bg-sky-500/25"
+              >
+                Edit profile
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
 
       <header className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
