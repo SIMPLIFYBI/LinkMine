@@ -7,9 +7,15 @@ import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import { fetchPlaceDetails } from "@/lib/googlePlaces";
 import ConsultantClaimButton from "@/app/components/ConsultantClaimButton";
 import ConsultantFavouriteButton from "@/app/components/ConsultantFavouriteButton";
+import TrackView from "./TrackView.client.jsx";
 
 async function getConsultant(id) {
   const sb = await supabaseServerClient();
+
+  // Resolve current user (for favourite + permissions)
+  const { data: auth } = await sb.auth.getUser();
+  const userId = auth?.user?.id || null;
+
   const { data, error } = await sb
     .from("consultants")
     .select("*")
@@ -29,48 +35,44 @@ async function getConsultant(id) {
     .eq("consultant_id", id)
     .order("created_at", { ascending: false });
 
+  // Fetch total page views for this consultant
+  const { count: viewsCount = 0 } = await sb
+    .from("consultant_page_views")
+    .select("id", { count: "exact", head: true })
+    .eq("consultant_id", id);
+
+  // User-specific: initial favourite + edit permission
+  let initialFavourite = false;
+  if (userId) {
+    const { data: fav } = await sb
+      .from("consultant_favourites")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("consultant_id", id)
+      .maybeSingle();
+    initialFavourite = Boolean(fav);
+  }
+
+  const canEdit = Boolean(userId && data.claimed_by === userId);
+
   return {
-    c: data,
+    consultant: data,
     services: (svc || []).map((r) => r.service).filter(Boolean),
     ports: ports || [],
+    viewsCount,
+    userId,
+    initialFavourite,
+    canEdit,
   };
 }
 
-export default async function ConsultantProfilePage({ params }) {
-  const { id: consultantId } = params;
-  const sb = await supabaseServerClient();
-
-  const [{ data: consultantRow }, { data: authData }] = await Promise.all([
-    sb
-      .from("consultants")
-      .select("id, display_name, owner, user_id, claimed_by")
-      .eq("id", consultantId)
-      .maybeSingle(),
-    sb.auth.getUser(),
-  ]);
-
-  const userId = authData?.user?.id || null;
-  const canEdit =
-    !!userId &&
-    (consultantRow?.owner === userId ||
-      consultantRow?.user_id === userId ||
-      consultantRow?.claimed_by === userId);
-
-  let initialFavourite = false;
-  if (userId) {
-    const { data: favRow } = await sb
-      .from("consultant_favourites")
-      .select("consultant_id")
-      .eq("consultant_id", consultantId)
-      .eq("user_id", userId)
-      .maybeSingle();
-    initialFavourite = Boolean(favRow);
-  }
-
+export default async function ConsultantPage({ params }) {
+  const consultantId = params.id; // fixed: no await
   const data = await getConsultant(consultantId);
   if (!data) return notFound();
 
-  const { c: consultant, services, ports } = data;
+  const { consultant, services, ports, viewsCount, userId, initialFavourite, canEdit } = data;
+
   const place = consultant.place_id
     ? await fetchPlaceDetails(consultant.place_id)
     : null;
@@ -84,7 +86,18 @@ export default async function ConsultantProfilePage({ params }) {
   const isOwner = Boolean(userId && consultant.claimed_by === userId);
 
   return (
-    <main className="mx-auto max-w-screen-xl px-4 py-6">
+    <main className="relative mx-auto w-full max-w-4xl px-6 py-10 space-y-6">
+      {/* Track page view */}
+      <TrackView consultantId={consultantId} source="consultant_profile" />
+
+      {/* Views badge (top-right) */}
+      <div className="absolute right-6 top-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-200 ring-1 ring-white/10">
+        <svg viewBox="0 0 24 24" className="h-4 w-4 text-slate-300" fill="currentColor" aria-hidden="true">
+          <path d="M12 5c4.5 0 8.3 2.9 10 7-1.7 4.1-5.5 7-10 7S3.7 16.1 2 12c1.7-4.1 5.5-7 10-7zm0 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
+        </svg>
+        <span>{viewsCount.toLocaleString()} views</span>
+      </div>
+
       <div className="flex items-center justify-between">
         <Link href="/consultants" className="text-sky-300 hover:underline">
           ← Back
