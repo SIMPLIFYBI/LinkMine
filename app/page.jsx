@@ -35,38 +35,13 @@ export default function HomePage() {
                 Get started — it's free
               </button>
             </Link>
-            <Link href="/explore" className="inline-flex">
-              <button className="rounded-md border border-white/10 bg-white/5 px-4 py-2 text-slate-100 hover:border-white/20 hover:bg-white/10 transition">
-                Explore listings
+            <Link href="/consultants" className="inline-flex">
+              <button
+                className="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-slate-100 shadow-lg backdrop-blur-md ring-1 ring-white/10 hover:bg-white/15 hover:border-white/30 hover:ring-white/20 transition"
+              >
+                Explore Consultants
               </button>
             </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* How it works directly under hero */}
-      <section className="mx-auto w-full max-w-5xl -mt-6 rounded-3xl border border-white/10 bg-white/[0.08] px-6 py-6 shadow-lg ring-1 ring-white/10">
-        <h2 className="text-center text-2xl font-semibold text-slate-50">
-          How YouMine works
-        </h2>
-        <div className="mt-5 grid gap-4 text-sm text-slate-200 sm:grid-cols-3">
-          <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
-            <div className="text-lg font-semibold">① List your job</div>
-            <p className="mt-1">
-              Create a public or private listing with project details and contact preferences.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
-            <div className="text-lg font-semibold">② Invite specialists</div>
-            <p className="mt-1">
-              Pick up to five consultants for private briefs or let the marketplace respond.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
-            <div className="text-lg font-semibold">③ Connect & deliver</div>
-            <p className="mt-1">
-              Interested consultants contact you directly to scope, quote, and start the work.
-            </p>
           </div>
         </div>
       </section>
@@ -118,20 +93,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-screen-md px-4 pb-6">
-        <h3 className="text-lg font-semibold mb-2">For Clients</h3>
-        <p className="text-slate-300">
-          Find contractors by service, browse portfolios, and contact providers directly. Save favourites and track projects.
-        </p>
-      </section>
-
-      <section className="mx-auto max-w-screen-md px-4 pb-6">
-        <h3 className="text-lg font-semibold mb-2">For Consultants</h3>
-        <p className="text-slate-300">
-          Create a profile, upload portfolio items, list services, and monitor profile views and enquiries.
-        </p>
-      </section>
-
       {showPreview && (
         <section className="mx-auto max-w-screen-md px-4 pb-8">
           <h3 className="text-lg font-semibold mb-3">Why MineLink?</h3>
@@ -143,35 +104,6 @@ export default function HomePage() {
           </div>
         </section>
       )}
-
-      {/* Make the three boxes clickable */}
-      <div className="mt-6 grid gap-4 grid-cols-1 sm:grid-cols-3">
-        <Link
-          href="/consultants"
-          className="group block rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition"
-        >
-          <div className="text-base font-semibold">Browse Consultants</div>
-          <div className="text-sm text-slate-400">
-            Discover experts across geotech, planning, environmental and more.
-          </div>
-        </Link>
-
-        <Link
-          href="/listings"
-          className="group block rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition"
-        >
-          <div className="text-base font-semibold">View Listings</div>
-          <div className="text-sm text-slate-400">Explore open listings and opportunities.</div>
-        </Link>
-
-        <Link
-          href="/favourites"
-          className="group block rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition"
-        >
-          <div className="text-base font-semibold">Favourites</div>
-          <div className="text-sm text-slate-400">Quick access to saved consultants.</div>
-        </Link>
-      </div>
 
       {/* For clients */}
       <section className="mt-12 rounded-3xl border border-white/10 bg-white/[0.04] p-6">
