@@ -1,76 +1,52 @@
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import EditConsultantForm from "./EditConsultantForm";
 import ConsultantServicesManager from "@/app/components/ConsultantServicesManager"; // ADDED
 import Link from "next/link";
 
-export default async function ConsultantEditPage({ params }) {
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default async function EditConsultantPage({ params }) {
+  const id = params.id;
   const sb = await supabaseServerClient();
 
-  const [{ data: auth }, { data: consultant, error }] = await Promise.all([
-    sb.auth.getUser(),
-    sb
-      .from("consultants")
-      .select(
-        `
-        id,
-        display_name,
-        headline,
-        bio,
-        company,
-        location,
-        contact_email,
-        metadata,
-        claimed_by
-      `
-      )
-      .eq("id", params.id)
-      .maybeSingle(),
-  ]);
-
-  if (error || !consultant) {
-    redirect("/consultants");
-  }
-
+  // Who is logged in?
+  const { data: auth } = await sb.auth.getUser();
   const userId = auth?.user?.id || null;
 
-  // Must be logged in
-  if (!userId) {
-    redirect(`/login?redirect=/consultants/${params.id}/edit`);
-  }
+  // Load consultant with claimed_by + new social columns
+  const { data: consultant, error } = await sb
+    .from("consultants")
+    .select(`
+      id,
+      display_name,
+      headline,
+      bio,
+      company,
+      location,
+      contact_email,
+      metadata,
+      claimed_by,
+      linkedin_url,
+      facebook_url,
+      twitter_url,
+      instagram_url
+    `)
+    .eq("id", id)
+    .maybeSingle();
 
-  // Simple ownership check: only the user who claimed the profile can edit
-  if (consultant.claimed_by !== userId) {
-    redirect(`/consultants/${params.id}`);
+  if (error || !consultant) return notFound();
+
+  // Guard: must be owner
+  if (!userId || consultant.claimed_by !== userId) {
+    redirect(`/consultants/${id}`); // go back to the profile, not the listing
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-10">
-      <div className="mb-4">
-        <Link
-          href={`/consultants/${consultant.id}`}
-          className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-slate-100 hover:border-sky-300/60 hover:bg-sky-500/10"
-        >
-          ← Back to profile
-        </Link>
-      </div>
-
-      <header className="mb-6 space-y-2">
-        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-          Consultant profile
-        </p>
-        <h1 className="text-2xl font-semibold text-slate-50">
-          Edit {consultant.display_name}
-        </h1>
-        <p className="text-sm text-slate-400">
-          Update what clients see on your public page.
-        </p>
-      </header>
-
-      {/* Main details form */}
+    <main className="mx-auto w-full max-w-3xl px-6 py-8">
+      <h1 className="mb-4 text-2xl font-semibold text-white">Edit profile</h1>
       <EditConsultantForm consultant={consultant} />
 
       {/* Services manager */}
