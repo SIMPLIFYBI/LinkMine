@@ -7,6 +7,7 @@ import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import { fetchPlaceDetails } from "@/lib/googlePlaces";
 import ConsultantClaimButton from "@/app/components/ConsultantClaimButton";
 import ConsultantFavouriteButton from "@/app/components/ConsultantFavouriteButton";
+import ConsultantSocialLinks from "@/app/components/ConsultantSocialLinks";
 import TrackView from "./TrackView.client.jsx";
 
 async function getConsultant(id) {
@@ -18,7 +19,7 @@ async function getConsultant(id) {
 
   const { data, error } = await sb
     .from("consultants")
-    .select("*")
+    .select("*, linkedin_url, facebook_url, twitter_url, instagram_url") // safe if you were not selecting *
     .eq("id", id)
     .maybeSingle();
 
@@ -123,15 +124,22 @@ export default async function ConsultantPage({ params }) {
 
       <header className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-slate-50">
-            {consultant.display_name}
-          </h1>
+          <h1 className="text-3xl font-semibold text-slate-50">{consultant.display_name}</h1>
           {consultant.headline ? (
-            <p className="mt-1 text-sm text-slate-300">
-              {consultant.headline}
-            </p>
+            <p className="mt-1 text-sm text-slate-300">{consultant.headline}</p>
           ) : null}
+
+          <ConsultantSocialLinks
+            links={{
+              linkedin_url: consultant.linkedin_url,
+              facebook_url: consultant.facebook_url,
+              twitter_url: consultant.twitter_url,
+              instagram_url: consultant.instagram_url,
+            }}
+            className="mt-3"
+          />
         </div>
+
         <ConsultantFavouriteButton
           consultantId={consultantId}
           initialFavourite={initialFavourite}
