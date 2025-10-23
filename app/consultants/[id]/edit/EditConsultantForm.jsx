@@ -15,6 +15,11 @@ export default function EditConsultantForm({ consultant }) {
     location: consultant.location ?? "",
     contact_email: consultant.contact_email ?? "",
     bio: consultant.bio ?? "",
+    // Socials
+    linkedin_url: consultant.linkedin_url ?? "",
+    facebook_url: consultant.facebook_url ?? "",
+    twitter_url: consultant.twitter_url ?? "",
+    instagram_url: consultant.instagram_url ?? "",
   });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -23,22 +28,102 @@ export default function EditConsultantForm({ consultant }) {
     setForm((prev) => ({ ...prev, [field]: event.target.value }));
   };
 
+  function normalizeSocialUrl(network, value) {
+    const v = String(value || "").trim();
+    if (!v) return "";
+    // Handle @handle or bare handle
+    const handle = v.startsWith("@") ? v.slice(1) : v;
+    const isUrl = /^https?:\/\//i.test(v);
+    const stripTrailingSlash = (u) => u.replace(/\/+$/, "");
+
+    switch (network) {
+      case "linkedin": {
+        let url = v;
+        if (!isUrl) url = `https://www.linkedin.com/in/${handle}`;
+        if (!/^https:\/\//i.test(url)) url = url.replace(/^http:\/\//i, "https://");
+        url = stripTrailingSlash(url);
+        // Accept any linkedin.com path
+        if (!/^https:\/\/([a-z0-9-]+\.)*linkedin\.com\/.+/i.test(url)) return null;
+        return url;
+      }
+      case "facebook": {
+        let url = v;
+        if (!isUrl) url = `https://www.facebook.com/${handle}`;
+        if (!/^https:\/\//i.test(url)) url = url.replace(/^http:\/\//i, "https://");
+        url = stripTrailingSlash(url);
+        if (!/^https:\/\/([a-z0-9-]+\.)*facebook\.com\/.+/i.test(url)) return null;
+        return url;
+      }
+      case "twitter": {
+        let url = v;
+        if (!isUrl) url = `https://x.com/${handle}`;
+        if (!/^https:\/\//i.test(url)) url = url.replace(/^http:\/\//i, "https://");
+        url = stripTrailingSlash(url);
+        if (!/^https:\/\/([a-z0-9-]+\.)*(twitter\.com|x\.com)\/.+/i.test(url)) return null;
+        // Normalize twitter.com to x.com for consistency
+        url = url.replace(/^https:\/\/(www\.)?twitter\.com/i, "https://x.com");
+        return url;
+      }
+      case "instagram": {
+        let url = v;
+        if (!isUrl) url = `https://www.instagram.com/${handle}`;
+        if (!/^https:\/\//i.test(url)) url = url.replace(/^http:\/\//i, "https://");
+        url = stripTrailingSlash(url);
+        if (!/^https:\/\/([a-z0-9-]+\.)*instagram\.com\/.+/i.test(url)) return null;
+        return url;
+      }
+      default:
+        return null;
+    }
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSaving(true);
     setMessage({ type: "", text: "" });
 
-    const { error } = await sb
-      .from("consultants")
-      .update({
-        display_name: form.display_name.trim(),
-        headline: form.headline.trim(),
-        company: form.company.trim(),
-        location: form.location.trim(),
-        contact_email: form.contact_email.trim(),
-        bio: form.bio.trim(),
-      })
-      .eq("id", consultant.id);
+    // Normalize socials (empty -> null, invalid -> error)
+    const linkedin = form.linkedin_url ? normalizeSocialUrl("linkedin", form.linkedin_url) : "";
+    const facebook = form.facebook_url ? normalizeSocialUrl("facebook", form.facebook_url) : "";
+    const twitter = form.twitter_url ? normalizeSocialUrl("twitter", form.twitter_url) : "";
+    const instagram = form.instagram_url ? normalizeSocialUrl("instagram", form.instagram_url) : "";
+
+    if (form.linkedin_url && !linkedin) {
+      setMessage({ type: "error", text: "LinkedIn URL looks invalid. Please use a linkedin.com link or a handle." });
+      setSaving(false);
+      return;
+    }
+    if (form.facebook_url && !facebook) {
+      setMessage({ type: "error", text: "Facebook URL looks invalid. Please use a facebook.com link or a handle." });
+      setSaving(false);
+      return;
+    }
+    if (form.twitter_url && !twitter) {
+      setMessage({ type: "error", text: "Twitter/X URL looks invalid. Please use x.com or twitter.com or a handle." });
+      setSaving(false);
+      return;
+    }
+    if (form.instagram_url && !instagram) {
+      setMessage({ type: "error", text: "Instagram URL looks invalid. Please use an instagram.com link or a handle." });
+      setSaving(false);
+      return;
+    }
+
+    const payload = {
+      display_name: form.display_name.trim(),
+      headline: form.headline.trim(),
+      company: form.company.trim(),
+      location: form.location.trim(),
+      contact_email: form.contact_email.trim(),
+      bio: form.bio.trim(),
+      // Socials (empty -> null)
+      linkedin_url: linkedin || null,
+      facebook_url: facebook || null,
+      twitter_url: twitter || null,
+      instagram_url: instagram || null,
+    };
+
+    const { error } = await sb.from("consultants").update(payload).eq("id", consultant.id);
 
     if (error) {
       setMessage({ type: "error", text: error.message || "Update failed." });
@@ -46,10 +131,7 @@ export default function EditConsultantForm({ consultant }) {
       return;
     }
 
-    setMessage({
-      type: "success",
-      text: "Profile updated. Redirecting…",
-    });
+    setMessage({ type: "success", text: "Profile updated. Redirecting…" });
     setTimeout(() => {
       router.replace(`/consultants/${consultant.id}`);
       router.refresh();
@@ -99,6 +181,41 @@ export default function EditConsultantForm({ consultant }) {
         rows={5}
       />
 
+      {/* Social links */}
+      <div className="space-y-3">
+        <p className="text-sm font-semibold text-slate-200">Social links</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field
+            label="LinkedIn"
+            placeholder="https://www.linkedin.com/in/your-handle or @your-handle"
+            value={form.linkedin_url}
+            onChange={handleChange("linkedin_url")}
+            hint="Use a full linkedin.com URL or just your handle."
+          />
+          <Field
+            label="Facebook"
+            placeholder="https://www.facebook.com/your-page or @your-page"
+            value={form.facebook_url}
+            onChange={handleChange("facebook_url")}
+            hint="Use a full facebook.com URL or just your handle."
+          />
+          <Field
+            label="Twitter/X"
+            placeholder="https://x.com/your-handle or @your-handle"
+            value={form.twitter_url}
+            onChange={handleChange("twitter_url")}
+            hint="Use x.com or twitter.com, or just your handle."
+          />
+          <Field
+            label="Instagram"
+            placeholder="https://www.instagram.com/your-handle or @your-handle"
+            value={form.instagram_url}
+            onChange={handleChange("instagram_url")}
+            hint="Use a full instagram.com URL or just your handle."
+          />
+        </div>
+      </div>
+
       {message.text && (
         <div
           className={`rounded-xl px-4 py-3 text-sm ${
@@ -131,7 +248,7 @@ export default function EditConsultantForm({ consultant }) {
   );
 }
 
-function Field({ label, as = "input", ...props }) {
+function Field({ label, as = "input", hint, ...props }) {
   const Component = as;
   const shared =
     "mt-1 w-full rounded-xl border border-white/10 bg-white/[0.07] px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:border-sky-400/60 focus:outline-none focus:ring-2 focus:ring-sky-400/30";
@@ -139,6 +256,7 @@ function Field({ label, as = "input", ...props }) {
     <label className="block text-sm text-slate-300">
       {label}
       <Component className={shared} {...props} />
+      {hint ? <p className="mt-1 text-xs text-slate-400">{hint}</p> : null}
     </label>
   );
 }

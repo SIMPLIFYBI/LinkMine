@@ -24,7 +24,11 @@ export default async function ConsultantEditPage({ params }) {
         location,
         contact_email,
         metadata,
-        claimed_by
+        claimed_by,
+        linkedin_url,       -- ADDED
+        facebook_url,       -- ADDED
+        twitter_url,        -- ADDED
+        instagram_url       -- ADDED
       `
       )
       .eq("id", params.id)
