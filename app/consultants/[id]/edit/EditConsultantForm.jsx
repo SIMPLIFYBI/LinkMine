@@ -28,45 +28,19 @@ export default function EditConsultantForm({ consultant }) {
     setForm((prev) => ({ ...prev, [field]: event.target.value }));
   };
 
-  function normalizeSocialUrl(network, value) {
+  // Only validate full https URLs for allowed domains. No handle parsing or normalization.
+  function isValidSocialUrl(network, value) {
     const v = String(value || "").trim();
-    if (!v) return "";
-    const handle = v.startsWith("@") ? v.slice(1) : v;
-    const isUrl = /^https?:\/\//i.test(v);
-    const stripSlash = (u) => u.replace(/\/+$/, "");
-
-    switch (network) {
-      case "linkedin": {
-        let url = isUrl ? v : `https://www.linkedin.com/in/${handle}`;
-        url = url.replace(/^http:\/\//i, "https://");
-        url = stripSlash(url);
-        if (!/^https:\/\/([a-z0-9-]+\.)*linkedin\.com\/.+/i.test(url)) return null;
-        return url;
-      }
-      case "facebook": {
-        let url = isUrl ? v : `https://www.facebook.com/${handle}`;
-        url = url.replace(/^http:\/\//i, "https://");
-        url = stripSlash(url);
-        if (!/^https:\/\/([a-z0-9-]+\.)*facebook\.com\/.+/i.test(url)) return null;
-        return url;
-      }
-      case "twitter": {
-        let url = isUrl ? v : `https://x.com/${handle}`;
-        url = url.replace(/^http:\/\//i, "https://");
-        url = stripSlash(url);
-        if (!/^https:\/\/([a-z0-9-]+\.)*(twitter\.com|x\.com)\/.+/i.test(url)) return null;
-        return url.replace(/^https:\/\/(www\.)?twitter\.com/i, "https://x.com");
-      }
-      case "instagram": {
-        let url = isUrl ? v : `https://www.instagram.com/${handle}`;
-        url = url.replace(/^http:\/\//i, "https://");
-        url = stripSlash(url);
-        if (!/^https:\/\/([a-z0-9-]+\.)*instagram\.com\/.+/i.test(url)) return null;
-        return url;
-      }
-      default:
-        return null;
-    }
+    if (!v) return true; // empty is allowed
+    if (!/^https:\/\//i.test(v)) return false;
+    const patterns = {
+      linkedin: /^https:\/\/([a-z0-9-]+\.)*linkedin\.com\/.+/i,
+      facebook: /^https:\/\/([a-z0-9-]+\.)*facebook\.com\/.+/i,
+      twitter: /^https:\/\/([a-z0-9-]+\.)*(twitter\.com|x\.com)\/.+/i,
+      instagram: /^https:\/\/([a-z0-9-]+\.)*instagram\.com\/.+/i,
+    };
+    const re = patterns[network];
+    return re.test(v);
   }
 
   const handleSubmit = async (event) => {
@@ -74,28 +48,24 @@ export default function EditConsultantForm({ consultant }) {
     setSaving(true);
     setMessage({ type: "", text: "" });
 
-    const linkedin = form.linkedin_url ? normalizeSocialUrl("linkedin", form.linkedin_url) : "";
-    const facebook = form.facebook_url ? normalizeSocialUrl("facebook", form.facebook_url) : "";
-    const twitter = form.twitter_url ? normalizeSocialUrl("twitter", form.twitter_url) : "";
-    const instagram = form.instagram_url ? normalizeSocialUrl("instagram", form.instagram_url) : "";
-
-    if (form.linkedin_url && !linkedin) {
-      setMessage({ type: "error", text: "LinkedIn URL looks invalid." });
+    // Validate inputs (must be full https URLs to approved domains)
+    if (form.linkedin_url && !isValidSocialUrl("linkedin", form.linkedin_url)) {
+      setMessage({ type: "error", text: "LinkedIn must be a full https://linkedin.com/... URL." });
       setSaving(false);
       return;
     }
-    if (form.facebook_url && !facebook) {
-      setMessage({ type: "error", text: "Facebook URL looks invalid." });
+    if (form.facebook_url && !isValidSocialUrl("facebook", form.facebook_url)) {
+      setMessage({ type: "error", text: "Facebook must be a full https://facebook.com/... URL." });
       setSaving(false);
       return;
     }
-    if (form.twitter_url && !twitter) {
-      setMessage({ type: "error", text: "Twitter/X URL looks invalid." });
+    if (form.twitter_url && !isValidSocialUrl("twitter", form.twitter_url)) {
+      setMessage({ type: "error", text: "Twitter/X must be a full https://x.com/... or https://twitter.com/... URL." });
       setSaving(false);
       return;
     }
-    if (form.instagram_url && !instagram) {
-      setMessage({ type: "error", text: "Instagram URL looks invalid." });
+    if (form.instagram_url && !isValidSocialUrl("instagram", form.instagram_url)) {
+      setMessage({ type: "error", text: "Instagram must be a full https://instagram.com/... URL." });
       setSaving(false);
       return;
     }
@@ -107,11 +77,11 @@ export default function EditConsultantForm({ consultant }) {
       location: form.location.trim(),
       contact_email: form.contact_email.trim(),
       bio: form.bio.trim(),
-      // Socials
-      linkedin_url: linkedin || null,
-      facebook_url: facebook || null,
-      twitter_url: twitter || null,
-      instagram_url: instagram || null,
+      // Socials: send empty as null
+      linkedin_url: form.linkedin_url.trim() || null,
+      facebook_url: form.facebook_url.trim() || null,
+      twitter_url: form.twitter_url.trim() || null,
+      instagram_url: form.instagram_url.trim() || null,
     };
 
     const { error } = await sb.from("consultants").update(payload).eq("id", consultant.id);
@@ -126,7 +96,7 @@ export default function EditConsultantForm({ consultant }) {
     setTimeout(() => {
       router.replace(`/consultants/${consultant.id}`);
       router.refresh();
-    }, 1200);
+    }, 1000);
   };
 
   return (
@@ -147,32 +117,33 @@ export default function EditConsultantForm({ consultant }) {
         <div className="grid gap-4 md:grid-cols-2">
           <Field
             label="LinkedIn"
-            placeholder="https://www.linkedin.com/in/your-handle or @your-handle"
+            placeholder="https://www.linkedin.com/in/your-handle"
             value={form.linkedin_url}
             onChange={handleChange("linkedin_url")}
+            hint="Paste the full https URL."
           />
           <Field
             label="Facebook"
-            placeholder="https://www.facebook.com/your-page or @your-page"
+            placeholder="https://www.facebook.com/your-page"
             value={form.facebook_url}
             onChange={handleChange("facebook_url")}
+            hint="Paste the full https URL."
           />
           <Field
             label="Twitter/X"
-            placeholder="https://x.com/your-handle or @your-handle"
+            placeholder="https://x.com/your-handle"
             value={form.twitter_url}
             onChange={handleChange("twitter_url")}
+            hint="Paste the full https URL."
           />
           <Field
             label="Instagram"
-            placeholder="https://www.instagram.com/your-handle or @your-handle"
+            placeholder="https://www.instagram.com/your-handle"
             value={form.instagram_url}
             onChange={handleChange("instagram_url")}
+            hint="Paste the full https URL."
           />
         </div>
-        <p className="text-xs text-slate-400">
-          Tips: Paste a full https URL or just your @handle. We’ll normalize and validate the domain.
-        </p>
       </div>
 
       {message.text && (
@@ -207,7 +178,7 @@ export default function EditConsultantForm({ consultant }) {
   );
 }
 
-function Field({ label, as = "input", ...props }) {
+function Field({ label, as = "input", hint, ...props }) {
   const Component = as;
   const shared =
     "mt-1 w-full rounded-xl border border-white/10 bg-white/[0.07] px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:border-sky-400/60 focus:outline-none focus:ring-2 focus:ring-sky-400/30";
@@ -215,6 +186,7 @@ function Field({ label, as = "input", ...props }) {
     <label className="block text-sm text-slate-300">
       {label}
       <Component className={shared} {...props} />
+      {hint ? <p className="mt-1 text-xs text-slate-400">{hint}</p> : null}
     </label>
   );
 }

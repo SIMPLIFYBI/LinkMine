@@ -113,7 +113,10 @@ export default async function ConsultantsPage({ searchParams }) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-6 py-10 space-y-8">
+    <main
+      className="mx-auto w-full max-w-6xl px-6 py-10 space-y-8 pb-24 sm:pb-12"
+      style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 4.5rem)" }}
+    >
       <section className="rounded-3xl border border-sky-400/30 bg-sky-500/10 p-6 text-slate-100 shadow-lg ring-1 ring-sky-400/20">
         <h1 className="text-2xl font-semibold text-white">
           Want to join MineHub?
@@ -173,7 +176,7 @@ export default async function ConsultantsPage({ searchParams }) {
       </section>
 
       {/* Pagination */}
-      <div className="mt-4 flex items-center justify-center gap-2">
+      <div className="mt-4 mb-20 flex items-center justify-center gap-2">
         <Link
           href={buildPageHref(Math.max(1, safePage - 1))}
           className="rounded-md border border-white/10 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/10"
@@ -190,6 +193,9 @@ export default async function ConsultantsPage({ searchParams }) {
           Next
         </Link>
       </div>
+
+      {/* Spacer to ensure no overlap on very small viewports */}
+      <div className="h-8 sm:h-0" aria-hidden="true" />
     </main>
   );
 }
