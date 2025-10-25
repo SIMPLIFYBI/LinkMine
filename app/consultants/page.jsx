@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
-import { supabaseServerClient } from "@/lib/supabaseServerClient";
+import { supabasePublicServer } from "@/lib/supabasePublicServer";
 import AddConsultantButton from "@/app/components/consultants/AddConsultantButton";
-import ConsultantFavouriteButton from "@/app/components/ConsultantFavouriteButton";
 import ServiceFilter from "./ServiceFilter.client.jsx";
 
 export const runtime = "nodejs";
@@ -124,8 +122,9 @@ export default async function ConsultantsPage({ searchParams }) {
   const requestedPage = Number.parseInt(sp?.page ?? "1", 10);
   const page = Number.isNaN(requestedPage) ? 1 : Math.max(1, requestedPage);
 
-  const sb = await supabaseServerClient();
+  const sb = supabasePublicServer(); // use public client (cacheable)
 
+  // Ensure queries only pull public, approved data and avoid count: "exact" if not needed.
   // Prefer service filter if present; else category; else all
   const dataResult = serviceSlug
     ? await getConsultantsByServiceSlug(sb, serviceSlug, page)
@@ -154,22 +153,6 @@ export default async function ConsultantsPage({ searchParams }) {
     const q = params.toString();
     return `/consultants${q ? `?${q}` : ""}`;
   };
-
-  // Favourites (auth optional)
-  const jar = await cookies();
-  const hasSbAuth = jar.getAll().some((c) => c.name.includes("auth-token"));
-  let favouriteIds = new Set();
-  if (hasSbAuth) {
-    const { data: auth } = await sb.auth.getUser();
-    const userId = auth?.user?.id || null;
-    if (userId) {
-      const { data: favRows } = await sb
-        .from("consultant_favourites")
-        .select("consultant_id")
-        .eq("user_id", userId);
-      favouriteIds = new Set(favRows?.map((r) => r.consultant_id) ?? []);
-    }
-  }
 
   return (
     <main
@@ -229,12 +212,6 @@ export default async function ConsultantsPage({ searchParams }) {
               key={c.id}
               className="relative rounded-xl border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/5 transition hover:border-white/20"
             >
-              <div className="absolute right-4 top-4">
-                <ConsultantFavouriteButton
-                  consultantId={c.id}
-                  initialFavourite={favouriteIds.has(c.id)}
-                />
-              </div>
               <h3 className="text-lg font-semibold text-white">{c.display_name}</h3>
               {c.headline ? <p className="mt-1 text-sm text-slate-300">{c.headline}</p> : null}
               {c.location ? <div className="mt-1 text-xs text-slate-400">{c.location}</div> : null}
