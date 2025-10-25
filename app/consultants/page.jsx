@@ -11,7 +11,60 @@ export const dynamic = "force-dynamic";
 const PAGE_SIZE = 15;
 const CARD_SELECT = "id, slug, display_name, headline, location, visibility, status";
 
-// New: fetch by service category slug
+// New: fetch by service slug (exact service)
+async function getConsultantsByServiceSlug(sb, serviceSlug, page) {
+  const offset = (page - 1) * PAGE_SIZE;
+
+  if (!serviceSlug) {
+    const { data, count } = await sb
+      .from("consultants")
+      .select(CARD_SELECT, { count: "exact" })
+      .eq("visibility", "public")
+      .eq("status", "approved")
+      .order("display_name", { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    return { consultants: data || [], activeService: null, total: count || 0 };
+  }
+
+  const { data: service } = await sb
+    .from("services")
+    .select("id, name, slug")
+    .eq("slug", serviceSlug)
+    .maybeSingle();
+
+  if (!service) {
+    return { consultants: [], activeService: null, total: 0 };
+  }
+
+  // Join consultant_services and pull consultants linked to this service
+  const { data: linkRows = [] } = await sb
+    .from("consultant_services")
+    .select(
+      "consultant:consultant_id (id, slug, display_name, headline, location, visibility, status)"
+    )
+    .eq("service_id", service.id)
+    .eq("consultant.visibility", "public", { foreignTable: "consultant" })
+    .eq("consultant.status", "approved", { foreignTable: "consultant" });
+
+  // De-duplicate consultants
+  const unique = new Map();
+  for (const row of linkRows) {
+    const c = row.consultant;
+    if (c && !unique.has(c.id)) unique.set(c.id, c);
+  }
+  const all = Array.from(unique.values());
+  const total = all.length;
+
+  // Paginate in memory
+  const consultants = all
+    .sort((a, b) => a.display_name.localeCompare(b.display_name))
+    .slice(offset, offset + PAGE_SIZE);
+
+  return { consultants, activeService: service, total };
+}
+
+// Existing: fetch by service category slug
 async function getConsultantsByCategorySlug(sb, categorySlug, page) {
   const offset = (page - 1) * PAGE_SIZE;
 
@@ -56,7 +109,7 @@ async function getConsultantsByCategorySlug(sb, categorySlug, page) {
   const all = Array.from(unique.values());
   const total = all.length;
 
-  // Paginate in memory (simple and correct for de-duplicated results)
+  // Paginate in memory
   const consultants = all
     .sort((a, b) => a.display_name.localeCompare(b.display_name))
     .slice(offset, offset + PAGE_SIZE);
@@ -66,23 +119,28 @@ async function getConsultantsByCategorySlug(sb, categorySlug, page) {
 
 export default async function ConsultantsPage({ searchParams }) {
   const sp = await searchParams;
-  const categorySlug = sp?.category || "";
+  const serviceSlug = sp?.service || "";     // NEW: exact service filter
+  const categorySlug = sp?.category || "";   // existing category filter
   const requestedPage = Number.parseInt(sp?.page ?? "1", 10);
   const page = Number.isNaN(requestedPage) ? 1 : Math.max(1, requestedPage);
 
   const sb = await supabaseServerClient();
 
-  const [
-    { consultants, activeCategory, total },
-    { data: allCategories = [] },
-  ] = await Promise.all([
-    getConsultantsByCategorySlug(sb, categorySlug, page),
-    sb
-      .from("service_categories")
-      .select("id, name, slug")
-      .order("position", { ascending: true })
-      .order("name", { ascending: true }),
-  ]);
+  // Prefer service filter if present; else category; else all
+  const dataResult = serviceSlug
+    ? await getConsultantsByServiceSlug(sb, serviceSlug, page)
+    : await getConsultantsByCategorySlug(sb, categorySlug, page);
+
+  const consultants = dataResult.consultants;
+  const activeCategory = dataResult.activeCategory || null;
+  const activeService = dataResult.activeService || null;
+  const total = dataResult.total || 0;
+
+  const { data: allCategories = [] } = await sb
+    .from("service_categories")
+    .select("id, name, slug")
+    .order("position", { ascending: true })
+    .order("name", { ascending: true });
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -90,7 +148,8 @@ export default async function ConsultantsPage({ searchParams }) {
   // Preserve selection in pagination links
   const buildPageHref = (targetPage) => {
     const params = new URLSearchParams();
-    if (categorySlug) params.set("category", categorySlug);
+    if (serviceSlug) params.set("service", serviceSlug);
+    else if (categorySlug) params.set("category", categorySlug);
     if (targetPage > 1) params.set("page", String(targetPage));
     const q = params.toString();
     return `/consultants${q ? `?${q}` : ""}`;
@@ -132,7 +191,11 @@ export default async function ConsultantsPage({ searchParams }) {
       {/* Category filter (single select) */}
       <section className="mt-2 space-y-2">
         <ServiceFilter categories={allCategories} activeSlug={activeCategory?.slug || ""} />
-        {activeCategory ? (
+        {activeService ? (
+          <div className="text-sm text-slate-300">
+            Filtering by service: <span className="font-medium text-white">{activeService.name}</span>
+          </div>
+        ) : activeCategory ? (
           <div className="text-sm text-slate-300">
             Filtering by category: <span className="font-medium text-white">{activeCategory.name}</span>
           </div>

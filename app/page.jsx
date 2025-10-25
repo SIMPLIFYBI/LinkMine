@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import Link from "next/link";
+import ServiceFinder from "@/app/components/ServiceFinder";
 
 const heroImage = "/Pictures/pexels-urtimud-89-76108288-14263363.jpg";
 
@@ -44,6 +45,11 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
+      </section>
+
+      {/* Service finder */}
+      <section className="mx-auto w-full max-w-screen-md px-4">
+        <ServiceFinder className="mt-4" />
       </section>
 
       {/* Split section: stack on mobile, 2 cols on md+ */}
