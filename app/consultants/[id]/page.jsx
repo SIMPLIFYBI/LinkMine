@@ -1,5 +1,5 @@
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const revalidate = 180; // 3 minutes
 
 import Link from "next/link";
 import { notFound } from "next/navigation";

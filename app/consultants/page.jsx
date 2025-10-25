@@ -6,7 +6,7 @@ import ConsultantFavouriteButton from "@/app/components/ConsultantFavouriteButto
 import ServiceFilter from "./ServiceFilter.client.jsx";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const revalidate = 180; // 3 minutes
 
 const PAGE_SIZE = 15;
 const CARD_SELECT = "id, slug, display_name, headline, location, visibility, status";

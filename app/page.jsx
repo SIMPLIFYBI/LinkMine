@@ -1,4 +1,5 @@
-"use client";
+export const revalidate = 300; // 5 minutes
+
 import React from "react";
 import Link from "next/link";
 import ServiceFinder from "@/app/components/ServiceFinder";

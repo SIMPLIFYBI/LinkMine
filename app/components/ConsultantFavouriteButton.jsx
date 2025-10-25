@@ -1,118 +1,96 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
-import { Star } from "lucide-react";
 
-export default function ConsultantFavouriteButton({
-  consultantId,
-  initialFavourite = false,
-}) {
-  const [status, setStatus] = useState({ loading: true, favourite: initialFavourite });
-  const [error, setError] = useState("");
+export default function ConsultantFavouriteButton({ consultantId, initialFavourite }) {
+  const sb = supabaseBrowser();
+  const [fav, setFav] = useState(initialFavourite ?? null);
+  const [loading, setLoading] = useState(false);
+  const canToggle = fav !== null;
 
   useEffect(() => {
-    let active = true;
-
-    async function load() {
-      const sb = supabaseBrowser();
-      const { data: userData } = await sb.auth.getUser();
-      const user = userData?.user ?? null;
-
-      if (!user) {
-        if (active) setStatus({ loading: false, favourite: false });
+    if (initialFavourite !== undefined) return;
+    let mounted = true;
+    (async () => {
+      const { data: auth } = await sb.auth.getUser();
+      const userId = auth?.user?.id || null;
+      if (!mounted) return;
+      if (!userId) {
+        setFav(false);
         return;
       }
-
-      const { data, error } = await sb
+      const { data } = await sb
         .from("consultant_favourites")
-        .select("id")
+        .select("consultant_id")
         .eq("consultant_id", consultantId)
+        .limit(1)
         .maybeSingle();
-
-      if (!active) return;
-
-      if (error && error.code !== "PGRST116") {
-        setError(error.message ?? "Unable to load favourite status.");
-        setStatus({ loading: false, favourite: initialFavourite });
-        return;
-      }
-
-      setStatus({ loading: false, favourite: Boolean(data) });
-    }
-
-    load();
+      if (!mounted) return;
+      setFav(Boolean(data));
+    })();
     return () => {
-      active = false;
+      mounted = false;
     };
-  }, [consultantId, initialFavourite]);
+  }, [consultantId, sb, initialFavourite]);
 
-  const isLoading = status.loading;
-  const isFavourite = status.favourite;
-
-  const label = useMemo(
-    () => (isFavourite ? "Remove from favourites" : "Save to favourites"),
-    [isFavourite]
-  );
-
-  async function toggleFavourite() {
-    setError("");
-    const sb = supabaseBrowser();
-    const { data: userData } = await sb.auth.getUser();
-    if (!userData?.user) {
-      setError("Log in to favourite consultants.");
+  const toggle = async () => {
+    if (loading) return;
+    setLoading(true);
+    const { data: auth } = await sb.auth.getUser();
+    const userId = auth?.user?.id || null;
+    if (!userId) {
+      setLoading(false);
       return;
     }
-
-    setStatus((prev) => ({ ...prev, loading: true }));
-
-    try {
-      const method = isFavourite ? "DELETE" : "POST";
-      const res = await fetch(
-        `/api/consultants/${consultantId}/favourite`,
-        {
-          method,
-          credentials: "include",
-        }
-      );
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Request failed.");
-      }
-
-      setStatus({ loading: false, favourite: !isFavourite });
-    } catch (err) {
-      setStatus({ loading: false, favourite: isFavourite });
-      setError(err.message || "Could not update favourite.");
+    if (fav) {
+      await sb
+        .from("consultant_favourites")
+        .delete()
+        .eq("consultant_id", consultantId)
+        .eq("user_id", userId);
+      setFav(false);
+    } else {
+      await sb
+        .from("consultant_favourites")
+        .upsert(
+          { consultant_id: consultantId, user_id: userId },
+          { onConflict: "user_id,consultant_id" }
+        );
+      setFav(true);
     }
-  }
+    setLoading(false);
+  };
 
   return (
-    <div className="absolute right-3 top-3 flex flex-col items-end gap-1">
-      <button
-        type="button"
-        onClick={toggleFavourite}
-        disabled={isLoading}
-        aria-label={label}
-        className={`group inline-flex h-9 w-9 items-center justify-center rounded-full border transition ${
-          isFavourite
-            ? "border-amber-400/60 bg-amber-400/10 text-amber-200 hover:border-amber-300 hover:bg-amber-400/20"
-            : "border-white/15 bg-white/5 text-slate-200 hover:border-white/25 hover:bg-white/10"
-        } disabled:opacity-60`}
-        title={label}
-      >
-        <Star
-          className={`h-4 w-4 transition ${
-            isFavourite
-              ? "fill-amber-400 text-amber-300"
-              : "text-slate-300 group-hover:text-amber-200"
-          }`}
-        />
-      </button>
-      {error && (
-        <span className="text-[10px] text-rose-300">{error}</span>
-      )}
-    </div>
+    <button
+      type="button"
+      onClick={toggle}
+      disabled={!canToggle || loading}
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-full border ${
+        fav
+          ? "border-amber-400/60 bg-amber-400/20 text-amber-200"
+          : "border-white/15 bg-white/5 text-slate-300"
+      } disabled:opacity-60`}
+      aria-pressed={!!fav}
+      title={fav ? "Remove favourite" : "Add to favourites"}
+    >
+      <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+        {fav ? (
+          <path
+            d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+            fill="currentColor"
+          />
+        ) : (
+          <path
+            d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+          />
+        )}
+      </svg>
+    </button>
   );
 }
