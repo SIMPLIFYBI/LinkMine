@@ -1,29 +1,91 @@
 export default function ConsultantSocialLinks({ links = {}, className = "" }) {
   const items = [
-    { key: "linkedin", href: links.linkedin_url, label: "LinkedIn", icon: LinkedInIcon },
-    { key: "facebook", href: links.facebook_url, label: "Facebook", icon: FacebookIcon },
-    { key: "twitter",  href: links.twitter_url,  label: "Twitter/X", icon: XIcon },
-    { key: "instagram",href: links.instagram_url,label: "Instagram", icon: InstagramIcon },
-  ].filter((i) => typeof i.href === "string" && i.href.startsWith("https://"));
-
-  if (items.length === 0) return null;
+    {
+      key: "linkedin",
+      href: links.linkedin_url,
+      label: "LinkedIn",
+      color: "#0A66C2",
+      Icon: LinkedInIcon,
+    },
+    {
+      key: "facebook",
+      href: links.facebook_url,
+      label: "Facebook",
+      color: "#1877F2",
+      Icon: FacebookIcon,
+    },
+    {
+      key: "twitter",
+      href: links.twitter_url,
+      label: "Twitter/X",
+      color: "#000000", // X brand is black
+      Icon: XIcon,
+    },
+    {
+      key: "instagram",
+      href: links.instagram_url,
+      label: "Instagram",
+      color: "#E4405F", // Instagram brand pink (simplified)
+      Icon: InstagramIcon,
+    },
+  ];
 
   return (
     <div className={`flex flex-wrap items-center gap-2 ${className}`}>
-      {items.map(({ key, href, label, icon: Icon }) => (
-        <a
-          key={key}
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer nofollow"
-          aria-label={label}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/10 hover:bg-white/20"
-        >
-          <Icon className="h-4 w-4 text-slate-200" />
-        </a>
-      ))}
+      {items.map(({ key, href, label, color, Icon }) => {
+        const active = typeof href === "string" && /^https:\/\//i.test(href);
+        const baseClass =
+          "inline-flex h-9 w-9 items-center justify-center rounded-full ring-1 transition";
+        const inactiveClass =
+          "bg-white/5 ring-white/10 text-slate-400 cursor-not-allowed";
+        const style =
+          key === "twitter" && active
+            ? { backgroundColor: "#ffffff", color: "#000000", boxShadow: "0 0 0 1px rgba(255,255,255,0.1) inset" }
+            : active
+            ? {
+                backgroundColor: hexToRgba(color, 0.15),
+                color,
+                boxShadow: `0 0 0 1px ${hexToRgba(color, 0.35)} inset`,
+              }
+            : undefined;
+
+        const content = (
+          <span
+            className={`${baseClass} ${active ? "" : inactiveClass}`}
+            style={style}
+            aria-label={label}
+            title={active ? label : `${label} (not provided)`}
+          >
+            <Icon className="h-4 w-4" />
+          </span>
+        );
+
+        return active ? (
+          <a
+            key={key}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+          >
+            {content}
+          </a>
+        ) : (
+          <div key={key} aria-disabled="true">
+            {content}
+          </div>
+        );
+      })}
     </div>
   );
+}
+
+function hexToRgba(hex, alpha = 1) {
+  const h = hex.replace("#", "");
+  const bigint = parseInt(h.length === 3 ? h.split("").map((c) => c + c).join("") : h, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 function LinkedInIcon(props) {

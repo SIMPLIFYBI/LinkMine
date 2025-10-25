@@ -144,7 +144,7 @@ export default function AddConsultantButton({ className = "" }) {
                   label="Company"
                   value={company}
                   onChange={setCompany}
-                  placeholder="e.g. LinkMine Consulting"
+                  placeholder="e.g. YouMine Consulting"
                 />
                 <Field
                   id={ids.headline}

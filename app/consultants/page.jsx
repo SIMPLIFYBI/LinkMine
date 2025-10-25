@@ -191,13 +191,26 @@ export default async function ConsultantsPage({ searchParams }) {
       {/* Category filter (single select) */}
       <section className="mt-2 space-y-2">
         <ServiceFilter categories={allCategories} activeSlug={activeCategory?.slug || ""} />
-        {activeService ? (
-          <div className="text-sm text-slate-300">
-            Filtering by service: <span className="font-medium text-white">{activeService.name}</span>
-          </div>
-        ) : activeCategory ? (
-          <div className="text-sm text-slate-300">
-            Filtering by category: <span className="font-medium text-white">{activeCategory.name}</span>
+        {(activeService || activeCategory) ? (
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm text-slate-300">
+              {activeService ? (
+                <>
+                  Filtering by service: <span className="font-medium text-white">{activeService.name}</span>
+                </>
+              ) : (
+                <>
+                  Filtering by category: <span className="font-medium text-white">{activeCategory?.name}</span>
+                </>
+              )}
+            </div>
+            <Link
+              href="/consultants"
+              prefetch={false}
+              className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-100 shadow backdrop-blur-md ring-1 ring-white/10 hover:bg-white/15"
+            >
+              Show all consultants
+            </Link>
           </div>
         ) : (
           <div className="text-sm text-slate-400">Browse all consultants.</div>
