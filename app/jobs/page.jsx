@@ -1,8 +1,10 @@
 import JobsPageTabs from "@/app/jobs/tabs";
-import { supabaseServerClient } from "@/lib/supabaseServerClient";
+// CHANGED: use the public, cacheable client
+import { supabasePublicServer } from "@/lib/supabasePublicServer";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+// CHANGED: enable ISR (remove force-dynamic)
+export const revalidate = 180; // 3 minutes
 
 const PAGE_SIZE = 16;
 
@@ -11,10 +13,11 @@ export default async function JobsRootPage({ searchParams }) {
 
   const page = Math.max(1, Number.parseInt(searchParams?.page ?? "1", 10));
   const from = (page - 1) * PAGE_SIZE;
-  // Request one extra row (sentinel) to know if there's a next page
-  const to = from + PAGE_SIZE; // inclusive; returns at most PAGE_SIZE + 1 rows
+  // sentinel row (+1) to determine hasNext without exact count
+  const to = from + PAGE_SIZE; // inclusive
 
-  const sb = await supabaseServerClient();
+  // CHANGED: public client is sync and does not read cookies
+  const sb = supabasePublicServer();
 
   const { data: raw = [] } = await sb
     .from("jobs")
