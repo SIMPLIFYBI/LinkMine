@@ -46,6 +46,7 @@ export default function JobsBoardSection({ jobs }) {
           <div className="mt-auto pt-6">
             <Link
               href={`/jobs/${job.id}`}
+              prefetch
               className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-slate-100 hover:border-sky-300/60 hover:bg-sky-500/10"
             >
               View job
