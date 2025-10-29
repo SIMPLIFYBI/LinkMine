@@ -9,20 +9,30 @@ export const revalidate = 180; // 3 minutes
 const PAGE_SIZE = 15;
 const CARD_SELECT = "id, slug, display_name, headline, location, visibility, status";
 
-// New: fetch by service slug (exact service)
+// Paginate base list without exact count
+async function getAllConsultantsPage(sb, page) {
+  const offset = (page - 1) * PAGE_SIZE;
+  // Fetch one extra row as a sentinel to detect a next page
+  const { data = [] } = await sb
+    .from("consultants")
+    .select(CARD_SELECT)
+    .eq("visibility", "public")
+    .eq("status", "approved")
+    .order("display_name", { ascending: true })
+    .range(offset, offset + PAGE_SIZE); // inclusive, returns up to PAGE_SIZE+1
+
+  const hasNext = data.length > PAGE_SIZE;
+  const consultants = hasNext ? data.slice(0, PAGE_SIZE) : data;
+  return { consultants, hasNext };
+}
+
+// Fetch by exact service slug with DB-level pagination on consultant_services
 async function getConsultantsByServiceSlug(sb, serviceSlug, page) {
   const offset = (page - 1) * PAGE_SIZE;
 
   if (!serviceSlug) {
-    const { data, count } = await sb
-      .from("consultants")
-      .select(CARD_SELECT, { count: "exact" })
-      .eq("visibility", "public")
-      .eq("status", "approved")
-      .order("display_name", { ascending: true })
-      .range(offset, offset + PAGE_SIZE - 1);
-
-    return { consultants: data || [], activeService: null, total: count || 0 };
+    const { consultants, hasNext } = await getAllConsultantsPage(sb, page);
+    return { consultants, activeService: null, hasNext };
   }
 
   const { data: service } = await sb
@@ -31,51 +41,51 @@ async function getConsultantsByServiceSlug(sb, serviceSlug, page) {
     .eq("slug", serviceSlug)
     .maybeSingle();
 
-  if (!service) {
-    return { consultants: [], activeService: null, total: 0 };
-  }
+  if (!service) return { consultants: [], activeService: null, hasNext: false };
 
-  // Join consultant_services and pull consultants linked to this service
+  // Pull one page of consultant ids ordered by consultant.display_name
   const { data: linkRows = [] } = await sb
     .from("consultant_services")
-    .select(
-      "consultant:consultant_id (id, slug, display_name, headline, location, visibility, status)"
-    )
+    .select("consultant_id, consultant:consultant_id(display_name)")
     .eq("service_id", service.id)
     .eq("consultant.visibility", "public", { foreignTable: "consultant" })
-    .eq("consultant.status", "approved", { foreignTable: "consultant" });
+    .eq("consultant.status", "approved", { foreignTable: "consultant" })
+    .order("consultant.display_name", { ascending: true, foreignTable: "consultant" })
+    .range(offset, offset + PAGE_SIZE); // inclusive; sentinel
 
-  // De-duplicate consultants
-  const unique = new Map();
-  for (const row of linkRows) {
-    const c = row.consultant;
-    if (c && !unique.has(c.id)) unique.set(c.id, c);
+  // De-dup + compute paging
+  const idsOrdered = [];
+  const seen = new Set();
+  for (const r of linkRows) {
+    if (!seen.has(r.consultant_id)) {
+      seen.add(r.consultant_id);
+      idsOrdered.push(r.consultant_id);
+    }
   }
-  const all = Array.from(unique.values());
-  const total = all.length;
+  const hasNext = idsOrdered.length > PAGE_SIZE;
+  const pageIds = hasNext ? idsOrdered.slice(0, PAGE_SIZE) : idsOrdered;
 
-  // Paginate in memory
-  const consultants = all
-    .sort((a, b) => a.display_name.localeCompare(b.display_name))
-    .slice(offset, offset + PAGE_SIZE);
+  if (pageIds.length === 0) return { consultants: [], activeService: service, hasNext: false };
 
-  return { consultants, activeService: service, total };
+  const { data: consultants = [] } = await sb
+    .from("consultants")
+    .select(CARD_SELECT)
+    .in("id", pageIds);
+
+  // Preserve order
+  const orderMap = new Map(pageIds.map((id, i) => [id, i]));
+  consultants.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
+
+  return { consultants, activeService: service, hasNext };
 }
 
-// Existing: fetch by service category slug
+// Fetch by category slug with DB-level pagination on consultant_services→services
 async function getConsultantsByCategorySlug(sb, categorySlug, page) {
   const offset = (page - 1) * PAGE_SIZE;
 
   if (!categorySlug) {
-    const { data, count } = await sb
-      .from("consultants")
-      .select(CARD_SELECT, { count: "exact" })
-      .eq("visibility", "public")
-      .eq("status", "approved")
-      .order("display_name", { ascending: true })
-      .range(offset, offset + PAGE_SIZE - 1);
-
-    return { consultants: data || [], activeCategory: null, total: count || 0 };
+    const { consultants, hasNext } = await getAllConsultantsPage(sb, page);
+    return { consultants, activeCategory: null, hasNext };
   }
 
   const { data: category } = await sb
@@ -84,48 +94,50 @@ async function getConsultantsByCategorySlug(sb, categorySlug, page) {
     .eq("slug", categorySlug)
     .maybeSingle();
 
-  if (!category) {
-    return { consultants: [], activeCategory: null, total: 0 };
-  }
+  if (!category) return { consultants: [], activeCategory: null, hasNext: false };
 
-  // Join consultant_services -> services (filter on services.category_id)
   const { data: linkRows = [] } = await sb
     .from("consultant_services")
-    .select(
-      "consultant:consultant_id (id, slug, display_name, headline, location, visibility, status), service:service_id (category_id)"
-    )
+    .select("consultant_id, consultant:consultant_id(display_name), service:service_id(category_id)")
     .eq("service.category_id", category.id, { foreignTable: "service" })
     .eq("consultant.visibility", "public", { foreignTable: "consultant" })
-    .eq("consultant.status", "approved", { foreignTable: "consultant" });
+    .eq("consultant.status", "approved", { foreignTable: "consultant" })
+    .order("consultant.display_name", { ascending: true, foreignTable: "consultant" })
+    .range(offset, offset + PAGE_SIZE); // inclusive; sentinel
 
-  // De-duplicate consultants (a consultant may have multiple services in the same category)
-  const unique = new Map();
-  for (const row of linkRows) {
-    const c = row.consultant;
-    if (c && !unique.has(c.id)) unique.set(c.id, c);
+  const idsOrdered = [];
+  const seen = new Set();
+  for (const r of linkRows) {
+    if (!seen.has(r.consultant_id)) {
+      seen.add(r.consultant_id);
+      idsOrdered.push(r.consultant_id);
+    }
   }
-  const all = Array.from(unique.values());
-  const total = all.length;
+  const hasNext = idsOrdered.length > PAGE_SIZE;
+  const pageIds = hasNext ? idsOrdered.slice(0, PAGE_SIZE) : idsOrdered;
 
-  // Paginate in memory
-  const consultants = all
-    .sort((a, b) => a.display_name.localeCompare(b.display_name))
-    .slice(offset, offset + PAGE_SIZE);
+  if (pageIds.length === 0) return { consultants: [], activeCategory: category, hasNext: false };
 
-  return { consultants, activeCategory: category, total };
+  const { data: consultants = [] } = await sb
+    .from("consultants")
+    .select(CARD_SELECT)
+    .in("id", pageIds);
+
+  const orderMap = new Map(pageIds.map((id, i) => [id, i]));
+  consultants.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
+
+  return { consultants, activeCategory: category, hasNext };
 }
 
 export default async function ConsultantsPage({ searchParams }) {
   const sp = await searchParams;
-  const serviceSlug = sp?.service || "";     // NEW: exact service filter
-  const categorySlug = sp?.category || "";   // existing category filter
+  const serviceSlug = sp?.service || "";
+  const categorySlug = sp?.category || "";
   const requestedPage = Number.parseInt(sp?.page ?? "1", 10);
   const page = Number.isNaN(requestedPage) ? 1 : Math.max(1, requestedPage);
 
-  const sb = supabasePublicServer(); // use public client (cacheable)
+  const sb = supabasePublicServer();
 
-  // Ensure queries only pull public, approved data and avoid count: "exact" if not needed.
-  // Prefer service filter if present; else category; else all
   const dataResult = serviceSlug
     ? await getConsultantsByServiceSlug(sb, serviceSlug, page)
     : await getConsultantsByCategorySlug(sb, categorySlug, page);
@@ -133,7 +145,8 @@ export default async function ConsultantsPage({ searchParams }) {
   const consultants = dataResult.consultants;
   const activeCategory = dataResult.activeCategory || null;
   const activeService = dataResult.activeService || null;
-  const total = dataResult.total || 0;
+  const hasNext = Boolean(dataResult.hasNext);
+  const hasPrev = page > 1;
 
   const { data: allCategories = [] } = await sb
     .from("service_categories")
@@ -141,10 +154,6 @@ export default async function ConsultantsPage({ searchParams }) {
     .order("position", { ascending: true })
     .order("name", { ascending: true });
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
-
-  // Preserve selection in pagination links
   const buildPageHref = (targetPage) => {
     const params = new URLSearchParams();
     if (serviceSlug) params.set("service", serviceSlug);
@@ -189,7 +198,7 @@ export default async function ConsultantsPage({ searchParams }) {
             </div>
             <Link
               href="/consultants"
-              prefetch={false}
+              prefetch
               className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-100 shadow backdrop-blur-md ring-1 ring-white/10 hover:bg-white/15"
             >
               Show all consultants
@@ -218,6 +227,7 @@ export default async function ConsultantsPage({ searchParams }) {
               <div className="mt-3">
                 <Link
                   href={`/consultants/${c.id}`}
+                  prefetch
                   className="inline-flex items-center rounded-md bg-gradient-to-r from-sky-600 to-indigo-600 px-3 py-1.5 text-xs font-medium"
                 >
                   View Profile
@@ -228,20 +238,26 @@ export default async function ConsultantsPage({ searchParams }) {
         )}
       </section>
 
-      {/* Pagination */}
+      {/* Pagination (no exact total; sentinel-based) */}
       <div className="mt-4 mb-20 flex items-center justify-center gap-2">
         <Link
-          href={buildPageHref(Math.max(1, safePage - 1))}
-          className="rounded-md border border-white/10 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/10"
-          prefetch={false}
+          href={hasPrev ? buildPageHref(page - 1) : "#"}
+          className={`rounded-md border border-white/10 px-3 py-1.5 text-sm ${
+            hasPrev ? "text-slate-200 hover:bg-white/10" : "text-slate-500 cursor-not-allowed"
+          }`}
+          prefetch
+          aria-disabled={!hasPrev}
         >
           Prev
         </Link>
-        <span className="text-xs text-slate-400">Page {safePage} of {totalPages}</span>
+        <span className="text-xs text-slate-400">Page {page}</span>
         <Link
-          href={buildPageHref(Math.min(totalPages, safePage + 1))}
-          className="rounded-md border border-white/10 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/10"
-          prefetch={false}
+          href={hasNext ? buildPageHref(page + 1) : "#"}
+          className={`rounded-md border border-white/10 px-3 py-1.5 text-sm ${
+            hasNext ? "text-slate-200 hover:bg-white/10" : "text-slate-500 cursor-not-allowed"
+          }`}
+          prefetch
+          aria-disabled={!hasNext}
         >
           Next
         </Link>
