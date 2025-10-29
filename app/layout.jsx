@@ -10,7 +10,7 @@ import TradingViewTicker from "@/app/components/TradingViewTicker";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata = {
-  title: { default: "LinkMine", template: "%s · LinkMine" },
+  title: { default: "YouMine", template: "%s · YouMine " },
   viewport: { width: "device-width", initialScale: 1, viewportFit: "cover" },
 };
 
