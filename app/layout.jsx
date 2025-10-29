@@ -11,7 +11,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata = {
   title: { default: "YouMine", template: "%s · YouMine " },
-  viewport: { width: "device-width", initialScale: 1, viewportFit: "cover" },
+  // keep viewport OUT of metadata; it belongs in app/viewport.js
 };
 
 export default function RootLayout({ children }) {

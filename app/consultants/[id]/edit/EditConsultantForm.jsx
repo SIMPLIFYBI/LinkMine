@@ -20,6 +20,8 @@ export default function EditConsultantForm({ consultant }) {
     facebook_url: consultant.facebook_url ?? "",
     twitter_url: consultant.twitter_url ?? "",
     instagram_url: consultant.instagram_url ?? "",
+    // Google
+    place_id: consultant.place_id ?? "",            // ADDED
   });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -70,6 +72,14 @@ export default function EditConsultantForm({ consultant }) {
       return;
     }
 
+    // Simple sanity for place_id (optional, lenient)
+    const placeId = String(form.place_id || "").trim();
+    if (placeId && placeId.length < 10) {
+      setMessage({ type: "error", text: "Place ID looks too short. Paste the full ID (e.g. starting with ChIJ...). You can leave it blank if unsure." });
+      setSaving(false);
+      return;
+    }
+
     const payload = {
       display_name: form.display_name.trim(),
       headline: form.headline.trim(),
@@ -82,6 +92,8 @@ export default function EditConsultantForm({ consultant }) {
       facebook_url: form.facebook_url.trim() || null,
       twitter_url: form.twitter_url.trim() || null,
       instagram_url: form.instagram_url.trim() || null,
+      // Google: send empty as null
+      place_id: placeId || null,                    // ADDED
     };
 
     const { error } = await sb.from("consultants").update(payload).eq("id", consultant.id);
@@ -146,6 +158,33 @@ export default function EditConsultantForm({ consultant }) {
         </div>
       </div>
 
+      {/* Google details */}
+      <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+        <div className="flex items-center gap-3">
+          {/* Simple branded badge for color */}
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-sm font-bold text-[#4285F4] shadow">
+            G
+          </span>
+          <p className="text-sm font-semibold text-slate-200">Connect your company Google details</p>
+        </div>
+        <p className="text-sm text-slate-400">
+          Link your Google business listing to show maps and ratings on your profile.
+        </p>
+
+        <div className="grid gap-3 md:grid-cols-2">
+          <Field
+            label="Google Place ID"
+            placeholder="ChIJN1t_tDeuEmsRUsoyG83frY4"
+            value={form.place_id}
+            onChange={handleChange("place_id")}
+            hint="Optional. Paste your Google Place ID here."
+          />
+          <div className="self-end">
+            <InfoPopover />
+          </div>
+        </div>
+      </div>
+
       {message.text && (
         <div
           className={`rounded-xl px-4 py-3 text-sm ${
@@ -175,6 +214,48 @@ export default function EditConsultantForm({ consultant }) {
         </button>
       </div>
     </form>
+  );
+}
+
+function InfoPopover() {
+  // Lightweight, accessible popover using <details>
+  return (
+    <details className="group relative w-full">
+      <summary className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-100 hover:bg-white/15">
+        What’s a Place ID?
+      </summary>
+      <div className="absolute z-10 mt-2 w-80 rounded-xl border border-white/10 bg-slate-900/95 p-3 text-xs text-slate-200 shadow-xl backdrop-blur-md ring-1 ring-white/10">
+        <p>
+          A Place ID uniquely identifies your business on Google Maps and lets us show your address, map,
+          and ratings. It looks like a long string, for example: <code className="text-slate-100">ChIJN1t_tDeuEmsRUsoyG83frY4</code>.
+        </p>
+        <ul className="mt-2 list-disc pl-4 space-y-1">
+          <li>
+            Learn more:{" "}
+            <a
+              href="https://developers.google.com/maps/documentation/places/web-service/place-id"
+              target="_blank"
+              className="text-sky-300 underline"
+            >
+              Google Place ID docs
+            </a>
+          </li>
+          <li>
+            Find your ID:{" "}
+            <a
+              href="https://developers.google.com/maps/documentation/javascript/place-id#find-id"
+              target="_blank"
+              className="text-sky-300 underline"
+            >
+              How to find a Place ID
+            </a>
+          </li>
+        </ul>
+        <p className="mt-2 text-slate-400">
+          Don’t have it handy? You can leave this blank and add it later.
+        </p>
+      </div>
+    </details>
   );
 }
 
