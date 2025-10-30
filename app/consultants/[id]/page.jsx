@@ -9,6 +9,7 @@ import ConsultantClaimButton from "@/app/components/ConsultantClaimButton";
 import ConsultantFavouriteButton from "@/app/components/ConsultantFavouriteButton";
 import ConsultantSocialLinks from "@/app/components/ConsultantSocialLinks";
 import TrackView from "./TrackView.client.jsx";
+import ContactConsultantButton from "./ContactConsultantButton.client.jsx";
 
 async function getConsultant(id) {
   const sb = await supabaseServerClient();
@@ -140,10 +141,16 @@ export default async function ConsultantPage({ params }) {
           />
         </div>
 
-        <ConsultantFavouriteButton
-          consultantId={consultantId}
-          initialFavourite={initialFavourite}
-        />
+        <div className="flex items-center gap-2">
+          <ContactConsultantButton
+            consultantId={consultantId}
+            consultantName={consultant.display_name}
+          />
+          <ConsultantFavouriteButton
+            consultantId={consultantId}
+            initialFavourite={initialFavourite}
+          />
+        </div>
       </header>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[2fr,1fr]">
