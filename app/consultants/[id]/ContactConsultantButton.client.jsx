@@ -20,7 +20,9 @@ export default function ContactConsultantButton({ consultantId, consultantName }
         setUser(null);
       }
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [sb]);
 
   const onClick = () => {
@@ -41,11 +43,7 @@ export default function ContactConsultantButton({ consultantId, consultantName }
         Contact {consultantName || "consultant"}
       </button>
       {open && (
-        <ContactModal
-          consultantId={consultantId}
-          user={user}
-          onClose={() => setOpen(false)}
-        />
+        <ContactModal consultantId={consultantId} user={user} onClose={() => setOpen(false)} />
       )}
     </>
   );
@@ -88,70 +86,87 @@ function ContactModal({ consultantId, user, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-slate-900/95 p-5 shadow-xl ring-1 ring-white/10">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-white">Contact consultant</h3>
-          <button
-            onClick={onClose}
-            className="rounded-full border border-white/10 px-2 py-1 text-slate-300 hover:bg-white/10"
-          >
-            ✕
-          </button>
-        </div>
+    // Overlay: fixed, with safe-area padding; scroll is inside the dialog, not the page
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-slate-900/95 shadow-xl ring-1 ring-white/10"
+        // Use dynamic viewport height to play nice with mobile browser chrome
+        style={{ maxHeight: "calc(100dvh - 2rem)" }}
+      >
+        {/* Always-visible close button with larger touch target */}
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute right-3 top-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-slate-300 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400/40"
+        >
+          <span aria-hidden>✕</span>
+        </button>
 
-        <p className="mt-1 text-sm text-slate-400">
-          Send a brief enquiry. This isn’t a job listing—just a message to start a conversation.
-        </p>
+        {/* Scrollable content area; add safe-area padding so nothing is hidden behind mobile UI */}
+        <div className="max-h-full overflow-y-auto px-5 pb-[max(env(safe-area-inset-bottom),1rem)] pt-[max(env(safe-area-inset-top),1rem)]">
+          {/* Header (kept simple; could be sticky if you prefer) */}
+          <h3 id="contact-consultant-title" className="pr-12 text-lg font-semibold text-white">
+            Contact consultant
+          </h3>
 
-        <form onSubmit={submit} className="mt-4 space-y-3">
-          <Field label="Subject" value={form.subject} onChange={handle("subject")} required />
-          <Field
-            as="textarea"
-            rows={6}
-            label="Message"
-            placeholder="Describe what you need help with…"
-            value={form.message}
-            onChange={handle("message")}
-            required
-          />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Your name" value={form.name} onChange={handle("name")} />
-            <Field label="Your email" type="email" value={form.email} onChange={handle("email")} />
-            <Field label="Phone (optional)" value={form.phone} onChange={handle("phone")} />
-            <Field label="Location (optional)" value={form.location} onChange={handle("location")} />
-          </div>
-          <Field label="Budget (optional)" value={form.budget} onChange={handle("budget")} />
+          <p className="mt-1 text-sm text-slate-400">
+            Send a brief enquiry. This isn’t a job listing—just a message to start a conversation.
+          </p>
 
-          {status && (
-            <div
-              className={`rounded-lg px-3 py-2 text-sm ${
-                status.ok
-                  ? "border border-emerald-400/40 bg-emerald-500/10 text-emerald-100"
-                  : "border border-rose-400/40 bg-rose-500/10 text-rose-100"
-              }`}
-            >
-              {status.msg}
+          <form onSubmit={submit} className="mt-4 space-y-3">
+            <Field label="Subject" value={form.subject} onChange={handle("subject")} required />
+            <Field
+              as="textarea"
+              rows={6}
+              label="Message"
+              placeholder="Describe what you need help with…"
+              value={form.message}
+              onChange={handle("message")}
+              required
+            />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Your name" value={form.name} onChange={handle("name")} />
+              <Field label="Your email" type="email" value={form.email} onChange={handle("email")} />
+              <Field label="Phone (optional)" value={form.phone} onChange={handle("phone")} />
+              <Field label="Location (optional)" value={form.location} onChange={handle("location")} />
             </div>
-          )}
+            <Field label="Budget (optional)" value={form.budget} onChange={handle("budget")} />
 
-          <div className="mt-2 flex items-center gap-2">
-            <button
-              type="submit"
-              disabled={sending}
-              className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            >
-              {sending ? "Sending…" : "Send message"}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="inline-flex items-center justify-center rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-slate-200 hover:border-sky-300/60 hover:bg-sky-500/10"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+            {status && (
+              <div
+                className={`rounded-lg px-3 py-2 text-sm ${
+                  status.ok
+                    ? "border border-emerald-400/40 bg-emerald-500/10 text-emerald-100"
+                    : "border border-rose-400/40 bg-rose-500/10 text-rose-100"
+                }`}
+              >
+                {status.msg}
+              </div>
+            )}
+
+            {/* Action bar with extra bottom spacing for mobile nav/keyboard */}
+            <div className="mt-2 flex items-center gap-2 pb-2">
+              <button
+                type="submit"
+                disabled={sending}
+                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {sending ? "Sending…" : "Send message"}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="inline-flex items-center justify-center rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-slate-200 hover:border-sky-300/60 hover:bg-sky-500/10"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
