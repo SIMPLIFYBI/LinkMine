@@ -86,18 +86,19 @@ function ContactModal({ consultantId, user, onClose }) {
   };
 
   return (
-    // Overlay: fixed, with safe-area padding; scroll is inside the dialog, not the page
+    // Overlay: allow scrolling as a fallback; keep background blur
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4 py-4 backdrop-blur-sm overflow-y-auto"
       role="dialog"
       aria-modal="true"
     >
       <div
-        className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-slate-900/95 shadow-xl ring-1 ring-white/10"
-        // Use dynamic viewport height to play nice with mobile browser chrome
+        className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-slate-900/95 shadow-xl ring-1 ring-white/10 flex flex-col"
+        // Cap height to dynamic viewport so inner area can scroll; keeps desktop nice too
         style={{ maxHeight: "calc(100dvh - 2rem)" }}
+        tabIndex={-1}
       >
-        {/* Always-visible close button with larger touch target */}
+        {/* Close: large tap target, always reachable */}
         <button
           onClick={onClose}
           aria-label="Close"
@@ -106,9 +107,11 @@ function ContactModal({ consultantId, user, onClose }) {
           <span aria-hidden>✕</span>
         </button>
 
-        {/* Scrollable content area; add safe-area padding so nothing is hidden behind mobile UI */}
-        <div className="max-h-full overflow-y-auto px-5 pb-[max(env(safe-area-inset-bottom),1rem)] pt-[max(env(safe-area-inset-top),1rem)]">
-          {/* Header (kept simple; could be sticky if you prefer) */}
+        {/* Scrollable content area */}
+        <div
+          className="flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(env(safe-area-inset-bottom),1rem)] pt-[max(env(safe-area-inset-top),1rem)]"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
           <h3 id="contact-consultant-title" className="pr-12 text-lg font-semibold text-white">
             Contact consultant
           </h3>
@@ -148,7 +151,7 @@ function ContactModal({ consultantId, user, onClose }) {
               </div>
             )}
 
-            {/* Action bar with extra bottom spacing for mobile nav/keyboard */}
+            {/* Action bar */}
             <div className="mt-2 flex items-center gap-2 pb-2">
               <button
                 type="submit"
