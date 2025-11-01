@@ -10,7 +10,7 @@ export default async function ConsultantPortfolioPage({ params }) {
 
   const { data: consultant } = await sb
     .from("consultants")
-    .select("id, display_name")
+    .select("id, display_name, metadata")
     .eq("id", id)
     .maybeSingle();
 
@@ -26,15 +26,28 @@ export default async function ConsultantPortfolioPage({ params }) {
 
       {/* Header with owner-only edit button on the right */}
       <header className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold text-white">
-            {consultant?.display_name || "Consultant"} · Portfolio
-          </h1>
-          {portfolio?.updated_at ? (
-            <p className="mt-1 text-xs text-slate-400">
-              Updated {new Date(portfolio.updated_at).toLocaleDateString()}
-            </p>
+        <div className="flex items-start gap-3">
+          {consultant?.metadata?.logo?.url ? (
+            <img
+              src={consultant.metadata.logo.url}
+              alt={`${consultant.display_name} logo`}
+              width={40}
+              height={40}
+              decoding="async"
+              loading="eager"
+              className="h-10 w-10 shrink-0 rounded-md bg-white/5 object-contain"
+            />
           ) : null}
+          <div>
+            <h1 className="text-xl font-semibold text-white">
+              {consultant?.display_name || "Consultant"} · Portfolio
+            </h1>
+            {portfolio?.updated_at ? (
+              <p className="mt-1 text-xs text-slate-400">
+                Updated {new Date(portfolio.updated_at).toLocaleDateString()}
+              </p>
+            ) : null}
+          </div>
         </div>
         <OwnerEditButton consultantId={id} />
       </header>

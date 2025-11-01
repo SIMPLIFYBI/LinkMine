@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 
+const MAX_LOGO_BYTES = 300_000; // ~300 KB
+const ALLOWED_LOGO_TYPES = ["image/png", "image/jpeg", "image/webp"];
+
 export default function EditConsultantForm({ consultant }) {
   const router = useRouter();
   const sb = supabaseBrowser();
@@ -21,8 +24,13 @@ export default function EditConsultantForm({ consultant }) {
     twitter_url: consultant.twitter_url ?? "",
     instagram_url: consultant.instagram_url ?? "",
     // Google
-    place_id: consultant.place_id ?? "",            // ADDED
+    place_id: consultant.place_id ?? "",
   });
+
+  // NEW: logo state (stored in consultants.metadata.logo)
+  const initialLogo = consultant?.metadata?.logo ?? { url: "", path: "", mime: "" };
+  const [logo, setLogo] = useState(initialLogo);
+  const [busyLogo, setBusyLogo] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
@@ -43,6 +51,48 @@ export default function EditConsultantForm({ consultant }) {
     };
     const re = patterns[network];
     return re.test(v);
+  }
+
+  async function handleLogoFile(file) {
+    if (!file) return;
+    if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
+      setMessage({ type: "error", text: "Logo must be PNG, JPG, or WEBP." });
+      return;
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      setMessage({ type: "error", text: "Logo too large (max ~300 KB)." });
+      return;
+    }
+    setBusyLogo(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`/api/consultants/${consultant.id}/logo/upload`, {
+        method: "POST",
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Upload failed");
+      setLogo({ url: data.publicUrl, path: data.path, mime: data.mime });
+    } catch (e) {
+      setMessage({ type: "error", text: e.message || "Upload failed." });
+    } finally {
+      setBusyLogo(false);
+    }
+  }
+
+  async function removeLogo() {
+    if (logo?.path) {
+      try {
+        await fetch(`/api/consultants/${consultant.id}/portfolio/delete-file`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ path: logo.path }),
+        });
+      } catch {}
+    }
+    setLogo({ url: "", path: "", mime: "" });
   }
 
   const handleSubmit = async (event) => {
@@ -92,8 +142,13 @@ export default function EditConsultantForm({ consultant }) {
       facebook_url: form.facebook_url.trim() || null,
       twitter_url: form.twitter_url.trim() || null,
       instagram_url: form.instagram_url.trim() || null,
-      // Google: send empty as null
-      place_id: placeId || null,                    // ADDED
+      // Google
+      place_id: placeId || null,
+      // NEW: metadata.logo (merge with existing metadata)
+      metadata: {
+        ...(consultant.metadata || {}),
+        logo: logo?.url ? { url: logo.url, path: logo.path, mime: logo.mime } : null,
+      },
     };
 
     const { error } = await sb.from("consultants").update(payload).eq("id", consultant.id);
@@ -122,6 +177,51 @@ export default function EditConsultantForm({ consultant }) {
       </div>
 
       <Field label="Bio" value={form.bio} onChange={handleChange("bio")} as="textarea" rows={5} />
+
+      {/* Brand logo */}
+      <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+        <p className="text-sm font-semibold text-slate-200">Brand logo</p>
+        <div className="flex items-start gap-4">
+          <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/5">
+            {logo?.url ? (
+              <img
+                src={logo.url}
+                alt={`${form.display_name || "Consultant"} logo`}
+                width={80}
+                height={80}
+                decoding="async"
+                loading="eager"
+                className="h-20 w-20 object-contain"
+              />
+            ) : (
+              <div className="h-20 w-20" />
+            )}
+          </div>
+          <div className="flex-1 space-y-2">
+            <div>
+              <label className="block text-xs text-slate-300">Upload logo (PNG, JPG, WEBP, ≤300 KB)</label>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(e) => handleLogoFile(e.target.files?.[0])}
+                disabled={busyLogo}
+                className="mt-1 block w-full text-xs text-slate-200 file:mr-3 file:rounded-md file:border file:border-white/15 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:text-slate-100 hover:file:bg-white/15"
+              />
+              {busyLogo && <p className="mt-1 text-xs text-slate-400">Uploading…</p>}
+            </div>
+            {logo?.url ? (
+              <button
+                type="button"
+                onClick={removeLogo}
+                className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs text-slate-100 hover:bg-white/15"
+              >
+                Remove logo
+              </button>
+            ) : null}
+          </div>
+        </div>
+        <p className="text-xs text-slate-400">Tip: square background, 256–512 px, optimized under 300 KB.</p>
+      </div>
 
       {/* Social links */}
       <div className="space-y-3">
