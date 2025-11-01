@@ -2,8 +2,10 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    // removed footer’s own gradient; keep it translucent so the body gradient shows through
-    <footer className="w-full border-t border-white/10 bg-white/[0.02] backdrop-blur-md supports-[backdrop-filter]:backdrop-blur-md">
+    <footer
+      role="contentinfo"
+      className="w-full border-t border-white/10 bg-white/[0.02] backdrop-blur-md supports-[backdrop-filter]:backdrop-blur-md"
+    >
       <div className="mx-auto max-w-6xl px-4 py-10">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div>
