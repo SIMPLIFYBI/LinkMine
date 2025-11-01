@@ -11,6 +11,7 @@ function SignupForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [agree, setAgree] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -28,6 +29,13 @@ function SignupForm() {
     setSubmitting(true);
     setError("");
     setMessage("");
+
+    if (!agree) {
+      setSubmitting(false);
+      setError("Please accept the Terms and Privacy Policy to continue.");
+      return;
+    }
+
     const sb = supabaseBrowser();
     const { data, error } = await sb.auth.signUp({
       email: email.trim(),
@@ -41,7 +49,7 @@ function SignupForm() {
     // If error, show it
     if (error) return setError(error.message || "Unable to sign up.");
 
-    // Try sign-in to check if account exists
+    // Try sign-in to check if account exists (and guide user appropriately)
     const { error: signInError } = await sb.auth.signInWithPassword({
       email: email.trim(),
       password,
@@ -87,12 +95,35 @@ function SignupForm() {
             />
           </div>
 
+          {/* Terms and Privacy consent */}
+          <div className="mt-2">
+            <label className="flex items-start gap-3 text-sm text-slate-300">
+              <input
+                type="checkbox"
+                className="mt-0.5 h-4 w-4 rounded border-white/20 bg-slate-900/60 text-sky-500 focus:ring-sky-500/40"
+                checked={agree}
+                onChange={(e) => setAgree(e.target.checked)}
+                aria-describedby="tos-privacy-help"
+                required
+              />
+              <span>
+                I have read and agree to the{" "}
+                <Link href="/terms" className="text-sky-300 underline">Terms & Conditions</Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="text-sky-300 underline">Privacy Policy</Link>.
+              </span>
+            </label>
+            <p id="tos-privacy-help" className="mt-1 text-xs text-slate-400">
+              You can withdraw consent where applicable; see our Privacy Policy for details.
+            </p>
+          </div>
+
           {error && <div className="text-sm text-rose-300">{error}</div>}
           {message && <div className="text-sm text-emerald-300">{message}</div>}
 
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || !agree}
             className="w-full rounded-md bg-gradient-to-r from-sky-600 to-indigo-600 px-4 py-2 text-sm font-medium disabled:opacity-60"
           >
             {submitting ? "Creating…" : "Sign up"}
