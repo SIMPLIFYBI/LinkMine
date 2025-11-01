@@ -61,6 +61,11 @@ export default async function ConsultantPortfolioPage({ params }) {
                     key={idx}
                     className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 ring-1 ring-white/10"
                   >
+                    {img?.title ? (
+                      <h3 className="mb-2 text-sm font-semibold text-slate-100">
+                        {img.title}
+                      </h3>
+                    ) : null}
                     {/* Using native img to avoid external domain config for now */}
                     {img?.url ? (
                       <img

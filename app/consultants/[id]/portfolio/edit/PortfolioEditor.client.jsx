@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 
-const emptyImage = { url: "", caption: "", alt: "", path: "" };
+const emptyImage = { url: "", title: "", caption: "", alt: "", path: "" };
 const MAX_IMAGE_BYTES = 2_000_000;
 const MAX_PDF_BYTES = 5_000_000;
 
@@ -15,7 +15,13 @@ export default function PortfolioEditor({ consultantId, initialData }) {
   const [overallIntro, setOverallIntro] = useState(initialData?.overall_intro || "");
   const [images, setImages] = useState(
     Array.isArray(initialData?.images) && initialData.images.length > 0
-      ? initialData.images.slice(0, 3).map((it) => ({ path: "", ...it }))
+      ? initialData.images.slice(0, 3).map((it) => ({
+          url: it?.url || "",
+          title: it?.title || "",
+          caption: it?.caption || "",
+          alt: it?.alt || "",
+          path: "",
+        }))
       : [emptyImage]
   );
   const [attachment, setAttachment] = useState(
@@ -133,8 +139,9 @@ export default function PortfolioEditor({ consultantId, initialData }) {
     const imgs = (images || [])
       .filter((it) => (it.url || "").trim())
       .slice(0, 3)
-      .map(({ url, caption, alt }) => ({
+      .map(({ url, title, caption, alt }) => ({
         url: String(url || "").trim(),
+        title: String(title || "").trim(),
         caption: String(caption || "").trim(),
         alt: String(alt || "").trim(),
       }));
@@ -223,6 +230,20 @@ export default function PortfolioEditor({ consultantId, initialData }) {
                       className="mt-1 block w-full text-xs text-slate-200 file:mr-3 file:rounded-md file:border file:border-white/15 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:text-slate-100 hover:file:bg-white/15"
                     />
                     {busyIdx === idx && <p className="mt-1 text-xs text-slate-400">Uploading…</p>}
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-300">Title</label>
+                    <input
+                      type="text"
+                      maxLength={100}
+                      value={img.title}
+                      onChange={(e) => updateImage(idx, { title: e.target.value })}
+                      placeholder="e.g., Haul Road Upgrade – West Pit"
+                      className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.07] px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:border-sky-400/60 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
+                    />
+                    <p className="mt-1 text-[11px] text-slate-400">
+                      A short project title (up to 100 chars).
+                    </p>
                   </div>
                   <div>
                     <label className="block text-xs text-slate-300">Alt text (accessibility)</label>
