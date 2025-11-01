@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 export const revalidate = 180; // 3 minutes
 
 const PAGE_SIZE = 15;
-const CARD_SELECT = "id, slug, display_name, headline, location, visibility, status";
+const CARD_SELECT = "id, slug, display_name, headline, location, visibility, status, metadata";
 
 // Paginate base list without exact count
 async function getAllConsultantsPage(sb, page) {
@@ -221,9 +221,27 @@ export default async function ConsultantsPage({ searchParams }) {
               key={c.id}
               className="relative rounded-xl border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/5 transition hover:border-white/20"
             >
-              <h3 className="text-lg font-semibold text-white">{c.display_name}</h3>
-              {c.headline ? <p className="mt-1 text-sm text-slate-300">{c.headline}</p> : null}
-              {c.location ? <div className="mt-1 text-xs text-slate-400">{c.location}</div> : null}
+              <div className="flex items-start gap-3">
+                {c?.metadata?.logo?.url ? (
+                  <img
+                    src={c.metadata.logo.url}
+                    alt={`${c.display_name} logo`}
+                    width={48}
+                    height={48}
+                    loading="lazy"
+                    decoding="async"
+                    className="h-12 w-12 shrink-0 rounded-md bg-white/5 object-contain"
+                  />
+                ) : (
+                  <div className="h-12 w-12 shrink-0 rounded-md bg-white/5" aria-hidden="true" />
+                )}
+                <div>
+                  <h3 className="text-lg font-semibold text-white">{c.display_name}</h3>
+                  {c.headline ? <p className="mt-1 text-sm text-slate-300">{c.headline}</p> : null}
+                  {c.location ? <div className="mt-1 text-xs text-slate-400">{c.location}</div> : null}
+                </div>
+              </div>
+
               <div className="mt-3">
                 <Link
                   href={`/consultants/${c.id}`}
