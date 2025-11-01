@@ -10,6 +10,7 @@ import ConsultantFavouriteButton from "@/app/components/ConsultantFavouriteButto
 import ConsultantSocialLinks from "@/app/components/ConsultantSocialLinks";
 import TrackView from "./TrackView.client.jsx";
 import ContactConsultantButton from "./ContactConsultantButton.client.jsx";
+import ConsultantTabs from "./ConsultantTabs";
 
 async function getConsultant(id) {
   const sb = await supabaseServerClient();
@@ -152,6 +153,8 @@ export default async function ConsultantPage({ params }) {
           />
         </div>
       </header>
+
+      <ConsultantTabs consultantId={consultant.id} active="profile" />
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[2fr,1fr]">
         <section className="space-y-6">
