@@ -31,11 +31,11 @@ export default async function ConsultantPortfolioPage({ params }) {
             <img
               src={consultant.metadata.logo.url}
               alt={`${consultant.display_name} logo`}
-              width={40}
-              height={40}
+              width={80}
+              height={80}
               decoding="async"
               loading="eager"
-              className="h-10 w-10 shrink-0 rounded-md bg-white/5 object-contain"
+              className="h-20 w-20 shrink-0 rounded-md bg-white/5 object-contain"
             />
           ) : null}
           <div>

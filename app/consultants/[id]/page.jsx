@@ -130,11 +130,11 @@ export default async function ConsultantPage({ params }) {
             <img
               src={consultant.metadata.logo.url}
               alt={`${consultant.display_name} logo`}
-              width={56}
-              height={56}
+              width={112}
+              height={112}
               decoding="async"
               loading="eager"
-              className="h-14 w-14 shrink-0 rounded-lg bg-white/5 object-contain"
+              className="h-28 w-28 shrink-0 rounded-lg bg-white/5 object-contain"
             />
           ) : null}
           <div>
