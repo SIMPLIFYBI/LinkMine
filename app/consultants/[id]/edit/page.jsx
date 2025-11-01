@@ -3,18 +3,17 @@ import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import EditConsultantForm from "./EditConsultantForm";
 import ConsultantServicesManager from "@/app/components/ConsultantServicesManager";
 import Link from "next/link";
+import EditTabs from "./EditTabs"; // ADD
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function EditConsultantPage({ params }) {
-  // FIX: await params before using its properties
   const { id } = await params;
   if (!id) return notFound();
 
   const sb = await supabaseServerClient();
-
   const { data: auth } = await sb.auth.getUser();
   const userId = auth?.user?.id || null;
 
@@ -48,6 +47,9 @@ export default async function EditConsultantPage({ params }) {
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-8">
       <h1 className="mb-4 text-2xl font-semibold text-white">Edit profile</h1>
+
+      <EditTabs consultantId={consultant.id} active="profile" /> {/* NEW */}
+
       <EditConsultantForm consultant={consultant} />
       <section className="mt-10 space-y-3">
         <h2 className="text-lg font-semibold text-slate-100">Services</h2>
