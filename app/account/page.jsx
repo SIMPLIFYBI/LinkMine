@@ -180,20 +180,30 @@ export default function AccountPage() {
                 style={{
                   border: "1px solid rgba(255,255,255,0.15)",
                   borderRadius: 12,
-                  padding: 16,
                   background: "rgba(255,255,255,0.04)",
                 }}
               >
-                <strong>{item.name}</strong>
-                <div
+                <Link
+                  href={`/consultants/${item.id}`}
                   style={{
-                    fontSize: 13,
-                    marginTop: 4,
-                    color: "#555",
+                    display: "block",
+                    padding: 16,
+                    color: "inherit",
+                    textDecoration: "none",
                   }}
+                  aria-label={`Open consultant profile: ${item.name}`}
                 >
-                  {item.isOwner ? "Owner (claimed by you)" : "—"}
-                </div>
+                  <strong>{item.name}</strong>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      marginTop: 4,
+                      color: "#555",
+                    }}
+                  >
+                    {item.isOwner ? "Owner (claimed by you)" : "—"}
+                  </div>
+                </Link>
               </li>
             ))}
           </ul>

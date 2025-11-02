@@ -8,6 +8,7 @@ import { buildConsultantRejectedEmail } from "@/lib/emails/consultantRejected";
 const POSTMARK_TOKEN = process.env.POSTMARK_TOKEN || process.env.POSTMARK_SERVER_TOKEN;
 const FROM_EMAIL = process.env.POSTMARK_FROM_EMAIL || "info@youmine.com.au";
 const FROM_NAME = process.env.POSTMARK_FROM_NAME || "YouMine";
+const BCC_EMAIL = process.env.POSTMARK_BCC_EMAIL || "info@youmine.com.au";
 
 export async function PATCH(req, context) {
   const sb = await supabaseServerClient({
@@ -95,6 +96,7 @@ export async function PATCH(req, context) {
         await client.sendEmail({
           From: `${FROM_NAME} <${FROM_EMAIL}>`,
           To: to,
+          Bcc: BCC_EMAIL,
           Subject,
           HtmlBody,
           TextBody,
@@ -111,6 +113,7 @@ export async function PATCH(req, context) {
         await client.sendEmail({
           From: `${FROM_NAME} <${FROM_EMAIL}>`,
           To: to,
+          Bcc: BCC_EMAIL,
           Subject,
           HtmlBody,
           TextBody,
