@@ -48,11 +48,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Service finder */}
-      <section className="mx-auto w-full max-w-screen-md px-4">
-        <ServiceFinder className="mt-4" />
-      </section>
-
       {/* Split section: stack on mobile, 2 cols on md+ */}
       <section className="mx-auto max-w-screen-md px-4 py-6 md:py-8">
         <div className="grid gap-7 items-center md:grid-cols-2">
@@ -98,6 +93,11 @@ export default function HomePage() {
             </div>
           </aside>
         </div>
+      </section>
+
+      {/* Service finder (moved below the “Connect…” section, above “Why MineLink?”) */}
+      <section className="mx-auto w-full max-w-screen-md px-4">
+        <ServiceFinder className="mt-4" />
       </section>
 
       {showPreview && (
