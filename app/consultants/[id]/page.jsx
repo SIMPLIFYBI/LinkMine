@@ -15,13 +15,12 @@ import ConsultantTabs from "./ConsultantTabs";
 async function getConsultant(id) {
   const sb = await supabaseServerClient();
 
-  // Resolve current user (for favourite + permissions)
   const { data: auth } = await sb.auth.getUser();
   const userId = auth?.user?.id || null;
 
   const { data, error } = await sb
     .from("consultants")
-    .select("*, linkedin_url, facebook_url, twitter_url, instagram_url") // safe if you were not selecting *
+    .select("*, linkedin_url, facebook_url, twitter_url, instagram_url")
     .eq("id", id)
     .maybeSingle();
 
@@ -38,13 +37,11 @@ async function getConsultant(id) {
     .eq("consultant_id", id)
     .order("created_at", { ascending: false });
 
-  // Fetch total page views for this consultant
   const { count: viewsCount = 0 } = await sb
     .from("consultant_page_views")
     .select("id", { count: "exact", head: true })
     .eq("consultant_id", id);
 
-  // User-specific: initial favourite + edit permission
   let initialFavourite = false;
   if (userId) {
     const { data: fav } = await sb
@@ -56,7 +53,18 @@ async function getConsultant(id) {
     initialFavourite = Boolean(fav);
   }
 
-  const canEdit = Boolean(userId && data.claimed_by === userId);
+  // NEW: admin check
+  let isAdmin = false;
+  if (userId) {
+    const { data: adminRow } = await sb
+      .from("app_admins")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    isAdmin = Boolean(adminRow);
+  }
+
+  const canEdit = Boolean(userId && (data.claimed_by === userId || isAdmin));
 
   return {
     consultant: data,
@@ -66,15 +74,16 @@ async function getConsultant(id) {
     userId,
     initialFavourite,
     canEdit,
+    isAdmin, // pass to UI if you want to show a badge
   };
 }
 
 export default async function ConsultantPage({ params }) {
-  const consultantId = params.id; // fixed: no await
+  const consultantId = params.id;
   const data = await getConsultant(consultantId);
   if (!data) return notFound();
 
-  const { consultant, services, ports, viewsCount, userId, initialFavourite, canEdit } = data;
+  const { consultant, services, ports, viewsCount, userId, initialFavourite, canEdit, isAdmin } = data;
 
   const place = consultant.place_id
     ? await fetchPlaceDetails(consultant.place_id)
@@ -93,6 +102,18 @@ export default async function ConsultantPage({ params }) {
       {/* Track page view */}
       <TrackView consultantId={consultantId} source="consultant_profile" />
 
+      {/* Admin pill — shows only to admins */}
+      {isAdmin && (
+        <div className="flex justify-start">
+          <span className="inline-flex items-center gap-2 rounded-full border border-sky-400/60 bg-sky-500/15 px-3 py-1.5 text-xs font-semibold text-sky-100 shadow-sm ring-1 ring-sky-300/30">
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+              <path d="M12 2l7 4v6c0 5-3.8 9.7-7 10-3.2-.3-7-5-7-10V6l7-4zm0 3.2L7 7v4.8c0 3.9 2.8 8 5 8.6 2.2-.6 5-4.7 5-8.6V7l-5-1.8z" />
+            </svg>
+            Admin mode
+          </span>
+        </div>
+      )}
+
       {/* Toolbar: Back + right-side stack (views above owner controls) */}
       <div className="flex items-start justify-between">
         <Link href="/consultants" className="text-sky-300 hover:underline">
@@ -100,19 +121,25 @@ export default async function ConsultantPage({ params }) {
         </Link>
 
         <div className="flex flex-col items-end gap-2">
-          {/* Views badge (moved here, no longer absolute) */}
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-200 ring-1 ring-white/10">
+            {/* views badge */}
             <svg viewBox="0 0 24 24" className="h-4 w-4 text-slate-300" fill="currentColor" aria-hidden="true">
               <path d="M12 5c4.5 0 8.3 2.9 10 7-1.7 4.1-5.5 7-10 7S3.7 16.1 2 12c1.7-4.1 5.5-7 10-7zm0 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
             </svg>
             <span>{viewsCount.toLocaleString()} views</span>
           </div>
 
-          {isOwner && (
+          {(isOwner || isAdmin) && (
             <div className="flex flex-wrap items-center justify-end gap-3">
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/70 bg-emerald-500/15 px-4 py-1.5 text-sm md:text-base font-semibold text-emerald-100 shadow-sm ring-1 ring-emerald-300/30">
-                You are the owner of this page
-              </span>
+              {isOwner ? (
+                <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/70 bg-emerald-500/15 px-4 py-1.5 text-sm md:text-base font-semibold text-emerald-100 shadow-sm ring-1 ring-emerald-300/30">
+                  You are the owner of this page
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-2 rounded-full border border-sky-300/70 bg-sky-500/15 px-4 py-1.5 text-sm md:text-base font-semibold text-sky-100 shadow-sm ring-1 ring-sky-300/30">
+                  Admin access
+                </span>
+              )}
               <Link
                 href={`/consultants/${consultantId}/edit`}
                 className="inline-flex items-center gap-2 rounded-full border border-sky-400/60 bg-sky-500/15 px-4 py-1.5 text-sm font-semibold text-sky-100 hover:border-sky-300 hover:bg-sky-500/25"
