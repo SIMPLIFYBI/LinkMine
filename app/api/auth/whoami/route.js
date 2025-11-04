@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
 export async function GET() {
-  const jar = cookies();
+  const jar = await cookies();
   const sb = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -13,8 +13,7 @@ export async function GET() {
       cookies: {
         get: (n) => jar.get(n)?.value,
         set: (n, v, o) => jar.set({ name: n, value: v, ...o }),
-        remove: (n, o) =>
-          jar.set({ name: n, value: "", ...o, expires: new Date(0) }),
+        remove: (n, o) => jar.delete({ name: n, ...o }),
       },
     }
   );

@@ -21,17 +21,17 @@ async function sbFromCookies() {
   );
 }
 
-export async function POST(req, { params }) {
+export async function POST(req, ctx) {
   const sb = await sbFromCookies();
-  const {
-    data: { user },
-  } = await sb.auth.getUser();
+  const { data: { user } } = await sb.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const { token } = (await req.json().catch(() => ({}))) || {};
-  const consultantId = params?.consultantId;
-  if (!consultantId || !token)
+  const { consultantId } = await ctx.params; // await params
+
+  if (!consultantId || !token) {
     return NextResponse.json({ error: "Missing consultantId or token" }, { status: 400 });
+  }
 
   const { data: c, error } = await sb
     .from("consultants")

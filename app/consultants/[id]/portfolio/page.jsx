@@ -16,7 +16,7 @@ export default async function ConsultantPortfolioPage({ params }) {
 
   const { data: portfolio } = await sb
     .from("consultant_portfolio")
-    .select("overall_intro, images, attachment, updated_at")
+    .select("overall_intro, images, attachment, updated_at, links") // <-- add links
     .eq("consultant_id", id)
     .maybeSingle();
 
@@ -118,6 +118,35 @@ export default async function ConsultantPortfolioPage({ params }) {
               >
                 {portfolio.attachment.name || "Download attachment (PDF)"}
               </a>
+            </section>
+          ) : null}
+
+          {/* Related links */}
+          {Array.isArray(portfolio?.links) && portfolio.links.length > 0 ? (
+            <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              <h2 className="mb-2 text-lg font-semibold text-white">Related links</h2>
+              <ul className="space-y-1">
+                {portfolio.links.map((l, i) => {
+                  const url = String(l?.url || "").trim();
+                  const label = String(l?.label || "").trim();
+                  let text = label;
+                  try {
+                    if (!text) text = new URL(url).hostname.replace(/^www\./i, "");
+                  } catch {}
+                  return url ? (
+                    <li key={i}>
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="nofollow ugc noopener"
+                        className="text-sky-300 hover:underline break-words"
+                      >
+                        {text || url}
+                      </a>
+                    </li>
+                  ) : null;
+                })}
+              </ul>
             </section>
           ) : null}
 

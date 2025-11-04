@@ -18,12 +18,21 @@ export async function POST(req, { params }) {
   const userId = auth?.user?.id;
   if (!userId) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
+  // Check admin
+  let isAdmin = false;
+  const { data: adminRow } = await sb
+    .from("app_admins")
+    .select("user_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  isAdmin = Boolean(adminRow);
+
   const { data: consultant } = await sb
     .from("consultants")
     .select("id, claimed_by")
     .eq("id", consultantId)
     .maybeSingle();
-  if (!consultant || consultant.claimed_by !== userId) {
+  if (!consultant || (consultant.claimed_by !== userId && !isAdmin)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

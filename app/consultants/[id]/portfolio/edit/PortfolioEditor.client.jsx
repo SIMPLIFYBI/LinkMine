@@ -8,6 +8,17 @@ const emptyImage = { url: "", title: "", caption: "", alt: "", path: "" };
 const MAX_IMAGE_BYTES = 2_000_000;
 const MAX_PDF_BYTES = 5_000_000;
 
+function isHttpsUrl(v) {
+  const s = String(v || "").trim();
+  if (!s) return false;
+  try {
+    const u = new URL(s);
+    return u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export default function PortfolioEditor({ consultantId, initialData }) {
   const router = useRouter();
   const sb = supabaseBrowser();
@@ -27,6 +38,17 @@ export default function PortfolioEditor({ consultantId, initialData }) {
   const [attachment, setAttachment] = useState(
     initialData?.attachment || { url: "", name: "", mime: "application/pdf", caption: "", path: "" }
   );
+
+  // NEW: up to 3 links
+  const [links, setLinks] = useState(
+    Array.isArray(initialData?.links) && initialData.links.length
+      ? initialData.links.slice(0, 3).map((l) => ({
+          url: String(l?.url || "").trim(),
+          label: String(l?.label || "").trim(),
+        }))
+      : [{ url: "", label: "" }]
+  );
+
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
   const [busyIdx, setBusyIdx] = useState(null);
@@ -131,6 +153,13 @@ export default function PortfolioEditor({ consultantId, initialData }) {
     setAttachment({ url: "", name: "", mime: "application/pdf", caption: "", path: "" });
   }
 
+  const addLink = () => {
+    if (links.length >= 3) return;
+    setLinks((arr) => [...arr, { url: "", label: "" }]);
+  };
+  const removeLink = (idx) => setLinks((arr) => arr.filter((_, i) => i !== idx));
+  const updateLink = (idx, patch) => setLinks((arr) => arr.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
+
   async function onSave(e) {
     e.preventDefault();
     setSaving(true);
@@ -146,6 +175,20 @@ export default function PortfolioEditor({ consultantId, initialData }) {
         alt: String(alt || "").trim(),
       }));
 
+    // NEW: validate and map links (up to 3, https only)
+    const cleanedLinks = (links || [])
+      .map((l) => ({ url: String(l.url || "").trim(), label: String(l.label || "").trim() }))
+      .filter((l) => l.url)                // non-empty url
+      .slice(0, 3);
+
+    for (const l of cleanedLinks) {
+      if (!isHttpsUrl(l.url)) {
+        setSaving(false);
+        setMsg({ ok: false, text: "Links must be full https URLs (e.g. https://example.com/article)." });
+        return;
+      }
+    }
+
     const payload = {
       consultant_id: consultantId,
       overall_intro: (overallIntro || "").trim() || null,
@@ -158,6 +201,8 @@ export default function PortfolioEditor({ consultantId, initialData }) {
             caption: String(attachment.caption || "").trim(),
           }
         : null,
+      // NEW: links
+      links: cleanedLinks,
     };
 
     const { error } = await sb
@@ -325,6 +370,64 @@ export default function PortfolioEditor({ consultantId, initialData }) {
           </div>
         </div>
         <p className="mt-2 text-xs text-slate-400">Keep PDFs under ~5 MB.</p>
+      </div>
+
+      {/* NEW: Related links */}
+      <div>
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-semibold text-slate-200">Related links (up to 3)</label>
+          <button
+            type="button"
+            onClick={addLink}
+            disabled={links.length >= 3}
+            className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs text-slate-100 hover:bg-white/15 disabled:opacity-50"
+          >
+            Add link
+          </button>
+        </div>
+
+        <div className="mt-3 grid gap-3">
+          {links.map((l, idx) => (
+            <div key={idx} className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
+              <div className="grid gap-3 md:grid-cols-[1fr_minmax(200px,0.6fr)_auto] items-start">
+                <div>
+                  <label className="block text-xs text-slate-300">URL (https)</label>
+                  <input
+                    type="url"
+                    inputMode="url"
+                    placeholder="https://example.com/article"
+                    value={l.url}
+                    onChange={(e) => updateLink(idx, { url: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.07] px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:border-sky-400/60 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-300">Label (optional)</label>
+                  <input
+                    type="text"
+                    maxLength={80}
+                    placeholder="e.g., Case study on tailings dam design"
+                    value={l.label}
+                    onChange={(e) => updateLink(idx, { label: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.07] px-3 py-2 text-sm text-slate-100"
+                  />
+                </div>
+                <div className="pt-5 md:pt-0">
+                  <button
+                    type="button"
+                    onClick={() => removeLink(idx)}
+                    className="rounded-full border border-white/15 bg-white/10 px-2 py-1 text-xs text-slate-100 hover:bg-white/15"
+                    aria-label="Remove link"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-2 text-xs text-slate-400">Use full https URLs. Choose short, descriptive labels.</p>
       </div>
 
       {msg && (

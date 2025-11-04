@@ -8,12 +8,12 @@ import { supabaseFromRequest } from "@/lib/supabaseRequestClient";
 export async function GET(req) {
   try {
     const hdrs = nextHeaders();
-    const jar = cookies();
+    const jar = await cookies();
     const cookieNames = jar.getAll().map((c) => c.name);
     const authHeader = hdrs.get("authorization") || req.headers.get("authorization") || "";
 
     // Check user via cookies (SSR client)
-    const sbCookie = supabaseRouteClient();
+    const sbCookie = await supabaseRouteClient();
     const { data: cookieAuth } = await sbCookie.auth.getUser();
 
     // Check user via Authorization header (Bearer token)

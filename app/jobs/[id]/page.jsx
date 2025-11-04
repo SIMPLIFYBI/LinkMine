@@ -36,7 +36,7 @@ async function getJob(id) {
 }
 
 export default async function JobDetailPage({ params }) {
-  const id = await params?.id;
+  const { id } = await params;            // await params
   const job = await getJob(id);
   if (!job) notFound();
 

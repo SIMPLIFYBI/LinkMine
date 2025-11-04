@@ -3,7 +3,7 @@ import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import EditConsultantForm from "./EditConsultantForm";
 import ConsultantServicesManager from "@/app/components/ConsultantServicesManager";
 import Link from "next/link";
-import EditTabs from "./EditTabs"; // ADD
+import EditTabs from "./EditTabs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,7 +11,6 @@ export const revalidate = 0;
 
 export default async function EditConsultantPage({ params }) {
   const { id } = await params;
-  if (!id) return notFound();
 
   const sb = await supabaseServerClient();
   const { data: auth } = await sb.auth.getUser();
@@ -41,7 +40,17 @@ export default async function EditConsultantPage({ params }) {
 
   if (error || !consultant) return notFound();
 
-  if (!userId || consultant.claimed_by !== userId) {
+  let isAdmin = false;
+  if (userId) {
+    const { data: adminRow } = await sb
+      .from("app_admins")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    isAdmin = Boolean(adminRow);
+  }
+
+  if (!userId || (consultant.claimed_by !== userId && !isAdmin)) {
     redirect(`/consultants/${id}`);
   }
 
@@ -49,7 +58,7 @@ export default async function EditConsultantPage({ params }) {
     <main className="mx-auto w-full max-w-3xl px-6 py-8">
       <h1 className="mb-4 text-2xl font-semibold text-white">Edit profile</h1>
 
-      <EditTabs consultantId={consultant.id} active="profile" /> {/* NEW */}
+      <EditTabs consultantId={consultant.id} active="profile" />
 
       {consultant.status === "pending" && (
         <div className="mt-4 rounded-xl border border-amber-400/30 bg-amber-500/10 p-4 text-amber-100">

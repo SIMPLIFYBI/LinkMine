@@ -17,14 +17,12 @@ async function supabaseFromCookies() {
   );
 }
 
-export async function POST(_req, { params }) {
+export async function POST(_req, ctx) {
   const sb = await supabaseFromCookies();
-  const {
-    data: { user },
-  } = await sb.auth.getUser();
+  const { data: { user } } = await sb.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const consultantId = params.consultantId;
+  const { consultantId } = await ctx.params; // await params
 
   const { error } = await sb.from("consultant_favourites").insert({
     user_id: user.id,
@@ -38,14 +36,12 @@ export async function POST(_req, { params }) {
   return NextResponse.json({ ok: true });
 }
 
-export async function DELETE(_req, { params }) {
+export async function DELETE(_req, ctx) {
   const sb = await supabaseFromCookies();
-  const {
-    data: { user },
-  } = await sb.auth.getUser();
+  const { data: { user } } = await sb.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const consultantId = params.consultantId;
+  const { consultantId } = await ctx.params; // await params
 
   const { error } = await sb
     .from("consultant_favourites")

@@ -5,17 +5,23 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { supabaseServer } from "@/lib/supabaseServerClient";
 
-function userClient() {
-  const jar = cookies();
+async function userClient() {
+  const jar = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    { cookies: { get: (n) => jar.get(n)?.value, set: (n, v, o) => jar.set({ name: n, value: v, ...o }), remove: (n, o) => jar.set({ name: n, value: "", ...o, expires: new Date(0) }) } }
+    {
+      cookies: {
+        get: (n) => jar.get(n)?.value,
+        set: (n, v, o) => jar.set({ name: n, value: v, ...o }),
+        remove: (n, o) => jar.delete({ name: n, ...o }),
+      },
+    }
   );
 }
 
 export async function PATCH(req, { params }) {
-  const u = userClient();
+  const u = await userClient();
   const a = supabaseServer();
   const { data: auth } = await u.auth.getUser();
   const user = auth?.user;
@@ -23,7 +29,7 @@ export async function PATCH(req, { params }) {
 
   const patch = await req.json().catch(() => ({}));
   const allowed = ["title", "description", "location", "service_slug", "recipient_ids", "status"];
-  const update = Object.fromEntries(Object.entries(patch).filter(([k, v]) => allowed.includes(k)));
+  const update = Object.fromEntries(Object.entries(patch).filter(([k]) => allowed.includes(k)));
   if (Object.keys(update).length === 0) return NextResponse.json({ ok: false, error: "No changes" }, { status: 400 });
 
   const { data, error } = await a
@@ -39,7 +45,7 @@ export async function PATCH(req, { params }) {
 }
 
 export async function DELETE(_req, { params }) {
-  const u = userClient();
+  const u = await userClient();
   const a = supabaseServer();
   const { data: auth } = await u.auth.getUser();
   const user = auth?.user;

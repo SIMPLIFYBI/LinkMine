@@ -15,7 +15,6 @@ export default async function EditPortfolioPage({ params }) {
   const { data: auth } = await sb.auth.getUser();
   const userId = auth?.user?.id || null;
 
-  // Confirm ownership
   const { data: consultant } = await sb
     .from("consultants")
     .select("id, display_name, claimed_by, status")
@@ -23,14 +22,26 @@ export default async function EditPortfolioPage({ params }) {
     .maybeSingle();
 
   if (!consultant) return notFound();
-  if (!userId || consultant.claimed_by !== userId) {
+
+  // NEW: allow admins
+  let isAdmin = false;
+  if (userId) {
+    const { data: adminRow } = await sb
+      .from("app_admins")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    isAdmin = Boolean(adminRow);
+  }
+
+  if (!userId || (consultant.claimed_by !== userId && !isAdmin)) {
     redirect(`/consultants/${id}/portfolio`);
   }
 
   // Load current portfolio (if any)
   const { data: portfolio } = await sb
     .from("consultant_portfolio")
-    .select("overall_intro, images, attachment")
+    .select("overall_intro, images, attachment, links")
     .eq("consultant_id", id)
     .maybeSingle();
 

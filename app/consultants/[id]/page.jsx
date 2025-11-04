@@ -78,8 +78,8 @@ async function getConsultant(id) {
   };
 }
 
-export default async function ConsultantPage({ params }) {
-  const consultantId = params.id;
+export default async function ConsultantPage(props) {
+  const { id: consultantId } = await props.params; // await params
   const data = await getConsultant(consultantId);
   if (!data) return notFound();
 

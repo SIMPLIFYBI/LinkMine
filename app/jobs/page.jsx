@@ -15,12 +15,13 @@ const PAGE_SIZE = 16;
 const HERO_IMG = "/HaulRoad.png";
 
 export default async function JobsRootPage({ searchParams }) {
-  const initialTab = searchParams?.tab === "my-jobs" ? "my-jobs" : "board";
+  const sp = await searchParams;                // await searchParams
+  const initialTab = sp?.tab === "my-jobs" ? "my-jobs" : "board";
 
-  const page = Math.max(1, Number.parseInt(searchParams?.page ?? "1", 10));
+  const page = Math.max(1, Number.parseInt(sp?.page ?? "1", 10));
   const from = (page - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE;
   // sentinel row (+1) to determine hasNext without exact count
-  const to = from + PAGE_SIZE; // inclusive
 
   // CHANGED: public client is sync and does not read cookies
   const sb = supabasePublicServer();

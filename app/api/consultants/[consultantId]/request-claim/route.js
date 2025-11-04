@@ -16,8 +16,8 @@ async function supabaseFromCookies() {
   );
 }
 
-export async function POST(req, { params }) {
-  const { consultantId } = params;
+export async function POST(req, ctx) {
+  const { consultantId } = await ctx.params; // await params
   const sb = await supabaseFromCookies();
 
   const { data: { user } } = await sb.auth.getUser();
