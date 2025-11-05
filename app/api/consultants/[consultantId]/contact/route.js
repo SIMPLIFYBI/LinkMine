@@ -1,3 +1,4 @@
+// Save every contact, update status after email, and raise rate-limit to 6 per 24h.
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
@@ -33,7 +34,7 @@ export async function POST(req, { params }) {
       phone = "",
       location = "",
       budget = "",
-      job_id = null, // optional linkage
+      job_id = null, // optional
       source = "contact_modal",
     } = body || {};
 
@@ -41,7 +42,7 @@ export async function POST(req, { params }) {
       return NextResponse.json({ error: "Subject and message are required." }, { status: 400 });
     }
 
-    // Consultant must be public and approved to receive messages
+    // Validate consultant contactability
     const { data: consultant, error: cErr } = await sb
       .from("consultants")
       .select("id, display_name, contact_email, visibility, status")
@@ -60,7 +61,7 @@ export async function POST(req, { params }) {
       return NextResponse.json({ error: "Consultant has no contact email set" }, { status: 400 });
     }
 
-    // Light rate-limit: same sender -> same consultant: max 3 in 24h
+    // Rate limit: 6 per sender → same consultant in last 24h
     const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const { count: recentCount } = await sb
       .from("consultant_contacts")
@@ -69,7 +70,7 @@ export async function POST(req, { params }) {
       .eq("consultant_id", consultantId)
       .gte("created_at", since24h);
 
-    if (typeof recentCount === "number" && recentCount >= 3) {
+    if (typeof recentCount === "number" && recentCount >= 6) {
       return NextResponse.json(
         { error: "You’ve reached the daily contact limit for this consultant. Please try again later." },
         { status: 429 }
@@ -83,11 +84,10 @@ export async function POST(req, { params }) {
       phone: (phone || "").trim(),
     };
 
-    // Prepare context for analytics/trace
     const referrer = req.headers.get("referer") || null;
-    const utm = {}; // you can parse UTM from referrer if needed
+    const utm = {};
 
-    // 1) Insert a 'pending' contact record first (system of record, even if email fails)
+    // 1) Persist the contact first
     const { data: inserted, error: insertErr } = await sb
       .from("consultant_contacts")
       .insert([
@@ -113,12 +113,10 @@ export async function POST(req, { params }) {
       .single();
 
     if (insertErr) {
-      // If we can’t record it, don’t proceed with email to avoid “email sent but not recorded”
       return NextResponse.json({ error: "Failed to record contact" }, { status: 500 });
     }
 
     if (!POSTMARK_TOKEN || !FROM_EMAIL) {
-      // Update stored row to failed
       await sb
         .from("consultant_contacts")
         .update({ status: "failed", delivery_provider: "postmark" })
@@ -138,8 +136,7 @@ export async function POST(req, { params }) {
       sender,
     });
 
-    // 2) Attempt email send
-    let messageId = null;
+    // 2) Try to send email and update status
     try {
       const client = new Postmark(POSTMARK_TOKEN);
       const sendRes = await client.sendEmail({
@@ -152,28 +149,22 @@ export async function POST(req, { params }) {
         ReplyTo: sender.email,
         TrackOpens: true,
       });
-      messageId = sendRes.MessageID || null;
 
-      // 3) Mark as 'sent' and store provider trace id
       await sb
         .from("consultant_contacts")
         .update({
           status: "sent",
           delivery_provider: "postmark",
-          delivery_message_id: messageId,
+          delivery_message_id: sendRes.MessageID || null,
         })
         .eq("id", inserted.id)
         .eq("sender_user_id", user.id);
 
-      return NextResponse.json({ ok: true, id: inserted.id, messageId });
+      return NextResponse.json({ ok: true, id: inserted.id, messageId: sendRes.MessageID || null });
     } catch (mailErr) {
-      // email failed – record failure
       await sb
         .from("consultant_contacts")
-        .update({
-          status: "failed",
-          delivery_provider: "postmark",
-        })
+        .update({ status: "failed", delivery_provider: "postmark" })
         .eq("id", inserted.id)
         .eq("sender_user_id", user.id);
 
