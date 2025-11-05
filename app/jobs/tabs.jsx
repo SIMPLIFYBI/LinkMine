@@ -3,13 +3,10 @@
 import Link from "next/link";
 import { useState, useMemo } from "react";
 import JobsBoardSection from "@/app/jobs/JobsBoardSection";
-import JobsTableSection from "@/app/jobs/JobsTableSection";
-import JobsRequestedTable from "@/app/jobs/JobsRequestedTable";
-import MyJobsClient from "./MyJobsClient";
+import MyJobsClient from "./MyJobsClient"; // Create job tab
 
 const tabs = [
   { key: "board", label: "Jobs board" },
-  { key: "table", label: "My jobs" },
   { key: "my-jobs", label: "Create job" },
 ];
 
@@ -26,8 +23,6 @@ export default function JobsPageTabs({
     switch (active) {
       case "my-jobs":
         return <MyJobsClient />;
-      case "table":
-        return <JobsRequestedTable />;
       case "board":
       default:
         return <JobsBoardSection jobs={boardJobs} />;
@@ -37,7 +32,7 @@ export default function JobsPageTabs({
   const buildPageHref = (targetPage) => {
     const params = new URLSearchParams();
     if (targetPage > 1) params.set("page", String(targetPage));
-    // We keep default tab behavior (board) by not including ?tab=...
+    // Default tab (board) by not including ?tab=...
     const q = params.toString();
     return `/jobs${q ? `?${q}` : ""}`;
   };
@@ -53,9 +48,7 @@ export default function JobsPageTabs({
               type="button"
               onClick={() => setActive(tab.key)}
               className={`flex-1 whitespace-nowrap rounded-full px-4 py-2 font-semibold transition ${
-                isActive
-                  ? "bg-sky-500 text-slate-900 shadow"
-                  : "text-slate-300 hover:bg-white/5"
+                isActive ? "bg-sky-500 text-slate-900 shadow" : "text-slate-300 hover:bg-white/5"
               }`}
             >
               {tab.label}
@@ -72,9 +65,7 @@ export default function JobsPageTabs({
             href={boardHasPrev ? buildPageHref(boardPage - 1) : "#"}
             aria-disabled={!boardHasPrev}
             className={`rounded-md border border-white/10 px-3 py-1.5 text-sm ${
-              boardHasPrev
-                ? "text-slate-200 hover:bg-white/10"
-                : "text-slate-500 cursor-not-allowed"
+              boardHasPrev ? "text-slate-200 hover:bg-white/10" : "text-slate-500 cursor-not-allowed"
             }`}
             prefetch
           >
@@ -85,9 +76,7 @@ export default function JobsPageTabs({
             href={boardHasNext ? buildPageHref(boardPage + 1) : "#"}
             aria-disabled={!boardHasNext}
             className={`rounded-md border border-white/10 px-3 py-1.5 text-sm ${
-              boardHasNext
-                ? "text-slate-200 hover:bg-white/10"
-                : "text-slate-500 cursor-not-allowed"
+              boardHasNext ? "text-slate-200 hover:bg-white/10" : "text-slate-500 cursor-not-allowed"
             }`}
             prefetch
           >

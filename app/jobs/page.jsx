@@ -1,29 +1,21 @@
 import JobsPageTabs from "@/app/jobs/tabs";
-// CHANGED: add UI imports
-import Link from "next/link";
 import Image from "next/image";
-// CHANGED: use the public, cacheable client
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
+import LearnAboutPostingModal from "./LearnAboutPostingModal.client"; // NEW
 
 export const runtime = "nodejs";
-// CHANGED: enable ISR (already set)
-export const revalidate = 180; // 3 minutes
+export const revalidate = 180;
 
 const PAGE_SIZE = 16;
-
-// NEW: hero image (place your photo here)
 const HERO_IMG = "/HaulRoad.png";
 
 export default async function JobsRootPage({ searchParams }) {
-  const sp = await searchParams;                // await searchParams
-  const initialTab = sp?.tab === "my-jobs" ? "my-jobs" : "board";
+  const sp = await searchParams;
 
   const page = Math.max(1, Number.parseInt(sp?.page ?? "1", 10));
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE;
-  // sentinel row (+1) to determine hasNext without exact count
 
-  // CHANGED: public client is sync and does not read cookies
   const sb = supabasePublicServer();
 
   const { data: raw = [] } = await sb
@@ -52,7 +44,6 @@ export default async function JobsRootPage({ searchParams }) {
 
   return (
     <main className="pb-8">
-      {/* Full-bleed hero with gradient overlay */}
       <section className="relative left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw] min-h-[260px] overflow-hidden border-b border-white/10">
         <Image
           src={HERO_IMG}
@@ -70,21 +61,14 @@ export default async function JobsRootPage({ searchParams }) {
               Find and post roles across geology, drilling, operations, and more.
             </p>
           </div>
-          <Link href="/jobs/new" className="hidden sm:inline-flex">
-            <button className="rounded-md bg-sky-600 px-4 py-2 text-white shadow-sm transition hover:bg-sky-500">
-              Post a job
-            </button>
-          </Link>
+          {/* Replaces the broken "Post a Job" link with the explainer modal */}
+          <LearnAboutPostingModal />
         </div>
-
-        {/* Soft header accent */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-sky-500/40 via-cyan-400/30 to-sky-500/40" />
       </section>
 
-      {/* Tabs section, slightly overlapped for a polished stack */}
       <div className="mx-auto -mt-6 max-w-6xl px-4">
         <JobsPageTabs
-          initialTab={initialTab}
           boardJobs={jobs}
           boardPage={page}
           boardHasPrev={hasPrev}
