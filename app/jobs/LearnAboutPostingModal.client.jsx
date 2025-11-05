@@ -11,7 +11,21 @@ export default function LearnAboutPostingModal({ buttonClassName = "" }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`inline-flex items-center gap-2 rounded-full border border-sky-400/40 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-100 shadow-sm transition hover:bg-sky-500/20 ${buttonClassName}`}
+        className={[
+          // Filled gradient with strong contrast over photos
+          "relative inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white",
+          "bg-gradient-to-r from-sky-500 via-cyan-500 to-indigo-500",
+          // Pop against background
+          "shadow-lg shadow-sky-900/30 ring-1 ring-white/20",
+          "hover:from-sky-400 hover:via-cyan-400 hover:to-indigo-400",
+          "focus:outline-none focus:ring-2 focus:ring-sky-300/50",
+          // Subtle glass sheen overlay (top highlight)
+          "before:absolute before:inset-0 before:rounded-full before:content-['']",
+          "before:bg-white/10 before:opacity-30",
+          "before:[mask-image:linear-gradient(to_bottom,white,transparent_60%)]",
+          // Allow custom additions
+          buttonClassName,
+        ].join(" ")}
       >
         Learn about Posting Jobs
       </button>

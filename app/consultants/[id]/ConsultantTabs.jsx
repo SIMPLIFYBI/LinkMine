@@ -5,8 +5,12 @@ export default function ConsultantTabs({ consultantId, active = "profile" }) {
     { key: "profile", label: "Profile", href: `/consultants/${consultantId}` },
     { key: "portfolio", label: "Portfolio", href: `/consultants/${consultantId}/portfolio` },
   ];
+
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-2">
+    <nav
+      aria-label="Consultant sections"
+      className="mb-4 flex gap-3 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1 text-sm text-slate-100"
+    >
       {tabs.map((t) => {
         const isActive = active === t.key;
         return (
@@ -14,16 +18,16 @@ export default function ConsultantTabs({ consultantId, active = "profile" }) {
             key={t.key}
             href={t.href}
             prefetch
-            className={`rounded-full border px-3 py-1.5 text-sm transition ${
+            className={`flex-1 whitespace-nowrap rounded-full px-4 py-2 font-semibold transition ${
               isActive
-                ? "border-sky-400/40 bg-sky-500/15 text-sky-100"
-                : "border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10"
+                ? "bg-sky-500 text-slate-900 shadow"
+                : "text-slate-300 hover:bg-white/5"
             }`}
           >
             {t.label}
           </Link>
         );
       })}
-    </div>
+    </nav>
   );
 }
