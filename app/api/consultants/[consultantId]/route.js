@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { buildConsultantApprovedEmail } from "@/lib/emails/consultantApproved";
 
 export const runtime = "nodejs";
 
@@ -21,66 +22,23 @@ function supabaseFromAuthHeader(req) {
   });
 }
 
-function approvalEmailHtml(name) {
-  const safeName = name || "there";
-  return `<!DOCTYPE html>
-<html lang="en" style="margin:0;padding:0;background:#0b1220;color:#ecf3ff;">
-  <head>
-    <meta charSet="utf-8" />
-    <title>Your MineLink consultancy is approved</title>
-  </head>
-  <body style="margin:0;padding:32px 0;background:#0b1220;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
-      <tr>
-        <td align="center">
-          <table role="presentation" width="560" border="0" cellspacing="0" cellpadding="0" style="width:560px;max-width:90%;background:linear-gradient(140deg,#12233f,#0b162d 70%);border:1px solid rgba(255,255,255,0.06);border-radius:24px;overflow:hidden;box-shadow:0 24px 60px rgba(11,18,32,0.55);">
-            <tr>
-              <td style="padding:40px 44px 32px;">
-                <p style="margin:0 0 18px;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:#7aa7ff;">MineLink</p>
-                <h1 style="margin:0 0 16px;font-size:28px;line-height:1.3;color:#ffffff;">Your consultancy profile is live</h1>
-                <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:rgba(236,243,255,0.78);">
-                  Hi ${safeName},<br/>Thanks for submitting your consultancy to MineLink. We’ve reviewed your details and everything looks great—your profile is now visible in the directory.
-                </p>
-                <table role="presentation" border="0" cellspacing="0" cellpadding="0">
-                  <tr>
-                    <td>
-                      <a href="${process.env.NEXT_PUBLIC_SITE_URL || ""}/consultants" style="display:inline-block;padding:14px 28px;border-radius:999px;background:linear-gradient(120deg,#33c8ff,#2a6bff);color:#0b1220;font-weight:600;font-size:15px;text-decoration:none;">View your profile</a>
-                    </td>
-                  </tr>
-                </table>
-                <p style="margin:28px 0 0;font-size:13px;line-height:1.6;color:rgba(236,243,255,0.62);">
-                  Log in to update your details, invite clients, and track engagement.
-                </p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:20px 44px 32px;border-top:1px solid rgba(255,255,255,0.06);">
-                <p style="margin:0;font-size:12px;color:rgba(236,243,255,0.45);">
-                  © ${new Date().getFullYear()} MineLink. All rights reserved.
-                </p>
-              </td>
-            </tr>
-          </table>
-          <p style="margin:20px 0 0;font-size:11px;color:rgba(236,243,255,0.35);">
-            You’re receiving this update because you requested a MineLink consultancy listing.
-          </p>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`;
-}
-
-async function sendApprovalEmail({ to, consultantName }) {
+// Centralized email send using Postmark
+async function sendApprovalEmail({ to, consultantName, profileUrl }) {
   const token = process.env.POSTMARK_SERVER_TOKEN;
   const from = process.env.POSTMARK_FROM_EMAIL;
   if (!token || !from || !to) return;
 
+  const { Subject, HtmlBody, TextBody } = buildConsultantApprovedEmail({
+    consultantName,
+    profileUrl,
+  });
+
   const payload = {
     From: from,
     To: to,
-    Subject: "Your MineLink consultancy profile is approved",
-    HtmlBody: approvalEmailHtml(consultantName),
+    Subject,
+    HtmlBody,
+    TextBody,
     MessageStream: process.env.POSTMARK_MESSAGE_STREAM || "outbound",
   };
 
@@ -123,7 +81,8 @@ export async function PATCH(req, { params }) {
     return NextResponse.json({ ok: false, error: "User not found." }, { status: 404 });
   }
 
-  const consultantId = params?.id;
+  // FIX: param folder is [consultantId], not [id]
+  const consultantId = params?.consultantId;
   if (!consultantId) {
     return NextResponse.json({ ok: false, error: "Missing consultant id." }, { status: 400 });
   }
@@ -175,9 +134,12 @@ export async function PATCH(req, { params }) {
   }
 
   if (data.status === "approved" && data.contact_email) {
+    const site = process.env.NEXT_PUBLIC_SITE_URL || "";
+    const profileUrl = `${site}/consultants/${consultantId}`;
     await sendApprovalEmail({
       to: data.contact_email,
       consultantName: data.display_name,
+      profileUrl,
     });
   }
 

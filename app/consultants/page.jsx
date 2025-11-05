@@ -170,10 +170,10 @@ export default async function ConsultantsPage({ searchParams }) {
     >
       <section className="rounded-3xl border border-sky-400/30 bg-sky-500/10 p-6 text-slate-100 shadow-lg ring-1 ring-sky-400/20">
         <h1 className="text-2xl font-semibold text-white">
-          Want to join MineHub?
+          Want to join YouMine?
         </h1>
         <p className="mt-2 text-sm text-slate-200">
-          Add your consultancy to showcase your services to potential clients and manage your profile directly on MineLink.
+          Add your consultancy to showcase your services to potential clients and manage your profile directly on YouMine.
         </p>
         <div className="mt-4 inline-flex items-center">
           <AddConsultantButton className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-900 shadow hover:bg-slate-100" />

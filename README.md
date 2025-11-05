@@ -1,62 +1,57 @@
-# MineLink Application
+# YouMine Application
 
 ## Overview
-MineLink is a web application designed to manage and track assets and their associated activities. It provides a user-friendly interface for managing vendors, assets, and locations, leveraging the power of Supabase for backend services.
+YouMine is a web application that connects mining clients with trusted consultants and contractors. It provides a simple way to browse services, view portfolios, and contact experts directly, using Supabase for backend services.
 
 ## Project Structure
 The project is organized into several key directories and files:
 
-- **app/**: Contains the main application components and styles.
-  - **assets/**: Includes components related to asset management.
-  - **layout.jsx**: Defines the layout structure for the application.
-  - **page.jsx**: Serves as the main entry point for the application.
-  - **globals.css**: Contains global CSS styles.
+- **app/**: Application routes, layouts, and pages.
+  - **layout.jsx**: App layout.
+  - **page.jsx**: Home page.
+  - **globals.css**: Global styles.
 
-- **components/**: Contains reusable UI components.
-  - **icons/**: Includes icon components used throughout the application.
-  - **ui/**: Contains UI elements like buttons and modals.
+- **components/**: Reusable UI components.
 
-- **lib/**: Contains utility files for managing application state and database interactions.
-  - **supabaseClient.js**: Initializes and interacts with the Supabase client.
-  - **OrgContext.js**: Manages organization-related state.
+- **lib/**: Utilities and clients (e.g., Supabase clients, email builders).
 
-- **styles/**: Contains stylesheets for the application.
-  - **tailwind.css**: Imports Tailwind CSS styles.
+- **styles/**: Additional stylesheets.
 
-- **public/**: Intended for static assets such as images and fonts.
+- **public/**: Static assets such as images and fonts.
 
 ## Installation
-To get started with the MineLink application, follow these steps:
+To get started with the YouMine application:
 
 1. Clone the repository:
-   ```
+   ```bash
    git clone <repository-url>
    ```
 
 2. Navigate to the project directory:
-   ```
-   cd MineLink
+   ```bash
+   cd <project-directory>
    ```
 
 3. Install the dependencies:
-   ```
+   ```bash
    npm install
    ```
 
 4. Start the development server:
-   ```
+   ```bash
    npm run dev
    ```
 
-5. Open your browser and navigate to `http://localhost:3000` to view the application.
+5. Open your browser and navigate to `http://localhost:3000`.
 
 ## Features
-- Manage assets, locations, and vendors.
-- View asset history and activity types.
-- Responsive design using Tailwind CSS.
+- Browse and discover consultants and contractors.
+- Consultant profiles with logos, portfolios, and attachments.
+- Basic metrics and favourites.
+- Responsive design powered by Tailwind CSS.
 
 ## Contributing
-Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.
+Contributions are welcome! Please open an issue or submit a pull request for enhancements or bug fixes.
 
 ## License
 This project is licensed under the MIT License. See the LICENSE file for details.

@@ -9,22 +9,22 @@ import { supabasePublicServer } from "@/lib/supabasePublicServer";
 const heroImage = "/Pictures/pexels-urtimud-89-76108288-14263363.jpg";
 
 export const metadata = {
-  title: "MineLink — Find mining consultants and contractors fast",
+  title: "YouMine — Find mining consultants and contractors fast",
   description:
-    "MineLink connects mining clients with trusted consultants and contractors. Browse services, view portfolios, and contact experts directly.",
+    "YouMine connects mining clients with trusted consultants and contractors. Browse services, view portfolios, and contact experts directly.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "MineLink — Find mining consultants and contractors fast",
+    title: "YouMine — Find mining consultants and contractors fast",
     description:
       "Discover trusted mining consultants and contractors by service. View portfolios and contact experts directly.",
     url: "/",
-    siteName: "MineLink",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "MineLink" }],
+    siteName: "YouMine",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "YouMine" }],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "MineLink — Find mining consultants and contractors fast",
+    title: "YouMine — Find mining consultants and contractors fast",
     description:
       "Discover trusted mining consultants and contractors by service. View portfolios and contact experts directly.",
     images: ["/og-image.png"],
@@ -127,7 +127,7 @@ export default async function HomePage() {
       a: "Open the consultant’s profile and use the Contact button to send a message directly.",
     },
     {
-      q: "How does MineLink verify profiles?",
+      q: "How does YouMine verify profiles?",
       a: "Profiles are linked to authenticated users and reviewed before approval.",
     },
     {
@@ -140,7 +140,7 @@ export default async function HomePage() {
     "@graph": [
       {
         "@type": "Organization",
-        "name": "MineLink",
+        "name": "YouMine",
         "url": "https://youmine.com.au",
         "logo": "https://youmine.com.au/og-image.png",
         "contactPoint": [{ "@type": "ContactPoint", "email": "info@youmine.com.au", "contactType": "customer support" }],
@@ -162,7 +162,7 @@ export default async function HomePage() {
       <section className="relative left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw] min-h-[340px] overflow-hidden">
         <Image
           src={heroImage}
-          alt="MineLink — consultants and contractors in mining"
+          alt="YouMine — consultants and contractors in mining"
           fill
           priority
           sizes="100vw"
@@ -198,7 +198,7 @@ export default async function HomePage() {
             Connect mining clients with trusted contractors & consultants
           </h2>
           <p className="mb-4 text-slate-300">
-            MineLink is a directory & portfolio platform for the mining industry — discover contractors, review portfolios,
+            YouMine is a directory & portfolio platform for the mining industry — discover contractors, review portfolios,
             and for consultants, showcase work and see profile metrics.
           </p>
 
@@ -359,7 +359,7 @@ export default async function HomePage() {
 
       {showPreview && (
         <section className="mx-auto max-w-screen-md px-4 pb-8">
-          <h3 className="mb-3 text-lg font-semibold">Why MineLink?</h3>
+          <h3 className="mb-3 text-lg font-semibold">Why YouMine?</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             <Feature title="Verified Listings" desc="Profiles linked to authenticated users and organizations." />
             <Feature title="Portfolios" desc="Showcase past projects with images and links." />

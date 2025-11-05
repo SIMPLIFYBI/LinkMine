@@ -1,12 +1,12 @@
 export const metadata = {
-  title: "About MineLink",
+  title: "About YouMine",
   description:
-    "MineLink connects mining clients with trusted consultants. Consultants showcase services and get quality enquiries. Clients browse by skill, filter, and contact the right expert fast.",
+    "YouMine connects mining clients with trusted consultants. Consultants showcase services and get quality enquiries. Clients browse by skill, filter, and contact the right expert fast.",
   alternates: { canonical: "/about" },
   openGraph: {
-    title: "About MineLink",
+    title: "About YouMine",
     description:
-      "MineLink connects mining clients with trusted consultants. Consultants showcase services and get quality enquiries. Clients browse by skill, filter, and contact the right expert fast.",
+      "YouMine connects mining clients with trusted consultants. Consultants showcase services and get quality enquiries. Clients browse by skill, filter, and contact the right expert fast.",
     url: "/about",
     type: "website",
   },
@@ -94,7 +94,7 @@ export default function AboutPage() {
           Built for the mining industry
         </span>
         <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-          How MineLink helps Consultants and Clients work smarter
+          How YouMine helps Consultants and Clients work smarter
         </h1>
         <p className="mx-auto mt-3 max-w-3xl text-base text-slate-300">
           A focused marketplace where specialists showcase their capabilities and clients find the
@@ -135,7 +135,7 @@ export default function AboutPage() {
           <h2 className="text-xl font-bold text-white">For Consultants</h2>
         </header>
         <p className="mt-2 max-w-3xl text-slate-300">
-          MineLink is your lightweight storefront: be discoverable for what you do best and make it
+          YouMine is your lightweight storefront: be discoverable for what you do best and make it
           effortless for the right clients to get in touch.
         </p>
 
@@ -250,7 +250,7 @@ export default function AboutPage() {
             <h2 className="text-xl font-bold text-white">Ready to get started?</h2>
             <p className="mt-1 text-slate-300">
               Whether you’re a consultant looking to be discovered or a client with a specific brief,
-              MineLink helps you move faster.
+              YouMine helps you move faster.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">

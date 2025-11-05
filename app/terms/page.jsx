@@ -1,12 +1,12 @@
 export const metadata = {
-  title: "Terms & Conditions · MineLink",
+  title: "Terms & Conditions · YouMine",
   description:
-    "Read MineLink’s Terms & Conditions covering account use, marketplace roles, acceptable use, intellectual property, warranties, liability, and dispute resolution.",
+    "Read YouMine’s Terms & Conditions covering account use, marketplace roles, acceptable use, intellectual property, warranties, liability, and dispute resolution.",
   alternates: { canonical: "/terms" },
   openGraph: {
-    title: "Terms & Conditions · MineLink",
+    title: "Terms & Conditions · YouMine",
     description:
-      "Read MineLink’s Terms & Conditions covering account use, marketplace roles, acceptable use, intellectual property, warranties, liability, and dispute resolution.",
+      "Read YouMine’s Terms & Conditions covering account use, marketplace roles, acceptable use, intellectual property, warranties, liability, and dispute resolution.",
     url: "/terms",
     type: "website",
   },
@@ -49,7 +49,7 @@ export default function TermsPage() {
         </h1>
         <p className="mt-2 text-sm text-slate-300">Last updated: {lastUpdated}</p>
         <p className="mt-3 text-slate-300">
-          These Terms govern your access to and use of MineLink (the “Service”). By using the Service,
+          These Terms govern your access to and use of YouMine (the “Service”). By using the Service,
           you agree to these Terms. If you use the Service on behalf of a company or organization,
           you represent that you are authorized to bind that entity to these Terms.
         </p>
@@ -89,11 +89,11 @@ export default function TermsPage() {
         <Section id="definitions" title="1) Definitions">
           <ul>
             <li>
-              “Service” means the MineLink website, apps, and related features that connect consultants
+              “Service” means the YouMine website, apps, and related features that connect consultants
               and clients in the mining industry.
             </li>
             <li>
-              “Consultant” means a professional or organisation offering services via MineLink.
+              “Consultant” means a professional or organisation offering services via YouMine.
             </li>
             <li>
               “Client” means an individual or organisation seeking to engage Consultants.
@@ -130,7 +130,7 @@ export default function TermsPage() {
 
         <Section id="marketplace-role" title="5) Our Marketplace Role">
           <p>
-            MineLink is a venue that facilitates introductions between Consultants and Clients. We do
+            YouMine is a venue that facilitates introductions between Consultants and Clients. We do
             not employ Consultants, provide consulting services, or guarantee outcomes. We are not a party
             to any contract between Consultants and Clients, and we do not control, supervise, or warrant
             the quality, safety, legality, or suitability of services offered or purchased.
@@ -142,7 +142,7 @@ export default function TermsPage() {
             <li>You are solely responsible for the accuracy of your profile and listings.</li>
             <li>You must comply with applicable licensing, safety, and regulatory obligations.</li>
             <li>
-              You grant MineLink a worldwide, non‑exclusive, royalty‑free licence to host, display, and
+              You grant YouMine a worldwide, non‑exclusive, royalty‑free licence to host, display, and
               promote your public profile Content to operate and improve the Service.
             </li>
             <li>You must handle Client enquiries professionally and keep confidential information secure.</li>
@@ -168,7 +168,7 @@ export default function TermsPage() {
         <Section id="content" title="9) User Content & Moderation">
           <ul>
             <li>
-              You retain ownership of your Content. You grant MineLink a licence to use it solely to
+              You retain ownership of your Content. You grant YouMine a licence to use it solely to
               provide and promote the Service.
             </li>
             <li>
@@ -182,7 +182,7 @@ export default function TermsPage() {
 
         <Section id="ip" title="10) Intellectual Property">
           <p>
-            The Service, including our trademarks, UI, and code, is owned by MineLink or our licensors
+            The Service, including our trademarks, UI, and code, is owned by YouMine or our licensors
             and protected by IP laws. No rights are granted except as expressly set out in these Terms.
           </p>
         </Section>
@@ -217,7 +217,7 @@ export default function TermsPage() {
 
         <Section id="liability" title="14) Limitation of Liability">
           <p>
-            To the maximum extent permitted by law, MineLink and its affiliates, directors, employees,
+            To the maximum extent permitted by law, YouMine and its affiliates, directors, employees,
             and suppliers will not be liable for indirect, incidental, special, consequential, exemplary, or
             punitive damages, or for lost profits, revenues, data, or goodwill, arising from or related to the
             Service or these Terms, even if advised of the possibility. Our aggregate liability for all claims
@@ -228,7 +228,7 @@ export default function TermsPage() {
 
         <Section id="indemnity" title="15) Indemnification">
           <p>
-            You agree to defend, indemnify, and hold harmless MineLink from any claims, damages, losses,
+            You agree to defend, indemnify, and hold harmless YouMine from any claims, damages, losses,
             liabilities, costs, and expenses (including reasonable legal fees) arising out of or related to
             your Content, your use of the Service, or your breach of these Terms.
           </p>
@@ -245,7 +245,7 @@ export default function TermsPage() {
         <Section id="disputes" title="17) Governing Law & Disputes">
           <p>
             These Terms are governed by the laws of [Insert jurisdiction]. The courts located in
-            [Insert venue] will have exclusive jurisdiction. Where permitted by law, you and MineLink
+            [Insert venue] will have exclusive jurisdiction. Where permitted by law, you and YouMine
             waive any right to a jury trial and to participate in a class action. If you’d prefer binding
             arbitration, replace this clause with your arbitration terms (e.g., rules, seat, language).
           </p>
@@ -262,7 +262,7 @@ export default function TermsPage() {
           <p>
             Questions about these Terms? Contact us at{" "}
             <a className="text-sky-300 underline" href="mailto:info@youmine.com.au">
-              info@YouMine.com.au
+              info@youmine.com.au
             </a>.
           </p>
         </Section>
