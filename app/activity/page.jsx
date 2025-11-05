@@ -125,25 +125,26 @@ function TabNav({ activeTab }) {
     { key: "jobs", label: "My Jobs", href: "/activity?tab=jobs" },
   ];
   return (
-    <div className="mb-2 flex items-center gap-2">
+    <nav
+      aria-label="Activity sections"
+      className="mb-2 flex gap-3 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1 text-sm text-slate-100"
+    >
       {tabs.map((t) => {
         const active = activeTab === t.key;
         return (
           <Link
             key={t.key}
             href={t.href}
-            className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
-              active
-                ? "border-sky-400/30 bg-sky-500/10 text-sky-200"
-                : "border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10"
-            }`}
             prefetch={false}
+            className={`flex-1 whitespace-nowrap rounded-full px-4 py-2 font-semibold transition ${
+              active ? "bg-sky-500 text-slate-900 shadow" : "text-slate-300 hover:bg-white/5"
+            }`}
           >
             {t.label}
           </Link>
         );
       })}
-    </div>
+    </nav>
   );
 }
 
