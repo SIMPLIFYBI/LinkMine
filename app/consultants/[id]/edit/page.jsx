@@ -4,6 +4,7 @@ import EditConsultantForm from "./EditConsultantForm";
 import ConsultantServicesManager from "@/app/components/ConsultantServicesManager";
 import Link from "next/link";
 import EditTabs from "./EditTabs";
+import AbnSection from "./AbnSection.client.jsx"; // NEW
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,7 +34,15 @@ export default async function EditConsultantPage({ params }) {
       twitter_url,
       instagram_url,
       place_id,
-      status
+      status,
+      abn,
+      acn,
+      abn_verified,
+      abn_status,
+      abn_entity_name,
+      abn_entity_type,
+      abn_gst_registered_from,
+      abn_last_checked
     `)
     .eq("id", id)
     .maybeSingle();
@@ -84,6 +93,22 @@ export default async function EditConsultantPage({ params }) {
       )}
 
       <EditConsultantForm consultant={consultant} />
+
+      {/* NEW: ABN/ACN verify section (positive-only badge) */}
+      <AbnSection
+        consultantId={consultant.id}
+        initial={{
+          abn: consultant.abn || "",
+          acn: consultant.acn || "",
+          abn_verified: consultant.abn_verified || false,
+          abn_entity_name: consultant.abn_entity_name || "",
+          abn_entity_type: consultant.abn_entity_type || "",
+          abn_status: consultant.abn_status || "",
+          abn_gst_registered_from: consultant.abn_gst_registered_from || null,
+          abn_last_checked: consultant.abn_last_checked || null,
+        }}
+      />
+
       <section className="mt-10 space-y-3">
         <h2 className="text-lg font-semibold text-slate-100">Services</h2>
         <p className="text-sm text-slate-400">
