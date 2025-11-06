@@ -12,6 +12,21 @@ import TrackView from "./TrackView.client.jsx";
 import ContactConsultantButton from "./ContactConsultantButton.client.jsx";
 import ConsultantTabs from "./ConsultantTabs";
 
+// Small formatting helpers for public display
+function formatAbn(abn) {
+  const d = String(abn || "").replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 2) return d;
+  if (d.length <= 5) return `${d.slice(0, 2)} ${d.slice(2)}`;
+  if (d.length <= 8) return `${d.slice(0, 2)} ${d.slice(2, 5)} ${d.slice(5)}`;
+  return `${d.slice(0, 2)} ${d.slice(2, 5)} ${d.slice(5, 8)} ${d.slice(8)}`;
+}
+function formatAcn(acn) {
+  const d = String(acn || "").replace(/\D/g, "").slice(0, 9);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0, 3)} ${d.slice(3)}`;
+  return `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}`;
+}
+
 async function getConsultant(id) {
   const sb = await supabaseServerClient();
 
@@ -166,6 +181,14 @@ export default async function ConsultantPage(props) {
           ) : null}
           <div>
             <h1 className="text-3xl font-semibold text-slate-50">{consultant.display_name}</h1>
+            {/* Optional: small verified chip near the name */}
+            {consultant.abn_verified ? (
+              <div className="mt-2">
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/50 bg-emerald-500/20 px-2.5 py-0.5 text-xs font-semibold text-emerald-100">
+                  ✓ ABN verified
+                </span>
+              </div>
+            ) : null}
             {consultant.headline ? (
               <p className="mt-1 text-sm text-slate-300">{consultant.headline}</p>
             ) : null}
@@ -326,6 +349,40 @@ export default async function ConsultantPage(props) {
         </section>
 
         <aside className="space-y-6">
+          {/* NEW: Public business registration box (positive-only) */}
+          {consultant.abn_verified ? (
+            <article className="rounded-3xl border border-emerald-400/30 bg-emerald-500/10 p-6 text-sm text-emerald-100 shadow-sm ring-1 ring-emerald-400/20">
+              <h2 className="text-lg font-semibold text-white">Business registration</h2>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center rounded-full border border-emerald-400/50 bg-emerald-500/20 px-2.5 py-0.5 text-xs font-semibold">
+                  ✓ ABN verified
+                </span>
+                <span className="text-emerald-200/90">
+                  {consultant.abn_entity_name ? <strong>{consultant.abn_entity_name}</strong> : null}
+                  {consultant.abn_entity_type ? <> • {consultant.abn_entity_type}</> : null}
+                  {consultant.abn ? <> • ABN {formatAbn(consultant.abn)}</> : null}
+                  {consultant.acn ? <> • ACN {formatAcn(consultant.acn)}</> : null}
+                  {consultant.abn_gst_registered_from ? (
+                    <> • GST from {new Date(consultant.abn_gst_registered_from).toLocaleDateString()}</>
+                  ) : null}
+                </span>
+              </div>
+              {consultant.abn ? (
+                <div className="mt-2 text-xs text-emerald-200/80">
+                  Data sourced from ABN Lookup.{" "}
+                  <a
+                    href={`https://abr.business.gov.au/ABN/View?abn=${String(consultant.abn).replace(/\D/g, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:no-underline"
+                  >
+                    View on ABN Lookup
+                  </a>
+                </div>
+              ) : null}
+            </article>
+          ) : null}
+
           <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-sm text-slate-200 shadow-sm ring-1 ring-white/5">
             <h2 className="text-lg font-semibold text-white">Contact</h2>
             <dl className="mt-3 space-y-3">
@@ -382,23 +439,7 @@ export default async function ConsultantPage(props) {
             </dl>
           </article>
 
-          {place?.formatted_address ? (
-            <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-sm text-slate-200 shadow-sm ring-1 ring-white/5">
-              <h2 className="text-lg font-semibold text-white">
-                Google location
-              </h2>
-              <p className="mt-2">{place.formatted_address}</p>
-              {place?.url ? (
-                <Link
-                  href={place.url}
-                  target="_blank"
-                  className="mt-3 inline-flex items-center rounded-full border border-sky-400/60 bg-sky-500/10 px-3 py-1.5 text-xs font-semibold text-sky-100 hover:border-sky-300 hover:bg-sky-500/20"
-                >
-                  View on Google Maps
-                </Link>
-              ) : null}
-            </article>
-          ) : null}
+          {/* ...existing Google location card... */}
         </aside>
       </div>
 
