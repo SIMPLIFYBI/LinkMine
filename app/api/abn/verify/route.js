@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { supabaseRouteClient } from "@/lib/supabaseRouteClient";
 import { searchByABN, searchByASIC } from "@/lib/abrClient";
 import { normalizeAbn, normalizeAcn } from "@/lib/abnValidators";
+import { getABRConfig } from "@/lib/serverEnv";
 
 export async function POST(req) {
   try {
@@ -62,6 +63,10 @@ export async function POST(req) {
 
     // Call ABR
     let result;
+    const { GUID } = getABRConfig();
+    if (!GUID) {
+      return NextResponse.json({ error: "Server ABR GUID not configured" }, { status: 500 });
+    }
     if (abnNorm) {
       result = await searchByABN(abnNorm);
     } else {
