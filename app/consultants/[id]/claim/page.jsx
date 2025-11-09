@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import ConsultantClaimConfirm from "@/app/components/ConsultantClaimConfirm";
+import ClaimCodeEntry from "@/app/components/ClaimCodeEntry.client.jsx";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -204,9 +205,29 @@ export default async function ConsultantClaimPage({ params, searchParams }) {
           </p>
         </header>
 
-        <div className="mt-6">
-          <ConsultantClaimConfirm consultant={consultant} user={user} token={token} />
-        </div>
+        {user && consultant.claimed_by === null ? (
+          <div className="mt-6">
+            <ConsultantClaimConfirm consultant={consultant} user={user} token={token} />
+          </div>
+        ) : (
+          <section className="mt-6 space-y-6">
+            <div className="rounded-3xl border border-white/10 bg-white/[0.05] p-6">
+              <h2 className="text-lg font-semibold text-white text-center">Enter your claim code</h2>
+              <p className="mt-2 text-center text-sm text-slate-300">
+                Check your email for the 12‑character code. Paste it below to take ownership.
+              </p>
+              <div className="mt-5">
+                <ClaimCodeEntry consultantId={consultant.id} />
+              </div>
+            </div>
+            <div className="rounded-2xl border border-sky-400/30 bg-sky-500/10 p-4 text-xs text-sky-100">
+              Didn’t get an email? Verify the contact email on the profile or reach us at{" "}
+              <a href={`mailto:${supportEmail}`} className="underline font-semibold">
+                {supportEmail}
+              </a>.
+            </div>
+          </section>
+        )}
 
         {/* Support + fine print */}
         <div className="mt-6 grid gap-3 md:grid-cols-2">

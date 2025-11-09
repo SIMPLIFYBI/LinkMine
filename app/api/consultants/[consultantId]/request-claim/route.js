@@ -6,6 +6,7 @@ import { randomUUID } from "crypto";
 import { postmarkClient } from "@/lib/postmark";
 import { siteUrl } from "@/lib/siteUrl";
 import { buildClaimProfileHtml, buildClaimProfileText } from "@/lib/emails/claimProfile";
+import { shortClaimCodeFromToken } from "@/lib/claimCode";
 
 async function supabaseFromCookies() {
   const jar = await cookies();
@@ -39,8 +40,8 @@ export async function POST(req, ctx) {
 
   const claimUrl = siteUrl(`/consultants/${consultant.id}/claim?token=${token}`, req);
 
-  const HtmlBody = buildClaimProfileHtml(consultant.display_name, claimUrl);
-  const TextBody = buildClaimProfileText(consultant.display_name, claimUrl);
+  const HtmlBody = buildClaimProfileHtml(consultant.display_name, claimUrl, token);
+  const TextBody = buildClaimProfileText(consultant.display_name, claimUrl, token);
 
   await postmarkClient().sendEmail({
     From: process.env.EMAIL_FROM,
