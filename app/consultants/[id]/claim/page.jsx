@@ -286,7 +286,6 @@ function renderMessage({ heading, body, extra = null, ctas = null, supportEmail 
         <h1 className="text-2xl font-semibold text-white">{heading}</h1>
         <p className="mx-auto mt-2 max-w-xl text-sm text-slate-300">{body}</p>
         {ctas}
-        {/* Support hint */}
         {supportHref ? (
           <p className="mx-auto mt-5 max-w-xl text-xs text-slate-400">
             Need a hand?{" "}
@@ -301,18 +300,3 @@ function renderMessage({ heading, body, extra = null, ctas = null, supportEmail 
     </main>
   );
 }
-
-return (
-  <main className="mx-auto mt-24 max-w-md px-6 text-center text-slate-100">
-    <h1 className="text-xl font-semibold">Claim flow updated</h1>
-    <p className="mt-3 text-sm text-slate-300">
-      Use the claim code from your email on the new page.
-    </p>
-    <a
-      href={`/claim?consultant=${consultant.id}`}
-      className="mt-6 inline-flex items-center rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 px-5 py-2 text-sm font-semibold text-white"
-    >
-      Go to claim page
-    </a>
-  </main>
-);
