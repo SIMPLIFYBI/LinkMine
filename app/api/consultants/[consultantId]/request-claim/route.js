@@ -39,9 +39,11 @@ export async function POST(req, ctx) {
   if (updateError) return NextResponse.json({ error: "Unable to initiate claim." }, { status: 500 });
 
   const claimUrl = siteUrl(`/consultants/${consultant.id}/claim?token=${token}`, req);
+  const legacyUrl = siteUrl(`/consultants/${consultant.id}/claim?token=${token}`, req);
+  const enterCodeUrl = siteUrl(`/claim?consultant=${consultant.id}`, req);
 
-  const HtmlBody = buildClaimProfileHtml(consultant.display_name, claimUrl, token);
-  const TextBody = buildClaimProfileText(consultant.display_name, claimUrl, token);
+  const HtmlBody = buildClaimProfileHtml(consultant.display_name, claimUrl, token, enterCodeUrl);
+  const TextBody = buildClaimProfileText(consultant.display_name, claimUrl, token, enterCodeUrl);
 
   await postmarkClient().sendEmail({
     From: process.env.EMAIL_FROM,
