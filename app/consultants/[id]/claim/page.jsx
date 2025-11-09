@@ -173,6 +173,20 @@ export default async function ConsultantClaimPage({ params, searchParams }) {
     });
   }
 
+  return renderMessage({
+    heading: "Claim flow updated",
+    body: "Use the claim code from your email on the new claim page.",
+    ctas: (
+      <a
+        href={`/claim?consultant=${consultant.id}`}
+        className="mt-6 inline-flex items-center rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 px-5 py-2 text-sm font-semibold text-white"
+      >
+        Go to claim page
+      </a>
+    ),
+    supportEmail,
+  });
+
   // Modern, polished claim card
   const mailSubject = encodeURIComponent(
     `Help claiming consultant profile: ${consultant.display_name}`
