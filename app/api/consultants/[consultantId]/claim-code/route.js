@@ -3,30 +3,45 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { normalizeClaimCodeInput, tokenMatchesCode } from "@/lib/claimCode";
 
-async function sbFromCookies() {
-  const jar = await cookies();
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    { cookies: { get: (n) => jar.get(n)?.value, set() {}, remove() {} } }
-  );
-}
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export async function POST(req, ctx) {
-  const sb = await sbFromCookies();
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const authHeader = req.headers.get("authorization") || "";
+  const accessToken = authHeader.toLowerCase().startsWith("bearer ")
+    ? authHeader.slice(7)
+    : null;
+
+  if (!accessToken) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  // Create a Supabase client that forwards the bearer token for RLS
+  const sb = createClient(url, anon, {
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    auth: { persistSession: false },
+  });
+
+  // Resolve the user from the provided token explicitly
+  const { data: userData, error: userErr } = await sb.auth.getUser(accessToken);
+  const user = userData?.user || null;
+  if (userErr || !user) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
 
   const { consultantId } = await ctx.params;
   const { code } = await req.json().catch(() => ({}));
-  if (!consultantId || !code) return NextResponse.json({ error: "Missing consultantId or code" }, { status: 400 });
+  if (!consultantId || !code) {
+    return NextResponse.json({ error: "Missing consultantId or code" }, { status: 400 });
+  }
 
   const normalized = normalizeClaimCodeInput(code);
-  if (normalized.length < 12) return NextResponse.json({ error: "Invalid code format" }, { status: 400 });
+  if (normalized.length < 12) {
+    return NextResponse.json({ error: "Invalid code format" }, { status: 400 });
+  }
 
   const { data: c, error } = await sb
     .from("consultants")

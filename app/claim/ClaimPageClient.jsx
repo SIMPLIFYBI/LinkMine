@@ -31,13 +31,22 @@ export default function ClaimPageClient({ consultantIdInitial = "" }) {
       if (!consultantId) throw new Error("Missing consultant id.");
       await signIn();
 
+      // IMPORTANT: pick up the access token to send to the API
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error("Unable to read session token after sign-in.");
+
       const raw = code.replace(/[^A-Z0-9]/gi, "").toUpperCase();
       if (raw.length < 12) throw new Error("Enter the 12-character code.");
 
       const res = await fetch(`/api/consultants/${consultantId}/claim-code`, {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        // We now authenticate via bearer token; cookies are not needed
+        credentials: "omit",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({ code: raw }),
       });
       const body = await res.json().catch(() => ({}));
