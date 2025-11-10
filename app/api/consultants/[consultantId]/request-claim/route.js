@@ -35,15 +35,11 @@ export async function POST(req, ctx) {
   if (consultant.claimed_by || consultant.claimed_at) return NextResponse.json({ error: "This profile has already been claimed." }, { status: 409 });
 
   const token = randomUUID();
-  const { error: updateError } = await sb.from("consultants").update({ claim_token: token }).eq("id", consultant.id);
-  if (updateError) return NextResponse.json({ error: "Unable to initiate claim." }, { status: 500 });
-
-  const claimUrl = siteUrl(`/consultants/${consultant.id}/claim?token=${token}`, req);
-  const legacyUrl = siteUrl(`/consultants/${consultant.id}/claim?token=${token}`, req);
+  await sb.from("consultants").update({ claim_token: token }).eq("id", consultant.id);
   const enterCodeUrl = siteUrl(`/claim?consultant=${consultant.id}`, req);
 
-  const HtmlBody = buildClaimProfileHtml(consultant.display_name, claimUrl, token, enterCodeUrl);
-  const TextBody = buildClaimProfileText(consultant.display_name, claimUrl, token, enterCodeUrl);
+  const HtmlBody = buildClaimProfileHtml(consultant.display_name, enterCodeUrl, token);
+  const TextBody = buildClaimProfileText(consultant.display_name, enterCodeUrl, token);
 
   await postmarkClient().sendEmail({
     From: process.env.EMAIL_FROM,
