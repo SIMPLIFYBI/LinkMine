@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import "./globals.css";
 import { Inter } from "next/font/google";
 import { Toaster } from "react-hot-toast";
@@ -14,14 +14,12 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata = {
   title: { default: "YouMine", template: "%s · YouMine " },
-  // keep viewport OUT of metadata; it belongs in app/viewport.js
 };
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+const enableAnalytics = GA_ID && process.env.NODE_ENV === "production";
 
 export default function RootLayout({ children }) {
-  const enableAnalytics = GA_ID && process.env.NODE_ENV === "production";
-
   return (
     <html lang="en" className={`${inter.variable} dark`}>
       <body
@@ -51,7 +49,9 @@ export default function RootLayout({ children }) {
                 `,
               }}
             />
-            <GA4 measurementId={GA_ID} />
+            <Suspense fallback={null}>
+              <GA4 measurementId={GA_ID} />
+            </Suspense>
           </>
         )}
 
