@@ -130,7 +130,7 @@ export default function ServiceFinder({ className = "" }) {
   return (
     <div className={className}>
       <p className="mb-2 text-sm font-semibold text-slate-200">
-        Find a consultant by service category
+        Find a Consultant by a specific service
       </p>
 
       {/* Glassmorphic combobox container */}

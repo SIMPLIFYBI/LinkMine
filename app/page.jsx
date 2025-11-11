@@ -35,7 +35,6 @@ async function getStatsAndFeatured() {
   try {
     const sb = supabasePublicServer();
 
-    // Fetch a pool to rotate from
     const { data: featured = [] } = await sb
       .from("consultants")
       .select("id, display_name, headline, location, metadata")
@@ -44,23 +43,54 @@ async function getStatsAndFeatured() {
       .order("created_at", { ascending: false })
       .limit(24);
 
-    return { featured };
+    // LIMIT TO 9 categories for 3x3 layout
+    const { data: categories = [] } = await sb
+      .from("service_categories")
+      .select("id, name, slug")
+      .order("position", { ascending: true })
+      .order("name", { ascending: true })
+      .limit(9);
+
+    return { featured, categories };
   } catch {
-    return { featured: [] };
+    return { featured: [], categories: [] };
   }
+}
+
+// Lightweight icon set mapped by slug keywords (fallback to generic)
+function CategoryIcon({ slug }) {
+  const s = (slug || "").toLowerCase();
+
+  // Pick an icon by simple heuristics; fallback is a grid icon
+  const path = (() => {
+    if (/(drill|rig)/.test(s)) return "M3 12l18-6-6 18-3-7-7-3z"; // paper plane/drill-ish
+    if (/(geo|survey|map)/.test(s)) return "M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3z"; // layered terrain
+    if (/(plan|manage|project)/.test(s)) return "M4 6h16v4H4V6zm0 6h10v4H4v-4z"; // panels
+    if (/(sample|lab|assay|core)/.test(s)) return "M7 4h10l-1 12a4 4 0 01-8 0L7 4z M9 4v12"; // flask-ish
+    if (/(safety|hse)/.test(s)) return "M12 2l7 4v6c0 4-3 7-7 9-4-2-7-5-7-9V6l7-4z"; // shield
+    if (/(mine|haul|truck)/.test(s)) return "M3 9h14l4 5v3h-3a3 3 0 11-6 0H9a3 3 0 11-6 0H3V9z"; // truck
+    if (/(env|water|rehab)/.test(s)) return "M12 2c4 4 6 7 6 10a6 6 0 11-12 0c0-3 2-6 6-10z"; // leaf
+    if (/(it|data|ai|software)/.test(s)) return "M4 6h16v8H4V6zm3 10h10v2H7v-2z"; // monitor
+    return "M4 5h16v4H4V5zm0 6h10v4H4v-4zm12 0h4v4h-4v-4z"; // grid
+  })();
+
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
+      <path d={path} />
+    </svg>
+  );
 }
 
 export default async function HomePage() {
   const showPreview = true;
-  const { featured } = await getStatsAndFeatured();
+  const { featured, categories } = await getStatsAndFeatured();
 
-  // Deterministic daily rotation (UTC). Change tzOffsetMinutes for another TZ (e.g., AWST = 480).
-  const tzOffsetMinutes = 0; // set to 480 for AWST (UTC+8) if desired
+  // Deterministic daily rotation (UTC) for featured
+  const tzOffsetMinutes = 0;
   const now = new Date(Date.now() + tzOffsetMinutes * 60_000);
-  const dayKey = now.toISOString().slice(0, 10); // YYYY-MM-DD
+  const dayKey = now.toISOString().slice(0, 10);
 
   const seedFromString = (str) => {
-    // Simple 32-bit hash (FNV-1a-ish)
     let h = 0x811c9dc5;
     for (let i = 0; i < str.length; i++) {
       h ^= str.charCodeAt(i);
@@ -191,35 +221,97 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Value prop */}
-      <section className="mx-auto max-w-screen-md px-4 py-6 md:py-8">
-        <div>
-          <h2 className="mb-2 text-2xl font-semibold md:text-[32px]">
-            Connect mining clients with trusted contractors & consultants
-          </h2>
-          <p className="mb-4 text-slate-300">
-            YouMine is a directory & portfolio platform for the mining industry — discover contractors, review portfolios,
-            and for consultants, showcase work and see profile metrics.
-          </p>
-
-          <div className="flex flex-wrap gap-3">
-            <Link href="/signup" className="inline-flex">
-              <button className="rounded-md bg-slate-700 px-4 py-2 text-white transition hover:bg-slate-600">
-                Get started — it's free
-              </button>
-            </Link>
-            <Link href="/explore" className="inline-flex">
-              <button className="rounded-md border border-white/10 bg-white/5 px-4 py-2 text-slate-100 transition hover:border-white/20 hover:bg-white/10">
-                Explore listings
-              </button>
-            </Link>
+      {/* Value prop + 3x3 category grid side-by-side */}
+      <section className="mx-auto w-full max-w-6xl px-2 md:px-4">
+        <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start">
+          {/* Left: existing value prop */}
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold md:text-[32px]">
+              Connect mining clients with trusted contractors & consultants
+            </h2>
+            <p className="text-slate-300">
+              YouMine is a directory & portfolio platform for the mining industry — discover contractors,
+              review portfolios, and for consultants, showcase work and see profile metrics.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/signup" className="inline-flex">
+                <button className="rounded-md bg-slate-700 px-4 py-2 text-white transition hover:bg-slate-600">
+                  Get started — it's free
+                </button>
+              </Link>
+              <Link href="/explore" className="inline-flex">
+                <button className="rounded-md border border-white/10 bg-white/5 px-4 py-2 text-slate-100 transition hover:border-white/20 hover:bg-white/10">
+                  Explore listings
+                </button>
+              </Link>
+            </div>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-400 text-sm">
+              <li>Business tiles for clients to showcase services</li>
+              <li>Consultant profiles with portfolio galleries</li>
+              <li>View metrics like profile views and favourites</li>
+            </ul>
           </div>
 
-          <ul className="mt-4 list-disc space-y-1 pl-5 text-slate-400">
-            <li>Business tiles for clients to showcase services</li>
-            <li>Consultant profiles with portfolio galleries</li>
-            <li>View metrics like profile views and favourites</li>
-          </ul>
+          {/* Right: 3x3 category grid */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-white tracking-wide">Browse by category</h3>
+              <Link
+                href="/consultants"
+                className="text-xs font-medium text-sky-300 hover:text-sky-200 hover:underline underline-offset-2"
+              >
+                View all
+              </Link>
+            </div>
+
+            {categories.length === 0 ? (
+              <p className="text-xs text-slate-400">Categories are coming soon.</p>
+            ) : (
+              <div className="grid grid-cols-3 gap-3">
+                {categories.map((c) => (
+                  <Link
+                    key={c.id}
+                    href={`/consultants?category=${encodeURIComponent(c.slug)}`}
+                    prefetch
+                    className="
+                      group relative flex flex-col gap-2 rounded-xl
+                      border border-white/10 bg-white/[0.06] p-3
+                      text-left shadow-sm ring-1 ring-white/10 transition
+                      hover:-translate-y-[2px] hover:border-sky-300/40 hover:bg-white/[0.1]
+                      focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50
+                    "
+                    aria-label={`Browse ${c.name}`}
+                  >
+                    {/* Accent bar */}
+                    <div className="pointer-events-none absolute inset-x-0 top-0 h-1 rounded-t-xl bg-gradient-to-r from-sky-500/60 via-cyan-300/60 to-sky-500/60 opacity-70 group-hover:opacity-90" />
+
+                    <span
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg
+                                 bg-sky-500/15 text-sky-200 ring-1 ring-inset ring-sky-400/30
+                                 transition-colors group-hover:bg-sky-500/25"
+                    >
+                      <CategoryIcon slug={c.slug} />
+                    </span>
+                    <span className="line-clamp-2 text-[11px] font-medium leading-tight text-slate-100">
+                      {c.name}
+                    </span>
+
+                    {/* Subtle glow */}
+                    <div
+                      className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-20"
+                      style={{
+                        background:
+                          "radial-gradient(circle at 30% 25%, rgba(56,189,248,0.35), transparent 70%)",
+                      }}
+                    />
+                  </Link>
+                ))}
+              </div>
+            )}
+            <p className="text-[10px] text-slate-500">
+              Choose a category to filter consultants by their offered services.
+            </p>
+          </div>
         </div>
       </section>
 
