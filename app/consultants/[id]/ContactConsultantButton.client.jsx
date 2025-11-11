@@ -38,9 +38,73 @@ export default function ContactConsultantButton({ consultantId, consultantName }
     <>
       <button
         onClick={onClick}
-        className="inline-flex items-center gap-2 rounded-full border border-sky-400/60 bg-sky-500/15 px-4 py-1.5 text-sm font-semibold text-sky-100 hover:border-sky-300 hover:bg-sky-500/25"
+        className="
+    group relative inline-flex items-center gap-2 rounded-2xl
+    px-5 py-2.5 text-sm font-semibold
+    text-white
+    transition-all duration-300
+    focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-slate-900
+    active:scale-[0.97]
+  "
+        style={{
+          // Layered gradient background via inline style for fine tuning
+          background:
+            "linear-gradient(135deg, rgba(99,102,241,0.85), rgba(168,85,247,0.85))",
+          boxShadow:
+            "0 4px 18px -4px rgba(99,102,241,0.5), 0 0 0 1px rgba(255,255,255,0.08), inset 0 0 0 1px rgba(255,255,255,0.1)",
+          WebkitBackdropFilter: "blur(4px)",
+          backdropFilter: "blur(4px)",
+        }}
       >
-        Contact {consultantName || "consultant"}
+        {/* Animated gradient border ring */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 rounded-2xl"
+          style={{
+            padding: "1px",
+            background:
+              "linear-gradient(140deg, rgba(255,255,255,0.4), rgba(255,255,255,0.05) 35%, rgba(255,200,150,0.3) 60%, rgba(255,255,255,0.15))",
+            mask:
+              "linear-gradient(#000,#000) content-box, linear-gradient(#000,#000)",
+            WebkitMask:
+              "linear-gradient(#000,#000) content-box, linear-gradient(#000,#000)",
+            maskComposite: "exclude",
+            WebkitMaskComposite: "destination-out",
+          }}
+        />
+
+        {/* Icon */}
+        <span
+          className="relative flex h-6 w-6 items-center justify-center rounded-lg bg-white/15 text-white shadow-inner
+               ring-1 ring-white/20 transition-colors duration-300 group-hover:bg-white/25"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            {/* Stylized send / message icon */}
+            <path d="M4 4l16 7-16 7 4-7z" />
+            <path d="M20 11l-9 4" />
+          </svg>
+        </span>
+
+        <span className="relative">Contact {consultantName || "consultant"}</span>
+
+        {/* Subtle glow on hover */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -inset-2 rounded-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-40"
+          style={{
+            background:
+              "radial-gradient(circle at 30% 30%, rgba(168,85,247,0.35), transparent 70%)",
+            filter: "blur(8px)",
+          }}
+        />
       </button>
       {open && (
         <ContactModal consultantId={consultantId} user={user} onClose={() => setOpen(false)} />

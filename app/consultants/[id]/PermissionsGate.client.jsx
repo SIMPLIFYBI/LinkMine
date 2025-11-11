@@ -91,8 +91,22 @@ export default function PermissionsGate({ consultantId, displayName, initialView
                 You are the owner
               </span>
             ) : (
-              <span className="inline-flex items-center gap-2 rounded-full border border-sky-300/70 bg-sky-500/15 px-4 py-1.5 text-sm font-semibold text-sky-100 shadow-sm ring-1 ring-sky-300/30">
-                Admin access
+              // Replaced the "Admin access" pill with a compact icon
+              <span
+                className="inline-flex h-[28px] w-[28px] items-center justify-center rounded-full border border-sky-300/70 bg-sky-500/15 text-sky-100 shadow-sm ring-1 ring-sky-300/30"
+                title="Admin"
+                aria-label="Admin"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  {/* shield badge icon */}
+                  <path d="M12 2c.3 0 .6.1.8.2l7 3a1 1 0 0 1 .7.94V12c0 3.74-2.55 7.23-7.6 9.74a1 1 0 0 1-.9 0C6.85 19.23 4.3 15.74 4.3 12V6.14a1 1 0 0 1 .7-.94l7-3c.2-.1.5-.2.8-.2zM8.5 12.75l2.75 2.75 4.25-5a1 1 0 1 1 1.5 1.3l-5 5.9a1 1 0 0 1-1.47.05l-3.5-3.5a1 1 0 1 1 1.42-1.42z" />
+                </svg>
+                <span className="sr-only">Admin</span>
               </span>
             )
           ) : null}

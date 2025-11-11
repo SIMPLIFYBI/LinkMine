@@ -65,6 +65,17 @@ export default async function EditConsultantPage({ params }) {
 
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-8">
+      {/* New back button */}
+      <div className="mb-4">
+        <Link
+          href={`/consultants/${consultant.id}`}
+          className="inline-flex items-center gap-1 text-sm font-medium text-sky-300 hover:text-sky-200 hover:underline"
+        >
+          <span aria-hidden className="text-lg leading-none">←</span>
+          <span>Back to profile</span>
+        </Link>
+      </div>
+
       <h1 className="mb-4 text-2xl font-semibold text-white">Edit profile</h1>
 
       <EditTabs consultantId={consultant.id} active="profile" />
