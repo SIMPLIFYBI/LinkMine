@@ -4,29 +4,34 @@ import AddConsultantButton from "@/app/components/consultants/AddConsultantButto
 import ServiceFilter from "./ServiceFilter.client.jsx";
 
 export const runtime = "nodejs";
-export const revalidate = 180; // 3 minutes
+// Ensure filters (query params) always re-evaluate on navigation
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const PAGE_SIZE = 15;
 const CARD_SELECT = "id, slug, display_name, headline, location, visibility, status, metadata";
 
-// Paginate base list without exact count
+// Base list with sentinel pagination
 async function getAllConsultantsPage(sb, page) {
   const offset = (page - 1) * PAGE_SIZE;
-  // Fetch one extra row as a sentinel to detect a next page
   const { data = [] } = await sb
     .from("consultants")
     .select(CARD_SELECT)
     .eq("visibility", "public")
     .eq("status", "approved")
     .order("display_name", { ascending: true })
-    .range(offset, offset + PAGE_SIZE); // inclusive, returns up to PAGE_SIZE+1
+  // Fetch PAGE_SIZE + 1 for sentinel
+    .range(offset, offset + PAGE_SIZE);
 
   const hasNext = data.length > PAGE_SIZE;
   const consultants = hasNext ? data.slice(0, PAGE_SIZE) : data;
   return { consultants, hasNext };
 }
 
-// Fetch by exact service slug with DB-level pagination on consultant_services
+// Helpers
+const toArray = (d) => (Array.isArray(d) ? d : []);
+const uniq = (arr) => Array.from(new Set(arr));
+
 async function getConsultantsByServiceSlug(sb, serviceSlug, page) {
   const offset = (page - 1) * PAGE_SIZE;
 
@@ -43,43 +48,34 @@ async function getConsultantsByServiceSlug(sb, serviceSlug, page) {
 
   if (!service) return { consultants: [], activeService: null, hasNext: false };
 
-  // Pull one page of consultant ids ordered by consultant.display_name
-  const { data: linkRows = [] } = await sb
+  // Get consultant IDs for this service (simple path, no nested filters)
+  const { data: linkRowsData } = await sb
     .from("consultant_services")
-    .select("consultant_id, consultant:consultant_id(display_name)")
-    .eq("service_id", service.id)
-    .eq("consultant.visibility", "public", { foreignTable: "consultant" })
-    .eq("consultant.status", "approved", { foreignTable: "consultant" })
-    .order("consultant.display_name", { ascending: true, foreignTable: "consultant" })
-    .range(offset, offset + PAGE_SIZE); // inclusive; sentinel
+    .select("consultant_id")
+    .eq("service_id", service.id);
 
-  // De-dup + compute paging
-  const idsOrdered = [];
-  const seen = new Set();
-  for (const r of linkRows) {
-    if (!seen.has(r.consultant_id)) {
-      seen.add(r.consultant_id);
-      idsOrdered.push(r.consultant_id);
-    }
-  }
-  const hasNext = idsOrdered.length > PAGE_SIZE;
-  const pageIds = hasNext ? idsOrdered.slice(0, PAGE_SIZE) : idsOrdered;
+  const idsAll = uniq(toArray(linkRowsData).map((r) => r.consultant_id).filter(Boolean));
+  if (idsAll.length === 0) return { consultants: [], activeService: service, hasNext: false };
 
-  if (pageIds.length === 0) return { consultants: [], activeService: service, hasNext: false };
+  // Page the ids
+  const hasNext = idsAll.length > page * PAGE_SIZE;
+  const pageIds = idsAll.slice(offset, offset + PAGE_SIZE);
 
+  if (pageIds.length === 0) return { consultants: [], activeService: service, hasNext };
+
+  // Fetch consultants for ids, enforce visibility/status and sort by name
   const { data: consultants = [] } = await sb
     .from("consultants")
     .select(CARD_SELECT)
-    .in("id", pageIds);
+    .in("id", pageIds)
+    .eq("visibility", "public")
+    .eq("status", "approved");
 
-  // Preserve order
-  const orderMap = new Map(pageIds.map((id, i) => [id, i]));
-  consultants.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
+  consultants.sort((a, b) => String(a.display_name).localeCompare(String(b.display_name)));
 
   return { consultants, activeService: service, hasNext };
 }
 
-// Fetch by category slug with DB-level pagination on consultant_services→services
 async function getConsultantsByCategorySlug(sb, categorySlug, page) {
   const offset = (page - 1) * PAGE_SIZE;
 
@@ -96,48 +92,52 @@ async function getConsultantsByCategorySlug(sb, categorySlug, page) {
 
   if (!category) return { consultants: [], activeCategory: null, hasNext: false };
 
-  const { data: linkRows = [] } = await sb
+  // Get all services under this category
+  const { data: servicesData } = await sb
+    .from("services")
+    .select("id")
+    .eq("category_id", category.id);
+
+  const serviceIds = toArray(servicesData).map((s) => s.id).filter(Boolean);
+  if (serviceIds.length === 0) return { consultants: [], activeCategory: category, hasNext: false };
+
+  // Get consultant IDs across those services
+  const { data: linkRowsData } = await sb
     .from("consultant_services")
-    .select("consultant_id, consultant:consultant_id(display_name), service:service_id(category_id)")
-    .eq("service.category_id", category.id, { foreignTable: "service" })
-    .eq("consultant.visibility", "public", { foreignTable: "consultant" })
-    .eq("consultant.status", "approved", { foreignTable: "consultant" })
-    .order("consultant.display_name", { ascending: true, foreignTable: "consultant" })
-    .range(offset, offset + PAGE_SIZE); // inclusive; sentinel
+    .select("consultant_id")
+    .in("service_id", serviceIds);
 
-  const idsOrdered = [];
-  const seen = new Set();
-  for (const r of linkRows) {
-    if (!seen.has(r.consultant_id)) {
-      seen.add(r.consultant_id);
-      idsOrdered.push(r.consultant_id);
-    }
-  }
-  const hasNext = idsOrdered.length > PAGE_SIZE;
-  const pageIds = hasNext ? idsOrdered.slice(0, PAGE_SIZE) : idsOrdered;
+  const idsAll = uniq(toArray(linkRowsData).map((r) => r.consultant_id).filter(Boolean));
+  if (idsAll.length === 0) return { consultants: [], activeCategory: category, hasNext: false };
 
-  if (pageIds.length === 0) return { consultants: [], activeCategory: category, hasNext: false };
+  const hasNext = idsAll.length > page * PAGE_SIZE;
+  const pageIds = idsAll.slice(offset, offset + PAGE_SIZE);
+
+  if (pageIds.length === 0) return { consultants: [], activeCategory: category, hasNext };
 
   const { data: consultants = [] } = await sb
     .from("consultants")
     .select(CARD_SELECT)
-    .in("id", pageIds);
+    .in("id", pageIds)
+    .eq("visibility", "public")
+    .eq("status", "approved");
 
-  const orderMap = new Map(pageIds.map((id, i) => [id, i]));
-  consultants.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
+  consultants.sort((a, b) => String(a.display_name).localeCompare(String(b.display_name)));
 
   return { consultants, activeCategory: category, hasNext };
 }
 
 export default async function ConsultantsPage({ searchParams }) {
-  const sp = await searchParams;
-  const serviceSlug = sp?.service || "";
-  const categorySlug = sp?.category || "";
-  const requestedPage = Number.parseInt(sp?.page ?? "1", 10);
+  // searchParams is a plain object; don’t await
+  const sp = searchParams || {};
+  const serviceSlug = typeof sp.service === "string" ? sp.service : "";
+  const categorySlug = typeof sp.category === "string" ? sp.category : "";
+  const requestedPage = Number.parseInt((sp.page ?? "1"), 10);
   const page = Number.isNaN(requestedPage) ? 1 : Math.max(1, requestedPage);
 
   const sb = supabasePublicServer();
 
+  // Prefer service when both exist
   const dataResult = serviceSlug
     ? await getConsultantsByServiceSlug(sb, serviceSlug, page)
     : await getConsultantsByCategorySlug(sb, categorySlug, page);
@@ -169,9 +169,7 @@ export default async function ConsultantsPage({ searchParams }) {
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 4.5rem)" }}
     >
       <section className="rounded-3xl border border-sky-400/30 bg-sky-500/10 p-6 text-slate-100 shadow-lg ring-1 ring-sky-400/20">
-        <h1 className="text-2xl font-semibold text-white">
-          Want to join YouMine?
-        </h1>
+        <h1 className="text-2xl font-semibold text-white">Want to join YouMine?</h1>
         <p className="mt-2 text-sm text-slate-200">
           Add your consultancy to showcase your services to potential clients and manage your profile directly on YouMine.
         </p>
@@ -187,13 +185,9 @@ export default async function ConsultantsPage({ searchParams }) {
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm text-slate-300">
               {activeService ? (
-                <>
-                  Filtering by service: <span className="font-medium text-white">{activeService.name}</span>
-                </>
+                <>Filtering by service: <span className="font-medium text-white">{activeService.name}</span></>
               ) : (
-                <>
-                  Filtering by category: <span className="font-medium text-white">{activeCategory?.name}</span>
-                </>
+                <>Filtering by category: <span className="font-medium text-white">{activeCategory?.name}</span></>
               )}
             </div>
             <Link
@@ -209,7 +203,7 @@ export default async function ConsultantsPage({ searchParams }) {
         )}
       </section>
 
-      {/* Grid of consultant cards */}
+      {/* Grid */}
       <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {consultants.length === 0 ? (
           <div className="text-slate-400 text-sm sm:col-span-2 lg:col-span-3">
@@ -256,7 +250,7 @@ export default async function ConsultantsPage({ searchParams }) {
         )}
       </section>
 
-      {/* Pagination (no exact total; sentinel-based) */}
+      {/* Pagination */}
       <div className="mt-4 mb-20 flex items-center justify-center gap-2">
         <Link
           href={hasPrev ? buildPageHref(page - 1) : "#"}
@@ -281,7 +275,6 @@ export default async function ConsultantsPage({ searchParams }) {
         </Link>
       </div>
 
-      {/* Spacer to ensure no overlap on very small viewports */}
       <div className="h-8 sm:h-0" aria-hidden="true" />
     </main>
   );

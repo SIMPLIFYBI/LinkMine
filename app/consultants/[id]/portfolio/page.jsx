@@ -1,6 +1,7 @@
-import ConsultantTabs from "../ConsultantTabs";
+import { notFound } from "next/navigation";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
-import OwnerEditButton from "./OwnerEditButton.client"; // ADD
+import TopSection from "../TopSection";
+import OwnerEditButton from "./OwnerEditButton.client";
 
 export const revalidate = 300;
 
@@ -8,50 +9,43 @@ export default async function ConsultantPortfolioPage({ params }) {
   const { id } = await params;
   const sb = supabasePublicServer();
 
+  // Fetch more fields so TopSection matches the Profile page
   const { data: consultant } = await sb
     .from("consultants")
-    .select("id, display_name, metadata")
+    .select("id, display_name, metadata, view_count, headline, abn_verified, linkedin_url, facebook_url, twitter_url, instagram_url")
     .eq("id", id)
     .maybeSingle();
 
+  if (!consultant || consultant.visibility === "private") return notFound();
+
   const { data: portfolio } = await sb
     .from("consultant_portfolio")
-    .select("overall_intro, images, attachment, updated_at, links") // <-- add links
+    .select("overall_intro, images, attachment, updated_at, links")
     .eq("consultant_id", id)
     .maybeSingle();
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-6 py-8">
-      <ConsultantTabs consultantId={id} active="portfolio" />
+    <main className="mx-auto w-full max-w-4xl px-6 py-10 space-y-6">
+      {/* Shared top section identical to Profile page */}
+      <TopSection
+        consultantId={id}
+        consultant={consultant}
+        initialViewsCount={Number(consultant.view_count ?? 0)}
+        active="portfolio"
+        showTrack
+      />
 
-      {/* Header with owner-only edit button on the right */}
-      <header className="mb-4 flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          {consultant?.metadata?.logo?.url ? (
-            <img
-              src={consultant.metadata.logo.url}
-              alt={`${consultant.display_name} logo`}
-              width={80}
-              height={80}
-              decoding="async"
-              loading="eager"
-              className="h-20 w-20 shrink-0 rounded-md bg-white/5 object-contain"
-            />
-          ) : null}
-          <div>
-            <h1 className="text-xl font-semibold text-white">
-              {consultant?.display_name || "Consultant"} · Portfolio
-            </h1>
-            {portfolio?.updated_at ? (
-              <p className="mt-1 text-xs text-slate-400">
-                Updated {new Date(portfolio.updated_at).toLocaleDateString()}
-              </p>
-            ) : null}
-          </div>
-        </div>
+      {/* Small toolbar just under tabs to preserve existing portfolio affordances */}
+      <div className="mb-2 flex items-start justify-between gap-3">
+        {portfolio?.updated_at ? (
+          <p className="text-xs text-slate-400">
+            Updated {new Date(portfolio.updated_at).toLocaleDateString()}
+          </p>
+        ) : <span />}
         <OwnerEditButton consultantId={id} />
-      </header>
+      </div>
 
+      {/* Existing portfolio content remains unchanged, just shifted below the tabs */}
       {!portfolio ? (
         <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-slate-300">
           This consultant hasn’t published a portfolio yet.
@@ -64,7 +58,6 @@ export default async function ConsultantPortfolioPage({ params }) {
             </section>
           ) : null}
 
-          {/* Images grid */}
           {Array.isArray(portfolio.images) && portfolio.images.length > 0 ? (
             <section>
               <h2 className="mb-2 text-sm font-semibold text-slate-100">Project photos</h2>
@@ -79,7 +72,6 @@ export default async function ConsultantPortfolioPage({ params }) {
                         {img.title}
                       </h3>
                     ) : null}
-                    {/* Using native img to avoid external domain config for now */}
                     {img?.url ? (
                       <img
                         src={img.url}
@@ -101,7 +93,6 @@ export default async function ConsultantPortfolioPage({ params }) {
             </section>
           ) : null}
 
-          {/* Attachment */}
           {portfolio.attachment?.url ? (
             <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 ring-1 ring-white/10">
               <h2 className="text-sm font-semibold text-slate-100">Project document</h2>
@@ -121,7 +112,6 @@ export default async function ConsultantPortfolioPage({ params }) {
             </section>
           ) : null}
 
-          {/* Related links */}
           {Array.isArray(portfolio?.links) && portfolio.links.length > 0 ? (
             <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
               <h2 className="mb-2 text-lg font-semibold text-white">Related links</h2>
@@ -149,11 +139,6 @@ export default async function ConsultantPortfolioPage({ params }) {
               </ul>
             </section>
           ) : null}
-
-          {/* Owner edit hint (we’ll render the real edit UI on /portfolio/edit) */}
-          <div className="pt-2 text-xs text-slate-400">
-            Owners can edit their portfolio from the “Edit portfolio” page.
-          </div>
         </div>
       )}
     </main>
