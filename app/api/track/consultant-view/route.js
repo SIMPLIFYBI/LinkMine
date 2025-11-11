@@ -12,8 +12,8 @@ export async function POST(req) {
     const { data: auth } = await sb.auth.getUser();
     const userId = auth?.user?.id || null;
 
-    // cooldown: 6h (was 12h)
-    const since = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+    // 10-minute cooldown window
+    const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
 
     const viewerFilter = userId
       ? { viewer_id: userId }
@@ -22,11 +22,10 @@ export async function POST(req) {
       : null;
 
     if (!viewerFilter) {
-      // Create a per-browser anon ID if client didn’t send one (best to send from client)
       return NextResponse.json({ error: "Missing anonId for anonymous view" }, { status: 400 });
     }
 
-    // Exists check (skip duplicate within cooldown)
+    // Exists check inside cooldown
     let q = sb
       .from("consultant_page_views")
       .select("id", { count: "exact", head: true })
@@ -48,13 +47,13 @@ export async function POST(req) {
       viewer_id: userId,
       anon_hash: userId ? null : anonId,
       user_agent: ua,
+      source, // keep if you later segment traffic
     };
 
     const { error } = await sb.from("consultant_page_views").insert(payload);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-    // Optional: also write to profile_views if you choose to keep it
-    // await sb.from("profile_views").insert({ consultant_id: consultantId, viewer_id: userId, source });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ ok: true });
   } catch (e) {

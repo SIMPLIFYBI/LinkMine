@@ -6,11 +6,11 @@ import { notFound } from "next/navigation";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import { fetchPlaceDetails } from "@/lib/googlePlaces";
 import ConsultantClaimButton from "@/app/components/ConsultantClaimButton";
-import ConsultantFavouriteButton from "@/app/components/ConsultantFavouriteButton";
 import ConsultantSocialLinks from "@/app/components/ConsultantSocialLinks";
 import TrackView from "./TrackView.client.jsx";
 import ContactConsultantButton from "./ContactConsultantButton.client.jsx";
 import ConsultantTabs from "./ConsultantTabs";
+import PermissionsGate from "./PermissionsGate.client.jsx";
 
 // Small formatting helpers for public display
 function formatAbn(abn) {
@@ -30,12 +30,10 @@ function formatAcn(acn) {
 async function getConsultant(id) {
   const sb = await supabaseServerClient();
 
-  const { data: auth } = await sb.auth.getUser();
-  const userId = auth?.user?.id || null;
-
-  const { data, error } = await sb
+  const { data } = await sb
     .from("consultants")
-    .select("*, linkedin_url, facebook_url, twitter_url, instagram_url")
+    // Added view_count to select; removed COUNT logic
+    .select("*, view_count, linkedin_url, facebook_url, twitter_url, instagram_url")
     .eq("id", id)
     .maybeSingle();
 
@@ -52,53 +50,19 @@ async function getConsultant(id) {
     .eq("consultant_id", id)
     .order("created_at", { ascending: false });
 
-  const { count: viewsCount = 0 } = await sb
-    .from("consultant_page_views")
-    .select("id", { count: "exact", head: true })
-    .eq("consultant_id", id);
-
-  let initialFavourite = false;
-  if (userId) {
-    const { data: fav } = await sb
-      .from("consultant_favourites")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("consultant_id", id)
-      .maybeSingle();
-    initialFavourite = Boolean(fav);
-  }
-
-  // NEW: admin check
-  let isAdmin = false;
-  if (userId) {
-    const { data: adminRow } = await sb
-      .from("app_admins")
-      .select("user_id")
-      .eq("user_id", userId)
-      .maybeSingle();
-    isAdmin = Boolean(adminRow);
-  }
-
-  const canEdit = Boolean(userId && (data.claimed_by === userId || isAdmin));
-
   return {
     consultant: data,
     services: (svc || []).map((r) => r.service).filter(Boolean),
     ports: ports || [],
-    viewsCount,
-    userId,
-    initialFavourite,
-    canEdit,
-    isAdmin, // pass to UI if you want to show a badge
   };
 }
 
 export default async function ConsultantPage(props) {
-  const { id: consultantId } = await props.params; // await params
+  const { id: consultantId } = await props.params;
   const data = await getConsultant(consultantId);
   if (!data) return notFound();
 
-  const { consultant, services, ports, viewsCount, userId, initialFavourite, canEdit, isAdmin } = data;
+  const { consultant, services, ports } = data;
 
   const place = consultant.place_id
     ? await fetchPlaceDetails(consultant.place_id)
@@ -110,60 +74,19 @@ export default async function ConsultantPage(props) {
     ? place.reviews.slice(0, 3)
     : [];
 
-  const isOwner = Boolean(userId && consultant.claimed_by === userId);
-
   return (
     <main className="relative mx-auto w-full max-w-4xl px-6 py-10 space-y-6">
-      {/* Track page view */}
       <TrackView consultantId={consultantId} source="consultant_profile" />
 
-      {/* Admin pill — shows only to admins */}
-      {isAdmin && (
-        <div className="flex justify-start">
-          <span className="inline-flex items-center gap-2 rounded-full border border-sky-400/60 bg-sky-500/15 px-3 py-1.5 text-xs font-semibold text-sky-100 shadow-sm ring-1 ring-sky-300/30">
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
-              <path d="M12 2l7 4v6c0 5-3.8 9.7-7 10-3.2-.3-7-5-7-10V6l7-4zm0 3.2L7 7v4.8c0 3.9 2.8 8 5 8.6 2.2-.6 5-4.7 5-8.6V7l-5-1.8z" />
-            </svg>
-            Admin mode
-          </span>
-        </div>
-      )}
-
-      {/* Toolbar: Back + right-side stack (views above owner controls) */}
       <div className="flex items-start justify-between">
         <Link href="/consultants" className="text-sky-300 hover:underline">
           ← Back
         </Link>
-
-        <div className="flex flex-col items-end gap-2">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-200 ring-1 ring-white/10">
-            {/* views badge */}
-            <svg viewBox="0 0 24 24" className="h-4 w-4 text-slate-300" fill="currentColor" aria-hidden="true">
-              <path d="M12 5c4.5 0 8.3 2.9 10 7-1.7 4.1-5.5 7-10 7S3.7 16.1 2 12c1.7-4.1 5.5-7 10-7zm0 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
-            </svg>
-            <span>{viewsCount.toLocaleString()} views</span>
-          </div>
-
-          {(isOwner || isAdmin) && (
-            <div className="flex flex-wrap items-center justify-end gap-3">
-              {isOwner ? (
-                <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/70 bg-emerald-500/15 px-4 py-1.5 text-sm md:text-base font-semibold text-emerald-100 shadow-sm ring-1 ring-emerald-300/30">
-                  You are the owner of this page
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-2 rounded-full border border-sky-300/70 bg-sky-500/15 px-4 py-1.5 text-sm md:text-base font-semibold text-sky-100 shadow-sm ring-1 ring-sky-300/30">
-                  Admin access
-                </span>
-              )}
-              <Link
-                href={`/consultants/${consultantId}/edit`}
-                className="inline-flex items-center gap-2 rounded-full border border-sky-400/60 bg-sky-500/15 px-4 py-1.5 text-sm font-semibold text-sky-100 hover:border-sky-300 hover:bg-sky-500/25"
-              >
-                Edit profile
-              </Link>
-            </div>
-          )}
-        </div>
+        <PermissionsGate
+          consultantId={consultantId}
+          displayName={consultant.display_name}
+          initialViewsCount={Number(consultant.view_count ?? 0)}
+        />
       </div>
 
       <header className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -181,7 +104,6 @@ export default async function ConsultantPage(props) {
           ) : null}
           <div>
             <h1 className="text-3xl font-semibold text-slate-50">{consultant.display_name}</h1>
-            {/* Optional: small verified chip near the name */}
             {consultant.abn_verified ? (
               <div className="mt-2">
                 <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/50 bg-emerald-500/20 px-2.5 py-0.5 text-xs font-semibold text-emerald-100">
@@ -208,10 +130,6 @@ export default async function ConsultantPage(props) {
           <ContactConsultantButton
             consultantId={consultantId}
             consultantName={consultant.display_name}
-          />
-          <ConsultantFavouriteButton
-            consultantId={consultantId}
-            initialFavourite={initialFavourite}
           />
         </div>
       </header>
@@ -447,7 +365,6 @@ export default async function ConsultantPage(props) {
         <ConsultantClaimButton
           consultantId={consultantId}
           isClaimed={Boolean(consultant.claimed_by)}
-          canEdit={canEdit}
           contactEmail={consultant.contact_email}
         />
       </div>
@@ -458,10 +375,8 @@ export default async function ConsultantPage(props) {
           <pre className="mt-2 whitespace-pre-wrap break-words">
             {JSON.stringify(
               {
-                userId,
                 claimedBy: consultant.claimed_by || null,
                 isClaimed: Boolean(consultant.claimed_by),
-                canEdit,
               },
               null,
               2
