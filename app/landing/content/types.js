@@ -8,6 +8,5 @@ export function validateEntry(e) {
   requiredString(e.title, "title");
   requiredString(e.description, "description");
   if (!e.hero || !e.hero.heading) throw new Error(`Landing entry ${e.slug} missing hero.heading`);
-  // Add more field checks if you want stricter validation.
   return e;
 }
