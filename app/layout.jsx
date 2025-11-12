@@ -20,6 +20,8 @@ const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 const enableAnalytics = GA_ID && process.env.NODE_ENV === "production";
 
 export default function RootLayout({ children }) {
+  const enableAnalytics = GA_ID && process.env.NODE_ENV === "production";
+
   return (
     <html lang="en" className={`${inter.variable} dark`}>
       <body
@@ -57,7 +59,9 @@ export default function RootLayout({ children }) {
 
         <AuthProvider>
           <Header />
-          <TradingViewTicker />
+          <div className="mb-4">
+            <TradingViewTicker />
+          </div>
           <main className="flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
             {children}
           </main>
