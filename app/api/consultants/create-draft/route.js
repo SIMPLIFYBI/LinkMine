@@ -19,12 +19,18 @@ function slugify(s = "") {
 }
 
 export async function POST(req) {
-  const sb = await supabaseServerClient();
+  const authHeader = req.headers.get("authorization") || undefined;
+  const headers = authHeader ? { Authorization: authHeader } : undefined;
+  const sb = await supabaseServerClient({ headers });
 
+  // Auth
   const { data: auth } = await sb.auth.getUser();
   const userId = auth?.user?.id || null;
-  if (!userId) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  if (!userId) {
+    return NextResponse.json({ stage: "auth", error: "Not authenticated" }, { status: 401 });
+  }
 
+  // Parse + validate
   const body = await req.json().catch(() => ({}));
   const display_name = String(body?.display_name || "").trim();
   const headline = String(body?.headline || "").trim();
@@ -32,53 +38,89 @@ export async function POST(req) {
   const contact_email = String(body?.contact_email || "").trim();
   const services = Array.isArray(body?.services) ? body.services.slice(0, MAX_SERVICES) : [];
 
-  if (!display_name) return NextResponse.json({ error: "Display name is required" }, { status: 400 });
-  if (!headline) return NextResponse.json({ error: "Headline is required" }, { status: 400 });
-  if (headline.length > MAX_HEADLINE) return NextResponse.json({ error: `Headline must be ${MAX_HEADLINE} characters or fewer` }, { status: 400 });
-  if (!location) return NextResponse.json({ error: "Location is required" }, { status: 400 });
+  if (!display_name) return NextResponse.json({ stage: "validate", error: "Display name is required" }, { status: 400 });
+  if (!headline) return NextResponse.json({ stage: "validate", error: "Headline is required" }, { status: 400 });
+  if (headline.length > MAX_HEADLINE) return NextResponse.json({ stage: "validate", error: `Headline must be ${MAX_HEADLINE} characters or fewer` }, { status: 400 });
+  if (!location) return NextResponse.json({ stage: "validate", error: "Location is required" }, { status: 400 });
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact_email);
-  if (!contact_email || !emailOk) return NextResponse.json({ error: "Valid contact email is required" }, { status: 400 });
-  if (!services.length) return NextResponse.json({ error: "Select at least one service" }, { status: 400 });
+  if (!contact_email || !emailOk) return NextResponse.json({ stage: "validate", error: "Valid contact email is required" }, { status: 400 });
+  if (!services.length) return NextResponse.json({ stage: "validate", error: "Select at least one service" }, { status: 400 });
 
-  // Validate services against DB (trust but verify)
-  const { data: validSvcs = [] } = await sb
+  // Validate services exist
+  const { data: validSvcs = [], error: svcErr } = await sb
     .from("services")
     .select("id")
     .in("id", services)
     .limit(MAX_SERVICES);
-  const svcIds = (validSvcs || []).map((s) => s.id);
-  if (!svcIds.length) return NextResponse.json({ error: "No valid services selected" }, { status: 400 });
 
-  // Generate unique-ish slug
+  if (svcErr) {
+    return NextResponse.json({ stage: "services-validate", error: svcErr.message, code: svcErr.code, details: svcErr.details, hint: svcErr.hint }, { status: 400 });
+  }
+
+  const svcIds = (validSvcs || []).map((s) => s.id);
+  if (!svcIds.length) return NextResponse.json({ stage: "services-validate", error: "No valid services selected" }, { status: 400 });
+
+  // Slug
   let slug = slugify(display_name);
-  const { data: existing } = await sb.from("consultants").select("id").eq("slug", slug).limit(1);
+  const { data: existing, error: existErr } = await sb
+    .from("consultants")
+    .select("id")
+    .eq("slug", slug)
+    .limit(1);
+
+  if (existErr) {
+    return NextResponse.json({ stage: "slug-check", error: existErr.message, code: existErr.code, details: existErr.details, hint: existErr.hint }, { status: 400 });
+  }
   if (existing && existing.length) slug = slugify(`${display_name}-${Date.now().toString(36).slice(4)}`);
 
-  // Create consultant as pending + owned by user
-  const { data: inserted, error } = await sb
+  // INSERT consultant — keep this minimal to satisfy RLS with-check
+  const insertPayload = {
+    display_name,
+    headline,
+    location,
+    contact_email,
+    slug,
+    claimed_by: userId,
+    // If your policy requires specific values or forbids explicit values,
+    // we can remove these to rely on defaults, or set to draft/private.
+    // Try one at a time if needed:
+    // status: "draft",
+    // visibility: "private",
+  };
+
+  const { data: inserted, error: insErr } = await sb
     .from("consultants")
-    .insert({
-      display_name,
-      headline,
-      location,
-      contact_email,
-      visibility: "public", // still gated by status
-      status: "pending",
-      slug,
-      claimed_by: userId,
-    })
+    .insert(insertPayload)
     .select("id")
     .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message || "Create failed" }, { status: 400 });
+  if (insErr) {
+    return NextResponse.json({
+      stage: "consultants-insert",
+      error: insErr.message,
+      code: insErr.code,
+      details: insErr.details,
+      hint: insErr.hint,
+      payloadKeys: Object.keys(insertPayload),
+    }, { status: 400 });
   }
 
   // Attach services
   if (svcIds.length) {
     const rows = svcIds.map((service_id) => ({ consultant_id: inserted.id, service_id }));
-    // Best effort insert; if it fails, still return the consultant id
-    await sb.from("consultant_services").insert(rows);
+    const { error: joinErr } = await sb.from("consultant_services").insert(rows);
+    if (joinErr) {
+      // Still return id so the user can continue editing; surface join error
+      return NextResponse.json({
+        id: inserted.id,
+        ok: true,
+        stage: "consultant-services-insert",
+        joinError: joinErr.message,
+        joinCode: joinErr.code,
+        joinDetails: joinErr.details,
+        joinHint: joinErr.hint,
+      });
+    }
   }
 
   return NextResponse.json({ id: inserted.id, ok: true });

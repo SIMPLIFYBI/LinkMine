@@ -6,11 +6,11 @@ export default function AddConsultantButton({ className = "" }) {
   return (
     <Link
       href="/consultants/new"
-      prefetch
+      prefetch={false}
       className={`rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:from-sky-400 hover:to-sky-600 ${className}`}
       aria-label="Add consultant (go to profile setup)"
     >
-      Add consultant
+      Add Your Profile
     </Link>
   );
 }

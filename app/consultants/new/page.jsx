@@ -12,7 +12,7 @@ export default async function NewConsultantPage() {
   const sb = await supabaseServerClient();
   const { data: auth } = await sb.auth.getUser();
   const userId = auth?.user?.id || null;
-  if (!userId) redirect("/login");
+  if (!userId) redirect(`/login?redirect=${encodeURIComponent("/consultants/new")}`);
 
   // Fetch services (grouped by category for nicer UI if present)
   const sp = supabasePublicServer();
