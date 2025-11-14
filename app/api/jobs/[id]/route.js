@@ -3,7 +3,7 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
-import { supabaseServer } from "@/lib/supabaseServerClient";
+import { supabaseServerClient } from "@/lib/supabaseServerClient";
 
 async function userClient() {
   const jar = await cookies();
@@ -22,7 +22,7 @@ async function userClient() {
 
 export async function PATCH(req, { params }) {
   const u = await userClient();
-  const a = supabaseServer();
+  const a = await supabaseServerClient(); // FIX: was supabaseServer()
   const { data: auth } = await u.auth.getUser();
   const user = auth?.user;
   if (!user) return NextResponse.json({ ok: false, error: "Not signed in" }, { status: 401 });
@@ -46,7 +46,7 @@ export async function PATCH(req, { params }) {
 
 export async function DELETE(_req, { params }) {
   const u = await userClient();
-  const a = supabaseServer();
+  const a = await supabaseServerClient(); // FIX: was supabaseServer()
   const { data: auth } = await u.auth.getUser();
   const user = auth?.user;
   if (!user) return NextResponse.json({ ok: false, error: "Not signed in" }, { status: 401 });
