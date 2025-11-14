@@ -200,7 +200,7 @@ export default async function HomePage() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/30 via-slate-900/40 to-slate-950/80" />
         <div className="relative z-10 flex h-full flex-col items-center justify-center gap-6 px-8 py-16 text-center sm:px-16">
-          <h1 className="max-w-3xl text-5xl font-bold tracking-tight sm:text-6xl">
+          <h1 className="max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl leading-tight">
             Stop searching, start mining: match with the right expert today.
           </h1>
           <p className="max-w-2xl text-lg text-slate-200 sm:text-xl">
