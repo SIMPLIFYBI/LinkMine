@@ -3,16 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
-import { Suspense } from "react";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
-import ResetPasswordClient from "./ResetPasswordClient";
-
-export default function ResetPasswordPage() {
+export default function ResetPasswordClient() {
   const router = useRouter();
   const sp = useSearchParams();
+
   const [ready, setReady] = useState(false);
   const [exchangeError, setExchangeError] = useState("");
   const [password, setPassword] = useState("");
@@ -25,7 +20,6 @@ export default function ResetPasswordPage() {
     (async () => {
       try {
         const sb = supabaseBrowser();
-        // Two patterns possible: ?code=... or #access_token=...
         const code = sp.get("code");
         if (code) {
           const { error } = await sb.auth.exchangeCodeForSession(code);
@@ -48,6 +42,7 @@ export default function ResetPasswordPage() {
     e.preventDefault();
     setMessage("");
     setExchangeError("");
+
     if (!password || password.length < 8) {
       setExchangeError("Password must be at least 8 characters.");
       return;
@@ -56,6 +51,7 @@ export default function ResetPasswordPage() {
       setExchangeError("Passwords do not match.");
       return;
     }
+
     setSaving(true);
     try {
       const sb = supabaseBrowser();
@@ -81,9 +77,7 @@ export default function ResetPasswordPage() {
   return (
     <main className="mx-auto max-w-md px-6 py-12">
       <h1 className="text-2xl font-semibold tracking-tight text-white">Reset password</h1>
-      <p className="mt-2 text-sm text-slate-300">
-        Enter a new password for your account.
-      </p>
+      <p className="mt-2 text-sm text-slate-300">Enter a new password for your account.</p>
 
       <form onSubmit={handleUpdate} className="mt-5 space-y-3">
         <div>
