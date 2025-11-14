@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 
+const SUPPRESS_PATTERN = /invalid request: both auth code and code verifier should be non-empty/i;
+
 export default function ResetPasswordClient() {
   const router = useRouter();
   const sp = useSearchParams();
@@ -21,16 +23,21 @@ export default function ResetPasswordClient() {
       try {
         const sb = supabaseBrowser();
         const code = sp.get("code");
+        // Only attempt exchange if a ?code= param exists.
         if (code) {
           const { error } = await sb.auth.exchangeCodeForSession(code);
-          if (error) throw error;
-        } else if (typeof window !== "undefined" && window.location.hash?.includes("access_token")) {
-          const { error } = await sb.auth.exchangeCodeForSession(window.location.hash);
-          if (error) throw error;
+          if (error && !SUPPRESS_PATTERN.test(error.message)) {
+            throw error;
+          }
         }
+        // For recovery links with access_token in hash, Supabase already sets session internally.
+        // We no longer call exchangeCodeForSession on the raw hash to avoid the PKCE warning.
       } catch (e) {
         if (!active) return;
-        setExchangeError(e.message || "Unable to verify reset link.");
+        const msg = e.message || "Unable to verify reset link.";
+        if (!SUPPRESS_PATTERN.test(msg)) {
+          setExchangeError(msg);
+        }
       } finally {
         if (active) setReady(true);
       }
