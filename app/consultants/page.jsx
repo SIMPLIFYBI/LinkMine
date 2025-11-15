@@ -11,20 +11,61 @@ export const revalidate = 0;
 const PAGE_SIZE = 15;
 const CARD_SELECT = "id, slug, display_name, headline, location, visibility, status, metadata";
 
-// Base list with sentinel pagination
-async function getAllConsultantsPage(sb, page) {
+// ---- New: deterministic shuffle helpers (changes every 5 minutes) ----
+const SEED_BUCKET_MS = 5 * 60 * 1000; // rotate order every 5 minutes
+
+function mulberry32(seed) {
+  let t = seed >>> 0;
+  return function () {
+    t += 0x6D2B79F5;
+    let r = Math.imul(t ^ (t >>> 15), t | 1);
+    r ^= r + Math.imul(r ^ (r >>> 7), r | 61);
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function seededShuffle(arr, seed) {
+  const a = arr.slice();
+  const rand = mulberry32(seed);
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getSeed() {
+  return Math.floor(Date.now() / SEED_BUCKET_MS);
+}
+
+// ---- Base list with seeded random pagination over IDs ----
+async function getAllConsultantsPage(sb, page, seed) {
   const offset = (page - 1) * PAGE_SIZE;
-  const { data = [] } = await sb
+
+  // Fetch IDs only (cheap), then seeded-shuffle for consistent windowed randomness
+  const { data: idRows = [] } = await sb
+    .from("consultants")
+    .select("id")
+    .eq("visibility", "public")
+    .eq("status", "approved");
+
+  const idsAll = idRows.map((r) => r.id).filter(Boolean);
+  if (idsAll.length === 0) return { consultants: [], hasNext: false };
+
+  const shuffled = seededShuffle(idsAll, seed);
+  const hasNext = shuffled.length > page * PAGE_SIZE;
+  const pageIds = shuffled.slice(offset, offset + PAGE_SIZE);
+
+  // Fetch the actual cards for the selected IDs
+  const { data: rows = [] } = await sb
     .from("consultants")
     .select(CARD_SELECT)
-    .eq("visibility", "public")
-    .eq("status", "approved")
-    .order("display_name", { ascending: true })
-  // Fetch PAGE_SIZE + 1 for sentinel
-    .range(offset, offset + PAGE_SIZE);
+    .in("id", pageIds);
 
-  const hasNext = data.length > PAGE_SIZE;
-  const consultants = hasNext ? data.slice(0, PAGE_SIZE) : data;
+  // Preserve the shuffled order
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  const consultants = pageIds.map((id) => byId.get(id)).filter(Boolean);
+
   return { consultants, hasNext };
 }
 
@@ -32,11 +73,11 @@ async function getAllConsultantsPage(sb, page) {
 const toArray = (d) => (Array.isArray(d) ? d : []);
 const uniq = (arr) => Array.from(new Set(arr));
 
-async function getConsultantsByServiceSlug(sb, serviceSlug, page) {
+async function getConsultantsByServiceSlug(sb, serviceSlug, page, seed) {
   const offset = (page - 1) * PAGE_SIZE;
 
   if (!serviceSlug) {
-    const { consultants, hasNext } = await getAllConsultantsPage(sb, page);
+    const { consultants, hasNext } = await getAllConsultantsPage(sb, page, seed);
     return { consultants, activeService: null, hasNext };
   }
 
@@ -48,39 +89,41 @@ async function getConsultantsByServiceSlug(sb, serviceSlug, page) {
 
   if (!service) return { consultants: [], activeService: null, hasNext: false };
 
-  // Get consultant IDs for this service (simple path, no nested filters)
+  // Get consultant IDs for this service
   const { data: linkRowsData } = await sb
     .from("consultant_services")
     .select("consultant_id")
     .eq("service_id", service.id);
 
-  const idsAll = uniq(toArray(linkRowsData).map((r) => r.consultant_id).filter(Boolean));
+  let idsAll = uniq(toArray(linkRowsData).map((r) => r.consultant_id).filter(Boolean));
   if (idsAll.length === 0) return { consultants: [], activeService: service, hasNext: false };
 
-  // Page the ids
+  // Seeded shuffle across the full filtered set
+  idsAll = seededShuffle(idsAll, seed);
+
   const hasNext = idsAll.length > page * PAGE_SIZE;
   const pageIds = idsAll.slice(offset, offset + PAGE_SIZE);
-
   if (pageIds.length === 0) return { consultants: [], activeService: service, hasNext };
 
-  // Fetch consultants for ids, enforce visibility/status and sort by name
-  const { data: consultants = [] } = await sb
+  const { data: rows = [] } = await sb
     .from("consultants")
     .select(CARD_SELECT)
     .in("id", pageIds)
     .eq("visibility", "public")
     .eq("status", "approved");
 
-  consultants.sort((a, b) => String(a.display_name).localeCompare(String(b.display_name)));
+  // Preserve the shuffled order
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  const consultants = pageIds.map((id) => byId.get(id)).filter(Boolean);
 
   return { consultants, activeService: service, hasNext };
 }
 
-async function getConsultantsByCategorySlug(sb, categorySlug, page) {
+async function getConsultantsByCategorySlug(sb, categorySlug, page, seed) {
   const offset = (page - 1) * PAGE_SIZE;
 
   if (!categorySlug) {
-    const { consultants, hasNext } = await getAllConsultantsPage(sb, page);
+    const { consultants, hasNext } = await getAllConsultantsPage(sb, page, seed);
     return { consultants, activeCategory: null, hasNext };
   }
 
@@ -107,28 +150,31 @@ async function getConsultantsByCategorySlug(sb, categorySlug, page) {
     .select("consultant_id")
     .in("service_id", serviceIds);
 
-  const idsAll = uniq(toArray(linkRowsData).map((r) => r.consultant_id).filter(Boolean));
+  let idsAll = uniq(toArray(linkRowsData).map((r) => r.consultant_id).filter(Boolean));
   if (idsAll.length === 0) return { consultants: [], activeCategory: category, hasNext: false };
+
+  // Seeded shuffle across the full filtered set
+  idsAll = seededShuffle(idsAll, seed);
 
   const hasNext = idsAll.length > page * PAGE_SIZE;
   const pageIds = idsAll.slice(offset, offset + PAGE_SIZE);
-
   if (pageIds.length === 0) return { consultants: [], activeCategory: category, hasNext };
 
-  const { data: consultants = [] } = await sb
+  const { data: rows = [] } = await sb
     .from("consultants")
     .select(CARD_SELECT)
     .in("id", pageIds)
     .eq("visibility", "public")
     .eq("status", "approved");
 
-  consultants.sort((a, b) => String(a.display_name).localeCompare(String(b.display_name)));
+  // Preserve the shuffled order
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  const consultants = pageIds.map((id) => byId.get(id)).filter(Boolean);
 
   return { consultants, activeCategory: category, hasNext };
 }
 
 export default async function ConsultantsPage({ searchParams }) {
-  // searchParams is a plain object; don’t await
   const sp = searchParams || {};
   const serviceSlug = typeof sp.service === "string" ? sp.service : "";
   const categorySlug = typeof sp.category === "string" ? sp.category : "";
@@ -136,11 +182,12 @@ export default async function ConsultantsPage({ searchParams }) {
   const page = Number.isNaN(requestedPage) ? 1 : Math.max(1, requestedPage);
 
   const sb = supabasePublicServer();
+  const seed = getSeed(); // new: consistent shuffle within the 5-min window
 
   // Prefer service when both exist
   const dataResult = serviceSlug
-    ? await getConsultantsByServiceSlug(sb, serviceSlug, page)
-    : await getConsultantsByCategorySlug(sb, categorySlug, page);
+    ? await getConsultantsByServiceSlug(sb, serviceSlug, page, seed)
+    : await getConsultantsByCategorySlug(sb, categorySlug, page, seed);
 
   const consultants = dataResult.consultants;
   const activeCategory = dataResult.activeCategory || null;
