@@ -4,8 +4,7 @@ import AddConsultantButton from "@/app/components/consultants/AddConsultantButto
 import ServiceFilter from "./ServiceFilter.client.jsx";
 import NameSearch from "./NameSearch.client.jsx";
 import ServiceSlugFilter from "./ServiceSlugFilter.client.jsx";
-import MobileHero from "./MobileHero"; // NEW
-import MobileFiltersToggle from "./MobileFiltersToggle.client.jsx"; // already added
+import MobileHeroAndFilters from "./MobileHeroAndFilters.client.jsx"; // NEW
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -270,7 +269,7 @@ export default async function ConsultantsPage({ searchParams }) {
 
   return (
     <main
-      className="mx-auto w-full max-w-6xl px-6 py-10 space-y-10 pb-24 sm:pb-12"
+      className="mx-auto w-full max-w-6xl px-6 py-10 space-y-8 md:space-y-10 pb-24 sm:pb-12"
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 4.5rem)" }}
     >
       {/* Desktop dual hero only */}
@@ -325,13 +324,20 @@ export default async function ConsultantsPage({ searchParams }) {
         </div>
       </section>
 
-      {/* Mobile slim hero */}
-      <MobileHero />
+      {/* Mobile hero + floating filter sheet trigger */}
+      <MobileHeroAndFilters
+        categories={allCategories}
+        services={allServices}
+        q={q}
+        activeService={activeService}
+        activeCategory={activeCategory}
+        hasActive={Boolean(activeService || activeCategory || q)}
+        consultantsCount={consultants.length}
+      />
 
-      {/* Filters */}
-      <section className="rounded-2xl border border-white/10 bg-white/[0.02] backdrop-blur-sm p-4 shadow-sm ring-1 ring-white/5 space-y-3">
-        {/* Desktop filter bar */}
-        <div className="hidden md:flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+      {/* Filters (desktop only) */}
+      <section className="hidden md:block rounded-2xl border border-white/10 bg-white/[0.02] backdrop-blur-sm p-4 shadow-sm ring-1 ring-white/5 space-y-3">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
             <ServiceFilter categories={allCategories} activeSlug={activeCategory?.slug || ""} />
             <ServiceSlugFilter services={allServices} activeSlug={activeService?.slug || ""} />
@@ -348,27 +354,8 @@ export default async function ConsultantsPage({ searchParams }) {
           )}
         </div>
 
-        {/* Mobile simplified filters */}
-        <div className="md:hidden space-y-3">
-          <NameSearch initialValue={q} />
-          <MobileFiltersToggle>
-            <ServiceFilter categories={allCategories} activeSlug={activeCategory?.slug || ""} />
-            <ServiceSlugFilter services={allServices} activeSlug={activeService?.slug || ""} />
-          </MobileFiltersToggle>
-          {(activeService || activeCategory || q) && (
-            <div className="text-[11px] text-slate-400">
-              Active: {q && <span>Name “{q}” </span>}
-              {activeService && <span>Service {activeService.name} </span>}
-              {!activeService && activeCategory && <span>Category {activeCategory.name} </span>}
-              <Link href="/consultants" className="ml-2 text-sky-300 underline-offset-2 hover:underline">
-                Reset
-              </Link>
-            </div>
-          )}
-        </div>
-
         {(activeService || activeCategory || q) ? (
-          <div className="hidden md:flex flex-wrap items-center gap-3 text-xs text-slate-300">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300">
             {q && (
               <span className="rounded-full border border-sky-400/30 bg-sky-500/10 px-3 py-1 font-medium text-sky-200">
                 Name: “{q}”
@@ -389,7 +376,7 @@ export default async function ConsultantsPage({ searchParams }) {
             </span>
           </div>
         ) : (
-          <div className="hidden md:block text-xs text-slate-400">
+          <div className="text-xs text-slate-400">
             Browse all consultants. Use filters or search to refine.
           </div>
         )}
