@@ -50,10 +50,16 @@ async function getConsultant(id) {
     .eq("consultant_id", id)
     .order("created_at", { ascending: false });
 
+  const { count: viewsCount = 0 } = await sb
+    .from("consultant_page_views")
+    .select("id", { head: true, count: "exact" })
+    .eq("consultant_id", id);
+
   return {
     consultant: data,
     services: (svc || []).map((r) => r.service).filter(Boolean),
     ports: ports || [],
+    viewsCount: viewsCount || 0,
   };
 }
 
@@ -62,7 +68,7 @@ export default async function ConsultantPage(props) {
   const data = await getConsultant(consultantId);
   if (!data) return notFound();
 
-  const { consultant, services, ports } = data;
+  const { consultant, services, ports, viewsCount } = data;
 
   const place = consultant.place_id
     ? await fetchPlaceDetails(consultant.place_id)
@@ -85,7 +91,7 @@ export default async function ConsultantPage(props) {
         <PermissionsGate
           consultantId={consultantId}
           displayName={consultant.display_name}
-          initialViewsCount={Number(consultant.view_count ?? 0)}
+          initialViewsCount={Number(viewsCount ?? 0)}
         />
       </div>
 

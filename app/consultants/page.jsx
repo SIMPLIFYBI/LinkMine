@@ -66,7 +66,14 @@ async function getAllConsultantsPage(sb, page, seed, q) {
   const hasNext = shuffled.length > page * PAGE_SIZE;
   const pageIds = shuffled.slice(offset, offset + PAGE_SIZE);
 
-  const { data: rows = [] } = await sb.from("consultants").select(CARD_SELECT).in("id", pageIds);
+  // Add the same public/approved constraints here for consistency
+  const { data: rows = [] } = await sb
+    .from("consultants")
+    .select(CARD_SELECT)
+    .in("id", pageIds)
+    .eq("visibility", "public")
+    .eq("status", "approved");
+
   const byId = new Map(rows.map((r) => [r.id, r]));
   const consultants = pageIds.map((id) => byId.get(id)).filter(Boolean);
 
@@ -335,13 +342,13 @@ export default async function ConsultantsPage({ searchParams }) {
             <NameSearch initialValue={q} />
           </div>
           {(activeService || activeCategory || q) && (
-            <button
-              type="button"
-              onClick={() => (window.location.href = "/consultants")}
-              className="h-9 rounded-xl border border-white/10 bg-white/10 px-4 text-xs font-semibold text-slate-100 backdrop-blur-md hover:bg-white/15 transition focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+            <Link
+              href="/consultants"
+              prefetch
+              className="h-9 inline-flex items-center rounded-xl border border-white/10 bg-white/10 px-4 text-xs font-semibold text-slate-100 backdrop-blur-md hover:bg-white/15 transition focus:outline-none focus:ring-2 focus:ring-sky-500/40"
             >
               Reset
-            </button>
+            </Link>
           )}
         </div>
 
