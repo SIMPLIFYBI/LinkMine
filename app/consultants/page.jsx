@@ -2,18 +2,18 @@ import Link from "next/link";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
 import AddConsultantButton from "@/app/components/consultants/AddConsultantButton";
 import ServiceFilter from "./ServiceFilter.client.jsx";
+import NameSearch from "./NameSearch.client.jsx";
+import ServiceSlugFilter from "./ServiceSlugFilter.client.jsx";
 
 export const runtime = "nodejs";
-// Ensure filters (query params) always re-evaluate on navigation
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const PAGE_SIZE = 15;
 const CARD_SELECT = "id, slug, display_name, headline, location, visibility, status, metadata";
 
-// ---- New: deterministic shuffle helpers (changes every 5 minutes) ----
-const SEED_BUCKET_MS = 5 * 60 * 1000; // rotate order every 5 minutes
-
+// ---- Shuffle helpers ----
+const SEED_BUCKET_MS = 5 * 60 * 1000;
 function mulberry32(seed) {
   let t = seed >>> 0;
   return function () {
@@ -23,7 +23,6 @@ function mulberry32(seed) {
     return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
   };
 }
-
 function seededShuffle(arr, seed) {
   const a = arr.slice();
   const rand = mulberry32(seed);
@@ -33,21 +32,32 @@ function seededShuffle(arr, seed) {
   }
   return a;
 }
-
 function getSeed() {
   return Math.floor(Date.now() / SEED_BUCKET_MS);
 }
 
-// ---- Base list with seeded random pagination over IDs ----
-async function getAllConsultantsPage(sb, page, seed) {
+// ---- Data lookups (with optional name search) ----
+async function getAllConsultantsPage(sb, page, seed, q) {
   const offset = (page - 1) * PAGE_SIZE;
 
-  // Fetch IDs only (cheap), then seeded-shuffle for consistent windowed randomness
-  const { data: idRows = [] } = await sb
-    .from("consultants")
-    .select("id")
-    .eq("visibility", "public")
-    .eq("status", "approved");
+  // Build the base id set (optionally filtered by name)
+  let idRows = [];
+  if (q) {
+    const { data = [] } = await sb
+      .from("consultants")
+      .select("id")
+      .eq("visibility", "public")
+      .eq("status", "approved")
+      .ilike("display_name", `%${q}%`);
+    idRows = data;
+  } else {
+    const { data = [] } = await sb
+      .from("consultants")
+      .select("id")
+      .eq("visibility", "public")
+      .eq("status", "approved");
+    idRows = data;
+  }
 
   const idsAll = idRows.map((r) => r.id).filter(Boolean);
   if (idsAll.length === 0) return { consultants: [], hasNext: false };
@@ -56,29 +66,21 @@ async function getAllConsultantsPage(sb, page, seed) {
   const hasNext = shuffled.length > page * PAGE_SIZE;
   const pageIds = shuffled.slice(offset, offset + PAGE_SIZE);
 
-  // Fetch the actual cards for the selected IDs
-  const { data: rows = [] } = await sb
-    .from("consultants")
-    .select(CARD_SELECT)
-    .in("id", pageIds);
-
-  // Preserve the shuffled order
+  const { data: rows = [] } = await sb.from("consultants").select(CARD_SELECT).in("id", pageIds);
   const byId = new Map(rows.map((r) => [r.id, r]));
   const consultants = pageIds.map((id) => byId.get(id)).filter(Boolean);
 
   return { consultants, hasNext };
 }
 
-// Helpers
 const toArray = (d) => (Array.isArray(d) ? d : []);
 const uniq = (arr) => Array.from(new Set(arr));
 
-async function getConsultantsByServiceSlug(sb, serviceSlug, page, seed) {
+async function getConsultantsByServiceSlug(sb, serviceSlug, page, seed, q) {
   const offset = (page - 1) * PAGE_SIZE;
 
   if (!serviceSlug) {
-    const { consultants, hasNext } = await getAllConsultantsPage(sb, page, seed);
-    return { consultants, activeService: null, hasNext };
+    return getAllConsultantsPage(sb, page, seed, q);
   }
 
   const { data: service } = await sb
@@ -89,7 +91,6 @@ async function getConsultantsByServiceSlug(sb, serviceSlug, page, seed) {
 
   if (!service) return { consultants: [], activeService: null, hasNext: false };
 
-  // Get consultant IDs for this service
   const { data: linkRowsData } = await sb
     .from("consultant_services")
     .select("consultant_id")
@@ -98,9 +99,20 @@ async function getConsultantsByServiceSlug(sb, serviceSlug, page, seed) {
   let idsAll = uniq(toArray(linkRowsData).map((r) => r.consultant_id).filter(Boolean));
   if (idsAll.length === 0) return { consultants: [], activeService: service, hasNext: false };
 
-  // Seeded shuffle across the full filtered set
-  idsAll = seededShuffle(idsAll, seed);
+  // Optional name filter: intersect with ILIKE results
+  if (q) {
+    const { data: filtered = [] } = await sb
+      .from("consultants")
+      .select("id")
+      .in("id", idsAll)
+      .eq("visibility", "public")
+      .eq("status", "approved")
+      .ilike("display_name", `%${q}%`);
+    idsAll = filtered.map((r) => r.id).filter(Boolean);
+    if (idsAll.length === 0) return { consultants: [], activeService: service, hasNext: false };
+  }
 
+  idsAll = seededShuffle(idsAll, seed);
   const hasNext = idsAll.length > page * PAGE_SIZE;
   const pageIds = idsAll.slice(offset, offset + PAGE_SIZE);
   if (pageIds.length === 0) return { consultants: [], activeService: service, hasNext };
@@ -112,19 +124,17 @@ async function getConsultantsByServiceSlug(sb, serviceSlug, page, seed) {
     .eq("visibility", "public")
     .eq("status", "approved");
 
-  // Preserve the shuffled order
   const byId = new Map(rows.map((r) => [r.id, r]));
   const consultants = pageIds.map((id) => byId.get(id)).filter(Boolean);
 
   return { consultants, activeService: service, hasNext };
 }
 
-async function getConsultantsByCategorySlug(sb, categorySlug, page, seed) {
+async function getConsultantsByCategorySlug(sb, categorySlug, page, seed, q) {
   const offset = (page - 1) * PAGE_SIZE;
 
   if (!categorySlug) {
-    const { consultants, hasNext } = await getAllConsultantsPage(sb, page, seed);
-    return { consultants, activeCategory: null, hasNext };
+    return getAllConsultantsPage(sb, page, seed, q);
   }
 
   const { data: category } = await sb
@@ -135,16 +145,10 @@ async function getConsultantsByCategorySlug(sb, categorySlug, page, seed) {
 
   if (!category) return { consultants: [], activeCategory: null, hasNext: false };
 
-  // Get all services under this category
-  const { data: servicesData } = await sb
-    .from("services")
-    .select("id")
-    .eq("category_id", category.id);
-
+  const { data: servicesData } = await sb.from("services").select("id").eq("category_id", category.id);
   const serviceIds = toArray(servicesData).map((s) => s.id).filter(Boolean);
   if (serviceIds.length === 0) return { consultants: [], activeCategory: category, hasNext: false };
 
-  // Get consultant IDs across those services
   const { data: linkRowsData } = await sb
     .from("consultant_services")
     .select("consultant_id")
@@ -153,9 +157,20 @@ async function getConsultantsByCategorySlug(sb, categorySlug, page, seed) {
   let idsAll = uniq(toArray(linkRowsData).map((r) => r.consultant_id).filter(Boolean));
   if (idsAll.length === 0) return { consultants: [], activeCategory: category, hasNext: false };
 
-  // Seeded shuffle across the full filtered set
-  idsAll = seededShuffle(idsAll, seed);
+  // Optional name filter: intersect with ILIKE results
+  if (q) {
+    const { data: filtered = [] } = await sb
+      .from("consultants")
+      .select("id")
+      .in("id", idsAll)
+      .eq("visibility", "public")
+      .eq("status", "approved")
+      .ilike("display_name", `%${q}%`);
+    idsAll = filtered.map((r) => r.id).filter(Boolean);
+    if (idsAll.length === 0) return { consultants: [], activeCategory: category, hasNext: false };
+  }
 
+  idsAll = seededShuffle(idsAll, seed);
   const hasNext = idsAll.length > page * PAGE_SIZE;
   const pageIds = idsAll.slice(offset, offset + PAGE_SIZE);
   if (pageIds.length === 0) return { consultants: [], activeCategory: category, hasNext };
@@ -167,27 +182,52 @@ async function getConsultantsByCategorySlug(sb, categorySlug, page, seed) {
     .eq("visibility", "public")
     .eq("status", "approved");
 
-  // Preserve the shuffled order
   const byId = new Map(rows.map((r) => [r.id, r]));
   const consultants = pageIds.map((id) => byId.get(id)).filter(Boolean);
 
   return { consultants, activeCategory: category, hasNext };
 }
 
+// --- Utility: derive a location phrase from query slugs for SEO flavor ---
+function deriveLocationPhrase(serviceSlug, categorySlug) {
+  const slug = (serviceSlug || categorySlug || "").toLowerCase();
+  if (slug.includes("perth") || slug.includes("wa") || slug.includes("western")) return "Perth & Western Australia";
+  if (slug.includes("brisbane") || slug.includes("queensland") || slug.includes("qld")) return "Brisbane & Queensland";
+  if (slug.includes("open-pit")) return "Open Pit Operations";
+  if (slug.includes("planning")) return "Mine Planning";
+  return "Australia";
+}
+
+// --- JSON-LD builder (optional SEO enrichment) ---
+function buildJsonLd(consultants) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Mining Engineering Consultants Directory",
+    "itemListElement": consultants.map((c, i) => ({
+      "@type": "Organization",
+      "position": i + 1,
+      "name": c.display_name,
+      "url": `https://youmine.example/consultants/${c.id}`,
+      ...(c.location ? { "address": { "@type": "PostalAddress", "addressLocality": c.location } } : {})
+    }))
+  };
+}
+
 export default async function ConsultantsPage({ searchParams }) {
   const sp = searchParams || {};
   const serviceSlug = typeof sp.service === "string" ? sp.service : "";
   const categorySlug = typeof sp.category === "string" ? sp.category : "";
-  const requestedPage = Number.parseInt((sp.page ?? "1"), 10);
+  const q = typeof sp.q === "string" ? sp.q.trim() : "";
+  const requestedPage = Number.parseInt(sp.page ?? "1", 10);
   const page = Number.isNaN(requestedPage) ? 1 : Math.max(1, requestedPage);
 
   const sb = supabasePublicServer();
-  const seed = getSeed(); // new: consistent shuffle within the 5-min window
+  const seed = getSeed();
 
-  // Prefer service when both exist
   const dataResult = serviceSlug
-    ? await getConsultantsByServiceSlug(sb, serviceSlug, page, seed)
-    : await getConsultantsByCategorySlug(sb, categorySlug, page, seed);
+    ? await getConsultantsByServiceSlug(sb, serviceSlug, page, seed, q)
+    : await getConsultantsByCategorySlug(sb, categorySlug, page, seed, q);
 
   const consultants = dataResult.consultants;
   const activeCategory = dataResult.activeCategory || null;
@@ -201,57 +241,140 @@ export default async function ConsultantsPage({ searchParams }) {
     .order("position", { ascending: true })
     .order("name", { ascending: true });
 
+  const { data: allServices = [] } = await sb
+    .from("services")
+    .select("id, name, slug")
+    .order("name", { ascending: true });
+
   const buildPageHref = (targetPage) => {
     const params = new URLSearchParams();
     if (serviceSlug) params.set("service", serviceSlug);
     else if (categorySlug) params.set("category", categorySlug);
+    if (q) params.set("q", q);
     if (targetPage > 1) params.set("page", String(targetPage));
-    const q = params.toString();
-    return `/consultants${q ? `?${q}` : ""}`;
+    const qstr = params.toString();
+    return `/consultants${qstr ? `?${qstr}` : ""}`;
   };
+
+  const locationPhrase = deriveLocationPhrase(serviceSlug, categorySlug);
+  const jsonLd = buildJsonLd(consultants);
 
   return (
     <main
-      className="mx-auto w-full max-w-6xl px-6 py-10 space-y-8 pb-24 sm:pb-12"
+      className="mx-auto w-full max-w-6xl px-6 py-10 space-y-10 pb-24 sm:pb-12"
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 4.5rem)" }}
     >
-      <section className="rounded-3xl border border-sky-400/30 bg-sky-500/10 p-6 text-slate-100 shadow-lg ring-1 ring-sky-400/20">
-        <h1 className="text-2xl font-semibold text-white">Want to join YouMine?</h1>
-        <p className="mt-2 text-sm text-slate-200">
-          Add your consultancy to showcase your services to potential clients and manage your profile directly on YouMine.
-        </p>
-        <div className="mt-4 inline-flex items-center">
-          <AddConsultantButton className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-900 shadow hover:bg-slate-100" />
+      {/* --- Dual Hero Section: SEO intent + Join CTA --- */}
+      <section className="grid gap-6 lg:grid-cols-2">
+        {/* SEO / Search Intent Panel */}
+        <div className="
+          group relative overflow-hidden rounded-3xl
+          border border-sky-400/30 bg-gradient-to-br from-slate-900/70 via-sky-900/30 to-indigo-900/40
+          p-7 backdrop-blur-xl shadow-lg ring-1 ring-sky-300/20
+        ">
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute -top-20 -left-28 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl transition group-hover:bg-sky-500/20" />
+            <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl transition group-hover:bg-indigo-500/20" />
+          </div>
+          <h1 className="relative text-2xl md:text-3xl font-bold tracking-tight text-white">
+            Discover Mining Professionals
+          </h1>
+          <p className="relative mt-3 text-sm leading-relaxed text-slate-200">
+            Discover vetted mine consultants and contractors across {locationPhrase}. Compare expertise,
+            disciplines, locations, and capabilities to deliver studies, projects, design, operations, and optimization.
+          </p>
+          <div className="relative mt-5 flex flex-wrap gap-2">
+            {/* Internal deep links for crawl & UX */}
+            <Link href="/landing/open-pit-engineering-mine-planning-consultants-australia" className="text-xs font-medium rounded-full bg-white/10 px-3 py-1.5 backdrop-blur-sm border border-white/15 hover:bg-white/20 transition" prefetch>Open Pit</Link>
+            <Link href="/landing/mining-consultants-perth-western-australia" className="text-xs font-medium rounded-full bg-white/10 px-3 py-1.5 backdrop-blur-sm border border-white/15 hover:bg-white/20 transition" prefetch>Perth & WA</Link>
+            <Link href="/landing/mining-consultants-brisbane-queensland" className="text-xs font-medium rounded-full bg-white/10 px-3 py-1.5 backdrop-blur-sm border border-white/15 hover:bg-white/20 transition" prefetch>Brisbane & QLD</Link>
+            <Link href="/consultants?service=planning" className="text-xs font-medium rounded-full bg-white/10 px-3 py-1.5 backdrop-blur-sm border border-white/15 hover:bg-white/20 transition" prefetch>Mine Planning</Link>
+            <Link href="/consultants?service=geology" className="text-xs font-medium rounded-full bg-white/10 px-3 py-1.5 backdrop-blur-sm border border-white/15 hover:bg-white/20 transition" prefetch>Geology</Link>
+          </div>
+          <div className="relative mt-6 text-xs text-slate-400">
+            Listing order rotates periodically to surface a broader range of consultants.
+          </div>
+        </div>
+
+        {/* Join / CTA Panel (compact) */}
+        <div className="
+          relative rounded-3xl border border-emerald-400/30
+          bg-gradient-to-br from-slate-900/70 via-emerald-900/30 to-cyan-900/40
+          p-6 backdrop-blur-xl shadow-lg ring-1 ring-emerald-300/20
+        ">
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute -top-16 -left-20 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl" />
+            <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
+          </div>
+          <h2 className="relative text-xl md:text-2xl font-semibold text-white">
+            Consultant or contractor? Join YouMine.
+          </h2>
+          <p className="relative mt-3 text-sm leading-relaxed text-slate-200">
+            List your company or contractor profile, showcase capabilities, and connect with clients seeking specialist mining expertise.
+          </p>
+          <div className="relative mt-3 flex flex-wrap gap-2">
+            <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[11px] font-medium text-slate-100/90 backdrop-blur-sm">Free to list</span>
+            <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[11px] font-medium text-slate-100/90 backdrop-blur-sm">Fast setup</span>
+            <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[11px] font-medium text-slate-100/90 backdrop-blur-sm">Own your profile</span>
+          </div>
+          <div className="relative mt-4 inline-flex">
+            <AddConsultantButton className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-900 shadow hover:bg-slate-100 transition" />
+          </div>
+          <div className="relative mt-3 text-xs text-slate-400">
+            Approval & public visibility subject to basic verification.
+          </div>
         </div>
       </section>
 
-      {/* Category filter (single select) */}
-      <section className="mt-2 space-y-2">
-        <ServiceFilter categories={allCategories} activeSlug={activeCategory?.slug || ""} />
-        {(activeService || activeCategory) ? (
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-sm text-slate-300">
-              {activeService ? (
-                <>Filtering by service: <span className="font-medium text-white">{activeService.name}</span></>
-              ) : (
-                <>Filtering by category: <span className="font-medium text-white">{activeCategory?.name}</span></>
-              )}
-            </div>
-            <Link
-              href="/consultants"
-              prefetch
-              className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-100 shadow backdrop-blur-md ring-1 ring-white/10 hover:bg-white/15"
+      {/* Filters: Category + Name search */}
+      <section className="rounded-2xl border border-white/10 bg-white/[0.02] backdrop-blur-sm p-4 shadow-sm ring-1 ring-white/5 space-y-3">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <ServiceFilter categories={allCategories} activeSlug={activeCategory?.slug || ""} />
+            <ServiceSlugFilter services={allServices} activeSlug={activeService?.slug || ""} />
+            <NameSearch initialValue={q} />
+          </div>
+          {(activeService || activeCategory || q) && (
+            <button
+              type="button"
+              onClick={() => (window.location.href = "/consultants")}
+              className="h-9 rounded-xl border border-white/10 bg-white/10 px-4 text-xs font-semibold text-slate-100 backdrop-blur-md hover:bg-white/15 transition focus:outline-none focus:ring-2 focus:ring-sky-500/40"
             >
-              Show all consultants
-            </Link>
+              Reset
+            </button>
+          )}
+        </div>
+
+        {(activeService || activeCategory || q) ? (
+          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300">
+            {q && (
+              <span className="rounded-full border border-sky-400/30 bg-sky-500/10 px-3 py-1 font-medium text-sky-200">
+                Name: “{q}”
+              </span>
+            )}
+            {activeService && (
+              <span className="rounded-full border border-indigo-400/30 bg-indigo-500/10 px-3 py-1 font-medium text-indigo-200">
+                Service: {activeService.name}
+              </span>
+            )}
+            {!activeService && activeCategory && (
+              <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 font-medium text-emerald-200">
+                Category: {activeCategory.name}
+              </span>
+            )}
+            <span className="text-slate-500">
+              {consultants.length} result{consultants.length === 1 ? "" : "s"}
+            </span>
           </div>
         ) : (
-          <div className="text-sm text-slate-400">Browse all consultants.</div>
+          <div className="text-xs text-slate-400">
+            Browse all consultants. Use filters or search to refine.
+          </div>
         )}
       </section>
 
       {/* Grid */}
-      <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {consultants.length === 0 ? (
           <div className="text-slate-400 text-sm sm:col-span-2 lg:col-span-3">
             No consultants found for this selection.
@@ -260,7 +383,7 @@ export default async function ConsultantsPage({ searchParams }) {
           consultants.map((c) => (
             <article
               key={c.id}
-              className="relative rounded-xl border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/5 transition hover:border-white/20"
+              className="relative rounded-xl border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/5 transition hover:border-white/20 hover:bg-white/[0.06]"
             >
               <div className="flex items-start gap-3">
                 {c?.metadata?.logo?.url ? (
@@ -278,11 +401,10 @@ export default async function ConsultantsPage({ searchParams }) {
                 )}
                 <div>
                   <h3 className="text-lg font-semibold text-white">{c.display_name}</h3>
-                  {c.headline ? <p className="mt-1 text-sm text-slate-300">{c.headline}</p> : null}
-                  {c.location ? <div className="mt-1 text-xs text-slate-400">{c.location}</div> : null}
+                  {c.headline && <p className="mt-1 text-sm text-slate-300">{c.headline}</p>}
+                  {c.location && <div className="mt-1 text-xs text-slate-400">{c.location}</div>}
                 </div>
               </div>
-
               <div className="mt-3">
                 <Link
                   href={`/consultants/${c.id}`}
@@ -298,7 +420,7 @@ export default async function ConsultantsPage({ searchParams }) {
       </section>
 
       {/* Pagination */}
-      <div className="mt-4 mb-20 flex items-center justify-center gap-2">
+      <div className="mt-6 mb-20 flex items-center justify-center gap-2">
         <Link
           href={hasPrev ? buildPageHref(page - 1) : "#"}
           className={`rounded-md border border-white/10 px-3 py-1.5 text-sm ${
@@ -323,6 +445,17 @@ export default async function ConsultantsPage({ searchParams }) {
       </div>
 
       <div className="h-8 sm:h-0" aria-hidden="true" />
+
+      {/* JSON-LD for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            ...jsonLd,
+            name: "Mine Consultants & Contractors Directory",
+          }),
+        }}
+      />
     </main>
   );
 }
