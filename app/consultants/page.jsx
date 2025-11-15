@@ -290,14 +290,7 @@ export default async function ConsultantsPage({ searchParams }) {
             Discover vetted mine consultants and contractors across {locationPhrase}. Compare expertise,
             disciplines, locations, and capabilities to deliver studies, projects, design, operations, and optimization.
           </p>
-          <div className="relative mt-5 flex flex-wrap gap-2">
-            {/* Internal deep links for crawl & UX */}
-            <Link href="/landing/open-pit-engineering-mine-planning-consultants-australia" className="text-xs font-medium rounded-full bg-white/10 px-3 py-1.5 backdrop-blur-sm border border-white/15 hover:bg-white/20 transition" prefetch>Open Pit</Link>
-            <Link href="/landing/mining-consultants-perth-western-australia" className="text-xs font-medium rounded-full bg-white/10 px-3 py-1.5 backdrop-blur-sm border border-white/15 hover:bg-white/20 transition" prefetch>Perth & WA</Link>
-            <Link href="/landing/mining-consultants-brisbane-queensland" className="text-xs font-medium rounded-full bg-white/10 px-3 py-1.5 backdrop-blur-sm border border-white/15 hover:bg-white/20 transition" prefetch>Brisbane & QLD</Link>
-            <Link href="/consultants?service=planning" className="text-xs font-medium rounded-full bg-white/10 px-3 py-1.5 backdrop-blur-sm border border-white/15 hover:bg-white/20 transition" prefetch>Mine Planning</Link>
-            <Link href="/consultants?service=geology" className="text-xs font-medium rounded-full bg-white/10 px-3 py-1.5 backdrop-blur-sm border border-white/15 hover:bg-white/20 transition" prefetch>Geology</Link>
-          </div>
+
           <div className="relative mt-6 text-xs text-slate-400">
             Listing order rotates periodically to surface a broader range of consultants.
           </div>
