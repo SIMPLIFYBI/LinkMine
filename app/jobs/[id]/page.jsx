@@ -20,7 +20,6 @@ async function getJob(id) {
         preferred_payment_type,
         urgency,
         company,
-        budget,
         close_date,
         contact_name,
         contact_email,
@@ -58,7 +57,6 @@ export default async function JobDetailPage({ params }) {
           <Info label="Location" value={job.location} />
           <Info label="Preferred payment type" value={job.preferred_payment_type} />
           <Info label="Urgency" value={job.urgency} />
-          <Info label="Budget" value={job.budget} />
           <Info label="Company" value={job.company} />
           <Info label="Close date" value={job.close_date} />
         </div>

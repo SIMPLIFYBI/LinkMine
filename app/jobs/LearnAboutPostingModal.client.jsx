@@ -34,12 +34,22 @@ export default function LearnAboutPostingModal({ buttonClassName = "" }) {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-[70] grid place-items-center bg-black/60 backdrop-blur-sm px-4 py-6"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 sm:px-6"
+          style={{
+            // Respect notches/home indicators on iOS and modern Android
+            paddingTop: "max(env(safe-area-inset-top, 0px), 1rem)",
+            paddingBottom: "max(env(safe-area-inset-bottom, 0px), 1rem)",
+            paddingLeft: "max(env(safe-area-inset-left, 0px), 1rem)",
+            paddingRight: "max(env(safe-area-inset-right, 0px), 1rem)",
+          }}
           onClick={() => setOpen(false)}
         >
           <div
-            className="relative w-full max-w-3xl overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-900/95 ring-1 ring-white/10 shadow-2xl"
-            style={{ maxHeight: "calc(100dvh - 4rem)" }}
+            className="relative w-full max-w-3xl flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-900/95 ring-1 ring-white/10 shadow-2xl"
+            style={{
+              // Constrain within the visible viewport on mobile toolbars (svh) with fallback to dvh
+              maxHeight: "min(calc(100svh - 2rem), calc(100dvh - 2rem))",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close */}
@@ -63,7 +73,13 @@ export default function LearnAboutPostingModal({ buttonClassName = "" }) {
             </div>
 
             {/* Content */}
-            <div className="overflow-y-auto px-5 py-5">
+            <div
+              className="flex-1 min-h-0 overflow-y-auto px-5 py-5"
+              style={{
+                overscrollBehavior: "contain",
+                WebkitOverflowScrolling: "touch",
+              }}
+            >
               <div className="grid gap-4 md:grid-cols-2">
                 {/* Private */}
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 ring-1 ring-white/10">
