@@ -1,12 +1,12 @@
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
 import { siteUrl } from "@/lib/siteUrl";
 
-export const revalidate = 60 * 60 * 24; // 24 hours
+// Must be a literal – not an expression
+export const revalidate = 86400; // 24h
 
 export default async function sitemap() {
   const sb = supabasePublicServer();
 
-  // Core/static pages (add or remove as needed)
   const core = [
     "/",
     "/consultants",
@@ -15,7 +15,6 @@ export default async function sitemap() {
     "/pricing",
     "/terms",
     "/privacy",
-    // Landing pages you’ve created/linked
     "/landing/open-pit-engineering-mine-planning-consultants-australia",
     "/landing/mining-consultants-perth-western-australia",
     "/landing/mining-consultants-brisbane-queensland",
@@ -25,7 +24,6 @@ export default async function sitemap() {
     priority: 0.7,
   }));
 
-  // Category listing URLs: /consultants?category=slug
   const { data: categories = [] } = await sb
     .from("service_categories")
     .select("slug, updated_at")
@@ -38,10 +36,9 @@ export default async function sitemap() {
       url: siteUrl(`/consultants?category=${encodeURIComponent(c.slug)}`),
       changeFrequency: "weekly",
       priority: 0.6,
-      lastModified: c?.updated_at ? new Date(c.updated_at) : undefined,
+      lastModified: c.updated_at ? new Date(c.updated_at) : undefined,
     }));
 
-  // Service listing URLs: /consultants?service=slug
   const { data: services = [] } = await sb
     .from("services")
     .select("slug, updated_at")
@@ -53,11 +50,9 @@ export default async function sitemap() {
       url: siteUrl(`/consultants?service=${encodeURIComponent(s.slug)}`),
       changeFrequency: "weekly",
       priority: 0.6,
-      lastModified: s?.updated_at ? new Date(s.updated_at) : undefined,
+      lastModified: s.updated_at ? new Date(s.updated_at) : undefined,
     }));
 
-  // Individual consultant profiles (public + approved only)
-  // Keep the select slim; cap at 5000 for now (easy to chunk later if needed)
   const { data: consultants = [] } = await sb
     .from("consultants")
     .select("id, updated_at, created_at, visibility, status")
@@ -65,19 +60,16 @@ export default async function sitemap() {
     .eq("status", "approved")
     .limit(5000);
 
-  const profileUrls = consultants
-    .filter((c) => c?.id)
-    .map((c) => ({
-      url: siteUrl(`/consultants/${c.id}`),
-      lastModified: c?.updated_at
-        ? new Date(c.updated_at)
-        : c?.created_at
-        ? new Date(c.created_at)
-        : undefined,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    }));
+  const profileUrls = consultants.map((c) => ({
+    url: siteUrl(`/consultants/${c.id}`),
+    lastModified: c.updated_at
+      ? new Date(c.updated_at)
+      : c.created_at
+      ? new Date(c.created_at)
+      : undefined,
+    changeFrequency: "weekly",
+    priority: 0.8,
+  }));
 
-  // Return a flat list (Next.js metadata route will serialize as XML)
   return [...core, ...categoryUrls, ...serviceUrls, ...profileUrls];
 }
