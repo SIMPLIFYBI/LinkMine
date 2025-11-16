@@ -189,7 +189,7 @@ export default async function HomePage() {
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pb-10">
       {/* Hero */}
-      <section className="relative left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw] min-h-[340px] overflow-hidden">
+      <section className="relative left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw] min-h-[240px] md:min-h-[300px] overflow-hidden">
         <Image
           src={heroImage}
           alt="YouMine — consultants and contractors in mining"
@@ -198,12 +198,12 @@ export default async function HomePage() {
           sizes="100vw"
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/30 via-slate-900/40 to-slate-950/80" />
-        <div className="relative z-10 flex h-full flex-col items-center justify-center gap-6 px-8 py-16 text-center sm:px-16">
-          <h1 className="max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl leading-tight">
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/25 via-slate-900/45 to-slate-950/85" />
+        <div className="relative z-10 flex h-full flex-col items-center justify-center gap-5 px-6 py-10 text-center sm:px-12 md:py-14">
+          <h1 className="max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl leading-tight">
             Stop searching, start mining: match with the right expert today.
           </h1>
-          <p className="max-w-2xl text-lg text-slate-200 sm:text-xl">
+          <p className="max-w-2xl text-base text-slate-200 sm:text-lg">
             Discover trusted consultants and contractors, review portfolios, and contact directly.
           </p>
           <div className="flex flex-wrap gap-3">
