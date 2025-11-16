@@ -46,19 +46,6 @@ export default function MyJobsClient() {
   const [jobsStatus, setJobsStatus] = useState("idle");
   const [jobsError, setJobsError] = useState("");
 
-  const [authDebug, setAuthDebug] = useState(null);
-
-  useEffect(() => {
-    const sb = supabaseBrowser();
-    sb.auth.getSession().then(({ data, error }) => {
-      setAuthDebug({
-        user: data?.session?.user ?? null,
-        session: data?.session ?? null,
-        error: error?.message ?? null,
-      });
-    });
-  }, []);
-
   useEffect(() => {
     if (!listingType) setListingModalOpen(true);
   }, [listingType]);
@@ -603,17 +590,6 @@ export default function MyJobsClient() {
             {error && <div className="text-sm text-red-500">{error}</div>}
           </form>
         </section>
-
-        {process.env.NODE_ENV !== "production" && authDebug && (
-          <details className="mt-8 rounded-lg border border-sky-500/30 bg-sky-500/5 p-4 text-xs text-sky-100">
-            <summary className="cursor-pointer font-semibold text-sky-200">
-              Auth debug
-            </summary>
-            <pre className="mt-3 whitespace-pre-wrap break-words text-[11px] text-sky-100/90">
-              {JSON.stringify(authDebug, null, 2)}
-            </pre>
-          </details>
-        )}
       </div>
     </div>
   );
