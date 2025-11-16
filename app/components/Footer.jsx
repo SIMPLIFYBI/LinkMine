@@ -1,8 +1,8 @@
 import Link from "next/link";
+import Logo from "@/app/components/Logo"; // NEW
 
 export default function Footer() {
   return (
-    // translucent footer that lets the body gradient show through
     <footer
       role="contentinfo"
       className="w-full border-t border-white/10 bg-white/[0.02] backdrop-blur-md supports-[backdrop-filter]:backdrop-blur-md"
@@ -10,10 +10,7 @@ export default function Footer() {
       <div className="mx-auto max-w-6xl px-4 py-10">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <div className="inline-flex items-center gap-2">
-              <span className="h-8 w-8 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 ring-1 ring-white/20" />
-              <span className="text-xl font-semibold tracking-tight">YouMine</span>
-            </div>
+            <Logo className="inline-block" />
             <p className="mt-3 text-sm text-slate-300">
               Connect mining clients with trusted consultants and contractors.
             </p>
