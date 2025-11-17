@@ -38,12 +38,21 @@ export async function POST(req) {
     "recipient_ids",
     "company",
     "budget",
-    "close_date",
+    "close_date",      // ensure already present
     "contact_name",
     "contact_email",
-    "category_id", // NEW: allow direct category assignment
+    "category_id",
+    "status"           // NEW: allow but will sanitize
   ];
   const payload = Object.fromEntries(Object.entries(job).filter(([key]) => allowed.includes(key)));
+
+  // Validate required fields
+  if (!payload.close_date) {
+    return NextResponse.json({ ok: false, error: "close_date required" }, { status: 400 });
+  }
+
+  // Sanitize status (server decides)
+  payload.status = 'open';
 
   if ("consultant_ids" in payload) {
     return NextResponse.json(

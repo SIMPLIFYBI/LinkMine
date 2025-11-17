@@ -26,6 +26,13 @@ export default function MyJobsClient() {
   const [servicesError, setServicesError] = useState("");
   const [selectedServiceId, setSelectedServiceId] = useState(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+  const [duration, setDuration] = useState(""); // "1w" | "2w" | "1m" | "2m"
+  const durationOptions = [
+    { value: "1w", label: "1 week", days: 7 },
+    { value: "2w", label: "2 weeks", days: 14 },
+    { value: "1m", label: "1 month", days: 30 },
+    { value: "2m", label: "2 months", days: 60 },
+  ];
   const [servicePickerOpen, setServicePickerOpen] = useState(false);
 
   const [consultants, setConsultants] = useState([]);
@@ -198,6 +205,10 @@ export default function MyJobsClient() {
       setError("Select a service category");
       return;
     }
+    if (!duration) {
+      setError("Select a posting duration");
+      return;
+    }
     if (!selectedServiceId && listingType !== "Public") {
       setError("Select a service first");
       return;
@@ -217,6 +228,14 @@ export default function MyJobsClient() {
     setStatus("creating");
     setError("");
 
+    // Compute close_date (UTC) from duration
+    const now = new Date();
+    const opt = durationOptions.find(o => o.value === duration);
+    const closeDate = opt
+      ? new Date(now.getTime() + opt.days * 24 * 60 * 60 * 1000)
+      : null;
+    const closeDateIso = closeDate ? closeDate.toISOString() : null;
+
     const insertPayload = {
       title,
       description: desc,
@@ -226,8 +245,10 @@ export default function MyJobsClient() {
       urgency: urgency || null,
       listing_type: listingType,
       service_id: selectedServiceId,
-      recipient_ids: listingType === "Public" ? [] : selectedConsultantIds,
+      recipient_ids:
+        listingType === "Public" ? [] : selectedConsultantIds,
       category_id: selectedCategoryId,
+      close_date: closeDateIso,
     };
 
     const res = await fetch("/api/jobs", {
@@ -590,6 +611,48 @@ export default function MyJobsClient() {
         <section className="space-y-3">
           <h3 className="font-medium">Create a job</h3>
           <form onSubmit={createJob} className="grid gap-3">
+            <label className="grid gap-1">
+              <span className="text-sm">Posting duration (required)</span>
+              <div className="flex flex-wrap gap-2">
+                {durationOptions.map(opt => {
+                  const active = duration === opt.value;
+                  return (
+                    <button
+                      type="button"
+                      key={opt.value}
+                      onClick={() => setDuration(opt.value)}
+                      className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
+                        active
+                          ? "bg-sky-500 text-white shadow-sm shadow-sky-500/30"
+                          : "bg-white/10 text-slate-100 hover:bg-sky-500/20"
+                      }`}
+                      aria-pressed={active}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {duration && (
+                <div className="text-xs text-slate-300">
+                  Closes on: {
+                    (() => {
+                      const d = durationOptions.find(o => o.value === duration);
+                      if (!d) return "—";
+                      const dt = new Date(Date.now() + d.days * 86400000);
+                      return dt.toLocaleDateString(undefined, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      });
+                    })()
+                  }
+                </div>
+              )}
+              {!duration && (
+                <div className="text-xs text-red-400">Select a duration.</div>
+              )}
+            </label>
             <label className="grid gap-1">
               <span className="text-sm">Title</span>
               <input
