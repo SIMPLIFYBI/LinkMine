@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 
@@ -11,10 +11,14 @@ export default function EditConsultantForm({ consultant }) {
   const router = useRouter();
   const sb = supabaseBrowser();
 
+  const originalCompany = useRef(consultant.company?.trim() || "");
+
   const [form, setForm] = useState({
     display_name: consultant.display_name ?? "",
     headline: consultant.headline ?? "",
-    company: consultant.company ?? "",
+    company: (consultant.company && consultant.company.trim())
+      ? consultant.company
+      : (consultant.display_name ?? ""), // seed if missing
     location: consultant.location ?? "",
     contact_email: consultant.contact_email ?? "",
     bio: consultant.bio ?? "",
@@ -24,6 +28,16 @@ export default function EditConsultantForm({ consultant }) {
     instagram_url: consultant.instagram_url ?? "",
     place_id: consultant.place_id ?? "",
   });
+
+  // If there was no original company value, keep company in sync with display_name edits.
+  useEffect(() => {
+    if (!originalCompany.current) {
+      setForm((prev) => ({
+        ...prev,
+        company: prev.display_name || "",
+      }));
+    }
+  }, [form.display_name]);
 
   const initialLogo = consultant?.metadata?.logo ?? { url: "", path: "", mime: "" };
   const [logo, setLogo] = useState(initialLogo);
@@ -94,7 +108,7 @@ export default function EditConsultantForm({ consultant }) {
     setSaving(true);
     setMessage({ type: "", text: "" });
 
-    // Social validation
+    // Social validation (unchanged)
     for (const [net, key] of [
       ["linkedin", "linkedin_url"],
       ["facebook", "facebook_url"],
@@ -123,10 +137,16 @@ export default function EditConsultantForm({ consultant }) {
       return;
     }
 
+    // Ensure company auto-fills if blank
+    const displayNameTrimmed = form.display_name.trim();
+    const companyFinal = (form.company && form.company.trim())
+      ? form.company.trim()
+      : displayNameTrimmed;
+
     const payload = {
-      display_name: form.display_name.trim(),
+      display_name: displayNameTrimmed,
       headline: form.headline.trim(),
-      company: form.company.trim(),
+      company: companyFinal,
       location: form.location.trim(),
       contact_email: form.contact_email.trim(),
       bio: form.bio.trim(),
@@ -169,7 +189,6 @@ export default function EditConsultantForm({ consultant }) {
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Display name" value={form.display_name} onChange={handleChange("display_name")} required />
           <Field label="Headline" value={form.headline} onChange={handleChange("headline")} />
-          <Field label="Company" value={form.company} onChange={handleChange("company")} />
           <Field label="Location" value={form.location} onChange={handleChange("location")} />
           <Field label="Contact email" type="email" value={form.contact_email} onChange={handleChange("contact_email")} />
           <div className="md:col-span-2">
@@ -184,55 +203,55 @@ export default function EditConsultantForm({ consultant }) {
           </div>
         </div>
 
-        {/* Logo sub-card */}
+        {/* Logo sub-card (unchanged) */}
         <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
           <p className="text-sm font-semibold text-slate-200">Brand logo</p>
-            <div className="flex items-start gap-4">
-              <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/5">
-                {logo?.url ? (
-                  <img
-                    src={logo.url}
-                    alt={`${form.display_name || "Consultant"} logo`}
-                    width={80}
-                    height={80}
-                    decoding="async"
-                    loading="eager"
-                    className="h-20 w-20 object-contain"
-                  />
-                ) : (
-                  <div className="h-20 w-20 flex items-center justify-center text-xs text-slate-500">
-                    No logo
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 space-y-2">
-                <div>
-                  <label className="block text-xs text-slate-300">
-                    Upload logo (PNG, JPG, WEBP, ≤300 KB)
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    onChange={(e) => handleLogoFile(e.target.files?.[0])}
-                    disabled={busyLogo}
-                    className="mt-1 block w-full text-xs text-slate-200 file:mr-3 file:rounded-md file:border file:border-white/15 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:text-slate-100 hover:file:bg-white/15"
-                  />
-                  {busyLogo && <p className="mt-1 text-xs text-slate-400">Uploading…</p>}
+          <div className="flex items-start gap-4">
+            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/5">
+              {logo?.url ? (
+                <img
+                  src={logo.url}
+                  alt={`${form.display_name || "Consultant"} logo`}
+                  width={80}
+                  height={80}
+                  decoding="async"
+                  loading="eager"
+                  className="h-20 w-20 object-contain"
+                />
+              ) : (
+                <div className="h-20 w-20 flex items-center justify-center text-xs text-slate-500">
+                  No logo
                 </div>
-                {logo?.url ? (
-                  <button
-                    type="button"
-                    onClick={removeLogo}
-                    className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs text-slate-100 hover:bg-white/15"
-                  >
-                    Remove logo
-                  </button>
-                ) : null}
-              </div>
+              )}
             </div>
-            <p className="text-xs text-slate-400">
-              Tip: square background, 256–512 px, optimized &lt; 300 KB.
-            </p>
+            <div className="flex-1 space-y-2">
+              <div>
+                <label className="block text-xs text-slate-300">
+                  Upload logo (PNG, JPG, WEBP, ≤300 KB)
+                </label>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={(e) => handleLogoFile(e.target.files?.[0])}
+                  disabled={busyLogo}
+                  className="mt-1 block w-full text-xs text-slate-200 file:mr-3 file:rounded-md file:border file:border-white/15 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:text-slate-100 hover:file:bg-white/15"
+                />
+                {busyLogo && <p className="mt-1 text-xs text-slate-400">Uploading…</p>}
+              </div>
+              {logo?.url ? (
+                <button
+                  type="button"
+                  onClick={removeLogo}
+                  className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs text-slate-100 hover:bg-white/15"
+                >
+                  Remove logo
+                </button>
+              ) : null}
+            </div>
+          </div>
+          <p className="text-xs text-slate-400">
+            Tip: square background, 256–512 px, optimized &lt; 300 KB.
+          </p>
         </div>
       </section>
 

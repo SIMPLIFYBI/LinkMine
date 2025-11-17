@@ -81,11 +81,7 @@ export async function POST(req) {
     contact_email,
     slug,
     claimed_by: userId,
-    // If your policy requires specific values or forbids explicit values,
-    // we can remove these to rely on defaults, or set to draft/private.
-    // Try one at a time if needed:
-    // status: "draft",
-    // visibility: "private",
+    company: display_name, // NEW: seed company same as display name
   };
 
   const { data: inserted, error: insErr } = await sb

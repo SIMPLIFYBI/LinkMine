@@ -159,23 +159,6 @@ export default function AccountPage() {
               Signed in as <strong className="text-slate-100">{userEmail}</strong>
             </p>
           </header>
-
-          {!isAdmin && (
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-              <pre className="m-0 max-h-64 overflow-auto p-4 text-xs text-slate-300">
-                {JSON.stringify(
-                  {
-                    email: userEmail,
-                    userId: userId,
-                    adminEmails,
-                    isAppAdmin,
-                  },
-                  null,
-                  2
-                )}
-              </pre>
-            </div>
-          )}
         </section>
       )}
 
