@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import NotificationsPreferences from "./NotificationsPreferences.client.jsx";
+import AccountTabs from "./AccountTabs.jsx";
 
 const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "")
   .split(",")
@@ -111,30 +112,16 @@ export default function AccountPage() {
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
       {/* Tab Navigation */}
-      <div className="mb-10 flex flex-wrap items-center gap-3">
-        {TABS.map((t) => {
-          const active = activeTab === t.key;
-          return (
-            <button
-              key={t.key}
-              onClick={() => setActiveTab(t.key)}
-              className={`relative rounded-full px-5 py-2 text-sm font-semibold transition ${
-                active
-                  ? "bg-gradient-to-r from-sky-500 via-indigo-500 to-fuchsia-500 text-white shadow-lg shadow-sky-500/20"
-                  : "border border-white/15 bg-white/5 text-slate-200 hover:border-sky-400/40 hover:bg-sky-500/10"
-              }`}
-            >
-              {t.label}
-              {active && (
-                <span className="absolute inset-0 rounded-full ring-2 ring-white/20 ring-offset-2 ring-offset-slate-900/0" />
-              )}
-            </button>
-          );
-        })}
+      <div className="mb-10 flex flex-wrap items-center gap-4">
+        <AccountTabs
+          tabs={TABS}
+          active={activeTab}
+          onChange={(key) => setActiveTab(key)}
+        />
         {isAdmin && (
           <Link
             href="/consultants/review"
-            className="rounded-full border border-amber-400/40 bg-amber-500/15 px-5 py-2 text-sm font-semibold text-amber-100 shadow-sm hover:bg-amber-500/25"
+            className="ml-2 rounded-full border border-amber-400/40 bg-amber-500/15 px-5 py-2 text-sm font-semibold text-amber-100 shadow-sm hover:bg-amber-500/25"
           >
             Review accounts
           </Link>
@@ -142,7 +129,7 @@ export default function AccountPage() {
         <div className="ml-auto">
           <button
             onClick={signOut}
-            className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 via-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/20 ring-1 ring-white/10 transition hover:from-sky-400 hover:via-cyan-400 hover:to-blue-500 hover:shadow-sky-500/30 focus:outline-none focus:ring-2 focus:ring-sky-400/60 disabled:opacity-60"
+            className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 via-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/20 ring-1 ring-white/10 transition hover:from-sky-400 hover:via-cyan-400 hover:to-blue-500 hover:shadow-sky-500/30 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
           >
             <svg
               className="h-4 w-4 opacity-90 transition group-hover:opacity-100"

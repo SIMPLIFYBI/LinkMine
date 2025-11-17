@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback, useTransition } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser"; // If you have supabaseBrowser; else import supabase from supabaseClient
 import { supabase } from "@/lib/supabaseClient"; // Fallback direct import
 
@@ -14,16 +14,14 @@ function getClient() {
 }
 
 export default function NotificationsPreferences({ userId }) {
-  const sb = useMemo(() => getClient(), []);
+  const sb = getClient();
   const [categories, setCategories] = useState([]);
   const [subs, setSubs] = useState(new Set());
   const [status, setStatus] = useState("loading"); // loading | ready | error
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
   const [busyIds, setBusyIds] = useState(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [banner, setBanner] = useState(null);
-  const [isPending, startTransition] = useTransition();
 
   // Load categories + subscriptions
   useEffect(() => {
@@ -79,17 +77,6 @@ export default function NotificationsPreferences({ userId }) {
     };
   }, [sb, userId]);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return categories;
-    return categories.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.slug.toLowerCase().includes(q) ||
-        (c.description || "").toLowerCase().includes(q)
-    );
-  }, [categories, search]);
-
   const toggle = useCallback(
     async (categoryId) => {
       if (!userId) return;
@@ -120,10 +107,10 @@ export default function NotificationsPreferences({ userId }) {
         failed = true;
         setBanner({
           type: "error",
-            message:
-              (isSubscribed
-                ? "Failed to unsubscribe: "
-                : "Failed to subscribe: ") + (e.message || String(e)),
+          message:
+            (isSubscribed
+              ? "Failed to unsubscribe: "
+              : "Failed to subscribe: ") + (e.message || String(e)),
         });
         // Rollback
         setSubs(subs);
@@ -226,7 +213,7 @@ export default function NotificationsPreferences({ userId }) {
           <div className="flex items-center gap-2">
             <button
               onClick={subscribeAll}
-              disabled={bulkBusy || filtered.length === 0}
+              disabled={bulkBusy || categories.length === 0}
               className="rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-sky-500/30 transition hover:from-sky-400 hover:to-indigo-400 disabled:opacity-40"
             >
               {bulkBusy ? "Working…" : "Subscribe All"}
@@ -244,28 +231,6 @@ export default function NotificationsPreferences({ userId }) {
           Choose which service categories you want job postings emailed for.
           Your changes save instantly. We’ll only send one notification per job.
         </p>
-        <div className="relative">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search categories…"
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 pl-10 text-sm text-slate-100 placeholder:text-slate-400/60 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
-          />
-          <svg
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            fill="none"
-          >
-            <circle cx="11" cy="11" r="7" />
-            <path d="m21 21-4.35-4.35" strokeLinecap="round" />
-          </svg>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-slate-400">
-          <span>{filtered.length} shown</span>
-          <span className="opacity-50">/ {categories.length} total</span>
-        </div>
       </header>
 
       {banner && (
@@ -280,13 +245,13 @@ export default function NotificationsPreferences({ userId }) {
         </div>
       )}
 
-      {filtered.length === 0 ? (
+      {categories.length === 0 ? (
         <div className="rounded-xl border border-white/10 bg-white/5 p-8 text-center text-sm text-slate-300/70">
-          No categories match your search.
+          No categories available.
         </div>
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((c) => {
+          {categories.map((c) => {
             const subscribed = subs.has(c.id);
             const busy = busyIds.has(c.id);
             return (

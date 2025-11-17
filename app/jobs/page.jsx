@@ -35,6 +35,7 @@ export default async function JobsRootPage({ searchParams }) {
       `
     )
     .or("listing_type.eq.Public,listing_type.eq.Both")
+    .eq("status", "open")            // Only show open jobs on the public board
     .order("created_at", { ascending: false })
     .range(from, to);
 
