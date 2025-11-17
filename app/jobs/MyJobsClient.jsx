@@ -6,6 +6,7 @@ import {
   useState,
   useTransition,
 } from "react";
+import { useRouter } from "next/navigation"; // NEW
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 
 const listingSummaries = {
@@ -18,6 +19,8 @@ const listingSummaries = {
 };
 
 export default function MyJobsClient() {
+  const router = useRouter(); // NEW
+
   const [listingType, setListingType] = useState("");
   const [listingModalOpen, setListingModalOpen] = useState(false);
 
@@ -213,10 +216,7 @@ export default function MyJobsClient() {
       setError("Select a service first");
       return;
     }
-    if (
-      listingType !== "Public" &&
-      selectedConsultantIds.length === 0
-    ) {
+    if (listingType !== "Public" && selectedConsultantIds.length === 0) {
       setError("Select at least one consultant");
       return;
     }
@@ -245,8 +245,7 @@ export default function MyJobsClient() {
       urgency: urgency || null,
       listing_type: listingType,
       service_id: selectedServiceId,
-      recipient_ids:
-        listingType === "Public" ? [] : selectedConsultantIds,
+      recipient_ids: listingType === "Public" ? [] : selectedConsultantIds,
       category_id: selectedCategoryId,
       close_date: closeDateIso,
     };
@@ -261,15 +260,22 @@ export default function MyJobsClient() {
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
       setError(body.error || `Failed (${res.status})`);
-    } else {
-      setTitle("");
-      setDesc("");
-      setLocation("");
-      setCompany("");
-      setPreferredPaymentType("");
-      setUrgency("");
-      if (currentUser?.id) loadJobs(currentUser.id);
+      setStatus("idle");
+      return;
     }
+
+    // Optional: local reset (not strictly needed if redirecting immediately)
+    setTitle("");
+    setDesc("");
+    setLocation("");
+    setCompany("");
+    setPreferredPaymentType("");
+    setUrgency("");
+
+    // Redirect to jobs board so user can see their posting (if Public / Both)
+    // Note: Private jobs will not appear there; adjust if you prefer a different destination.
+    router.push("/jobs"); // NEW redirect
+
     setStatus("idle");
   }
 

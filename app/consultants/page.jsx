@@ -29,7 +29,7 @@ function seededShuffle(arr, seed) {
   const rand = mulberry32(seed);
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(rand() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
+    [a[i], a[j] ] = [a[j], a[i]];
   }
   return a;
 }
@@ -269,7 +269,7 @@ export default async function ConsultantsPage({ searchParams }) {
 
   return (
     <main
-      className="mx-auto w-full max-w-6xl px-6 py-10 space-y-8 md:space-y-10 pb-24 sm:pb-12"
+      className="mx-auto w-full max-w-6xl px-6 pt-0 md:pt-10 space-y-0 md:space-y-10 pb-24 sm:pb-12"
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 4.5rem)" }}
     >
       {/* Desktop dual hero only */}
@@ -383,7 +383,7 @@ export default async function ConsultantsPage({ searchParams }) {
       </section>
 
       {/* Grid */}
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="mt-6 md:mt-0 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {consultants.length === 0 ? (
           <div className="text-slate-400 text-sm sm:col-span-2 lg:col-span-3">
             No consultants found for this selection.
