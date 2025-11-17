@@ -25,6 +25,7 @@ export default function MyJobsClient() {
   const [servicesStatus, setServicesStatus] = useState("loading");
   const [servicesError, setServicesError] = useState("");
   const [selectedServiceId, setSelectedServiceId] = useState(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [servicePickerOpen, setServicePickerOpen] = useState(false);
 
   const [consultants, setConsultants] = useState([]);
@@ -193,6 +194,10 @@ export default function MyJobsClient() {
       setError("Choose a listing type first");
       return;
     }
+    if (!selectedCategoryId) {
+      setError("Select a service category");
+      return;
+    }
     if (!selectedServiceId && listingType !== "Public") {
       setError("Select a service first");
       return;
@@ -212,24 +217,24 @@ export default function MyJobsClient() {
     setStatus("creating");
     setError("");
 
+    const insertPayload = {
+      title,
+      description: desc,
+      location,
+      company: company || null,
+      preferred_payment_type: preferredPaymentType || null,
+      urgency: urgency || null,
+      listing_type: listingType,
+      service_id: selectedServiceId,
+      recipient_ids: listingType === "Public" ? [] : selectedConsultantIds,
+      category_id: selectedCategoryId,
+    };
+
     const res = await fetch("/api/jobs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({
-        job: {
-          title,
-          description: desc,
-          location,
-          company: company || null,
-          preferred_payment_type: preferredPaymentType || null,
-          urgency: urgency || null,
-          listing_type: listingType,
-          service_id: selectedServiceId,
-          recipient_ids:
-            listingType === "Public" ? [] : selectedConsultantIds,
-        },
-      }),
+      body: JSON.stringify({ job: insertPayload }),
     });
 
     const body = await res.json().catch(() => ({}));
@@ -250,7 +255,7 @@ export default function MyJobsClient() {
   const flattenedServices = useMemo(
     () =>
       serviceCategories.flatMap((cat) =>
-        cat.services.map((svc) => ({ ...svc, categoryName: cat.name }))
+        cat.services.map((svc) => ({ ...svc, categoryName: cat.name, categoryId: cat.id }))
       ),
     [serviceCategories]
   );
@@ -260,10 +265,25 @@ export default function MyJobsClient() {
     [flattenedServices, selectedServiceId]
   );
 
+  const selectedCategory = useMemo(
+    () => serviceCategories.find((c) => c.id === selectedCategoryId) || null,
+    [serviceCategories, selectedCategoryId]
+  );
+
   const listingLabel = listingType ? `${listingType} job` : "Not selected";
 
   const openListingModal = useCallback(() => setListingModalOpen(true), []);
   const closeListingModal = useCallback(() => setListingModalOpen(false), []);
+
+  useEffect(() => {
+    setSelectedServiceId(null);
+  }, [selectedCategoryId]);
+
+  const servicesForSelectedCategory = useMemo(() => {
+    if (!selectedCategoryId) return [];
+    const cat = serviceCategories.find((c) => c.id === selectedCategoryId);
+    return cat ? cat.services : [];
+  }, [serviceCategories, selectedCategoryId]);
 
   return (
     <div className="relative">
@@ -345,32 +365,73 @@ export default function MyJobsClient() {
           )}
         </div>
 
+        {/* category picker (mandatory) */}
+        {listingType && (
+          <section className="space-y-3">
+            <h3 className="font-medium">Select a service category</h3>
+            <p className="text-xs text-slate-300/70">
+              Jobs notify subscribers to this category. Required.
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
+              {serviceCategories.map((cat) => {
+                const active = cat.id === selectedCategoryId;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setSelectedCategoryId(cat.id)}
+                    className={`flex flex-col rounded-lg border px-4 py-3 text-left text-sm transition ${
+                      active
+                        ? "border-sky-400 bg-sky-500/20 text-white"
+                        : "border-white/15 bg-white/5 text-slate-100 hover:border-sky-300/60 hover:bg-sky-500/10"
+                    }`}
+                  >
+                    <span className="font-semibold leading-tight">{cat.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {!selectedCategoryId && (
+              <div className="text-xs text-red-400">
+                You must choose a category before posting.
+              </div>
+            )}
+          </section>
+        )}
+
         {/* service picker */}
         {listingType !== "Public" && (
           <section className="space-y-3">
             <h3 className="font-medium">Choose a service</h3>
+            {!selectedCategoryId && (
+              <p className="text-xs text-red-400">
+                Select a category above to show services.
+              </p>
+            )}
             {servicesStatus === "loading" && (
               <p className="text-sm opacity-70">Loading services…</p>
             )}
             {servicesError && (
               <p className="text-sm text-red-400">Error: {servicesError}</p>
             )}
-            {!servicesError && servicesStatus === "idle" && (
-              <button
-                type="button"
-                onClick={() => setServicePickerOpen(true)}
-                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-left transition hover:border-blue-300/60 hover:bg-blue-500/10"
-              >
-                <span className="font-medium">
-                  {selectedService ? selectedService.name : "Select service"}
-                </span>
-                {selectedService && (
-                  <span className="text-xs opacity-70">
-                    {selectedService.categoryName}
+            {!servicesError &&
+              servicesStatus === "idle" &&
+             selectedCategoryId && (
+                <button
+                  type="button"
+                  onClick={() => setServicePickerOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-left transition hover:border-blue-300/60 hover:bg-blue-500/10"
+                >
+                  <span className="font-medium">
+                    {selectedService ? selectedService.name : "Select service"}
                   </span>
-                )}
-              </button>
-            )}
+                  {selectedService && (
+                    <span className="text-xs opacity-70">
+                      {selectedService.categoryName}
+                    </span>
+                  )}
+                </button>
+              )}
           </section>
         )}
 
@@ -378,7 +439,10 @@ export default function MyJobsClient() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6">
             <div className="relative w-full max-w-5xl overflow-hidden rounded-2xl border border-white/10 bg-slate-900/95 ring-1 ring-white/10 shadow-2xl">
               <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-                <h2 className="text-lg font-semibold">Select a service</h2>
+                <h2 className="text-lg font-semibold">
+                  Select a service
+                  {selectedCategory ? ` — ${selectedCategory.name}` : ""}
+                </h2>
                 <button
                   type="button"
                   onClick={() => setServicePickerOpen(false)}
@@ -388,13 +452,13 @@ export default function MyJobsClient() {
                 </button>
               </div>
               <div className="grid max-h-[60vh] grid-cols-1 gap-4 overflow-y-auto px-4 py-4 md:grid-cols-2 lg:grid-cols-3">
-                {serviceCategories.map((cat) => (
-                  <div key={cat.id} className="min-w-0">
+                {selectedCategory && (
+                  <div className="min-w-0">
                     <div className="mb-2 text-xs uppercase tracking-wide text-slate-400">
-                      {cat.name}
+                      {selectedCategory.name}
                     </div>
                     <ul className="space-y-1.5">
-                      {cat.services.map((svc) => {
+                      {servicesForSelectedCategory.map((svc) => {
                         const active = svc.id === selectedServiceId;
                         return (
                           <li key={svc.id}>
@@ -422,9 +486,11 @@ export default function MyJobsClient() {
                       })}
                     </ul>
                   </div>
-                ))}
-                {serviceCategories.length === 0 && (
-                  <p className="text-sm opacity-70">No services available.</p>
+                )}
+                {selectedCategory && servicesForSelectedCategory.length === 0 && (
+                  <p className="text-sm opacity-70">
+                    No services available for this category.
+                  </p>
                 )}
               </div>
             </div>
@@ -435,11 +501,20 @@ export default function MyJobsClient() {
           <section className="space-y-3">
             <h3 className="font-medium">
               Consultants offering{" "}
-              {selectedService ? `"${selectedService.name}"` : "(select a service)"}
+              {selectedService
+                ? `"${selectedService.name}"`
+                : selectedCategory
+                ? "(select a service)"
+                : "(choose a category first)"}
             </h3>
-            {!selectedService && (
+            {!selectedCategory && (
               <p className="text-sm opacity-70">
-                Choose a service above to view consultants.
+                Select a category to view its services and consultants.
+              </p>
+            )}
+            {selectedCategory && !selectedService && (
+              <p className="text-sm opacity-70">
+                Pick a service to load consultants.
               </p>
             )}
             {selectedService && consultantsStatus === "loading" && (

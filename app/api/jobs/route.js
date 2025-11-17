@@ -41,6 +41,7 @@ export async function POST(req) {
     "close_date",
     "contact_name",
     "contact_email",
+    "category_id", // NEW: allow direct category assignment
   ];
   const payload = Object.fromEntries(Object.entries(job).filter(([key]) => allowed.includes(key)));
 
@@ -75,6 +76,35 @@ export async function POST(req) {
     .single();
 
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+
+  // NEW: enqueue notifications for the job's category
+  try {
+    await sb.rpc("queue_job_notifications", { p_job_id: data.id });
+  } catch (e) {
+    console.error("queue_job_notifications failed:", e?.message || e);
+  }
+
+  // NEW: nudge the dispatcher to send immediately (non-blocking with a short timeout)
+  try {
+    const base = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
+    const secret = process.env.CRON_SECRET || process.env.NOTIFY_CRON_SECRET;
+    if (base && secret) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2000); // cap at ~2s
+
+      // Kick off the dispatcher; it will process queued items
+      fetch(`${base}/api/notifications/jobs/dispatch`, {
+        method: "POST",
+        headers: { "x-cron-secret": secret },
+        signal: controller.signal,
+        cache: "no-store",
+      })
+        .catch(() => {}) // ignore network errors (we’ll rely on cron if needed)
+        .finally(() => clearTimeout(timeout));
+    }
+  } catch {
+    // best-effort; ignore
+  }
 
   const { data: consultants, error: consultantsError } = await sb
     .from("consultants")
