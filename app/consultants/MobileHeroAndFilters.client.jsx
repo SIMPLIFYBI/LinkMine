@@ -168,7 +168,7 @@ export default function MobileHeroAndFilters({
       {/* Floating quick filter icon: persistent, fade on scroll, top-right (lowered & modern gradient) */}
       <div
         className="fixed right-6 z-40 md:hidden"
-        style={{ top: "calc(env(safe-area-inset-top, 0px) + 4.25rem)" }} // was 2.75rem
+        style={{ top: "calc(env(safe-area-inset-top, 0px) + 8.25rem)" }} // was 4.25rem
       >
         <button
           aria-label="Open filters"
@@ -189,7 +189,6 @@ export default function MobileHeroAndFilters({
           `}
           style={{ transitionProperty: "opacity, transform, box-shadow, filter" }}
         >
-          {/* Radial sheen overlay */}
           <span className="pointer-events-none absolute inset-0 rounded-2xl opacity-70 mix-blend-screen
             bg-[radial-gradient(circle_at_30%_28%,rgba(255,255,255,0.35),transparent_60%)]" />
           <svg
