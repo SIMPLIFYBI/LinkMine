@@ -277,7 +277,7 @@ export default async function ConsultantsPage({ searchParams }) {
         <div className="
           group relative overflow-hidden rounded-3xl
           border border-sky-400/30 bg-gradient-to-br from-slate-900/70 via-sky-900/30 to-indigo-900/40
-          p-7 backdrop-blur-xl shadow-lg ring-1 ring-sky-300/20
+          p-6 backdrop-blur-xl shadow-lg ring-1 ring-sky-300/20
         ">
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -top-20 -left-28 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
@@ -298,7 +298,7 @@ export default async function ConsultantsPage({ searchParams }) {
         <div className="
           relative rounded-3xl border border-emerald-400/30
           bg-gradient-to-br from-slate-900/70 via-emerald-900/30 to-cyan-900/40
-          p-6 backdrop-blur-xl shadow-lg ring-1 ring-emerald-300/20
+          p-5 backdrop-blur-xl shadow-lg ring-1 ring-emerald-300/20
         ">
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -top-16 -left-20 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl" />
@@ -315,11 +315,8 @@ export default async function ConsultantsPage({ searchParams }) {
             <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[11px] font-medium text-slate-100/90 backdrop-blur-sm">Fast setup</span>
             <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[11px] font-medium text-slate-100/90 backdrop-blur-sm">Own your profile</span>
           </div>
-          <div className="relative mt-4 inline-flex">
+          <div className="relative mt-3 inline-flex">
             <AddConsultantButton className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-900 shadow hover:bg-slate-100 transition" />
-          </div>
-          <div className="relative mt-3 text-xs text-slate-400">
-            Approval & public visibility subject to basic verification.
           </div>
         </div>
       </section>

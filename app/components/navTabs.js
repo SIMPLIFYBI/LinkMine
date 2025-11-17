@@ -1,6 +1,6 @@
 const navTabs = [
   { label: "Home", href: "/" },
-  { label: "Jobs", href: "/jobs" },
+  { label: "Jobs Board", href: "/jobs" }, // was "Jobs"
   { label: "Consultants", href: "/consultants" },
   { label: "My Activity", href: "/activity" }, // NEW
   { label: "About", href: "/about" },
