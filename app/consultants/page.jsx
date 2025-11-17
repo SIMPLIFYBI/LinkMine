@@ -304,8 +304,8 @@ export default async function ConsultantsPage({ searchParams }) {
             <div className="absolute -top-16 -left-20 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl" />
             <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
           </div>
-          <h2 className="relative text-xl md:text-2xl font-semibold text-white">
-            Consultant or contractor? Join YouMine.
+          <h2 className="relative text-2xl md:text-3xl font-bold tracking-tight text-white">
+            Join YouMine
           </h2>
           <p className="relative mt-3 text-sm leading-relaxed text-slate-200">
             List your company or contractor profile, showcase capabilities, and connect with clients seeking specialist mining expertise.
