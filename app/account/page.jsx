@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation"; // UPDATED
 import { supabase } from "@/lib/supabaseClient";
 import NotificationsPreferences from "./NotificationsPreferences.client.jsx";
 import AccountTabs from "./AccountTabs.jsx";
@@ -19,6 +19,7 @@ const TABS = [
 
 export default function AccountPage() {
   const router = useRouter();
+  const sp = useSearchParams(); // NEW
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
   const [consultants, setConsultants] = useState([]);
@@ -26,6 +27,14 @@ export default function AccountPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAppAdmin, setIsAppAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState("account");
+
+  // NEW: set initial tab from query string if valid
+  useEffect(() => {
+    const t = sp?.get("tab");
+    if (t && TABS.some((tab) => tab.key === t)) {
+      setActiveTab(t);
+    }
+  }, [sp]);
 
   useEffect(() => {
     let mounted = true;
