@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import ServiceFinder from "@/app/components/ServiceFinder";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
+import AddProfileSmartCTA from "@/app/components/consultants/AddProfileSmartCTA.client.jsx"; // NEW
 
 const heroImage = "/Pictures/pexels-urtimud-89-76108288-14263363.jpg";
 
@@ -201,7 +202,7 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/25 via-slate-900/45 to-slate-950/85" />
         <div className="relative z-10 flex h-full flex-col items-center justify-center gap-5 px-6 py-10 text-center sm:px-12 md:py-14">
           <h1 className="max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl leading-tight">
-            Stop searching, start mining: match with the right expert today.
+            Match with the right mining expert today.
           </h1>
           <p className="max-w-2xl text-base text-slate-200 sm:text-lg">
             Discover trusted consultants and contractors, review portfolios, and contact directly.
@@ -230,8 +231,7 @@ export default async function HomePage() {
               Connect mining clients with trusted contractors & consultants
             </h2>
             <p className="text-slate-300">
-              YouMine is a directory & portfolio platform for the mining industry — discover contractors,
-              review portfolios, and for consultants, showcase work and see profile metrics.
+              YouMine helps mining companies find qualified contractors and consultants fast — with portfolios, verified business details, service categories, and Google-linked profiles. For consultants, it’s the easiest way to showcase your work, build credibility, and track profile metrics.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/signup" className="inline-flex">
@@ -246,9 +246,10 @@ export default async function HomePage() {
               </Link>
             </div>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-400 text-sm">
-              <li>Business tiles for clients to showcase services</li>
+              <li>ABN/ACN validation linked directly to ASIC</li>
               <li>Consultant profiles with portfolio galleries</li>
-              <li>View metrics like profile views and favourites</li>
+              <li>Google-linked ratings & location profiles</li>
+              <li>View metrics like profile view count and favourites</li>
             </ul>
           </div>
 
@@ -473,6 +474,39 @@ export default async function HomePage() {
           <Step n={2} title="Review matches" desc="Compare profiles, experience, and proposals. Shortlist favourites and start a conversation." />
           <Step n={3} title="Hire and deliver" desc="Select the best fit and kick off quickly. Stay in touch and keep momentum through delivery." />
         </ol>
+
+        {/* CTA: send clients to the consultants directory */}
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            href="/consultants"
+            prefetch
+            className="inline-flex items-center rounded-full bg-gradient-to-r from-sky-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:from-sky-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+          >
+            Browse consultants
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="ml-2 h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M5 12h14" />
+              <path d="M13 5l7 7-7 7" />
+            </svg>
+          </Link>
+
+          {/* REPLACED: 'See directory' -> 'Create a Job' to open the Create tab on Jobs */}
+          <Link
+            href="/jobs?tab=my-jobs"
+            prefetch
+            className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/30"
+          >
+            Create a Job
+          </Link>
+        </div>
       </section>
 
       {/* For consultants */}
@@ -487,6 +521,11 @@ export default async function HomePage() {
           <Step n={2} title="Find and contact clients" desc="Browse posted jobs that match your skills and reach out directly with tailored proposals." />
           <Step n={3} title="Get discovered and hired" desc="Clients can contact you directly. Reply fast to turn enquiries into engagements." />
         </ol>
+
+        {/* CTA: consultants add their profile (conditional on auth) */}
+        <div className="mt-6">
+          <AddProfileSmartCTA />
+        </div>
       </section>
 
       {/* JSON-LD */}
