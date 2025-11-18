@@ -26,6 +26,8 @@ export default function OnboardingPage() {
     organisationSize: "",
     organisationName: "",
     profession: "",
+    firstName: "", // NEW
+    lastName: "", // NEW
   });
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -115,6 +117,8 @@ export default function OnboardingPage() {
             organisationSize: form.organisationSize,
             organisationName: form.organisationName?.trim() || null,
             profession: form.profession.trim(),
+            firstName: form.firstName?.trim() || undefined, // NEW
+            lastName: form.lastName?.trim() || undefined, // NEW
           }),
         });
 
@@ -211,7 +215,8 @@ export default function OnboardingPage() {
 
           <div>
             <label className="block text-sm text-slate-300">
-              Organisation name <span className="text-slate-500">(optional)</span>
+              Organisation name{" "}
+              <span className="text-slate-500">(optional)</span>
             </label>
             <input
               type="text"
@@ -234,6 +239,37 @@ export default function OnboardingPage() {
               className="mt-2 w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"
               placeholder="e.g. Principal Mining Engineer"
             />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm text-slate-300">
+                First name{" "}
+                <span className="text-slate-500">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={form.firstName}
+                onChange={(e) => updateField("firstName", e.target.value)}
+                maxLength={60}
+                className="mt-1 w-full rounded-md bg-slate-900/60 border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sky-500/40"
+                placeholder="Jane"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-slate-300">
+                Last name{" "}
+                <span className="text-slate-500">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={form.lastName}
+                onChange={(e) => updateField("lastName", e.target.value)}
+                maxLength={60}
+                className="mt-1 w-full rounded-md bg-slate-900/60 border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sky-500/40"
+                placeholder="Smith"
+              />
+            </div>
           </div>
 
           {error ? (
