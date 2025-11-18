@@ -1,42 +1,45 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { supabaseBrowser } from "@/lib/supabaseBrowser"; // If you have supabaseBrowser; else import supabase from supabaseClient
-import { supabase } from "@/lib/supabaseClient"; // Fallback direct import
+import { supabaseBrowser } from "@/lib/supabaseBrowser"; // keep only the browser factory
 
-// Choose whichever is defined; prefer supabaseBrowser if available
 function getClient() {
+  if (typeof window === "undefined") return null; // avoid SSR init
   try {
     return supabaseBrowser();
   } catch {
-    return supabase;
+    return null;
   }
 }
 
 export default function NotificationsPreferences({ userId }) {
-  const sb = getClient();
+  const [sb, setSb] = useState(null);                 // NEW
   const [categories, setCategories] = useState([]);
   const [subs, setSubs] = useState(new Set());
-  const [status, setStatus] = useState("loading"); // loading | ready | error
+  const [status, setStatus] = useState("loading");
   const [error, setError] = useState("");
   const [busyIds, setBusyIds] = useState(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [banner, setBanner] = useState(null);
 
+  // Init client on mount
+  useEffect(() => {
+    setSb(getClient());
+  }, []);
+
   // Load categories + subscriptions
   useEffect(() => {
+    if (!sb || !userId) return;                        // guard
     let mounted = true;
     async function load() {
       setStatus("loading");
       setError("");
       try {
         const [catsRes, subsRes] = await Promise.all([
-          sb
-            .from("service_categories")
+          sb.from("service_categories")
             .select("id,name,slug,description,position")
             .order("position", { ascending: true }),
-          sb
-            .from("job_category_subscriptions")
+          sb.from("job_category_subscriptions")
             .select("category_id")
             .eq("user_id", userId),
         ]);
@@ -71,7 +74,7 @@ export default function NotificationsPreferences({ userId }) {
         setStatus("error");
       }
     }
-    if (userId) load();
+    load();
     return () => {
       mounted = false;
     };
@@ -79,7 +82,7 @@ export default function NotificationsPreferences({ userId }) {
 
   const toggle = useCallback(
     async (categoryId) => {
-      if (!userId) return;
+      if (!sb || !userId) return;                      // guard
       // Optimistic
       setBusyIds((prev) => new Set(prev).add(categoryId));
       const isSubscribed = subs.has(categoryId);
@@ -134,7 +137,7 @@ export default function NotificationsPreferences({ userId }) {
   );
 
   async function subscribeAll() {
-    if (!userId || categories.length === 0) return;
+    if (!sb || !userId || categories.length === 0) return; // guard
     setBulkBusy(true);
     const allIds = categories.map((c) => c.id);
     // Optimistic
@@ -157,9 +160,8 @@ export default function NotificationsPreferences({ userId }) {
   }
 
   async function clearAll() {
-    if (!userId) return;
+    if (!sb || !userId) return;                        // guard
     setBulkBusy(true);
-    // Optimistic
     const prev = new Set(subs);
     setSubs(new Set());
     try {
@@ -174,7 +176,6 @@ export default function NotificationsPreferences({ userId }) {
         type: "error",
         message: "Failed to clear: " + (e.message || String(e)),
       });
-      // Rollback
       setSubs(prev);
     } finally {
       setBulkBusy(false);
@@ -188,7 +189,7 @@ export default function NotificationsPreferences({ userId }) {
     return () => clearTimeout(t);
   }, [banner]);
 
-  if (status === "loading") {
+  if (status === "loading" || !sb) {
     return (
       <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm">
         Loading categories…

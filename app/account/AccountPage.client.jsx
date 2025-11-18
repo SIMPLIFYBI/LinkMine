@@ -1,8 +1,9 @@
 "use client";
+
 import Link from "next/link";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation"; // ensure this import exists
-import { supabaseBrowser } from "@/lib/supabaseBrowser"; // CHANGED: use browser factory, not pre-instantiated client
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabaseBrowser } from "@/lib/supabaseBrowser";
 import NotificationsPreferences from "./NotificationsPreferences.client.jsx";
 import AccountTabs from "./AccountTabs.jsx";
 
@@ -17,10 +18,9 @@ const TABS = [
   { key: "consultants", label: "Consultants" },
 ];
 
-function AccountPageClient({ initialTab }) {
+export default function AccountPageClient({ initialTab = "account" }) {
   const router = useRouter();
-  const sp = useSearchParams();
-  const sbRef = useRef(null); // NEW: hold client instance after mount
+  const sbRef = useRef(null);
 
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
@@ -28,19 +28,13 @@ function AccountPageClient({ initialTab }) {
   const [profileError, setProfileError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAppAdmin, setIsAppAdmin] = useState(false);
-  const [activeTab, setActiveTab] = useState(initialTab);
-
-  // Respect ?tab=notifications on entry
-  useEffect(() => {
-    const t = sp?.get("tab");
-    if (t && TABS.some((tab) => tab.key === t)) {
-      setActiveTab(t);
-    }
-  }, [sp]);
+  const [activeTab, setActiveTab] = useState(
+    TABS.some((t) => t.key === initialTab) ? initialTab : "account"
+  );
 
   useEffect(() => {
     let mounted = true;
-    const sb = supabaseBrowser();       // create client only on client after mount starts
+    const sb = supabaseBrowser();
     sbRef.current = sb;
 
     async function init() {
@@ -59,14 +53,15 @@ function AccountPageClient({ initialTab }) {
       const userId = currentSession.user.id;
       const email = currentSession.user.email?.toLowerCase() ?? "";
 
-      const [{ data: adminRow }, { data: consultantRows, error }] = await Promise.all([
-        sb.from("app_admins").select("user_id").eq("user_id", userId).maybeSingle(),
-        sb
-          .from("consultants")
-          .select("id, display_name, claimed_by")
-          .eq("claimed_by", userId)
-          .order("display_name"),
-      ]);
+      const [{ data: adminRow }, { data: consultantRows, error }] =
+        await Promise.all([
+          sb.from("app_admins").select("user_id").eq("user_id", userId).maybeSingle(),
+          sb
+            .from("consultants")
+            .select("id, display_name, claimed_by")
+            .eq("claimed_by", userId)
+            .order("display_name"),
+        ]);
 
       if (!mounted) return;
 
@@ -128,11 +123,7 @@ function AccountPageClient({ initialTab }) {
     <main className="mx-auto max-w-6xl px-6 py-10">
       {/* Tab Navigation */}
       <div className="mb-10 flex flex-wrap items-center gap-4">
-        <AccountTabs
-          tabs={TABS}
-          active={activeTab}
-          onChange={(key) => setActiveTab(key)}
-        />
+        <AccountTabs tabs={TABS} active={activeTab} onChange={(key) => setActiveTab(key)} />
         {isAdmin && (
           <Link
             href="/consultants/review"
@@ -181,16 +172,12 @@ function AccountPageClient({ initialTab }) {
         <section className="mb-12 space-y-6">
           <header>
             <h2 className="text-2xl font-semibold tracking-tight">Consultant Ownership</h2>
-            <p className="mt-1 text-sm text-slate-300">
-              Pages you’ve claimed or manage.
-            </p>
+            <p className="mt-1 text-sm text-slate-300">Pages you’ve claimed or manage.</p>
           </header>
           {profileError ? (
             <p className="text-sm text-red-400">{profileError}</p>
           ) : ownedConsultants.length === 0 ? (
-            <p className="text-sm text-slate-300">
-              You don’t own or manage any consultant pages yet.
-            </p>
+            <p className="text-sm text-slate-300">You don’t own or manage any consultant pages yet.</p>
           ) : (
             <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {ownedConsultants.map((item) => (
@@ -221,30 +208,5 @@ function AccountPageClient({ initialTab }) {
         </section>
       )}
     </main>
-  );
-}
-
-export default function Page({ searchParams }) {
-  const tabParam = Array.isArray(searchParams?.tab)
-    ? searchParams?.tab?.[0]
-    : searchParams?.tab;
-
-  const initialTab =
-    typeof tabParam === "string" && ALLOWED_TABS.has(tabParam.toLowerCase())
-      ? tabParam.toLowerCase()
-      : "account";
-
-  return (
-    <Suspense
-      fallback={
-        <main className="p-10">
-          <div className="animate-pulse rounded-xl border border-white/10 bg-white/5 p-6 text-sm">
-            Loading…
-          </div>
-        </main>
-      }
-    >
-      <AccountPageClient initialTab={initialTab} />
-    </Suspense>
   );
 }
