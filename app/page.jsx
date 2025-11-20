@@ -5,7 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import ServiceFinder from "@/app/components/ServiceFinder";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
-import AddProfileSmartCTA from "@/app/components/consultants/AddProfileSmartCTA.client.jsx"; // NEW
+import AddProfileSmartCTA from "@/app/components/consultants/AddProfileSmartCTA.client.jsx";
+import ConsultantsEstimateKPI from "./components/kpi/ConsultantsEstimateKPI.jsx";
 
 const heroImage = "/Pictures/pexels-urtimud-89-76108288-14263363.jpg";
 
@@ -218,6 +219,22 @@ export default async function HomePage() {
                 Explore consultants
               </button>
             </Link>
+          </div>
+
+          <div className="mt-6 grid grid-cols-2 gap-2">
+            {/* Estimated consultants in Australia */}
+            <ConsultantsEstimateKPI
+              target={22000}
+              displayLabel="Mining Consultants"
+              label="Estimated mining consultants across Australia"
+            />
+
+            {/* Estimated mining clients */}
+            <ConsultantsEstimateKPI
+              target={850}
+              displayLabel="Mining clients (est.)"
+              label="Estimated mining clients"
+            />
           </div>
         </div>
       </section>

@@ -37,3 +37,8 @@ body {
   background: linear-gradient(135deg, #0a1b3f 0%, #2f3a52 60%, #f97316 100%);
   color: #e2e8f0;
 }
+
+@keyframes kpiPan {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
