@@ -1,11 +1,11 @@
-import { useCountUp } from "react-countup";
-import { ref } from "react";
+"use client";
+import { useCountUp } from "./useCountUp";
 
 export default function ConsultantsEstimateKPI({
   target = 22000,
-  displayLabel = "Mining Consultants", // default display label
-  label = "Estimated mining consultants across Australia", // screen-reader friendly
-  overshoot = 0, // set e.g. 120 for tiny bounce
+  displayLabel = "Mining Consultants",
+  label = "Estimated mining consultants across Australia",
+  overshoot = 0,
   className = ""
 }) {
   const { ref, formatted, done } = useCountUp(target, {
@@ -20,7 +20,6 @@ export default function ConsultantsEstimateKPI({
       ref={ref}
       className={[
         "relative isolate flex flex-col items-center justify-center",
-        // tighter base, roomy on sm+
         "rounded-xl sm:rounded-2xl px-3 py-3 sm:px-5 sm:py-4",
         "bg-gradient-to-br from-slate-900/40 via-slate-900/30 to-slate-800/30",
         "border border-white/10 ring-1 ring-white/10 backdrop-blur-md",
@@ -39,7 +38,6 @@ export default function ConsultantsEstimateKPI({
       <div
         className={[
           "font-bold tracking-tight tabular-nums",
-          // clamp font size so two cards fit side-by-side even on very narrow devices
           "text-[clamp(1.125rem,5.5vw,2rem)] sm:text-[clamp(1.5rem,3.2vw,2.25rem)]",
           "bg-clip-text text-transparent",
           "bg-[linear-gradient(90deg,#38bdf8,#6366f1,#8b5cf6,#6366f1,#38bdf8)]",
@@ -62,9 +60,3 @@ export default function ConsultantsEstimateKPI({
     </div>
   );
 }
-
-<ConsultantsEstimateKPI
-  target={22000}
-  displayLabel="Mining Consultants"
-  label="Estimated mining consultants across Australia"
-/>
