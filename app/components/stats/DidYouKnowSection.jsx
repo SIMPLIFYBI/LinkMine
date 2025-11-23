@@ -81,33 +81,35 @@ function TrendChart({
   ],
   height = 140
 }) {
-  // Dynamic horizontal scale
-  const step = 28; // horizontal distance between points
-  const w = (points.length - 1) * step;
-  const max = Math.max(...points.map((p) => p.v));
-  const topPad = 6;
-  const bottomPad = 8;
-  const h = 100; // internal vertical units
+  const step = 28;
 
-  // Normalized point coordinates
+  // NEW: horizontal + vertical padding so labels never clip
+  const leftPad = 10;
+  const rightPad = 10;
+  const topPad = 18;      // was 6; extra space for max label above highest point
+  const bottomPad = 8;
+
+  const innerW = (points.length - 1) * step;
+  const w = innerW + leftPad + rightPad;
+  const h = 100;
+
+  const max = Math.max(...points.map(p => p.v));
+  const min = Math.min(...points.map(p => p.v));
+
   const coords = points.map((p, i) => {
-    const x = i * step;
+    const x = leftPad + i * step;
     const y = h - bottomPad - ((p.v / max) * (h - topPad - bottomPad));
     return { x, y };
   });
 
-  // Catmull-Rom to Bezier for smoothing
   function smoothPath(pts) {
     if (pts.length < 2) return "";
-    const d = [];
-    d.push(`M${pts[0].x},${pts[0].y}`);
+    const d = [`M${pts[0].x},${pts[0].y}`];
     for (let i = 0; i < pts.length - 1; i++) {
       const p0 = pts[i - 1] || pts[i];
       const p1 = pts[i];
       const p2 = pts[i + 1];
       const p3 = pts[i + 2] || p2;
-
-      // Catmull-Rom to Cubic Bezier conversion
       const cp1x = p1.x + (p2.x - p0.x) / 6;
       const cp1y = p1.y + (p2.y - p0.y) / 6;
       const cp2x = p2.x - (p3.x - p1.x) / 6;
@@ -118,21 +120,37 @@ function TrendChart({
   }
 
   const linePath = smoothPath(coords);
-  const areaPath = `${linePath} L${w},${h} L0,${h} Z`;
+  const areaPath = `${linePath} L${w - rightPad},${h} L${leftPad},${h} Z`;
+
+  const minIndex = points.findIndex(p => p.v === min);
+  const maxIndex = points.findIndex(p => p.v === max);
+  const minCoord = coords[minIndex];
+  const maxCoord = coords[maxIndex];
+
+  const fontSize = 7;
+
+  // Clamp baseline so text always fully inside viewBox (baseline + ascenders)
+  const labelY = (y) => Math.max(fontSize + 3, y - 8);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 ring-1 ring-white/10 backdrop-blur-md shadow-[0_4px_20px_-6px_rgba(0,0,0,0.45)]">
+    <div
+      className="
+        relative rounded-2xl border border-white/10 bg-white/[0.04]
+        p-4 pt-6 ring-1 ring-white/10 backdrop-blur-md
+        shadow-[0_4px_20px_-6px_rgba(0,0,0,0.45)]
+      "
+    >
       <p className="text-sm font-semibold tracking-wide text-slate-200 mb-2">
         Annual spend on mining consultants (A$ millions) — Australia
       </p>
+
       <svg
         viewBox={`0 0 ${w} ${h}`}
-        // Removed preserveAspectRatio="none" so circles stay round.
         preserveAspectRatio="xMidYMid meet"
         style={{ height, width: "100%" }}
         className="block"
         role="img"
-        aria-label="Line chart showing growth over years"
+        aria-label="Line chart showing annual spend across years"
       >
         <defs>
           <linearGradient id="chartFill2" x1="0" x2="0" y1="0" y2="1">
@@ -146,7 +164,6 @@ function TrendChart({
           </linearGradient>
         </defs>
 
-        {/* Filled area */}
         <path
           d={areaPath}
           fill="url(#chartFill2)"
@@ -154,7 +171,6 @@ function TrendChart({
           style={{ animation: "fadeIn 0.7s ease-out forwards" }}
         />
 
-        {/* Smoothed stroke */}
         <path
           d={linePath}
           fill="none"
@@ -163,13 +179,12 @@ function TrendChart({
           strokeLinejoin="round"
           strokeLinecap="round"
           style={{
-            strokeDasharray: w * 2,
-            strokeDashoffset: w * 2,
+            strokeDasharray: innerW * 2,
+            strokeDashoffset: innerW * 2,
             animation: "dash 1.4s cubic-bezier(.16,1,.3,1) forwards"
           }}
         />
 
-        {/* Data points */}
         {coords.map((c, i) => (
           <circle
             key={points[i].m}
@@ -184,6 +199,30 @@ function TrendChart({
             }}
           />
         ))}
+
+        {/* Min label */}
+        <text
+          x={minCoord.x}
+          y={labelY(minCoord.y)}
+          fontSize={fontSize}
+          fill="#94a3b8"
+          textAnchor="middle"
+          style={{ fontWeight: 500 }}
+        >
+          {min.toLocaleString()}
+        </text>
+
+        {/* Max label */}
+        <text
+          x={maxCoord.x}
+          y={labelY(maxCoord.y)}
+          fontSize={fontSize}
+          fill="#94a3b8"
+          textAnchor="middle"
+          style={{ fontWeight: 500 }}
+        >
+          {max.toLocaleString()}
+        </text>
       </svg>
 
       <div className="mt-2 sm:overflow-visible overflow-x-auto no-scrollbar">
@@ -191,14 +230,15 @@ function TrendChart({
           className="grid text-[10px] tracking-wide text-slate-400"
           style={{
             gridTemplateColumns: `repeat(${points.length}, minmax(24px, 1fr))`,
-            minWidth: `${points.length * 28}px`
+            minWidth: `${points.length * 28}px`,
+            paddingLeft: `${leftPad - 2}px`,
+            paddingRight: `${rightPad - 2}px`
           }}
         >
-          {points.map((p) => {
-            // If label is a 4-digit year, show last two digits; otherwise leave as-is
+          {points.map(p => {
             const short = /^[0-9]{4}$/.test(p.m) ? p.m.slice(2) : p.m;
             return (
-              <span key={p.m} className="text-center">
+              <span key={p.m} className="text-center" aria-label={p.m}>
                 {short}
               </span>
             );

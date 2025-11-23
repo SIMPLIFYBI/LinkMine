@@ -215,7 +215,7 @@ export default async function HomePage() {
                   group relative flex w-full items-center justify-center
                   rounded-xl px-3 py-2
                   font-semibold tracking-tight leading-none
-                  text-[10px] sm:text-[13px]
+                  text-[12px] sm:text-[13px]
                   whitespace-nowrap min-w-[150px]
                   backdrop-blur-md
                   border border-sky-300/30 ring-1 ring-white/10
@@ -238,7 +238,7 @@ export default async function HomePage() {
                   group relative flex w-full items-center justify-center
                   rounded-xl px-3 py-2
                   font-semibold tracking-tight leading-none
-                  text-[10px] sm:text-[13px]
+                  text-[12px] sm:text-[13px]
                   whitespace-nowrap min-w-[150px]
                   backdrop-blur-md
                   border border-white/15 ring-1 ring-white/10
@@ -276,14 +276,48 @@ export default async function HomePage() {
               YouMine helps mining companies find qualified contractors and consultants fast — with portfolios, verified business details, service categories, and Google-linked profiles. For consultants, it’s the easiest way to showcase your work, build credibility, and track profile metrics.
             </p>
             <div className="mt-4 flex gap-2">
-              <Link href="/signup" className="inline-flex">
-                <button className="rounded-md bg-slate-700 px-4 py-2 text-white transition hover:bg-slate-600">
-                  Get started — it's free
+              <Link href="/jobs" className="inline-flex flex-1 sm:flex-none">
+                <button
+                  className="
+                    group relative flex w-full items-center justify-center
+                    rounded-xl px-3 py-2
+                    font-semibold tracking-tight leading-none
+                    text-[12px] sm:text-[13px]
+                    whitespace-nowrap min-w-[150px]
+                    backdrop-blur-md
+                    border border-sky-300/30 ring-1 ring-white/10
+                    bg-gradient-to-r from-sky-500/35 via-indigo-500/35 to-sky-500/35
+                    text-white
+                    shadow-[0_4px_14px_-4px_rgba(0,0,0,0.6)]
+                    transition
+                    hover:from-sky-500/45 hover:via-indigo-500/45 hover:to-sky-500/45
+                    hover:border-sky-300/50 hover:shadow-[0_6px_18px_-6px_rgba(0,0,0,0.65)]
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60
+                  "
+                  aria-label="Explore jobs board"
+                >
+                  Explore Jobs
                 </button>
               </Link>
-              <Link href="/explore" className="inline-flex">
-                <button className="rounded-md border border-white/10 bg-white/5 px-4 py-2 text-slate-100 transition hover:border-white/20 hover:bg-white/10">
-                  Explore listings
+              <Link href="/about" className="inline-flex flex-1 sm:flex-none">
+                <button
+                  className="
+                    group relative flex w-full items-center justify-center
+                    rounded-xl px-3 py-2
+                    font-semibold tracking-tight leading-none
+                    text-[12px] sm:text-[13px]
+                    whitespace-nowrap min-w-[150px]
+                    backdrop-blur-md
+                    border border-white/15 ring-1 ring-white/10
+                    bg-white/10 text-slate-100
+                    shadow-[0_4px_14px_-4px_rgba(0,0,0,0.6)]
+                    transition
+                    hover:bg-white/15 hover:border-white/25 hover:shadow-[0_6px_18px_-6px_rgba(0,0,0,0.65)]
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300/40
+                  "
+                  aria-label="Learn About YouMine"
+                >
+                  Learn About YouMine
                 </button>
               </Link>
             </div>

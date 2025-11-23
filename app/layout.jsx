@@ -59,8 +59,12 @@ export default function RootLayout({ children }) {
 
         <AuthProvider>
           <Header />
-          <div className="mb-4">
+          <div className="relative">
             <TradingViewTicker />
+            <div
+              aria-hidden="true"
+              className="absolute -bottom-px left-0 h-px w-full bg-gradient-to-r from-transparent via-sky-400/50 to-transparent"
+            />
           </div>
           <main className="flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
             {children}
