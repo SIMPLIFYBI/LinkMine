@@ -7,6 +7,7 @@ import ServiceFinder from "@/app/components/ServiceFinder";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
 import AddProfileSmartCTA from "@/app/components/consultants/AddProfileSmartCTA.client.jsx";
 import ConsultantsEstimateKPI from "./components/kpi/ConsultantsEstimateKPI.jsx";
+import DidYouKnowSection from "./components/stats/DidYouKnowSection.jsx";
 
 const heroImage = "/Pictures/pexels-urtimud-89-76108288-14263363.jpg";
 
@@ -630,6 +631,8 @@ export default async function HomePage() {
           <AddProfileSmartCTA />
         </div>
       </section>
+
+      <DidYouKnowSection />
 
       {/* JSON-LD */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
