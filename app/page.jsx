@@ -208,14 +208,48 @@ export default async function HomePage() {
           <p className="max-w-2xl text-base text-slate-200 sm:text-lg">
             Discover trusted consultants and contractors, review portfolios, and contact directly.
           </p>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/signup" className="inline-flex">
-              <button className="rounded-md bg-slate-700 px-4 py-2 text-white transition hover:bg-slate-600">
-                Get started — it's free
+          <div className="mt-4 flex gap-2">
+            <Link href="/signup" className="flex-1">
+              <button
+                className="
+                  group relative flex w-full items-center justify-center
+                  rounded-xl px-3 py-2
+                  font-semibold tracking-tight leading-none
+                  text-[10px] sm:text-[13px]
+                  whitespace-nowrap min-w-[150px]
+                  backdrop-blur-md
+                  border border-sky-300/30 ring-1 ring-white/10
+                  bg-gradient-to-r from-sky-500/35 via-indigo-500/35 to-sky-500/35
+                  text-white
+                  shadow-[0_4px_14px_-4px_rgba(0,0,0,0.6)]
+                  transition
+                  hover:from-sky-500/45 hover:via-indigo-500/45 hover:to-sky-500/45
+                  hover:border-sky-300/50 hover:shadow-[0_6px_18px_-6px_rgba(0,0,0,0.65)]
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60
+                "
+                aria-label="Sign up — it's free"
+              >
+                Get started — it’s free
               </button>
             </Link>
-            <Link href="/consultants" className="inline-flex">
-              <button className="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-slate-100 shadow-lg backdrop-blur-md ring-1 ring-white/10 transition hover:border-white/30 hover:bg-white/15 hover:ring-white/20">
+            <Link href="/consultants" className="flex-1">
+              <button
+                className="
+                  group relative flex w-full items-center justify-center
+                  rounded-xl px-3 py-2
+                  font-semibold tracking-tight leading-none
+                  text-[10px] sm:text-[13px]
+                  whitespace-nowrap min-w-[150px]
+                  backdrop-blur-md
+                  border border-white/15 ring-1 ring-white/10
+                  bg-white/10 text-slate-100
+                  shadow-[0_4px_14px_-4px_rgba(0,0,0,0.6)]
+                  transition
+                  hover:bg-white/15 hover:border-white/25 hover:shadow-[0_6px_18px_-6px_rgba(0,0,0,0.65)]
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300/40
+                "
+                aria-label="Explore consultants"
+              >
                 Explore consultants
               </button>
             </Link>
@@ -232,7 +266,7 @@ export default async function HomePage() {
             {/* Estimated mining clients */}
             <ConsultantsEstimateKPI
               target={850}
-              displayLabel="Mining clients (est.)"
+              displayLabel="Mining clients"
               label="Estimated mining clients"
             />
           </div>
@@ -242,8 +276,8 @@ export default async function HomePage() {
       {/* Value prop + 3x3 category grid side-by-side */}
       <section className="mx-auto w-full max-w-6xl px-2 md:px-4">
         <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start">
-          {/* Left: existing value prop */}
-          <div className="space-y-4">
+          {/* Left: existing value prop (desktop). Mobile: second */}
+          <div className="space-y-4 order-2 md:order-1">
             <h2 className="text-2xl font-semibold md:text-[32px]">
               Connect mining clients with trusted contractors & consultants
             </h2>
@@ -270,8 +304,8 @@ export default async function HomePage() {
             </ul>
           </div>
 
-          {/* Right: 3x3 category grid */}
-          <div className="space-y-3">
+          {/* Right: 3x3 category grid (desktop). Mobile: first */}
+          <div className="space-y-3 order-1 md:order-2">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-white tracking-wide">Browse by category</h3>
               <Link
@@ -300,14 +334,11 @@ export default async function HomePage() {
                     "
                     aria-label={`Browse ${c.name}`}
                   >
-                    {/* Accent bar */}
                     <div className="pointer-events-none absolute inset-x-0 top-0 h-1 rounded-t-xl bg-gradient-to-r from-sky-500/60 via-cyan-300/60 to-sky-500/60 opacity-70 group-hover:opacity-90" />
 
-                    <span
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg
                                  bg-sky-500/15 text-sky-200 ring-1 ring-inset ring-sky-400/30
-                                 transition-colors group-hover:bg-sky-500/25"
-                    >
+                                 transition-colors group-hover:bg-sky-500/25">
                       <CategoryIcon slug={c.slug} />
                     </span>
                     <span className="line-clamp-2 text-[11px] font-medium leading-tight text-slate-100">
