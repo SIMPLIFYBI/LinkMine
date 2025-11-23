@@ -6,7 +6,8 @@ export default function ConsultantsEstimateKPI({
   displayLabel = "Mining Consultants",
   label = "Estimated mining consultants across Australia",
   overshoot = 0,
-  className = ""
+  className = "",
+  subText = "" // NEW: optional tiny secondary line
 }) {
   const { ref, formatted, done } = useCountUp(target, {
     duration: 1800,
@@ -20,13 +21,14 @@ export default function ConsultantsEstimateKPI({
       ref={ref}
       className={[
         "relative isolate flex flex-col items-center justify-center",
-        "rounded-xl sm:rounded-2xl px-3 py-3 sm:px-5 sm:py-4",
+        // Slightly reduce vertical padding to make room for subText without growing height
+        "rounded-xl sm:rounded-2xl px-3 py-2.5 sm:px-5 sm:py-4",
         "bg-gradient-to-br from-slate-900/40 via-slate-900/30 to-slate-800/30",
         "border border-white/10 ring-1 ring-white/10 backdrop-blur-md",
         "shadow-[0_4px_16px_-4px_rgba(0,0,0,0.5)]",
         className
       ].join(" ")}
-      aria-label={`${formatted} – ${label}`}
+      aria-label={`${formatted} – ${label}${subText ? ` (${subText})` : ""}`}
     >
       {/* Ambient glow */}
       <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-20">
@@ -56,7 +58,13 @@ export default function ConsultantsEstimateKPI({
         {displayLabel}
       </div>
 
-      <div className="mt-1 sm:mt-2 h-px w-10 sm:w-12 bg-gradient-to-r from-sky-500/50 via-cyan-400/40 to-sky-500/50 rounded-full" />
+      {subText ? (
+        <div className="mt-0.5 text-[9px] leading-tight text-slate-400">
+          {subText}
+        </div>
+      ) : null}
+
+      <div className="mt-1 h-px w-10 sm:w-12 bg-gradient-to-r from-sky-500/50 via-cyan-400/40 to-sky-500/50 rounded-full" />
     </div>
   );
 }

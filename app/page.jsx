@@ -261,6 +261,7 @@ export default async function HomePage() {
               target={22000}
               displayLabel="Mining Consultants"
               label="Estimated mining consultants across Australia"
+              subText="In Australia"
             />
 
             {/* Estimated mining clients */}
@@ -268,6 +269,7 @@ export default async function HomePage() {
               target={850}
               displayLabel="Mining clients"
               label="Estimated mining clients"
+              subText="In Australia"
             />
           </div>
         </div>
@@ -372,18 +374,21 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Divider: categories -> service finder */}
-      <div aria-hidden="true" className="my-6 divider-gradient" />
-
-      {/* Service finder */}
+      {/* Service finder (flush to previous separator line) */}
       <section
         id="search"
         className="
           relative left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw]
-          py-6
+          pb-6
         "
       >
-        {/* Restored layered gradient: subtle linear + radial fades */}
+        {/* Inline separator line flush at very top */}
+        <div
+          aria-hidden="true"
+          className="absolute top-0 left-0 h-px w-full bg-gradient-to-r from-transparent via-sky-400/50 to-transparent z-10"
+        />
+
+        {/* Background layers */}
         <div
           aria-hidden="true"
           className="
@@ -401,8 +406,8 @@ export default async function HomePage() {
           "
         />
 
-        {/* Centered content with added horizontal padding */}
-        <div className="mx-auto w-full max-w-screen-md px-6 sm:px-8">
+        {/* Content wrapper (adds internal top spacing below line) */}
+        <div className="mx-auto w-full max-w-screen-md px-6 sm:px-8 pt-5">
           <p className="section-label mb-2">Search</p>
           <ServiceFinder className="mt-2" />
         </div>
