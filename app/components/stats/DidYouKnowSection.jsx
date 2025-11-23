@@ -190,16 +190,19 @@ function TrendChart({
         <div
           className="grid text-[10px] tracking-wide text-slate-400"
           style={{
-            // 10 equal columns; min width helps prevent clipping on very small screens
             gridTemplateColumns: `repeat(${points.length}, minmax(24px, 1fr))`,
             minWidth: `${points.length * 28}px`
           }}
         >
-          {points.map((p) => (
-            <span key={p.m} className="text-center">
-              {p.m}
-            </span>
-          ))}
+          {points.map((p) => {
+            // If label is a 4-digit year, show last two digits; otherwise leave as-is
+            const short = /^[0-9]{4}$/.test(p.m) ? p.m.slice(2) : p.m;
+            return (
+              <span key={p.m} className="text-center">
+                {short}
+              </span>
+            );
+          })}
         </div>
       </div>
 
@@ -249,18 +252,51 @@ export default function DidYouKnowSection() {
           target={22000}
           label="Estimated independent mining consultants"
           sub="Potential expert profiles across Australia"
-          icon="A"
           suffix="+"
           gradient="from-sky-500 via-cyan-500 to-sky-600"
+          icon={
+            <svg
+              viewBox="0 0 24 24"
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              {/* Users/group icon */}
+              <path d="M17 21v-2a4 4 0 0 0-4-4h-2a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+              <path d="M5.5 11a3.5 3.5 0 0 1 0-7" />
+              <path d="M18.5 11a3.5 3.5 0 0 0 0-7" />
+            </svg>
+          }
         />
         <StatCard
           target={850}
           label="Estimated active mining clients"
           sub="Organizations regularly engaging specialist services"
-          icon="C"
           suffix="+"
           gradient="from-indigo-500 via-violet-500 to-fuchsia-500"
           duration={2000}
+          icon={
+            <svg
+              viewBox="0 0 24 24"
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              {/* Briefcase icon */}
+              <path d="M3 7h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
+              <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              <path d="M3 12h18" />
+            </svg>
+          }
         />
         <TrendChart />
       </div>
