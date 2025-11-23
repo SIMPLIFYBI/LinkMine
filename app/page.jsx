@@ -6,7 +6,6 @@ import Image from "next/image";
 import ServiceFinder from "@/app/components/ServiceFinder";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
 import AddProfileSmartCTA from "@/app/components/consultants/AddProfileSmartCTA.client.jsx";
-import ConsultantsEstimateKPI from "./components/kpi/ConsultantsEstimateKPI.jsx";
 import DidYouKnowSection from "./components/stats/DidYouKnowSection.jsx";
 
 const heroImage = "/Pictures/pexels-urtimud-89-76108288-14263363.jpg";
@@ -255,24 +254,6 @@ export default async function HomePage() {
               </button>
             </Link>
           </div>
-
-          <div className="mt-6 grid grid-cols-2 gap-2">
-            {/* Estimated consultants in Australia */}
-            <ConsultantsEstimateKPI
-              target={22000}
-              displayLabel="Mining Consultants"
-              label="Estimated mining consultants across Australia"
-              subText="In Australia"
-            />
-
-            {/* Estimated mining clients */}
-            <ConsultantsEstimateKPI
-              target={850}
-              displayLabel="Mining clients"
-              label="Estimated mining clients"
-              subText="In Australia"
-            />
-          </div>
         </div>
 
         {/* Flush separator line at bottom of hero */}
@@ -507,6 +488,9 @@ export default async function HomePage() {
         )}
       </section>
 
+      {/* Did You Know placed under Featured */}
+      <DidYouKnowSection />
+
       <div aria-hidden="true" className="my-6 divider-gradient" />
 
       {/* Testimonials */}
@@ -631,8 +615,6 @@ export default async function HomePage() {
           <AddProfileSmartCTA />
         </div>
       </section>
-
-      <DidYouKnowSection />
 
       {/* JSON-LD */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
