@@ -373,16 +373,40 @@ export default async function HomePage() {
       </section>
 
       {/* Divider: categories -> service finder */}
-      <div aria-hidden="true" className="mt-10 divider-gradient" />
+      <div aria-hidden="true" className="my-6 divider-gradient" />
 
       {/* Service finder */}
-      <section id="search" className="relative mx-auto w-full max-w-screen-md px-4 fade-in-up">
-        <p className="section-label mb-2">Search</p>
-        <ServiceFinder className="mt-4" />
-        <div aria-hidden="true" className="absolute inset-0 -z-10 bg-radial-fade pointer-events-none" />
-      </section>
+      <section
+        id="search"
+        className="
+          relative left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw]
+          py-6
+        "
+      >
+        {/* Restored layered gradient: subtle linear + radial fades */}
+        <div
+          aria-hidden="true"
+          className="
+            absolute inset-0 -z-10
+            bg-gradient-to-tr from-slate-950/85 via-slate-900/80 to-slate-950/85
+          "
+        />
+        <div
+          aria-hidden="true"
+          className="
+            pointer-events-none absolute inset-0 -z-10
+            bg-radial-fade
+            mix-blend-plus-lighter
+            opacity-60
+          "
+        />
 
-      <div aria-hidden="true" className="mt-12 divider-soft" />
+        {/* Centered content with added horizontal padding */}
+        <div className="mx-auto w-full max-w-screen-md px-6 sm:px-8">
+          <p className="section-label mb-2">Search</p>
+          <ServiceFinder className="mt-2" />
+        </div>
+      </section>
 
       {/* Featured consultants */}
       <section id="featured" className="mx-auto w-full max-w-screen-lg px-4 fade-in-up">
@@ -477,7 +501,7 @@ export default async function HomePage() {
         )}
       </section>
 
-      <div aria-hidden="true" className="mt-12 divider-gradient" />
+      <div aria-hidden="true" className="my-6 divider-gradient" />
 
       {/* Testimonials */}
       <section id="testimonials" className="relative mx-auto w-full max-w-screen-lg px-4 fade-in-up bg-panel-alt rounded-3xl py-8">
@@ -532,10 +556,10 @@ export default async function HomePage() {
         </section>
       )}
 
-      <div aria-hidden="true" className="mt-16 divider-gradient" />
+      <div aria-hidden="true" className="my-6 divider-gradient" />
 
       {/* For clients */}
-      <section id="clients" className="mt-12 rounded-3xl border border-white/10 bg-white/[0.04] p-6 fade-in-up">
+      <section id="clients" className="mt-0 rounded-3xl border border-white/10 bg-white/[0.04] p-6 fade-in-up">
         <header className="mb-4">
           <p className="text-xs uppercase tracking-[0.2em] text-sky-300">For clients</p>
           <h2 className="mt-1 text-2xl font-semibold text-white">How YouMine works for Clients</h2>
@@ -581,10 +605,10 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <div aria-hidden="true" className="mt-16 divider-gradient" />
+      <div aria-hidden="true" className="my-6 divider-gradient" />
 
       {/* For consultants */}
-      <section id="consultants" className="mt-12 rounded-3xl border border-white/10 bg-white/[0.04] p-6 fade-in-up">
+      <section id="consultants" className="mt-0 rounded-3xl border border-white/10 bg-white/[0.04] p-6 fade-in-up">
         <header className="mb-4">
           <p className="text-xs uppercase tracking-[0.2em] text-sky-300">For consultants</p>
           <h2 className="mt-1 text-2xl font-semibold text-white">How YouMine works for Consultants</h2>
