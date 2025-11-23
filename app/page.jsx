@@ -271,20 +271,27 @@ export default async function HomePage() {
             />
           </div>
         </div>
+
+        {/* Flush separator line at bottom of hero */}
+        <div
+          aria-hidden="true"
+          className="absolute bottom-0 left-0 z-20 h-px w-full bg-gradient-to-r from-transparent via-sky-400/60 to-transparent"
+        />
       </section>
 
       {/* Value prop + 3x3 category grid side-by-side */}
-      <section className="mx-auto w-full max-w-6xl px-2 md:px-4">
+      <section id="overview" className="-mt-7 mx-auto w-full max-w-6xl px-2 md:px-4 fade-in-up">
         <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start">
           {/* Left: existing value prop (desktop). Mobile: second */}
           <div className="space-y-4 order-2 md:order-1">
+            <p className="section-label">Overview</p>
             <h2 className="text-2xl font-semibold md:text-[32px]">
               Connect mining clients with trusted contractors & consultants
             </h2>
             <p className="text-slate-300">
               YouMine helps mining companies find qualified contractors and consultants fast — with portfolios, verified business details, service categories, and Google-linked profiles. For consultants, it’s the easiest way to showcase your work, build credibility, and track profile metrics.
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="mt-4 flex gap-2">
               <Link href="/signup" className="inline-flex">
                 <button className="rounded-md bg-slate-700 px-4 py-2 text-white transition hover:bg-slate-600">
                   Get started — it's free
@@ -304,8 +311,9 @@ export default async function HomePage() {
             </ul>
           </div>
 
-          {/* Right: 3x3 category grid (desktop). Mobile: first */}
+          {/* Right: categories */}
           <div className="space-y-3 order-1 md:order-2">
+            <p className="section-label">Categories</p>
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-white tracking-wide">Browse by category</h3>
               <Link
@@ -364,13 +372,21 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Service finder — glassmorphic combobox */}
-      <section className="mx-auto w-full max-w-screen-md px-4">
+      {/* Divider: categories -> service finder */}
+      <div aria-hidden="true" className="mt-10 divider-gradient" />
+
+      {/* Service finder */}
+      <section id="search" className="relative mx-auto w-full max-w-screen-md px-4 fade-in-up">
+        <p className="section-label mb-2">Search</p>
         <ServiceFinder className="mt-4" />
+        <div aria-hidden="true" className="absolute inset-0 -z-10 bg-radial-fade pointer-events-none" />
       </section>
 
-      {/* Featured consultants — 3 cards, rotates daily */}
-      <section className="mx-auto w-full max-w-screen-lg px-4">
+      <div aria-hidden="true" className="mt-12 divider-soft" />
+
+      {/* Featured consultants */}
+      <section id="featured" className="mx-auto w-full max-w-screen-lg px-4 fade-in-up">
+        <p className="section-label mb-2">Featured</p>
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-base font-semibold text-white">Featured consultants</h3>
           <Link href="/consultants" className="text-xs text-sky-300 underline-offset-2 hover:underline">
@@ -461,9 +477,12 @@ export default async function HomePage() {
         )}
       </section>
 
-      {/* Testimonials — horizontal snap strip */}
-      <section className="mx-auto w-full max-w-screen-lg px-4">
-        <div className="mb-3 flex items-center justify-between">
+      <div aria-hidden="true" className="mt-12 divider-gradient" />
+
+      {/* Testimonials */}
+      <section id="testimonials" className="relative mx-auto w-full max-w-screen-lg px-4 fade-in-up bg-panel-alt rounded-3xl py-8">
+        <p className="section-label mb-3 px-1">Testimonials</p>
+        <div className="mb-3 flex items-center justify-between px-1">
           <h3 className="text-base font-semibold text-white">What clients say</h3>
           <span className="text-xs text-slate-400">Real feedback from teams using YouMine</span>
         </div>
@@ -496,10 +515,13 @@ export default async function HomePage() {
             ))}
           </div>
         </div>
+
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-3xl bg-radial-fade opacity-50 mix-blend-plus-lighter" />
       </section>
 
       {showPreview && (
-        <section className="mx-auto max-w-screen-md px-4 pb-8">
+        <section id="features" className="mx-auto max-w-screen-md px-4 pb-8 fade-in-up">
+          <p className="section-label mb-2">Features</p>
           <h3 className="mb-3 text-lg font-semibold">Why YouMine?</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             <Feature title="Verified Listings" desc="Profiles linked to authenticated users and organizations." />
@@ -510,8 +532,10 @@ export default async function HomePage() {
         </section>
       )}
 
+      <div aria-hidden="true" className="mt-16 divider-gradient" />
+
       {/* For clients */}
-      <section className="mt-12 rounded-3xl border border-white/10 bg-white/[0.04] p-6">
+      <section id="clients" className="mt-12 rounded-3xl border border-white/10 bg-white/[0.04] p-6 fade-in-up">
         <header className="mb-4">
           <p className="text-xs uppercase tracking-[0.2em] text-sky-300">For clients</p>
           <h2 className="mt-1 text-2xl font-semibold text-white">How YouMine works for Clients</h2>
@@ -557,8 +581,10 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <div aria-hidden="true" className="mt-16 divider-gradient" />
+
       {/* For consultants */}
-      <section className="mt-12 rounded-3xl border border-white/10 bg-white/[0.04] p-6">
+      <section id="consultants" className="mt-12 rounded-3xl border border-white/10 bg-white/[0.04] p-6 fade-in-up">
         <header className="mb-4">
           <p className="text-xs uppercase tracking-[0.2em] text-sky-300">For consultants</p>
           <h2 className="mt-1 text-2xl font-semibold text-white">How YouMine works for Consultants</h2>
