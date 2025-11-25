@@ -173,8 +173,8 @@ export default async function HomePage() {
       {
         "@type": "Organization",
         "name": "YouMine",
-        "url": "https://youmine.com.au",
-        "logo": "https://youmine.com.au/og-image.png",
+        "url": "https://youmine.io",
+        "logo": "https://youmine.io/og-image.png",
         "contactPoint": [{ "@type": "ContactPoint", "email": "info@youmine.com.au", "contactType": "customer support" }],
       },
       {
