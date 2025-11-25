@@ -1,11 +1,11 @@
 import Link from "next/link";
-import Logo from "@/app/components/Logo"; // NEW
+import Logo from "@/app/components/Logo";
 
 export default function Footer() {
   return (
     <footer
       role="contentinfo"
-      className="w-full border-t border-white/10 bg-white/[0.02] backdrop-blur-md supports-[backdrop-filter]:backdrop-blur-md"
+      className="w-full border-t border-white/10 bg-gradient-to-t from-slate-950 via-slate-900/95 to-slate-900/90 backdrop-blur-md supports-[backdrop-filter]:backdrop-blur-md"
     >
       <div className="mx-auto max-w-6xl px-4 py-10">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -19,30 +19,73 @@ export default function Footer() {
           <nav aria-label="Explore">
             <h4 className="text-sm font-semibold text-slate-100">Explore</h4>
             <ul className="mt-3 space-y-2 text-sm text-slate-300">
-              <li><Link href="/consultants" className="hover:text-sky-300">Consultants</Link></li>
-              <li><Link href="/jobs" className="hover:text-sky-300">Jobs</Link></li>
-              <li><Link href="/signup" className="hover:text-sky-300">Create account</Link></li>
+              <li>
+                <Link href="/consultants" className="hover:text-sky-300">
+                  Consultants
+                </Link>
+              </li>
+              <li>
+                <Link href="/jobs" className="hover:text-sky-300">
+                  Jobs
+                </Link>
+              </li>
+              <li>
+                <Link href="/signup" className="hover:text-sky-300">
+                  Create account
+                </Link>
+              </li>
+            </ul>
+          </nav>
+
+          {/* Landing index: now styled like other footer links */}
+          <nav aria-label="Discover">
+            <h4 className="text-sm font-semibold text-slate-100">Discover</h4>
+            <ul className="mt-3 space-y-2 text-sm text-slate-300">
+              <li>
+                <Link href="/landing" className="hover:text-sky-300">
+                  Explore regions & specialties
+                </Link>
+              </li>
             </ul>
           </nav>
 
           <nav aria-label="Company">
             <h4 className="text-sm font-semibold text-slate-100">Company</h4>
             <ul className="mt-3 space-y-2 text-sm text-slate-300">
-              <li><Link href="/about" className="hover:text-sky-300">About</Link></li>
               <li>
-                <a href="mailto:info@youmine.com.au" className="hover:text-sky-300">
+                <Link href="/about" className="hover:text-sky-300">
+                  About
+                </Link>
+              </li>
+              <li>
+                <a
+                  href="mailto:info@youmine.com.au"
+                  className="hover:text-sky-300"
+                >
                   info@YouMine.com.au
                 </a>
               </li>
-              <li><Link href="/pricing" className="hover:text-sky-300">Pricing</Link></li>
+              <li>
+                <Link href="/pricing" className="hover:text-sky-300">
+                  Pricing
+                </Link>
+              </li>
             </ul>
           </nav>
 
-          <nav aria-label="Legal">
+          <nav aria-label="Legal" className="lg:col-start-4">
             <h4 className="text-sm font-semibold text-slate-100">Legal</h4>
             <ul className="mt-3 space-y-2 text-sm text-slate-300">
-              <li><Link href="/terms" className="hover:text-sky-300">Terms</Link></li>
-              <li><Link href="/privacy" className="hover:text-sky-300">Privacy</Link></li>
+              <li>
+                <Link href="/terms" className="hover:text-sky-300">
+                  Terms
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy" className="hover:text-sky-300">
+                  Privacy
+                </Link>
+              </li>
             </ul>
           </nav>
         </div>
