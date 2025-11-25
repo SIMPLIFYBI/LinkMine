@@ -1,14 +1,13 @@
 export const metadata = {
   title: "About YouMine",
-  description:
-    "YouMine connects mining clients with trusted consultants. Consultants showcase services and get quality enquiries. Clients browse by skill, filter, and contact the right expert fast.",
-  alternates: { canonical: "/about" },
+  description: "Learn how YouMine connects mining clients with trusted consultants and contractors.",
+  alternates: {
+    canonical: "/about",
+  },
   openGraph: {
     title: "About YouMine",
-    description:
-      "YouMine connects mining clients with trusted consultants. Consultants showcase services and get quality enquiries. Clients browse by skill, filter, and contact the right expert fast.",
+    description: "Learn how YouMine connects mining clients with trusted consultants and contractors.",
     url: "/about",
-    type: "website",
   },
 };
 

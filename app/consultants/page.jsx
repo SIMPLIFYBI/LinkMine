@@ -222,6 +222,19 @@ function buildJsonLd(consultants) {
   };
 }
 
+export const metadata = {
+  title: "Mining Consultants & Contractors Directory · YouMine",
+  description: "Discover verified mining consultants and contractors, view portfolios, and contact directly.",
+  alternates: {
+    canonical: "/consultants",
+  },
+  openGraph: {
+    title: "Mining Consultants & Contractors Directory · YouMine",
+    description: "Discover verified mining consultants and contractors, view portfolios, and contact directly.",
+    url: "/consultants",
+  },
+};
+
 export default async function ConsultantsPage({ searchParams }) {
   const sp = searchParams || {};
   const serviceSlug = typeof sp.service === "string" ? sp.service : "";

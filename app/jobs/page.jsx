@@ -7,6 +7,19 @@ import Link from "next/link"; // NEW
 export const runtime = "nodejs";
 export const revalidate = 180;
 
+export const metadata = {
+  title: "Mining Jobs Board · YouMine",
+  description: "Browse open mining jobs and connect directly with consultants and contractors.",
+  alternates: {
+    canonical: "/jobs",
+  },
+  openGraph: {
+    title: "Mining Jobs Board · YouMine",
+    description: "Browse open mining jobs and connect directly with consultants and contractors.",
+    url: "/jobs",
+  },
+};
+
 const PAGE_SIZE = 16;
 const HERO_IMG = "/OpenPit2.png"; // was "/Pictures/youmine_hero.webp"
 
