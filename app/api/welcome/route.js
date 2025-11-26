@@ -5,7 +5,11 @@ import { WELCOME_SUBJECT, buildWelcomeEmailHtml, buildWelcomeEmailText } from "@
 import { sendEmail } from "@/lib/emailPostmark";
 import { siteUrl } from "@/lib/siteUrl";
 
-export async function POST() {
+export async function POST(req) {
+  // Disable welcome email unless explicitly enabled
+  if (process.env.WELCOME_EMAIL_ENABLED !== "true") {
+    return new Response(null, { status: 204 });
+  }
   try {
     const authz = headers().get("authorization") || "";
     const token = authz.replace(/^Bearer\s+/i, "");
