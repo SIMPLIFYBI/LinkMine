@@ -24,9 +24,11 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         {/* add favicon */}
-        <link rel="icon" href="/favicon.svg" />
-        {/* optional PNG fallback for older clients */}
-        {/* <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" /> */}
+        <link rel="icon" href="/favicon.svg?v=1" type="image/svg+xml" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=1" />
+        <link rel="icon" href="/favicon.ico?v=1" />
+        <link rel="apple-touch-icon" href="/favicon-180.png?v=1" />
+        <meta name="theme-color" content="#0ea5e9" />
       </head>
       <body
         className="
