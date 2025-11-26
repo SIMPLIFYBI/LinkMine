@@ -374,22 +374,6 @@ export default async function ConsultantPage(props) {
           contactEmail={consultant.contact_email}
         />
       </div>
-
-      {process.env.NODE_ENV !== "production" && (
-        <details className="mt-4 rounded-xl border border-sky-400/30 bg-sky-500/10 p-4 text-xs text-sky-100">
-          <summary className="cursor-pointer font-semibold">Claim debug</summary>
-          <pre className="mt-2 whitespace-pre-wrap break-words">
-            {JSON.stringify(
-              {
-                claimedBy: consultant.claimed_by || null,
-                isClaimed: Boolean(consultant.claimed_by),
-              },
-              null,
-              2
-            )}
-          </pre>
-        </details>
-      )}
     </main>
   );
 }
