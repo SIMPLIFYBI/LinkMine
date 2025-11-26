@@ -9,7 +9,7 @@ import Logo from "@/app/components/Logo";
 export default function Header() {
   const pathname = usePathname();
   return (
-    <header className="sticky top-0 z-40 bg-slate-900/70 backdrop-blur border-b border-white/10">
+    <header className="sticky top-0 z-40 bg-slate-900/70 backdrop-blur border-b border-white/10 pt-[env(safe-area-inset-top)]">
       <div
         className="
           mx-auto max-w-screen-xl px-4 h-14 flex items-center
@@ -29,7 +29,7 @@ export default function Header() {
               whitespace-nowrap overflow-x-auto no-scrollbar
             "
           >
-            {navTabs.map((t) => {
+            {(navTabs ?? []).map((t) => {
               const active = pathname === t.href || pathname?.startsWith(t.href + "/");
               return (
                 <Link
@@ -51,7 +51,7 @@ export default function Header() {
         {/* User pill: absolute on mobile so logo can center; normal flow on md+ */}
         <div
           className="
-            md:static absolute right-4 top-1/2 -translate-y-1/2
+            md:static absolute right-4 top-1/2 -translate-y-1/2 md:translate-y-0 md:top-auto
             flex items-center gap-2
           "
         >
