@@ -20,10 +20,14 @@ const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 const enableAnalytics = GA_ID && process.env.NODE_ENV === "production";
 
 export default function RootLayout({ children }) {
-  const enableAnalytics = GA_ID && process.env.NODE_ENV === "production";
-
   return (
-    <html lang="en" className={`${inter.variable} dark`}>
+    <html lang="en">
+      <head>
+        {/* add favicon */}
+        <link rel="icon" href="/favicon.svg" />
+        {/* optional PNG fallback for older clients */}
+        {/* <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" /> */}
+      </head>
       <body
         className="
           min-h-screen supports-[height:100dvh]:min-h-[100dvh]
