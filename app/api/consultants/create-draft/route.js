@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
+import { sendNewConsultancyNotification } from "@/lib/emails/sendNewConsultancy";
 
 const MAX_HEADLINE = 120;
 const MAX_SERVICES = 15;
@@ -106,7 +107,6 @@ export async function POST(req) {
     const rows = svcIds.map((service_id) => ({ consultant_id: inserted.id, service_id }));
     const { error: joinErr } = await sb.from("consultant_services").insert(rows);
     if (joinErr) {
-      // Still return id so the user can continue editing; surface join error
       return NextResponse.json({
         id: inserted.id,
         ok: true,
@@ -118,6 +118,15 @@ export async function POST(req) {
       });
     }
   }
+
+  // ADD THIS: Send admin notification (fire-and-forget)
+  console.log("[create-draft] created:", inserted?.id, "— sending admin notification…");
+  sendNewConsultancyNotification({
+    consultancy: { ...inserted, display_name, headline, location, contact_email },
+    createdBy: { email: contact_email, name: display_name },
+  })
+    .then(() => console.log("[create-draft] admin notified"))
+    .catch((err) => console.error("[create-draft] notify error:", err));
 
   return NextResponse.json({ id: inserted.id, ok: true });
 }
