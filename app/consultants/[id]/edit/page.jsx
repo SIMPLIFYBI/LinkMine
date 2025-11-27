@@ -81,9 +81,9 @@ export default async function EditConsultantPage({ params }) {
       <EditTabs consultantId={consultant.id} active="profile" />
 
       {consultant.status === "pending" && (
-        <div className="mt-4 rounded-xl border border-amber-400/30 bg-amber-500/10 p-4 text-amber-100">
+        <div className="mt-4 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4 text-yellow-200 mb-6">
           <p className="text-sm font-semibold">Your profile has been submitted and is awaiting approval.</p>
-          <p className="mt-1 text-xs text-amber-200/80">
+          <p className="mt-1 text-xs text-yellow-200/80">
             While you wait, you can keep improving your profile or add a portfolio.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
