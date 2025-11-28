@@ -46,20 +46,31 @@ function SignupForm() {
     });
     setSubmitting(false);
 
-    // If error, show it
     if (error) return setError(error.message || "Unable to sign up.");
 
-    // Try sign-in to check if account exists (and guide user appropriately)
-    const { error: signInError } = await sb.auth.signInWithPassword({
+    // Try sign-in
+    const { error: signInError, data: signInData } = await sb.auth.signInWithPassword({
       email: email.trim(),
       password,
     });
-    if (
-      signInError &&
-      signInError.message?.toLowerCase().includes("invalid login credentials")
-    ) {
+    
+    if (signInError && signInError.message?.toLowerCase().includes("invalid login credentials")) {
       setError("You already have an account. Reset your password.");
       return;
+    }
+
+    // NEW: Send welcome email after successful signup
+    if (signInData?.session) {
+      try {
+        await fetch("/api/welcome", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${signInData.session.access_token}`,
+          },
+        });
+      } catch (e) {
+        console.error("welcome email trigger error:", e);
+      }
     }
 
     setMessage("Check your email to confirm your account, then sign in.");
