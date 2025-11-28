@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 export default function StatsCards() {
-  const [counts, setCounts] = useState({ consultants: 0, users: 0, pageViews: 0 });
+  const [counts, setCounts] = useState({ consultants: 0, users: 0, pageViews: 0, contacts: 0 });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -29,7 +29,7 @@ export default function StatsCards() {
   }, []);
 
   return (
-    <div className="grid gap-4 md:grid-cols-3 mb-6">
+    <div className="grid gap-4 md:grid-cols-4 mb-6">
       {/* Total Consultants Card */}
       <div className="rounded-lg border border-white/10 bg-white/5 p-6">
         <div className="text-sm font-medium text-slate-400">Total Consultants</div>
@@ -54,9 +54,17 @@ export default function StatsCards() {
         </div>
       </div>
 
+      {/* Total Contacts Card */}
+      <div className="rounded-lg border border-white/10 bg-white/5 p-6">
+        <div className="text-sm font-medium text-slate-400">Total Contacts</div>
+        <div className="mt-2 text-3xl font-bold text-white">
+          {loading ? "—" : counts.contacts}
+        </div>
+      </div>
+
       {/* Error display */}
       {error && (
-        <div className="col-span-3 rounded bg-red-500/10 p-3 text-xs text-red-300">
+        <div className="col-span-4 rounded bg-red-500/10 p-3 text-xs text-red-300">
           {error}
         </div>
       )}

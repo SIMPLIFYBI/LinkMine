@@ -35,10 +35,21 @@ export async function GET(req) {
       return NextResponse.json({ error: e3.message }, { status: 500 });
     }
 
+    // Get consultant contacts count
+    const { count: contactCount, error: e4 } = await sb
+      .from("consultant_contacts")
+      .select("*", { count: "exact", head: true });
+
+    if (e4) {
+      console.error("[stats] contacts error:", e4);
+      return NextResponse.json({ error: e4.message }, { status: 500 });
+    }
+
     return NextResponse.json({
       consultants: consultantCount || 0,
       users: userCount || 0,
       pageViews: pageViewCount || 0,
+      contacts: contactCount || 0,
     });
   } catch (err) {
     console.error("[stats] error:", err);

@@ -99,18 +99,8 @@ export default function ConsultantReviewClient() {
         </div>
       )}
 
+     
       <ReviewList initialConsultants={state.consultants} />
-
-      {process.env.NODE_ENV !== "production" && state.debug && (
-        <details className="rounded-lg border border-sky-500/30 bg-sky-500/5 p-4 text-xs text-sky-100">
-          <summary className="cursor-pointer font-semibold text-sky-200">
-            Auth debug
-          </summary>
-          <pre className="mt-3 whitespace-pre-wrap break-words text-[11px] text-sky-100/90">
-            {JSON.stringify(state.debug, null, 2)}
-          </pre>
-        </details>
-      )}
     </main>
   );
 }
