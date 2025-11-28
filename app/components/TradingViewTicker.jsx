@@ -17,10 +17,14 @@ function TradingViewTicker() {
     script.innerHTML = `
       {
         "symbols": [
-            { "proName": "ASX:MQG", "title": "Macquarie" },
+            
+             { "proName": "ASX:CYM", "title": "Cyprium Metals" },
+              { "proName": "ASX:LKY", "title": "Locksley Resources" },
+    { "proName": "ASX:GSM", "title": "Golden State Mining" },
+    { "proName": "ASX:AWJ", "title": "Auric Mining" },
+     { "proName": "ASX:AIS", "title": "Aeris Resources" },
              { "proName": "ASX:GMD", "title": "Genesis Minerals" },
           { "proName": "ASX:SVL", "title": "Silver Mines" },
-          { "proName": "ASX:JRV", "title": "Jervois Global" },
           { "proName": "ASX:NIC", "title": "Nickel Industries" },
            { "proName": "ASX:CMM", "title": "Capricorn Metals" },
             { "proName": "NYSE:AA", "title": "Alcoa" },
@@ -40,7 +44,6 @@ function TradingViewTicker() {
           { "proName": "ASX:IGO", "title": "IGO" },
           { "proName": "NYSE:AU", "title": "AngloGold" },
           { "proName": "ASX:SFR", "title": "Sandfire" },
-          { "proName": "ASX:AGL", "title": "AGL" },
           { "proName": "ASX:WAF", "title": "West African Resources" },
           { "proName": "ASX:CHN", "title": "Chalice Mining" },
           { "proName": "ASX:BOE", "title": "Boss Energy" },
