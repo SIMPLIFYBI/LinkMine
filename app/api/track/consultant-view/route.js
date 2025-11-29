@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 
 export async function POST(req) {
