@@ -35,7 +35,7 @@ export default function PrivacyPage() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "YouMine",
-    url: "https://youmine.com.au",
+    url: "https://youmine.io",
     email: "info@youmine.com.au",
     contactPoint: [
       {
