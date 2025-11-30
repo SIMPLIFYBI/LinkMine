@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import CourseDrawer from "./CourseDrawer.client.jsx";
 
 const ZOOMS = {
-  month: { label: "6 mo", pxPerDay: 24 }, // 24px = 1 day
-  week: { label: "8 wk", pxPerDay: 64 },  // 64px = 1 day
-  day: { label: "14 d", pxPerDay: 240 },  // 240px = 1 day
+  month: { label: "6 mo", pxPerDay: 24 },
+  week: { label: "8 wk", pxPerDay: 64 },
+  day: { label: "14 d", pxPerDay: 240 },
 };
+// Add an explicit zoom order
+const ZOOM_ORDER = ["month", "week", "day"];
 
 function classNames(...a) {
   return a.filter(Boolean).join(" ");
@@ -37,7 +40,7 @@ function colorForDelivery(m) {
 }
 
 export default function TimelineView() {
-  const [zoom, setZoom] = useState("month"); // "month" | "week" | "day"
+  const [zoom, setZoom] = useState("month");
   const [from, setFrom] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() - 7); // a week back
@@ -58,6 +61,10 @@ export default function TimelineView() {
   const [sessions, setSessions] = useState([]);
   const scrollRef = useRef(null);
 
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerCourseId, setDrawerCourseId] = useState(null);
+  const [drawerSeed, setDrawerSeed] = useState(null); // { courseTitle, providerName, providerLogoUrl? }
+
   const range = useMemo(() => {
     const start = new Date(`${from}T00:00:00`);
     const end = new Date(`${to}T23:59:59`);
@@ -67,6 +74,17 @@ export default function TimelineView() {
 
   const pxPerDay = ZOOMS[zoom].pxPerDay;
   const timelineWidth = range.days * pxPerDay;
+
+  // Helpers for +/- zoom
+  const zIndex = ZOOM_ORDER.indexOf(zoom);
+  const canZoomOut = zIndex > 0;
+  const canZoomIn = zIndex < ZOOM_ORDER.length - 1;
+  function zoomIn() {
+    setZoom((z) => ZOOM_ORDER[Math.min(ZOOM_ORDER.length - 1, ZOOM_ORDER.indexOf(z) + 1)]);
+  }
+  function zoomOut() {
+    setZoom((z) => ZOOM_ORDER[Math.max(0, ZOOM_ORDER.indexOf(z) - 1)]);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -184,16 +202,34 @@ export default function TimelineView() {
             {Object.keys(ZOOMS).map((k) => (
               <button
                 key={k}
-                className={classNames(
-                  "rounded-md px-2 py-1 text-xs font-medium",
-                  zoom === k ? "bg-white/90 text-slate-900" : "text-slate-200 hover:bg-white/10"
-                )}
+                className={`rounded-md px-2 py-1 text-xs font-medium ${zoom === k ? "bg-white/90 text-slate-900" : "text-slate-200 hover:bg-white/10"}`}
                 onClick={() => setZoom(k)}
                 type="button"
               >
                 {k}
               </button>
             ))}
+            {/* New +/- zoom buttons */}
+            <div className="ml-1 flex items-center gap-1">
+              <button
+                type="button"
+                aria-label="Zoom out"
+                onClick={zoomOut}
+                disabled={!canZoomOut}
+                className={`h-7 w-7 rounded-md border border-white/10 text-sm font-bold ${canZoomOut ? "text-slate-200 hover:bg-white/10" : "cursor-not-allowed opacity-40"}`}
+              >
+                −
+              </button>
+              <button
+                type="button"
+                aria-label="Zoom in"
+                onClick={zoomIn}
+                disabled={!canZoomIn}
+                className={`h-7 w-7 rounded-md border border-white/10 text-sm font-bold ${canZoomIn ? "text-slate-200 hover:bg-white/10" : "cursor-not-allowed opacity-40"}`}
+              >
+                +
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-2 py-1">
@@ -280,113 +316,141 @@ export default function TimelineView() {
       </div>
 
       {/* Timeline */}
-      <div className="overflow-auto rounded-xl border border-white/10 bg-gradient-to-b from-slate-900/40 to-slate-900/10">
-        {/* Header scale */}
-        <div className="sticky top-0 z-10 flex border-b border-white/10 bg-slate-900/70 backdrop-blur">
-          <div className="sticky left-0 z-30 w-64 shrink-0 border-r border-white/10 bg-slate-900/80 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-300 backdrop-blur supports-[backdrop-filter]:bg-slate-900/60">
-             Provider / Course
-           </div>
-          <div className="relative h-10" style={{ width: timelineWidth }}>
-            {/* Month gutters */}
-            <div className="absolute inset-0">
-              {ticks.map((t, i) => (
-                <div
-                  key={i}
-                  className={classNames(
-                    "absolute top-0 h-full border-r border-white/5",
-                    t.isMonthStart && "border-white/20"
-                  )}
-                  style={{ left: t.x, width: 1 }}
-                />
-              ))}
+      <div className="rounded-xl border border-white/10 bg-gradient-to-b from-slate-900/40 to-slate-900/10">
+        <div className="flex">
+          {/* Left fixed pane (always visible) */}
+          <div className="w-64 shrink-0">
+            {/* Sticky left header */}
+            <div className="sticky top-0 z-20 border-b border-white/10 bg-slate-900/80 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-300 backdrop-blur supports-[backdrop-filter]:bg-slate-900/60">
+              Provider / Course
             </div>
-            {/* Labels */}
-            <div className="absolute inset-x-0 top-0 flex h-full items-center">
-              {ticks
-                .filter((_, i) => {
-                  // Reduce label density by zoom
-                  if (zoom === "day") return true;
-                  if (zoom === "week") return i % 2 === 0;
-                  return i % 7 === 0;
-                })
-                .map((t, i) => (
-                  <div key={i} className="absolute top-0 translate-x-1/2 text-[10px] text-slate-300" style={{ left: t.x }}>
-                    {zoom === "day" ? t.label : t.label}
+
+            {/* Left body: providers + courses */}
+            {providers.length === 0 && (
+              <div className="p-6 text-sm text-slate-400">No sessions in this range.</div>
+            )}
+            {providers.map((p) => {
+              const courses = Array.from(p.courses.values());
+              return (
+                <div key={p.id || p.slug || p.name} className="border-b border-white/10">
+                  {/* Provider row (parent shading) */}
+                  <div className="bg-white/10 px-3 py-2 text-sm font-semibold text-white ring-1 ring-inset ring-white/10">
+                    {p.name}
                   </div>
-                ))}
+                  {/* Courses (indented) */}
+                  {courses.map((c) => (
+                    <div
+                      key={c.id || c.title}
+                      className="relative border-t border-white/5 px-3 py-2 pl-6 hover:bg-white/[0.03] cursor-pointer"
+                      onClick={() => {
+                        if (!c.id) return;
+                        setDrawerCourseId(c.id);
+                        setDrawerSeed({ courseTitle: c.title, providerName: p.name });
+                        setDrawerOpen(true);
+                      }}
+                      title="View course details"
+                    >
+                      <span className="pointer-events-none absolute left-2 top-0 bottom-0 border-l border-white/10" />
+                      <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-sky-300/80 ring-1 ring-white/30" />
+                      <div className="truncate text-sm font-medium text-white">{c.title}</div>
+                      <div className="text-xs text-slate-400">{(c.sessions || []).length} dates</div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Right scrollable pane (single horizontal scroller for header + body) */}
+          <div className="min-w-0 flex-1 overflow-x-auto overscroll-x-contain">
+            {/* Sticky header scale inside the scroller */}
+            <div className="sticky top-0 z-10 border-b border-white/10 bg-slate-900/70 backdrop-blur supports-[backdrop-filter]:bg-slate-900/50">
+              <div className="relative h-10" style={{ width: timelineWidth }}>
+                {/* Month/day gutters */}
+                <div className="absolute inset-0">
+                  {ticks.map((t, i) => (
+                    <div
+                      key={i}
+                      className={`absolute top-0 h-full border-r ${t.isMonthStart ? "border-white/20" : "border-white/5"}`}
+                      style={{ left: t.x, width: 1 }}
+                    />
+                  ))}
+                </div>
+                {/* Labels */}
+                <div className="absolute inset-x-0 top-0 flex h-full items-center">
+                  {ticks
+                    .filter((_, i) => (zoom === "day" ? true : zoom === "week" ? i % 2 === 0 : i % 7 === 0))
+                    .map((t, i) => (
+                      <div
+                        key={i}
+                        className="absolute top-0 translate-x-1/2 text-[10px] text-slate-300"
+                        style={{ left: t.x }}
+                      >
+                        {t.label}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right body timeline rows; width strictly equals the timeline range */}
+            <div className="relative" style={{ width: timelineWidth }}>
+              {providers.map((p) => {
+                const courses = Array.from(p.courses.values());
+                return (
+                  <div key={p.id || p.slug || p.name} className="border-b border-white/10">
+                    {/* Provider spacer row to match left height */}
+                    <div className="h-10" />
+
+                    {/* Course rows with bars */}
+                    {courses.map((c) => (
+                      <div key={c.id || c.title} className="relative h-12 border-t border-white/5">
+                        {/* Grid lines */}
+                        {ticks.map((t, i) => (
+                          <div key={i} className="absolute inset-y-0 border-r border-white/[0.04]" style={{ left: t.x, width: 1 }} />
+                        ))}
+                        {/* Bars */}
+                        {(c.sessions || []).map((s) => {
+                          const left = xFor(s.starts_at);
+                          const width = wFor(s.starts_at, s.ends_at);
+                          return (
+                            <button
+                              type="button"
+                              key={s.id}
+                              onClick={() => {
+                                if (!c.id) return;
+                                setDrawerCourseId(c.id);
+                                setDrawerSeed({ courseTitle: c.title, providerName: p.name });
+                                setDrawerOpen(true);
+                              }}
+                              className={`${"group absolute top-1 h-8 rounded-md bg-gradient-to-r shadow-[0_6px_20px_-8px_rgba(0,0,0,0.6)] ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400/60"} ${s.delivery_method === "online" ? "from-sky-400/80 to-sky-600/70" : s.delivery_method === "hybrid" ? "from-violet-400/80 to-indigo-600/70" : "from-emerald-400/80 to-teal-600/70"}`}
+                              style={{ left, width }}
+                              title={`${c.title} • ${p.name}\n${new Date(s.starts_at).toLocaleString()} → ${new Date(s.ends_at).toLocaleString()}`}
+                            >
+                              <span className="pointer-events-none absolute inset-0 rounded-md ring-1 ring-inset ring-white/20 opacity-0 transition-opacity group-hover:opacity-100" />
+                              <span className="pointer-events-none absolute -top-6 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-slate-900/90 px-2 py-1 text-[10px] text-white shadow ring-1 ring-white/10 group-hover:block">
+                                {s.delivery_method === "online" ? "Online" : s.location || "TBA"}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
-
-        {/* Body */}
-        <div className="relative">
-          {providers.length === 0 && (
-            <div className="p-6 text-sm text-slate-400">No sessions in this range.</div>
-          )}
-
-          {providers.map((p, pi) => {
-            const courses = Array.from(p.courses.values());
-            return (
-              <div key={p.id || p.slug || p.name} className="border-b border-white/10">
-                {/* Provider header row */}
-                <div className="flex bg-white/5">
-                  <div className="sticky left-0 z-20 w-64 shrink-0 border-r border-white/10 bg-slate-900/70 px-3 py-2 text-sm font-semibold text-white backdrop-blur supports-[backdrop-filter]:bg-slate-900/50">
-                     {p.name}
-                   </div>
-                  <div className="h-10" style={{ width: timelineWidth }} />
-                </div>
-
-                {/* Course rows */}
-                {courses.map((c) => (
-                  <div key={c.id || c.title} className="relative flex items-stretch border-t border-white/5 hover:bg-white/[0.03]">
-                    <div className="sticky left-0 z-10 w-64 shrink-0 border-r border-white/10 bg-slate-900/60 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-slate-900/40">
-                       <div className="truncate text-sm font-medium text-white">{c.title}</div>
-                       <div className="text-xs text-slate-400">{(c.sessions || []).length} dates</div>
-                     </div>
-
-                    <div
-                      className="relative h-12"
-                      style={{ width: timelineWidth }}
-                      ref={pi === 0 ? scrollRef : null}
-                    >
-                      {/* Grid lines */}
-                      {ticks.map((t, i) => (
-                        <div
-                          key={i}
-                          className="absolute inset-y-0 border-r border-white/[0.04]"
-                          style={{ left: t.x, width: 1 }}
-                        />
-                      ))}
-
-                      {/* Bars */}
-                      {(c.sessions || []).map((s) => {
-                        const left = xFor(s.starts_at);
-                        const width = wFor(s.starts_at, s.ends_at);
-                        return (
-                          <div
-                            key={s.id}
-                            className={classNames(
-                              "group absolute top-1 h-8 rounded-md bg-gradient-to-r shadow-[0_6px_20px_-8px_rgba(0,0,0,0.6)] ring-1 ring-white/10",
-                              colorForDelivery(s.delivery_method)
-                            )}
-                            style={{ left, width }}
-                            title={`${c.title} • ${p.name}\n${new Date(s.starts_at).toLocaleString()} → ${new Date(s.ends_at).toLocaleString()}`}
-                          >
-                            <div className="pointer-events-none absolute inset-0 rounded-md ring-1 ring-inset ring-white/20 opacity-0 transition-opacity group-hover:opacity-100" />
-                            <div className="pointer-events-none absolute -top-6 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-slate-900/90 px-2 py-1 text-[10px] text-white shadow ring-1 ring-white/10 group-hover:block">
-                              {s.delivery_method === "online" ? "Online" : s.location || "TBA"}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            );
-          })}
-        </div>
       </div>
+
+      {/* Drawer mount */}
+      <CourseDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        courseId={drawerCourseId}
+        seedMeta={drawerSeed}
+      />
     </div>
   );
 }
