@@ -251,7 +251,7 @@ export default function MobileHeroAndFilters({
           <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10">
             <div className="space-y-3">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Search</h2>
-              <NameSearch initialValue={q} />
+              <NameSearch initialValue={q} onApplied={() => setOpen(false)} />
             </div>
             <div className="space-y-3">
               <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Category</h2>

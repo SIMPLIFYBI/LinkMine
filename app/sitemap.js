@@ -13,7 +13,7 @@ export default async function sitemap() {
     "/consultants",
     "/jobs",
     "/about",
-    "/pricing",
+    // "/pricing", // removed (page does not exist)
     "/terms",
     "/privacy",
     // Hand-authored landing pages are good to keep:
