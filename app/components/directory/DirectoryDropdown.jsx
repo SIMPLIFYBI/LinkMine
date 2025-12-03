@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
-export default function DirectoryDropdown({ categories }) {
+export default function DirectoryDropdown({ categories = [], label = "Services" }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -31,8 +31,10 @@ export default function DirectoryDropdown({ categories }) {
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        Directory
-        <svg width="14" height="14" viewBox="0 0 20 20" className="opacity-70"><path fill="currentColor" d="M5.5 7.5L10 12l4.5-4.5z"/></svg>
+        {label}
+        <svg width="14" height="14" viewBox="0 0 20 20" className="opacity-70">
+          <path fill="currentColor" d="M5.5 7.5L10 12l4.5-4.5z"/>
+        </svg>
       </button>
 
       {open && (

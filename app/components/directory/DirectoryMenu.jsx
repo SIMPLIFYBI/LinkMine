@@ -19,5 +19,5 @@ export default async function DirectoryMenu({ variant = "desktop" }) {
   }));
 
   if (variant === "mobile") return <DirectoryMobileSheet categories={categories} />;
-  return <DirectoryDropdown categories={categories} />;
+  return <DirectoryDropdown label="Services" categories={categories} />;
 }
