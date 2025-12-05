@@ -1,9 +1,10 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import NameSearch from "./NameSearch.client.jsx";
 import ServiceFilter from "./ServiceFilter.client.jsx";
 import ServiceSlugFilter from "./ServiceSlugFilter.client.jsx";
+import ProviderKindFilter from "@/app/consultants/ProviderKindFilter.client";
 import AddConsultantButton from "@/app/components/consultants/AddConsultantButton";
 
 export default function MobileHeroAndFilters({
@@ -18,6 +19,13 @@ export default function MobileHeroAndFilters({
   const [open, setOpen] = useState(false);
   const [floatingVisible, setFloatingVisible] = useState(true);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const kind = searchParams?.get("kind") || "";
+  const kindLabel =
+    kind === "operational" ? "Operational Services" :
+    kind === "professional" ? "Professional Services" :
+    kind === "both" ? "Both" : "";
+  const anyActive = hasActive || !!kind;
   const sheetRef = useRef(null);
 
   // Prevent body scroll when sheet is open
@@ -147,11 +155,12 @@ export default function MobileHeroAndFilters({
           {/* Removed inline filter trigger to “detach” it from the hero */}
         </div>
 
-        {hasActive ? (
+        {anyActive ? (
           <div className="relative mt-3 text-[11px] text-slate-300">
             {q && <span>Name “{q}” • </span>}
             {activeService && <span>Service {activeService.name} • </span>}
             {!activeService && activeCategory && <span>Category {activeCategory.name} • </span>}
+            {kind && <span>Type {kindLabel} • </span>}
             <span>
               {consultantsCount} result{consultantsCount === 1 ? "" : "s"}
             </span>
@@ -261,6 +270,10 @@ export default function MobileHeroAndFilters({
               <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Service</h2>
               <ServiceSlugFilter services={services} activeSlug={activeService?.slug || ""} />
             </div>
+            <div className="space-y-3">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Provider type</h2>
+              <ProviderKindFilter />
+            </div>
 
             <div className="mt-4 flex flex-wrap gap-2 text-[11px] text-slate-300">
               {q && (
@@ -278,7 +291,12 @@ export default function MobileHeroAndFilters({
                   Category: {activeCategory.name}
                 </span>
               )}
-              {hasActive && (
+              {kind && (
+                <span className="rounded-full border border-fuchsia-400/30 bg-fuchsia-500/10 px-3 py-1 font-medium text-fuchsia-200">
+                  Type: {kindLabel}
+                </span>
+              )}
+              {anyActive && (
                 <button
                   onClick={handleReset}
                   className="rounded-full border border-white/15 bg-white/10 px-3 py-1 font-medium text-slate-200 hover:bg-white/15 transition"
