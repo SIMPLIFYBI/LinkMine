@@ -237,6 +237,9 @@ export const metadata = {
   },
 };
 
+// Utils
+const uniq = (arr) => Array.from(new Set(arr));
+
 export default async function ConsultantsPage({ searchParams }) {
   const sp = searchParams || {};
   const serviceSlug = typeof sp.service === "string" ? sp.service : "";
