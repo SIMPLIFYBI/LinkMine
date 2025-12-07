@@ -12,16 +12,16 @@ export default async function EditWorkerPage({ params }) {
   const {
     data: { user },
   } = await sb.auth.getUser();
-  if (!user) redirect(`/workers/${id}`);
+  if (!user) redirect(`/talenthub/${id}`);
 
   const { data: worker } = await sb
     .from("workers")
-    .select("id, display_name, headline, bio, location")
+    .select("id, display_name, public_profile_name, working_rights_slug, headline, bio, location")
     .eq("id", id)
     .maybeSingle();
 
   if (!worker) return notFound();
-  if (user.id !== worker.id) redirect(`/workers/${id}`);
+  if (user.id !== worker.id) redirect(`/talenthub/${id}`);
 
   // Role options
   const { data: roleOptions = [] } = await sb
@@ -29,13 +29,27 @@ export default async function EditWorkerPage({ params }) {
     .select("id, name, slug, position")
     .order("position", { ascending: true });
 
+  // Working rights options
+  const { data: workingRightsOptions = [] } = await sb
+    .from("working_rights_categories")
+    .select("name, slug, position")
+    .order("position", { ascending: true });
+
+  // Experiences (limit to 3 for edit UX)
+  const { data: experiences = [] } = await sb
+    .from("worker_experiences")
+    .select("id, role_title, company, description, position")
+    .eq("worker_id", id)
+    .order("position", { ascending: true })
+    .limit(3);
+
   // Current roles
   const { data: roleRows = [] } = await sb
     .from("worker_roles")
     .select("role_categories(slug)")
     .eq("worker_id", worker.id);
 
-  const selectedRoleSlugs = roleRows
+  const selectedRoleSlugs = (roleRows || [])
     .map((r) => r.role_categories?.slug)
     .filter(Boolean);
 
@@ -62,7 +76,7 @@ export default async function EditWorkerPage({ params }) {
           </div>
           <h1 className="mt-4 text-2xl md:text-3xl font-semibold text-white">Edit your profile</h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-300">
-            Update your details, roles, and availability. Changes are saved to your public worker profile.
+            Update your details, roles, working rights, and availability.
           </p>
         </div>
       </section>
@@ -72,14 +86,18 @@ export default async function EditWorkerPage({ params }) {
           workerId={worker.id}
           initial={{
             display_name: worker.display_name || "",
+            public_profile_name: worker.public_profile_name || "",
+            working_rights_slug: worker.working_rights_slug || "",
             headline: worker.headline || "",
             bio: worker.bio || "",
             location: worker.location || "",
             roles: selectedRoleSlugs,
             available_now: availableNow,
             available_from: availableFrom,
+            experiences: experiences || [],
           }}
           roleOptions={roleOptions}
+          workingRightsOptions={workingRightsOptions}
         />
       </section>
     </main>

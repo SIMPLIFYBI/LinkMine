@@ -4,16 +4,21 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
-export default function EditWorkerForm({ workerId, initial, roleOptions }) {
+export default function EditWorkerForm({ workerId, initial, roleOptions, workingRightsOptions }) {
   const router = useRouter();
 
   const [displayName, setDisplayName] = useState(initial.display_name);
+  const [publicProfileName, setPublicProfileName] = useState(initial.public_profile_name || "");
+  const [workingRightsSlug, setWorkingRightsSlug] = useState(initial.working_rights_slug || "");
   const [headline, setHeadline] = useState(initial.headline);
   const [bio, setBio] = useState(initial.bio);
   const [location, setLocation] = useState(initial.location);
   const [selectedRoles, setSelectedRoles] = useState(new Set(initial.roles || []));
   const [availableNow, setAvailableNow] = useState(!!initial.available_now);
   const [availableFrom, setAvailableFrom] = useState(initial.available_from || "");
+  const [experiences, setExperiences] = useState(
+    Array.isArray(initial.experiences) ? initial.experiences.slice(0, 3) : []
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -30,6 +35,23 @@ export default function EditWorkerForm({ workerId, initial, roleOptions }) {
     setSelectedRoles(next);
   }
 
+  function addExperience() {
+    if (experiences.length >= 3) return;
+    setExperiences([
+      ...experiences,
+      { id: undefined, role_title: "", company: "", description: "", position: experiences.length },
+    ]);
+  }
+
+  function updateExperience(i, patch) {
+    setExperiences((prev) => prev.map((x, idx) => (idx === i ? { ...x, ...patch } : x)));
+  }
+
+  function removeExperience(i) {
+    const next = experiences.filter((_, idx) => idx !== i).map((x, idx) => ({ ...x, position: idx }));
+    setExperiences(next);
+  }
+
   async function onSave(e) {
     e.preventDefault();
     setSaving(true);
@@ -40,6 +62,8 @@ export default function EditWorkerForm({ workerId, initial, roleOptions }) {
       .from("workers")
       .update({
         display_name: displayName || null,
+        public_profile_name: publicProfileName || null,
+        working_rights_slug: workingRightsSlug || null,
         headline: headline || null,
         bio: bio || null,
         location: location || null,
@@ -55,29 +79,64 @@ export default function EditWorkerForm({ workerId, initial, roleOptions }) {
     const fromVal = availableFrom ? availableFrom : null;
     const { error: aErr } = await supabase
       .from("worker_availability")
-      .upsert(
-        [
-          {
-            worker_id: workerId,
-            available_now: availableNow,
-            available_from: fromVal,
-          },
-        ],
-        { onConflict: "worker_id" }
-      );
+      .upsert([{ worker_id: workerId, available_now: availableNow, available_from: fromVal }], {
+        onConflict: "worker_id",
+      });
     if (aErr) {
       setError(aErr.message);
       setSaving(false);
       return;
     }
 
-    // 3) Sync roles
-    const desiredSlugs = Array.from(selectedRoles);
-    const desiredIds = desiredSlugs
-      .map((s) => roleBySlug.get(s)?.id)
-      .filter(Boolean);
+    // 3) Replace experiences with edited set (keep it simple and consistent)
+    const cleaned = experiences
+      .map((e, idx) => ({
+        // DO NOT include id for inserts (let bigserial auto-generate)
+        worker_id: workerId,
+        role_title: (e.role_title || "").trim(),
+        company: (e.company || "").trim(),
+        description: e.description ? e.description.trim() : null,
+        position: idx, // 0..2
+      }))
+      .filter((e) => e.role_title && e.company)
+      .slice(0, 3);
 
-    // Fetch current role ids to diff (in case props are stale)
+    // Validate: if any row is partially filled, prompt user
+    const hasPartial = experiences.some((e) => {
+      const r = (e.role_title || "").trim();
+      const c = (e.company || "").trim();
+      const any = r || c || (e.description || "").trim();
+      const ok = r && c;
+      return any && !ok;
+    });
+    if (hasPartial) {
+      setError("Each experience must have both Role title and Company, or be left blank.");
+      setSaving(false);
+      return;
+    }
+
+    // Delete all existing experiences for this worker, then insert the cleaned set
+    const { error: delErr } = await supabase.from("worker_experiences").delete().eq("worker_id", workerId);
+    if (delErr) {
+      setError(delErr.message);
+      setSaving(false);
+      return;
+    }
+    if (cleaned.length) {
+      const { error: insErr } = await supabase
+        .from("worker_experiences")
+        .insert(cleaned);
+      if (insErr) {
+        setError(insErr.message);
+        setSaving(false);
+        return;
+      }
+    }
+
+    // 4) Sync roles (diff)
+    const desiredSlugs = Array.from(selectedRoles);
+    const desiredIds = desiredSlugs.map((s) => roleBySlug.get(s)?.id).filter(Boolean);
+
     const { data: currentRows = [], error: curErr } = await supabase
       .from("worker_roles")
       .select("role_category_id")
@@ -88,19 +147,18 @@ export default function EditWorkerForm({ workerId, initial, roleOptions }) {
       return;
     }
     const currentIds = new Set((currentRows || []).map((r) => r.role_category_id));
-
     const desiredIdSet = new Set(desiredIds);
     const toAdd = desiredIds.filter((id) => !currentIds.has(id));
     const toRemove = Array.from(currentIds).filter((id) => !desiredIdSet.has(id));
 
     if (toRemove.length) {
-      const { error: delErr } = await supabase
+      const { error: delRolesErr } = await supabase
         .from("worker_roles")
         .delete()
         .eq("worker_id", workerId)
         .in("role_category_id", toRemove);
-      if (delErr) {
-        setError(delErr.message);
+      if (delRolesErr) {
+        setError(delRolesErr.message);
         setSaving(false);
         return;
       }
@@ -117,7 +175,7 @@ export default function EditWorkerForm({ workerId, initial, roleOptions }) {
     }
 
     setSaving(false);
-    router.push(`/workers/${workerId}`);
+    router.push(`/talenthub/${workerId}`);
     router.refresh();
   }
 
@@ -134,6 +192,18 @@ export default function EditWorkerForm({ workerId, initial, roleOptions }) {
           />
         </div>
         <div>
+          <label className="text-xs font-medium text-slate-300">Public profile name</label>
+          <input
+            className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-sm text-slate-100 outline-none focus:ring-2 focus:ring-sky-400/30"
+            value={publicProfileName}
+            onChange={(e) => setPublicProfileName(e.target.value)}
+            placeholder="Shown on your public profile"
+          />
+          <p className="mt-1 text-[11px] text-slate-400">
+            Optional. If empty, we’ll show your Display name.
+          </p>
+        </div>
+        <div>
           <label className="text-xs font-medium text-slate-300">Location</label>
           <input
             className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-sm text-slate-100 outline-none focus:ring-2 focus:ring-sky-400/30"
@@ -141,6 +211,21 @@ export default function EditWorkerForm({ workerId, initial, roleOptions }) {
             onChange={(e) => setLocation(e.target.value)}
             placeholder="e.g. Perth, WA"
           />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-slate-300">Working rights</label>
+          <select
+            className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-sm text-slate-100 outline-none focus:ring-2 focus:ring-sky-400/30 [color-scheme:dark]"
+            value={workingRightsSlug}
+            onChange={(e) => setWorkingRightsSlug(e.target.value)}
+          >
+            <option value="">Select...</option>
+            {(workingRightsOptions || []).map((o) => (
+              <option key={o.slug} value={o.slug}>
+                {o.name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -228,6 +313,70 @@ export default function EditWorkerForm({ workerId, initial, roleOptions }) {
         </div>
       </div>
 
+      <div>
+        <h2 className="text-sm font-semibold text-white">Recent experiences</h2>
+        <p className="mt-1 text-[11px] text-slate-400">Add up to 3. Role title and Company are required.</p>
+        <div className="mt-3 space-y-3">
+          {experiences.map((xp, i) => (
+            <div
+              key={i}
+              className="rounded-2xl border border-white/12 bg-white/[0.04] p-4 ring-1 ring-white/10"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-slate-300">Role title</label>
+                  <input
+                    className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-sm text-slate-100 outline-none focus:ring-2 focus:ring-sky-400/30"
+                    value={xp.role_title || ""}
+                    onChange={(e) => updateExperience(i, { role_title: e.target.value })}
+                    placeholder="e.g. Senior Geologist"
+                    required={false}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-300">Company</label>
+                  <input
+                    className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-sm text-slate-100 outline-none focus:ring-2 focus:ring-sky-400/30"
+                    value={xp.company || ""}
+                    onChange={(e) => updateExperience(i, { company: e.target.value })}
+                    placeholder="e.g. CoreYard"
+                    required={false}
+                  />
+                </div>
+              </div>
+              <div className="mt-3">
+                <label className="text-xs font-medium text-slate-300">Short description (optional)</label>
+                <textarea
+                  rows={3}
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2 text-sm text-slate-100 outline-none focus:ring-2 focus:ring-sky-400/30"
+                  value={xp.description || ""}
+                  onChange={(e) => updateExperience(i, { description: e.target.value })}
+                  placeholder="A sentence about responsibilities, tools, or impact."
+                />
+              </div>
+              <div className="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => removeExperience(i)}
+                  className="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs text-slate-200 hover:bg-white/[0.1]"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        {experiences.length < 3 ? (
+          <button
+            type="button"
+            onClick={addExperience}
+            className="mt-2 rounded-xl border border-sky-400/30 bg-sky-500/10 px-3 py-2 text-sm text-sky-100 hover:bg-sky-500/15 hover:border-sky-400/40 transition"
+          >
+            Add experience
+          </button>
+        ) : null}
+      </div>
+
       {error ? (
         <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-100">
           {error}
@@ -244,7 +393,7 @@ export default function EditWorkerForm({ workerId, initial, roleOptions }) {
         </button>
         <button
           type="button"
-          onClick={() => router.push(`/workers/${workerId}`)}
+          onClick={() => router.push(`/talenthub/${workerId}`)}
           className="rounded-xl border border-white/12 bg-white/[0.04] px-4 py-2 text-sm text-slate-200 hover:bg-white/[0.07]"
         >
           Cancel

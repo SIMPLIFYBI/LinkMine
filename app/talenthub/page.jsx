@@ -4,6 +4,7 @@ import Link from "next/link";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import WorkersFiltersDesktop from "./WorkersFiltersDesktop.client";
 import WorkersFiltersMobile from "./WorkersFiltersMobile.client";
+import BackButton from "./BackButton.client";
 
 // small helper
 const uniq = (arr) => Array.from(new Set(arr));
@@ -162,7 +163,7 @@ export default async function WorkersPage({ searchParams }) {
         {workers.length === 0 ? (
           <EmptyState />
         ) : (
-          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {workers.map((w) => (
               <li key={w.id}>
                 <WorkerCard worker={w} />
@@ -220,7 +221,7 @@ function Hero({ rolesParam, availParam, fromDate, count, roles, selectedRoleSlug
 }
 
 function WorkerCard({ worker }) {
-  const roles = (worker.roles || []).slice(0, 2);
+  const roles = (worker.roles || []).slice(0, 3);
   const extra = Math.max(0, (worker.roles || []).length - roles.length);
   const av = worker.availability;
   const availNow = !!av?.available_now;
@@ -228,58 +229,79 @@ function WorkerCard({ worker }) {
 
   return (
     <Link
-      href={`/workers/${worker.id}`}
-      className="group relative block overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.02] p-4 shadow-sm ring-1 ring-white/10 transition hover:border-sky-400/30 hover:ring-sky-400/20"
+      href={`/talenthub/${worker.id}`}
+      className="group relative block overflow-hidden rounded-3xl p-[1px] bg-gradient-to-br from-sky-300/40 via-slate-200/40 to-transparent transition hover:from-sky-400/60 hover:via-white/60 hover:to-sky-200/20"
     >
-      <div className="absolute -inset-px -z-10 opacity-0 transition-opacity group-hover:opacity-100">
-        <div className="h-full w-full bg-[radial-gradient(80%_60%_at_20%_-10%,rgba(56,189,248,0.18),transparent_60%)]" />
-      </div>
+      <div className="relative rounded-3xl bg-white/70 backdrop-blur-md border border-white/40 p-6 shadow-sm transition group-hover:shadow-md">
+        {/* Content row with full-height image column */}
+        <div className="flex items-stretch gap-4">
+          {/* Full-height image container */}
+          <div className="shrink-0 w-[96px] flex">
+            <div className="flex-1 rounded-2xl border border-slate-200 bg-white/70 p-3 backdrop-blur-sm flex items-center justify-center">
+              <div className="h-14 w-14 rounded-xl border border-sky-200 bg-sky-100 text-sky-700 text-xl font-bold flex items-center justify-center">
+                {initials(worker.display_name)}
+              </div>
+            </div>
+          </div>
 
-      <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white font-semibold">
-          {initials(worker.display_name)}
-        </div>
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="truncate text-sm font-semibold text-white">{worker.display_name}</h3>
-            {availNow ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-200">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                Available now
-              </span>
-            ) : availFrom ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-100">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-                From {availFrom.toLocaleDateString()}
-              </span>
+          {/* Right content */}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="truncate text-base md:text-lg font-semibold text-slate-900">
+                {worker.display_name}
+              </h3>
+              {availNow ? (
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300/60 bg-emerald-100/70 px-2 py-0.5 text-[11px] font-medium text-emerald-800">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  Available now
+                </span>
+              ) : availFrom ? (
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-300/60 bg-amber-100/70 px-2 py-0.5 text-[11px] font-medium text-amber-800">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
+                  From {availFrom.toLocaleDateString()}
+                </span>
+              ) : null}
+            </div>
+
+            {worker.headline ? (
+              <p className="mt-1 line-clamp-2 text-sm text-slate-600">{worker.headline}</p>
             ) : null}
-          </div>
-          {worker.headline ? (
-            <p className="mt-0.5 line-clamp-2 text-xs text-slate-300">{worker.headline}</p>
-          ) : null}
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            {roles.map((r) => (
-              <span
-                key={r.slug}
-                className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-200"
-              >
-                {r.name}
-              </span>
-            ))}
-            {extra > 0 && (
-              <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-300">
-                +{extra} more
-              </span>
-            )}
-          </div>
-          {worker.location ? (
-            <div className="mt-2 text-[11px] text-slate-400">{worker.location}</div>
-          ) : null}
-        </div>
-      </div>
 
-      <div className="pointer-events-none absolute right-3 top-3 opacity-60 transition group-hover:opacity-100">
-        <ArrowNarrowRight />
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              {roles.map((r) => (
+                <span
+                  key={r.slug}
+                  className="inline-flex items-center rounded-full border border-white/60 bg-white/70 px-2.5 py-1 text-xs text-slate-800"
+                >
+                  {r.name}
+                </span>
+              ))}
+              {extra > 0 && (
+                <span className="inline-flex items-center rounded-full border border-white/60 bg-white/70 px-2.5 py-1 text-xs text-slate-700">
+                  +{extra} more
+                </span>
+              )}
+            </div>
+
+            <div className="mt-5 border-t border-white/60 pt-3 flex items-center justify-between">
+              {worker.location ? (
+                <div className="inline-flex items-center gap-2 text-xs text-slate-600">
+                  <LocationDot />
+                  <span className="truncate">{worker.location}</span>
+                </div>
+              ) : (
+                <span />
+              )}
+              <div className="inline-flex items-center gap-2 text-xs text-sky-700 opacity-80 group-hover:opacity-100">
+                View profile
+                <ArrowNarrowRight className="text-sky-700" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Subtle bottom shine */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-70 group-hover:opacity-90" />
       </div>
     </Link>
   );
@@ -314,10 +336,18 @@ function Sparkles({ className = "" }) {
   );
 }
 
-function ArrowNarrowRight() {
+function ArrowNarrowRight({ className = "text-slate-300" }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 20 20" className="text-slate-300">
+    <svg width="16" height="16" viewBox="0 0 20 20" className={className}>
       <path fill="currentColor" d="M11 5l4 5-4 5v-3H5v-4h6V5z" />
+    </svg>
+  );
+}
+
+function LocationDot() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" className="text-slate-500">
+      <path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/>
     </svg>
   );
 }
