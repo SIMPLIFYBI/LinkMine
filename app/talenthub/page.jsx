@@ -9,7 +9,7 @@ import BackButton from "./BackButton.client";
 // small helper
 const uniq = (arr) => Array.from(new Set(arr));
 
-export default async function WorkersPage({ searchParams }) {
+export default async function TalentHubPage({ searchParams }) {
   const sb = await supabaseServerClient();
 
   // Parse filters from URL
@@ -140,6 +140,30 @@ export default async function WorkersPage({ searchParams }) {
 
   return (
     <main className="min-h-screen">
+      <section className="border-b border-white/10">
+        <div className="mx-auto max-w-screen-xl px-4 py-6 md:py-8">
+          <div className="flex items-center justify-between">
+            <div className="inline-flex items-center gap-2 rounded-full border border-sky-400/25 bg-sky-500/10 px-3 py-1.5 text-[11px] font-medium text-sky-200">
+              Talent Hub
+            </div>
+            <Link
+              href="/talenthub/deck"
+              className="inline-flex items-center gap-2 rounded-xl border border-sky-400/30 bg-sky-500/10 px-3 py-2 text-sm font-medium text-sky-100 hover:bg-sky-500/15 hover:border-sky-400/40 transition"
+            >
+              View Deck
+            </Link>
+          </div>
+
+          {/* Filters */}
+          <div className="mt-4 hidden md:block">
+            {/* ...existing code... */}
+          </div>
+          <div className="mt-4 md:hidden">
+            {/* ...existing code... */}
+          </div>
+        </div>
+      </section>
+
       <Hero
         rolesParam={rolesParam}
         availParam={availParam}
