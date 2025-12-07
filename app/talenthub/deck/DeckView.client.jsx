@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import { supabase } from "@/lib/supabaseClient";
+import EmblaParallax from "./EmblaParallax.client";
 
 const PAGE_SIZE = 50;
 
@@ -116,25 +117,29 @@ export default function DeckView({ initialFilters }) {
         <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-6 text-rose-100">
           {error}
         </div>
-      ) : !current ? (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-slate-300">
-          No more profiles.{" "}
-          <button
-            className="ml-2 rounded-md border border-sky-400/30 bg-sky-500/10 px-2 py-1 text-sky-100"
-            onClick={() => setIndex(0)}
-          >
-            Restart
-          </button>
-        </div>
       ) : (
-        <Deck
-          cards={workers}
-          index={index}
-          onIndexChange={setIndex}
-          onOpen={openProfile}
-          onPrev={prev}
-          onNext={next}
-          remaining={remaining}
+        <EmblaParallax
+          slides={workers}
+          onOpen={(id) => router.push(`/talenthub/${id}`)}
+          renderSlide={(card) => (
+            <div className="group relative h-[520px] rounded-[32px] p-[5px] bg-gradient-to-br from-[#3B82F6] via-[#60A5FA] to-[#93C5FD] shadow-[0_10px_30px_rgba(59,130,246,0.35)] ring-1 ring-white/30">
+              <div className="h-full w-full rounded-[26px] bg-white/75 backdrop-blur-md border border-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
+                {/* CardSurface holds the actual content */}
+                <div className="h-full w-full p-6">
+                  <CardSurface
+                    displayName={(card.public_profile_name || card.display_name || "Unnamed")}
+                    card={card}
+                    availNow={!!card.availability?.available_now}
+                    availFrom={
+                      card.availability?.available_from
+                        ? new Date(card.availability.available_from).toLocaleDateString()
+                        : null
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         />
       )}
     </div>
