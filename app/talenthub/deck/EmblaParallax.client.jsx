@@ -74,20 +74,30 @@ export default function EmblaParallax({ slides, renderSlide, onOpen }) {
         }
         .embla__viewport {
           overflow: hidden;
+          height: 72vh; /* mobile: keep viewport height contained */
+        }
+        @media (min-width: 768px) {
+          .embla__viewport {
+            height: auto; /* desktop handled by card height */
+          }
         }
         .embla__container {
           display: flex;
-          gap: 24px;
-          padding: 12px 8px;
+          gap: 16px; /* tighter gap on mobile */
+          padding: 8px;
         }
         .embla__slide {
           position: relative;
-          flex: 0 0 85%;
+          flex: 0 0 92%; /* mobile: larger slide width so card fills */
           min-width: 0;
         }
         @media (min-width: 768px) {
           .embla__slide {
             flex-basis: 68%;
+          }
+          .embla__container {
+            gap: 24px;
+            padding: 12px 8px;
           }
         }
         .embla__parallax {

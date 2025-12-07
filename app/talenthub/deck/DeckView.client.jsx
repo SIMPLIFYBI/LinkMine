@@ -122,10 +122,9 @@ export default function DeckView({ initialFilters }) {
           slides={workers}
           onOpen={(id) => router.push(`/talenthub/${id}`)}
           renderSlide={(card) => (
-            <div className="group relative h-[520px] rounded-[32px] p-[5px] bg-gradient-to-br from-[#3B82F6] via-[#60A5FA] to-[#93C5FD] shadow-[0_10px_30px_rgba(59,130,246,0.35)] ring-1 ring-white/30">
+            <div className="group relative h-[70vh] md:h-[520px] rounded-[32px] p-[5px] bg-gradient-to-br from-[#3B82F6] via-[#60A5FA] to-[#93C5FD] shadow-[0_10px_30px_rgba(59,130,246,0.35)] ring-1 ring-white/30">
               <div className="h-full w-full rounded-[26px] bg-white/75 backdrop-blur-md border border-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
-                {/* CardSurface holds the actual content */}
-                <div className="h-full w-full p-6">
+                <div className="h-full w-full p-4 md:p-6">
                   <CardSurface
                     displayName={(card.public_profile_name || card.display_name || "Unnamed")}
                     card={card}
@@ -320,17 +319,17 @@ function CardSurface({ displayName, card, availNow, availFrom, muted = false }) 
   return (
     <div className="relative h-full rounded-3xl bg-white/70 backdrop-blur-md border border-white/40 p-6 shadow-sm">
       {/* Top-left square avatar */}
-      <div className="absolute left-6 top-6">
-        <div className="h-[176px] w-[176px] rounded-2xl border border-slate-200 bg-sky-50 p-3 flex items-center justify-center">
-          <div className="h-full w-full rounded-xl border border-sky-200 bg-sky-100 text-sky-700 text-4xl font-bold flex items-center justify-center">
+      <div className="absolute left-4 top-4 md:left-6 md:top-6">
+        <div className="h-[120px] w-[120px] md:h-[176px] md:w-[176px] rounded-2xl border border-slate-200 bg-sky-50 p-2 md:p-3 flex items-center justify-center">
+          <div className="h-full w-full rounded-xl border border-sky-200 bg-sky-100 text-sky-700 text-3xl md:text-4xl font-bold flex items-center justify-center">
             {initials(displayName)}
           </div>
         </div>
       </div>
-      <div className="flex items-stretch gap-4 h-full">
-        <div className="min-w-0 flex-1 ml-[200px]">
+      <div className="flex items-stretch gap-3 md:gap-4 h-full">
+        <div className="min-w-0 flex-1 ml-[140px] md:ml-[200px]">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className={`truncate text-lg font-semibold ${muted ? "text-slate-700" : "text-slate-900"}`}>{displayName}</h3>
+            <h3 className={`truncate text-base md:text-lg font-semibold ${muted ? "text-slate-700" : "text-slate-900"}`}>{displayName}</h3>
             {availNow ? (
               <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300/60 bg-emerald-100/70 px-2 py-0.5 text-[11px] font-medium text-emerald-800">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
@@ -347,7 +346,7 @@ function CardSurface({ displayName, card, availNow, availFrom, muted = false }) 
             <p className={`mt-1 line-clamp-3 text-sm ${muted ? "text-slate-500" : "text-slate-600"}`}>{card.headline}</p>
           ) : null}
           {(card.experiences || []).length ? (
-            <ul className="mt-3 space-y-2">
+            <ul className="mt-2 md:mt-3 space-y-2">
               {card.experiences.slice(0, 3).map((xp, i) => (
                 <li key={`${card.id}-xp-${i}`} className="flex items-start gap-2">
                   <span className="mt-1 h-1.5 w-1.5 rounded-full bg-slate-300" />
@@ -361,7 +360,7 @@ function CardSurface({ displayName, card, availNow, availFrom, muted = false }) 
               ))}
             </ul>
           ) : null}
-          <div className="mt-4 border-t border-slate-200 pt-3 flex items-center justify-between">
+          <div className="mt-3 md:mt-4 border-t border-slate-200 pt-2 md:pt-3 flex items-center justify-between">
             {card.location ? (
               <div className={`inline-flex items-center gap-2 text-xs ${muted ? "text-slate-500" : "text-slate-600"}`}>
                 <LocationDot />

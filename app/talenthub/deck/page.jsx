@@ -23,7 +23,7 @@ export default async function TalentHubDeckPage({ searchParams }) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-8">
+      <section className="mx-auto max-w-6xl px-4 py-4 md:py-8">
         <DeckView initialFilters={initial} />
       </section>
     </main>
