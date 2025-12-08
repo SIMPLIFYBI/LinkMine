@@ -122,9 +122,9 @@ export default function DeckView({ initialFilters }) {
           slides={workers}
           onOpen={(id) => router.push(`/talenthub/${id}`)}
           renderSlide={(card) => (
-            <div className="group relative h-[70vh] md:h-[520px] rounded-[32px] p-[5px] bg-gradient-to-br from-[#3B82F6] via-[#60A5FA] to-[#93C5FD] shadow-[0_10px_30px_rgba(59,130,246,0.35)] ring-1 ring-white/30">
-              <div className="h-full w-full rounded-[26px] bg-white/75 backdrop-blur-md border border-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
-                <div className="h-full w-full p-4 md:p-6">
+            <div className="group relative h-[50vh] md:h-[520px] rounded-[32px] p-[4px] bg-gradient-to-br from-[#3B82F6] via-[#60A5FA] to-[#93C5FD] shadow-[0_8px_24px_rgba(59,130,246,0.28)] ring-1 ring-white/30">
+              <div className="h-full w-full rounded-[26px] bg-white/80 backdrop-blur-md border border-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] overflow-hidden">
+                <div className="h-full w-full p-2 md:p-6">  {/* tighten inner padding on mobile */}
                   <CardSurface
                     displayName={(card.public_profile_name || card.display_name || "Unnamed")}
                     card={card}
@@ -317,41 +317,54 @@ function PeekCard({ card }) {
 
 function CardSurface({ displayName, card, availNow, availFrom, muted = false }) {
   return (
-    <div className="relative h-full rounded-3xl bg-white/70 backdrop-blur-md border border-white/40 p-6 shadow-sm">
-      {/* Top-left square avatar */}
-      <div className="absolute left-4 top-4 md:left-6 md:top-6">
-        <div className="h-[120px] w-[120px] md:h-[176px] md:w-[176px] rounded-2xl border border-slate-200 bg-sky-50 p-2 md:p-3 flex items-center justify-center">
-          <div className="h-full w-full rounded-xl border border-sky-200 bg-sky-100 text-sky-700 text-3xl md:text-4xl font-bold flex items-center justify-center">
-            {initials(displayName)}
+    <div className="relative h-full rounded-3xl bg-white/70 backdrop-blur-md border border-white/40 p-0 shadow-sm overflow-hidden">
+      {/* Responsive layout: stack on mobile, grid on desktop */}
+      <div className="flex h-full flex-col md:grid md:grid-cols-[200px_1fr] gap-3 md:gap-4">
+        {/* Top image (stacked on mobile) / left image (desktop) */}
+        <div className="flex items-start justify-center md:justify-start p-3 md:p-4">
+          <div className="h-[104px] w-[104px] md:h-[176px] md:w-[176px] rounded-2xl border border-slate-200 bg-sky-50 p-2 md:p-3 flex items-center justify-center">
+            <div className="h-full w-full rounded-xl border border-sky-200 bg-sky-100 text-sky-700 text-xl md:text-4xl font-bold flex items-center justify-center">
+              {initials(displayName)}
+            </div>
           </div>
         </div>
-      </div>
-      <div className="flex items-stretch gap-3 md:gap-4 h-full">
-        <div className="min-w-0 flex-1 ml-[140px] md:ml-[200px]">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className={`truncate text-base md:text-lg font-semibold ${muted ? "text-slate-700" : "text-slate-900"}`}>{displayName}</h3>
-            {availNow ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300/60 bg-emerald-100/70 px-2 py-0.5 text-[11px] font-medium text-emerald-800">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                Available now
-              </span>
-            ) : availFrom ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-amber-300/60 bg-amber-100/70 px-2 py-0.5 text-[11px] font-medium text-amber-800">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-                From {availFrom}
-              </span>
+
+        {/* Content column — mobile: full width below image */}
+        <div className="min-w-0 flex flex-col px-3 md:px-0">
+          {/* Header row */}
+          <div className="pt-1 md:pt-4 md:px-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className={`truncate text-[15px] md:text-lg font-semibold ${muted ? "text-slate-700" : "text-slate-900"}`}>
+                {displayName}
+              </h3>
+              {availNow ? (
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300/60 bg-emerald-100/70 px-2 py-0.5 text-[11px] font-medium text-emerald-800">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  Available now
+                </span>
+              ) : availFrom ? (
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-300/60 bg-amber-100/70 px-2 py-0.5 text-[11px] font-medium text-amber-800">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
+                  From {availFrom}
+                </span>
+              ) : null}
+            </div>
+
+            {card.headline ? (
+              <p className={`mt-1 line-clamp-2 md:line-clamp-3 text-[13px] md:text-sm ${muted ? "text-slate-500" : "text-slate-600"}`}>
+                {card.headline}
+              </p>
             ) : null}
           </div>
-          {card.headline ? (
-            <p className={`mt-1 line-clamp-3 text-sm ${muted ? "text-slate-500" : "text-slate-600"}`}>{card.headline}</p>
-          ) : null}
+
+          {/* Experiences list */}
           {(card.experiences || []).length ? (
-            <ul className="mt-2 md:mt-3 space-y-2">
+            <ul className="mt-2 md:mt-3 space-y-2 md:px-4">
               {card.experiences.slice(0, 3).map((xp, i) => (
                 <li key={`${card.id}-xp-${i}`} className="flex items-start gap-2">
                   <span className="mt-1 h-1.5 w-1.5 rounded-full bg-slate-300" />
                   <div className="min-w-0">
-                    <div className={`text-sm font-medium ${muted ? "text-slate-700" : "text-slate-900"}`}>
+                    <div className={`text-[13px] md:text-sm font-medium ${muted ? "text-slate-700" : "text-slate-900"}`}>
                       {xp.role_title}
                       {xp.company ? <span className="text-slate-500 font-normal"> · {xp.company}</span> : null}
                     </div>
@@ -360,22 +373,26 @@ function CardSurface({ displayName, card, availNow, availFrom, muted = false }) 
               ))}
             </ul>
           ) : null}
-          <div className="mt-3 md:mt-4 border-t border-slate-200 pt-2 md:pt-3 flex items-center justify-between">
+
+          {/* Footer */}
+          <div className="mt-3 md:mt-4 border-t border-slate-200 pt-2 md:pt-3 md:px-4 flex items-center justify-between">
             {card.location ? (
-              <div className={`inline-flex items-center gap-2 text-xs ${muted ? "text-slate-500" : "text-slate-600"}`}>
+              <div className={`inline-flex items-center gap-2 text-[11px] md:text-xs ${muted ? "text-slate-500" : "text-slate-600"}`}>
                 <LocationDot />
                 <span className="truncate">{card.location}</span>
               </div>
             ) : (
               <span />
             )}
-            <div className={`inline-flex items-center gap-2 text-xs ${muted ? "text-sky-600/70" : "text-sky-700"} opacity-80`}>
+            <div className={`inline-flex items-center gap-2 text-[11px] md:text-xs ${muted ? "text-sky-600/70" : "text-sky-700"} opacity-80`}>
               View profile
               <ArrowNarrowRight />
             </div>
           </div>
         </div>
       </div>
+
+      {/* Subtle bottom shine */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-70" />
     </div>
   );

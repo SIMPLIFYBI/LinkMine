@@ -3,7 +3,7 @@
 import useEmblaCarousel from "embla-carousel-react";
 import { useEffect, useState, useCallback } from "react";
 
-export default function EmblaParallax({ slides, renderSlide, onOpen }) {
+export default function EmblaParallax({ slides = [], renderSlide, onOpen }) {
   const [emblaRef, embla] = useEmblaCarousel({ align: "center", loop: false });
   const [progress, setProgress] = useState(0);
   const [canPrev, setCanPrev] = useState(false);
@@ -33,11 +33,11 @@ export default function EmblaParallax({ slides, renderSlide, onOpen }) {
     <div className="embla">
       <div className="embla__viewport" ref={emblaRef}>
         <div className="embla__container">
-          {(slides || []).map((slide, i) => (
+          {slides.map((slide, i) => (
             <div key={slide.id ?? i} className="embla__slide">
               <div
                 className="embla__parallax"
-                style={{ transform: `translateX(${(progress - i / (slides.length || 1)) * -20}%)` }}
+                style={{ transform: `translateX(${(progress - i / (slides.length || 1)) * -18}%)` }}
                 onClick={() => onOpen?.(slide.id)}
               >
                 {renderSlide(slide, i)}
@@ -47,8 +47,7 @@ export default function EmblaParallax({ slides, renderSlide, onOpen }) {
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="mt-6 flex items-center justify-between">
+      <div className="embla__controls">
         <button
           type="button"
           onClick={() => embla?.scrollPrev()}
@@ -57,7 +56,9 @@ export default function EmblaParallax({ slides, renderSlide, onOpen }) {
         >
           Back
         </button>
-        <div className="text-xs text-slate-400">Swipe or use arrows</div>
+
+        <div className="text-[11px] text-slate-400">Swipe or use arrows</div>
+
         <button
           type="button"
           onClick={() => embla?.scrollNext()}
@@ -69,39 +70,73 @@ export default function EmblaParallax({ slides, renderSlide, onOpen }) {
       </div>
 
       <style jsx>{`
+        :root { --embla-controls-h: 56px; } /* adjust if needed */
+
+        /* Mobile: let the carousel shrink to fit the slide height so controls sit immediately below card.
+           Use max-height to keep it from exceeding the viewport. */
         .embla {
           position: relative;
+          height: auto;
         }
+
         .embla__viewport {
           overflow: hidden;
-          height: 72vh; /* mobile: keep viewport height contained */
+          height: auto; /* allow viewport to size to slides */
+          max-height: calc(100svh - var(--embla-controls-h)); /* don't exceed viewport minus controls */
+          max-height: calc(100vh - var(--embla-controls-h)); /* fallback */
         }
-        @media (min-width: 768px) {
-          .embla__viewport {
-            height: auto; /* desktop handled by card height */
-          }
-        }
+
         .embla__container {
           display: flex;
-          gap: 16px; /* tighter gap on mobile */
-          padding: 8px;
+          gap: 8px;
+          padding: 4px 6px 0;
+          align-items: flex-start; /* stack cards from top so they don't center and leave empty space */
         }
+
         .embla__slide {
           position: relative;
-          flex: 0 0 92%; /* mobile: larger slide width so card fills */
+          flex: 0 0 86%; /* narrow to show peeks */
           min-width: 0;
+          height: auto; /* let slide content define height */
         }
+
+        .embla__parallax {
+          will-change: transform;
+          height: auto;
+        }
+
+        .embla__controls {
+          height: var(--embla-controls-h);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 6px 10px;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          background: transparent;
+        }
+
         @media (min-width: 768px) {
-          .embla__slide {
-            flex-basis: 68%;
+          /* Desktop: maintain larger slide sizing and full-height behavior */
+          .embla__viewport {
+            height: 100%;
+            max-height: none;
           }
           .embla__container {
             gap: 24px;
             padding: 12px 8px;
+            align-items: center;
           }
-        }
-        .embla__parallax {
-          will-change: transform;
+          .embla__slide {
+            flex-basis: 68%;
+            height: 100%;
+          }
+          .embla__parallax {
+            height: 100%;
+          }
+          .embla__controls {
+            height: auto;
+            padding: 12px 16px;
+          }
         }
       `}</style>
     </div>
