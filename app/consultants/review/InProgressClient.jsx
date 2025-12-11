@@ -59,7 +59,8 @@ export default function InProgressClient() {
       let q = sb
         .from("consultants")
         .select(
-          "id, display_name, company, location, contact_email, visibility, status, created_at, reviewed_at, is_trainer, provider_kind, view_count, invite_email" // added invite_email
+          // include claimed_by for claimed flag
+          "id, company, location, contact_email, visibility, status, created_at, reviewed_at, view_count, invite_email, claimed_by"
         )
         .order("created_at", { ascending: false })
         .limit(200);
@@ -218,15 +219,12 @@ export default function InProgressClient() {
           <table className="min-w-full text-left text-sm">
             <thead className="bg-slate-800/40 text-slate-300">
               <tr>
-                <th className="px-3 py-2">Name</th>
                 <th className="px-3 py-2">Company</th>
                 <th className="px-3 py-2">Location</th>
-                <th className="px-3 py-2">Trainer</th>
-                <th className="px-3 py-2">Kind</th>
                 <th className="px-3 py-2">Visibility</th>
                 <th className="px-3 py-2">Status</th>
                 <th className="px-3 py-2">Invite Email</th>
-                {/* new column header */}
+                <th className="px-3 py-2">Claimed</th>
                 <th className="px-3 py-2">Views</th>
                 <th className="px-3 py-2">Created</th>
                 <th className="px-3 py-2">Actions</th>
@@ -235,24 +233,21 @@ export default function InProgressClient() {
             <tbody className="divide-y divide-white/10">
               {loading ? (
                 <tr>
-                  <td colSpan={11} className="px-3 py-4 text-slate-400">
+                  <td colSpan={9} className="px-3 py-4 text-slate-400">
                     Loading…
                   </td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="px-3 py-4 text-slate-400">
+                  <td colSpan={9} className="px-3 py-4 text-slate-400">
                     No consultants found.
                   </td>
                 </tr>
               ) : (
                 items.map((it) => (
                   <tr key={it.id} className="hover:bg-slate-800/30">
-                    <td className="px-3 py-2 text-white">{it.display_name || "-"}</td>
                     <td className="px-3 py-2 text-slate-200">{it.company || "-"}</td>
                     <td className="px-3 py-2 text-slate-200">{it.location || "-"}</td>
-                    <td className="px-3 py-2">{it.is_trainer ? "Yes" : "No"}</td>
-                    <td className="px-3 py-2">{it.provider_kind || "both"}</td>
                     <td className="px-3 py-2">
                       <span
                         className={
@@ -287,6 +282,7 @@ export default function InProgressClient() {
                         Sent
                       </label>
                     </td>
+                    <td className="px-3 py-2">{it.claimed_by ? "Yes" : "No"}</td>
                     <td className="px-3 py-2">{it.view_count ?? 0}</td>
                     <td className="px-3 py-2 text-slate-400">
                       {new Date(it.created_at).toLocaleDateString()}
