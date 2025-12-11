@@ -14,7 +14,7 @@
     "@supabase/supabase-js": "^2.40.0",
     "fast-xml-parser": "^5.3.1",
     "lucide-react": "^0.544.0",
-    "next": "^15.5.4",
+    "next": "15.5.7",
     "postmark": "^4.0.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
