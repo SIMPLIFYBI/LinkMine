@@ -29,10 +29,10 @@ export default function InProgressClient() {
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState(initial);
+  const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [editing, setEditing] = useState(null);
   const [visibilityFilter, setVisibilityFilter] = useState("all"); // new
 
   useEffect(() => {
@@ -88,6 +88,7 @@ export default function InProgressClient() {
     setMessage("");
     setError("");
   }
+
   function startEdit(item) {
     setEditing(item);
     setForm({
@@ -97,10 +98,11 @@ export default function InProgressClient() {
       visibility: item.visibility || "private",
       status: item.status || "pending",
     });
-    setFormOpen(true);
+    setFormOpen(true); // open form when editing
     setMessage("");
     setError("");
   }
+
   function closeForm() {
     setFormOpen(false);
     setEditing(null);
@@ -296,7 +298,11 @@ export default function InProgressClient() {
                           Edit
                         </button>
                         <button
-                          className="rounded bg-white/10 px-3 py-1 text-xs text-white hover:bg-white/20"
+                          className={
+                            it.visibility === "public"
+                              ? "rounded bg-emerald-600 px-3 py-1 text-xs text-white hover:bg-emerald-500"
+                              : "rounded bg-amber-600 px-3 py-1 text-xs text-black hover:bg-amber-500"
+                          }
                           onClick={() => toggleVisibility(it)}
                         >
                           {it.visibility === "public" ? "Make private" : "Make public"}
@@ -311,98 +317,113 @@ export default function InProgressClient() {
         </div>
       </section>
 
+      {/* Modal overlay for the form */}
       {formOpen && (
-        <section className="space-y-6 rounded-lg border border-white/10 bg-slate-800/30 p-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-200">
-              {editing?.id ? "Edit consultant" : "Create draft"}
-            </h2>
-            <button
-              type="button"
-              onClick={closeForm}
-              className="rounded bg-slate-700/50 px-3 py-1 text-xs text-slate-200 hover:bg-slate-700"
-            >
-              Close
-            </button>
-          </div>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          aria-modal="true"
+          role="dialog"
+        >
+          <div
+            className="
+              w-full max-w-full sm:max-w-3xl
+              mx-4 sm:mx-6
+              rounded-lg border border-white/10 bg-slate-900 shadow-xl
+              p-4 sm:p-5
+              max-h-[90vh] overflow-y-auto
+            "
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <h2 className="text-base sm:text-sm font-semibold text-slate-200">
+                {editing?.id ? "Edit consultant" : "Create draft"}
+              </h2>
+              <button
+                type="button"
+                onClick={closeForm}
+                className="self-start sm:self-auto rounded bg-slate-700/50 px-3 py-1 text-xs text-slate-200 hover:bg-slate-700"
+                aria-label="Close"
+              >
+                Close
+              </button>
+            </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Text label="Display name" value={form.display_name} onChange={(v) => setField("display_name", v)} />
-            <Text label="Headline" value={form.headline} onChange={(v) => setField("headline", v)} />
-            <TextArea label="Bio" value={form.bio} onChange={(v) => setField("bio", v)} />
-            <Text label="Company" value={form.company} onChange={(v) => setField("company", v)} />
-            <Text label="Location" value={form.location} onChange={(v) => setField("location", v)} />
-            <Text label="Contact email" type="email" value={form.contact_email} onChange={(v) => setField("contact_email", v)} />
-            <Text label="Phone" value={form.phone} onChange={(v) => setField("phone", v)} />
-          </div>
+            <div className="mt-4 space-y-6">
+              {/* No mandatory fields; all inputs optional */}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Text label="Company" value={form.company} onChange={(v) => setField("company", v)} />
+                <Text label="Location" value={form.location} onChange={(v) => setField("location", v)} />
+                <Text label="Contact email" type="email" value={form.contact_email} onChange={(v) => setField("contact_email", v)} />
+                <Text label="Phone" value={form.phone} onChange={(v) => setField("phone", v)} />
+                <Text label="Display name" value={form.display_name} onChange={(v) => setField("display_name", v)} />
+                <Text label="Headline" value={form.headline} onChange={(v) => setField("headline", v)} />
+                <TextArea label="Bio" value={form.bio} onChange={(v) => setField("bio", v)} />
+              </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Text label="LinkedIn URL" value={form.linkedin_url} onChange={(v) => setField("linkedin_url", v)} />
-            <Text label="Facebook URL" value={form.facebook_url} onChange={(v) => setField("facebook_url", v)} />
-            <Text label="Twitter/X URL" value={form.twitter_url} onChange={(v) => setField("twitter_url", v)} />
-            <Text label="Instagram URL" value={form.instagram_url} onChange={(v) => setField("instagram_url", v)} />
-          </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Text label="LinkedIn URL" value={form.linkedin_url} onChange={(v) => setField("linkedin_url", v)} />
+                <Text label="Facebook URL" value={form.facebook_url} onChange={(v) => setField("facebook_url", v)} />
+                <Text label="Twitter/X URL" value={form.twitter_url} onChange={(v) => setField("twitter_url", v)} />
+                <Text label="Instagram URL" value={form.instagram_url} onChange={(v) => setField("instagram_url", v)} />
+              </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <Text label="ABN" value={form.abn} onChange={(v) => setField("abn", v)} />
-            <Text label="ACN" value={form.acn} onChange={(v) => setField("acn", v)} />
-            <Checkbox label="Is trainer" checked={form.is_trainer} onChange={(v) => setField("is_trainer", v)} />
-          </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <Text label="ABN" value={form.abn} onChange={(v) => setField("abn", v)} />
+                <Text label="ACN" value={form.acn} onChange={(v) => setField("acn", v)} />
+                <Checkbox label="Is trainer" checked={form.is_trainer} onChange={(v) => setField("is_trainer", v)} />
+              </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <Select
-              label="Provider kind"
-              value={form.provider_kind}
-              onChange={(v) => setField("provider_kind", v)}
-              options={[
-                { value: "both", label: "Both" },
-                { value: "training", label: "Training" },
-                { value: "consulting", label: "Consulting" },
-              ]}
-            />
-            <Select
-              label="Visibility"
-              value={form.visibility}
-              onChange={(v) => setField("visibility", v)}
-              options={[
-                { value: "private", label: "Private (hidden)" },
-                { value: "public", label: "Public (visible)" },
-              ]}
-            />
-            <Select
-              label="Status"
-              value={form.status}
-              onChange={(v) => setField("status", v)}
-              options={[
-                { value: "pending", label: "Pending" },
-                { value: "approved", label: "Approved" },
-                { value: "rejected", label: "Rejected" },
-              ]}
-            />
-          </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <Select
+                  label="Provider kind"
+                  value={form.provider_kind}
+                  onChange={(v) => setField("provider_kind", v)}
+                  options={[
+                    { value: "both", label: "Both" },
+                    { value: "training", label: "Training" },
+                    { value: "consulting", label: "Consulting" },
+                  ]}
+                />
+                <Select
+                  label="Visibility"
+                  value={form.visibility}
+                  onChange={(v) => setField("visibility", v)}
+                  options={[
+                    { value: "private", label: "Private (hidden)" },
+                    { value: "public", label: "Public (visible)" },
+                  ]}
+                />
+                <Select
+                  label="Status"
+                  value={form.status}
+                  onChange={(v) => setField("status", v)}
+                  options={[
+                    { value: "pending", label: "Pending" },
+                    { value: "approved", label: "Approved" },
+                    { value: "rejected", label: "Rejected" },
+                  ]}
+                />
+              </div>
 
-          <div className="flex gap-3">
-            <button
-              type="button"
-              disabled={saving}
-              onClick={save}
-              className="rounded bg-white/10 px-4 py-2 text-sm text-white hover:bg-white/20 disabled:opacity-50"
-            >
-              {saving ? "Saving…" : editing?.id ? "Save changes" : "Create draft"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setForm(initial);
-                setMessage("");
-                setError("");
-              }}
-              className="rounded bg-slate-700/50 px-4 py-2 text-sm text-slate-200 hover:bg-slate-700"
-            >
-              Reset
-            </button>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={save}
+                  className="rounded bg-white/10 px-4 py-2 text-sm text-white hover:bg-white/20 disabled:opacity-50"
+                >
+                  {saving ? "Saving…" : editing?.id ? "Save changes" : "Create draft"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm(initial)}
+                  className="rounded bg-slate-700/50 px-4 py-2 text-sm text-slate-200 hover:bg-slate-700"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
           </div>
-        </section>
+        </div>
       )}
     </main>
   );
