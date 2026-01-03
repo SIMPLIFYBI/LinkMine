@@ -281,11 +281,15 @@ export default function TimelineView() {
               onChange={(e) => setProviderFilter(e.target.value)}
             >
               <option value="all">All</option>
-              {allProviders.map((p) => (
-                <option key={p.id || p.name} value={p.id || ""}>
-                  {p.name}
-                </option>
-              ))}
+              {allProviders.map((p, idx) => {
+                const id = p.id ?? p.consultant_id ?? p.slug ?? "";
+                const name = p.name ?? p.display_name ?? "Provider";
+                return (
+                  <option key={`${id || name}-${idx}`} value={id || name}>
+                    {name}
+                  </option>
+                );
+              })}
             </select>
           </div>
 

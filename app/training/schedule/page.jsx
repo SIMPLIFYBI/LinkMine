@@ -17,6 +17,10 @@ function getSearchParam(url, key, fallback) {
   }
 }
 
+function ymd(d) {
+  return d.toISOString().slice(0, 10);
+}
+
 export default async function TrainingSchedulePage({ searchParams }) {
   const enabled = String(process.env.TRAINING_SCHEDULE_ENABLED || "").toLowerCase() === "true";
   if (!enabled) return notFound();
@@ -28,8 +32,17 @@ export default async function TrainingSchedulePage({ searchParams }) {
 
   const view = (await searchParams?.view) || "cards"; // "cards" or "timeline"
 
+  // ✅ Add a default window (today -> +6 months) for cards view too
+  const now = new Date();
+  const from = (await searchParams?.from) || ymd(now);
+  const toDate = new Date(now);
+  toDate.setMonth(toDate.getMonth() + 6);
+  const to = (await searchParams?.to) || ymd(toDate);
+
+  const qs = new URLSearchParams({ from, to });
+
   // Fetch sessions JSON for cards view
-  const res = await fetch(`${base}/api/training/sessions`, { cache: "no-store" });
+  const res = await fetch(`${base}/api/training/sessions?${qs.toString()}`, { cache: "no-store" });
   const data = res.ok ? await res.json() : { sessions: [] };
 
   // Group: providers -> courses for cards
@@ -151,9 +164,9 @@ export default async function TrainingSchedulePage({ searchParams }) {
             <div className="rounded-lg border border-white/10 bg-white/5 p-6 text-slate-400">No upcoming sessions yet.</div>
           )}
           <div className="grid gap-4 md:grid-cols-2">
-            {providers.map((p) => (
+            {providers.map((p, idx) => (
               <ProviderCard
-                key={p.id || p.slug || p.name}
+                key={`${p.id ?? p.consultant_id ?? p.slug ?? p.name ?? "provider"}-${idx}`}
                 provider={p}
                 canManage={Boolean(userId && (isAdmin || (p.id && ownedIds.has(p.id))))}
               />

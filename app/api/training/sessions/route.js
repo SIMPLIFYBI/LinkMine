@@ -1,90 +1,79 @@
+import { NextResponse } from "next/server";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 
 export const runtime = "nodejs";
 
+function asIsoOrNull(s) {
+  if (!s) return null;
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 export async function GET(req) {
   try {
     const url = new URL(req.url);
-    const from = url.searchParams.get("from"); // ISO
-    const to = url.searchParams.get("to");     // ISO
-    const includeCompleted = url.searchParams.get("includeCompleted") === "true";
+
+    const from = asIsoOrNull(url.searchParams.get("from"));
+    const to = asIsoOrNull(url.searchParams.get("to"));
+    const includeCompleted = String(url.searchParams.get("includeCompleted") || "false").toLowerCase() === "true";
 
     const now = new Date();
     const defaultFrom = now.toISOString();
-    const defaultTo = new Date(now.getTime() + 1000 * 60 * 60 * 24 * 180).toISOString(); // +180d
+    const defaultTo = new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000).toISOString(); // ~6 months
 
     const sb = await supabaseServerClient();
 
+    // ✅ DEFINE q
     let q = sb
       .from("training_sessions")
-      .select(`
-        id, starts_at, ends_at, timezone, delivery_method,
-        location_name, suburb, state, country, join_url,
-        capacity, price_cents, currency, gst_included, status,
-        course:training_courses!inner (
-          id, title, slug, summary, delivery_default, consultant_id,
-          provider:consultants!inner ( id, display_name, slug )
-        )
-      `)
-      .order("starts_at", { ascending: true })
-      .limit(1000);
+      .select(
+        `
+        id, course_id, starts_at, ends_at, timezone, delivery_method,
+        location_name, suburb, state, country,
+        join_url, price_cents, currency, gst_included, status,
+        course:training_courses ( id, title, slug )
+      `
+      )
+      .gte("starts_at", from || defaultFrom)
+      .lte("starts_at", to || defaultTo)
+      .order("starts_at", { ascending: true });
 
-    // Status filter
-    if (includeCompleted) {
-      q = q.in("status", ["scheduled", "completed"]);
-    } else {
+    if (!includeCompleted) {
       q = q.eq("status", "scheduled");
     }
 
-    // Range filter
-    q = q.gte("starts_at", from || defaultFrom);
-    if (to) q = q.lte("starts_at", to);
-    else q = q.lte("starts_at", defaultTo);
-
     const { data, error } = await q;
-
     if (error) {
-      console.error("[training sessions] query error:", error);
-      return new Response(JSON.stringify({ sessions: [], error: error.message }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+      return NextResponse.json(
+        { error: error.message, details: error.details, hint: error.hint, code: error.code },
+        { status: 500 }
+      );
     }
 
     const sessions = (data || []).map((s) => ({
       id: s.id,
-      course_id: s.course?.id || null,
-      course: s.course?.title || "Course",
-      course_slug: s.course?.slug || null,
-      course_summary: s.course?.summary || null,
-      course_delivery_default: s.course?.delivery_default || null,
-
-      provider_id: s.course?.provider?.id || null,
-      provider: s.course?.provider?.display_name || "Provider",
-      provider_slug: s.course?.provider?.slug || null,
-
-      location:
-        s.delivery_method === "online"
-          ? "Online"
-          : [s.location_name, s.suburb, s.state].filter(Boolean).join(", "),
+      course_id: s.course_id,
       starts_at: s.starts_at,
       ends_at: s.ends_at,
-      price_cents: s.price_cents,
-      currency: s.currency || "AUD",
-      delivery_method: s.delivery_method,
       timezone: s.timezone,
+      delivery_method: s.delivery_method,
+      location_name: s.location_name,
+      suburb: s.suburb,
+      state: s.state,
+      country: s.country,
+      join_url: s.join_url,
+      price_cents: s.price_cents,
+      currency: s.currency,
+      gst_included: s.gst_included,
       status: s.status,
+
+      // back-compat for Timeline rendering
+      course: s.course?.title ?? null,
+      course_meta: s.course ?? null,
     }));
 
-    return new Response(JSON.stringify({ sessions }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-    });
+    return NextResponse.json({ sessions }, { headers: { "Cache-Control": "no-store" } });
   } catch (e) {
-    console.error("[training sessions] unexpected error:", e);
-    return new Response(JSON.stringify({ sessions: [] }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json({ error: e.message || "Server error" }, { status: 500 });
   }
 }

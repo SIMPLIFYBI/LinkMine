@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { zonedTimeToUtc } from "date-fns-tz";
 
 export default function AddCourseForm({ consultantId, onDone }) {
   // Course fields
@@ -56,11 +57,15 @@ export default function AddCourseForm({ consultantId, onDone }) {
       .slice(0, 80);
   }
 
-  function toISO(d, t) {
-    if (!d || !t) return null;
-    const dt = new Date(`${d}T${t}:00`);
-    if (Number.isNaN(dt.getTime())) return null;
-    return dt.toISOString();
+  function toISO(dateStr, timeStr, timeZone) {
+    // dateStr: "YYYY-MM-DD"
+    // timeStr: "HH:mm"
+    // timeZone: "Australia/Perth"
+    if (!dateStr || !timeStr) return null;
+
+    // Interpret the input as a wall-clock time in `timeZone`, then convert to UTC.
+    const utcDate = zonedTimeToUtc(`${dateStr} ${timeStr}`, timeZone);
+    return utcDate.toISOString();
   }
 
   function addRow() {
@@ -117,41 +122,27 @@ export default function AddCourseForm({ consultantId, onDone }) {
       return setError("Title is required.");
     }
 
-    if (addSessions && sessions.length > 0) {
-      const built = [];
-      for (const r of sessions) {
-        const starts_at = toISO(r.date, r.startTime);
-        const ends_at = toISO(r.date, r.endTime);
-        if (!starts_at || !ends_at) {
-          setBusy(false);
-          return setError("Each session needs a date, start and end time.");
-        }
-        if (new Date(ends_at) <= new Date(starts_at)) {
-          setBusy(false);
-          return setError("Session end time must be after start time.");
-        }
-        if (!["in_person", "online", "hybrid"].includes(r.delivery_method)) {
-          setBusy(false);
-          return setError("Invalid delivery method.");
-        }
-        built.push({
-          starts_at,
-          ends_at,
-          timezone: r.timezone || null,
-          delivery_method: r.delivery_method,
-          location_name: r.delivery_method === "online" ? null : (r.location_name || null),
-          suburb: r.delivery_method === "online" ? null : (r.suburb || null),
-          state: r.delivery_method === "online" ? null : (r.state || null),
-          country: r.delivery_method === "online" ? "AU" : (r.country || "AU"),
-          join_url: r.delivery_method === "online" || r.delivery_method === "hybrid" ? (r.join_url || null) : null,
-          capacity: r.capacity !== "" && Number.isFinite(Number(r.capacity)) ? Number(r.capacity) : null,
-          price_cents: r.price !== "" && Number.isFinite(Number(r.price)) ? Math.round(Number(r.price) * 100) : null,
-          currency: r.currency || "AUD",
-          gst_included: !!r.gst_included,
-          status: "scheduled",
-        });
-      }
-      body.sessions = built;
+    const sessionPayload = sessions
+      .filter((s) => s.date && s.startTime && s.endTime)
+      .map((s) => ({
+        timezone: s.timezone,
+        starts_at: toISO(s.date, s.startTime, s.timezone),
+        ends_at: toISO(s.date, s.endTime, s.timezone),
+        delivery_method: s.delivery_method,
+        location_name: s.delivery_method === "online" ? null : (s.location_name || null),
+        suburb: s.delivery_method === "online" ? null : (s.suburb || null),
+        state: s.delivery_method === "online" ? null : (s.state || null),
+        country: s.delivery_method === "online" ? "AU" : (s.country || "AU"),
+        join_url: s.delivery_method === "online" || s.delivery_method === "hybrid" ? (s.join_url || null) : null,
+        capacity: s.capacity !== "" && Number.isFinite(Number(s.capacity)) ? Number(s.capacity) : null,
+        price_cents: s.price !== "" && Number.isFinite(Number(s.price)) ? Math.round(Number(s.price) * 100) : null,
+        currency: s.currency || "AUD",
+        gst_included: !!s.gst_included,
+        status: "scheduled",
+      }));
+
+    if (addSessions && sessionPayload.length > 0) {
+      body.sessions = sessionPayload;
     }
 
     try {
