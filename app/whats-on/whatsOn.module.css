@@ -1,0 +1,24 @@
+.sidebarScroll {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+.sidebarScroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.sidebarScroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebarScroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  border: 3px solid transparent; /* creates padding */
+  background-clip: content-box;
+}
+
+.sidebarScroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+  background-clip: content-box;
+}
