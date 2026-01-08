@@ -54,6 +54,38 @@ function normalizeLocation({ delivery_method, location_name, suburb, state }) {
   return parts.length ? parts.join(", ") : "TBA";
 }
 
+function initials(name) {
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+  if (!parts.length) return "?";
+  return parts.map((p) => p[0]?.toUpperCase()).join("");
+}
+
+function extractProviderFromCourse(course) {
+  const meta = course?.metadata ?? course?.course?.metadata ?? {};
+  const consultant = course?.consultant ?? course?.course?.consultant ?? null;
+
+  const provider_name =
+    consultant?.display_name ||
+    consultant?.name ||
+    meta?.providerName ||
+    meta?.provider_name ||
+    "";
+
+  const provider_logo_url =
+    consultant?.logo_url ||
+    consultant?.thumbnail_url ||
+    meta?.providerLogoUrl ||
+    meta?.provider_logo_url ||
+    meta?.logo_url ||
+    null;
+
+  return { provider_name, provider_logo_url };
+}
+
 export default function WhatsOnPage() {
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [loading, setLoading] = useState(false);
@@ -65,6 +97,7 @@ export default function WhatsOnPage() {
   const [submitOpen, setSubmitOpen] = useState(false);
 
   const sidebarRef = useRef(null);
+  const courseProviderCacheRef = useRef(new Map()); // courseId -> { provider_name, provider_logo_url }
 
   const calendarRange = useMemo(() => {
     // Month grid: start on Sunday, show 6 weeks (42 days)
@@ -98,7 +131,10 @@ export default function WhatsOnPage() {
         const to = calendarRange.gridEnd.toISOString();
 
         const [sessRes, evtRes] = await Promise.all([
-          fetch(`/api/training/sessions?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&includeCompleted=false`, { cache: "no-store" }),
+          fetch(
+            `/api/training/sessions?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&includeCompleted=false`,
+            { cache: "no-store" }
+          ),
           fetch(`/api/events?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`, { cache: "no-store" }),
         ]);
 
@@ -115,28 +151,56 @@ export default function WhatsOnPage() {
         const events = Array.isArray(evtJson?.events) ? evtJson.events : [];
 
         const normalized = [
-          ...sessions.map((s) => ({
-            type: "training",
-            id: `training-${s.id}`,
-            source_id: s.id,
-            course_id: s.course_id,
-            title: s.course || s.course_meta?.title || "Training session",
-            starts_at: s.starts_at,
-            ends_at: s.ends_at,
-            timezone: s.timezone || "UTC",
-            delivery_method: s.delivery_method || "in_person",
-            locationText: normalizeLocation({
-              delivery_method: s.delivery_method,
-              location_name: s.location_name,
-              suburb: s.suburb,
-              state: s.state,
-            }),
-            join_url: s.join_url || null,
-            external_url: null,
-            tags: Array.isArray(s.course_meta?.tags) ? s.course_meta.tags : [],
-            price_cents: s.price_cents ?? null,
-            currency: s.currency || "AUD",
-          })),
+          ...sessions.map((s) => {
+            const courseMeta = s?.course_meta ?? null;
+            const meta = courseMeta?.metadata ?? {};
+
+            const providerName =
+              courseMeta?.consultant_name ||
+              meta?.providerName ||
+              meta?.provider_name ||
+              s?.consultant?.display_name ||
+              s?.provider?.display_name ||
+              "";
+
+            const providerLogoUrl =
+              meta?.providerLogoUrl ||
+              meta?.provider_logo_url ||
+              meta?.logo_url ||
+              s?.consultant?.logo_url ||
+              s?.provider?.logo_url ||
+              null;
+
+            return {
+              type: "training",
+              id: `training-${s.id}`,
+              source_id: s.id,
+              course_id: s.course_id,
+              title: s.course || courseMeta?.title || "Training session",
+              starts_at: s.starts_at,
+              ends_at: s.ends_at,
+              timezone: s.timezone || "UTC",
+              delivery_method: s.delivery_method || "in_person",
+              locationText: normalizeLocation({
+                delivery_method: s.delivery_method,
+                location_name: s.location_name,
+                suburb: s.suburb,
+                state: s.state,
+              }),
+              join_url: s.join_url || null,
+              external_url: null,
+              tags: Array.isArray(courseMeta?.tags) ? courseMeta.tags : [],
+              price_cents: s.price_cents ?? null,
+              currency: s.currency || "AUD",
+
+              // ✅ used by sidebar thumbnail (CourseDrawer-style)
+              provider_name: providerName,
+              provider_logo_url: providerLogoUrl,
+
+              // ✅ optional: still pass through for CourseDrawer seedMeta usage if you want later
+              course_meta: courseMeta,
+            };
+          }),
           ...events.map((e) => ({
             type: "event",
             id: `event-${e.id}`,
@@ -225,6 +289,73 @@ export default function WhatsOnPage() {
       window.setTimeout(() => el.classList.remove("ring-2", "ring-sky-400/50"), 700);
     }
   }
+
+  // ✅ After items load, lazy-fetch provider logo/name for training rows that are missing it
+  useEffect(() => {
+    let cancelled = false;
+
+    async function enrichTrainingProviders() {
+      const missingCourseIds = Array.from(
+        new Set(
+          items
+            .filter(
+              (it) =>
+                it?.type === "training" &&
+                it?.course_id &&
+                (!it.provider_logo_url || !it.provider_name)
+            )
+            .map((it) => it.course_id)
+        )
+      ).filter((courseId) => !courseProviderCacheRef.current.has(courseId));
+
+      if (missingCourseIds.length === 0) return;
+
+      const results = await Promise.allSettled(
+        missingCourseIds.map(async (courseId) => {
+          const res = await fetch(`/api/training/courses/${encodeURIComponent(courseId)}`, { cache: "no-store" });
+          const ct = res.headers.get("content-type") || "";
+          const json = ct.includes("application/json") ? await res.json() : null;
+          if (!res.ok) throw new Error(json?.error || `Failed to load course ${courseId} (HTTP ${res.status})`);
+
+          const { provider_name, provider_logo_url } = extractProviderFromCourse(json);
+          courseProviderCacheRef.current.set(courseId, { provider_name, provider_logo_url });
+          return { courseId, provider_name, provider_logo_url };
+        })
+      );
+
+      if (cancelled) return;
+
+      const updates = new Map();
+      for (const r of results) {
+        if (r.status === "fulfilled") {
+          updates.set(r.value.courseId, {
+            provider_name: r.value.provider_name,
+            provider_logo_url: r.value.provider_logo_url,
+          });
+        }
+      }
+
+      if (updates.size === 0) return;
+
+      setItems((prev) =>
+        prev.map((it) => {
+          if (it?.type !== "training" || !it?.course_id) return it;
+          const u = updates.get(it.course_id);
+          if (!u) return it;
+          return {
+            ...it,
+            provider_name: it.provider_name || u.provider_name,
+            provider_logo_url: it.provider_logo_url || u.provider_logo_url,
+          };
+        })
+      );
+    }
+
+    enrichTrainingProviders();
+    return () => {
+      cancelled = true;
+    };
+  }, [items]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-white">
@@ -320,17 +451,37 @@ export default function WhatsOnPage() {
                             onClick={() => openDrawer(it)}
                             className="flex w-full items-start gap-2 rounded-md border border-white/10 bg-slate-950/40 px-2 py-2 text-left hover:bg-white/10"
                           >
-                            <span
-                              className={`mt-1 inline-block h-2.5 w-2.5 rounded-full ${
-                                it.type === "training" ? "bg-indigo-400" : "bg-emerald-400"
-                              }`}
-                            />
+                            {it.type === "training" ? (
+                              <span className="mt-0.5 h-8 w-8 shrink-0 overflow-hidden ring-1 ring-white/10">
+                                {it.provider_logo_url ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={it.provider_logo_url}
+                                    alt={it.provider_name || "Provider"}
+                                    className="h-full w-full object-cover"
+                                    loading="lazy"
+                                    onError={(e) => {
+                                      // if it fails, hide the img so the fallback below can show next render
+                                      e.currentTarget.style.display = "none";
+                                    }}
+                                  />
+                                ) : (
+                                  <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-sky-500/60 to-indigo-600/60 text-xs font-bold text-white">
+                                    {(it.provider_name || "?").slice(0, 1).toUpperCase()}
+                                  </span>
+                                )}
+                              </span>
+                            ) : (
+                              <span className="mt-1 inline-block h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                            )}
+
                             <div className="min-w-0 flex-1">
                               <div className="truncate text-sm text-white">{it.title}</div>
                               <div className="mt-0.5 text-xs text-slate-400">
                                 {fmtTimeRange(it.starts_at, it.ends_at)} • {clampText(it.locationText, 40)}
                               </div>
                             </div>
+
                             <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wider text-slate-200">
                               {it.type === "training" ? "Training" : "Event"}
                             </span>
