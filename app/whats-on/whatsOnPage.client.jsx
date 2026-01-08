@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import WhatsOnDrawer from "./whatsOnDrawer.client.jsx";
+import SubmitEventModal from "./SubmitEventModal.client.jsx";
 import styles from "./whatsOn.module.css";
 
 function startOfMonth(d) {
@@ -61,6 +62,7 @@ export default function WhatsOnPage() {
   const [items, setItems] = useState([]);
   const [selected, setSelected] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [submitOpen, setSubmitOpen] = useState(false);
 
   const sidebarRef = useRef(null);
 
@@ -235,6 +237,15 @@ export default function WhatsOnPage() {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
+            {/* ✅ Add an Event */}
+            <button
+              type="button"
+              onClick={() => setSubmitOpen(true)}
+              className="hidden sm:inline-flex rounded-md bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-sky-500"
+            >
+              Add an Event
+            </button>
+
             <button
               type="button"
               onClick={() => setMonth((m) => addMonths(m, -1))}
@@ -261,6 +272,17 @@ export default function WhatsOnPage() {
 
             <div className="ml-2 hidden sm:block text-sm font-semibold text-slate-100">{fmtMonthTitle(month)}</div>
           </div>
+        </div>
+
+        {/* ✅ mobile placement */}
+        <div className="mx-auto w-full max-w-7xl px-4 pb-3 sm:hidden">
+          <button
+            type="button"
+            onClick={() => setSubmitOpen(true)}
+            className="w-full rounded-md bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-500"
+          >
+            Add an Event
+          </button>
         </div>
       </div>
 
@@ -406,11 +428,10 @@ export default function WhatsOnPage() {
         </main>
       </div>
 
-      <WhatsOnDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        item={selected}
-      />
+      <WhatsOnDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} item={selected} />
+
+      {/* ✅ submit modal */}
+      <SubmitEventModal open={submitOpen} onClose={() => setSubmitOpen(false)} />
     </div>
   );
 }
