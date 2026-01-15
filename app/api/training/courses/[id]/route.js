@@ -169,3 +169,64 @@ export async function PATCH(req, { params }) {
     return NextResponse.json({ error: e.message || "Server error" }, { status: 500 });
   }
 }
+
+export async function DELETE(_req, { params }) {
+  try {
+    const p = await params;
+    const id = p?.id;
+    if (!id) return NextResponse.json({ error: "Missing course id" }, { status: 400 });
+
+    const sb = await supabaseServerClient();
+
+    const { data: auth } = await sb.auth.getUser();
+    const userId = auth?.user?.id;
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // Load course consultant_id for permission checks
+    const { data: course, error: courseErr } = await sb
+      .from("training_courses")
+      .select("id, consultant_id")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (courseErr) return NextResponse.json({ error: courseErr.message }, { status: 500 });
+    if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 });
+
+    // Admin?
+    const { data: adminRow, error: adminErr } = await sb
+      .from("app_admins")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (adminErr) return NextResponse.json({ error: adminErr.message }, { status: 500 });
+    const isAdmin = Boolean(adminRow);
+
+    // Owner/claimer of the consultancy?
+    let canManage = isAdmin;
+    if (!canManage) {
+      const { data: ownerRow, error: ownerErr } = await sb
+        .from("consultants")
+        .select("id")
+        .eq("id", course.consultant_id)
+        .or(`user_id.eq.${userId},claimed_by.eq.${userId}`)
+        .maybeSingle();
+
+      if (ownerErr) return NextResponse.json({ error: ownerErr.message }, { status: 500 });
+      canManage = Boolean(ownerRow);
+    }
+
+    if (!canManage) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+    // Delete sessions first (works even if ON DELETE CASCADE is not set yet)
+    const { error: delSessionsErr } = await sb.from("training_sessions").delete().eq("course_id", id);
+    if (delSessionsErr) return NextResponse.json({ error: delSessionsErr.message }, { status: 400 });
+
+    const { error: delCourseErr } = await sb.from("training_courses").delete().eq("id", id);
+    if (delCourseErr) return NextResponse.json({ error: delCourseErr.message }, { status: 400 });
+
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    return NextResponse.json({ error: e?.message || "Server error" }, { status: 500 });
+  }
+}

@@ -35,8 +35,6 @@ function sortSessions(sessions) {
 
 export default function ProviderCard({ provider, canManage }) {
   const [showForm, setShowForm] = useState(false);
-
-  // accordion open state (as you already implemented)
   const [openCourseId, setOpenCourseId] = useState(null);
 
   // single editor modal state
@@ -87,20 +85,20 @@ export default function ProviderCard({ provider, canManage }) {
 
       <div className="space-y-2">
         {courses.map((c) => {
-          const courseKey = c.id || c.slug || c.title;
+          const courseKey = String(c.id ?? c.slug ?? c.title ?? "");
           const isOpen = openCourseId === courseKey;
           const sessions = sortSessions(c.sessions);
 
           return (
             <div key={courseKey} className="rounded-lg border border-white/10 bg-white/0">
-              {/* ✅ header is a div (no nested buttons) */}
+              {/* header */}
               <div className="flex w-full items-stretch justify-between gap-2 px-3 py-2 hover:bg-white/5">
-                {/* ✅ toggle button controls accordion */}
                 <button
                   type="button"
                   onClick={() => setOpenCourseId((prev) => (prev === courseKey ? null : courseKey))}
                   className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left"
                   aria-expanded={isOpen}
+                  aria-controls={`course-panel-${courseKey}`}
                 >
                   <div className="min-w-0">
                     <div className="truncate font-medium text-white">{c.title}</div>
@@ -112,7 +110,6 @@ export default function ProviderCard({ provider, canManage }) {
                   <span className="text-slate-400 text-xs">{isOpen ? "▲" : "▼"}</span>
                 </button>
 
-                {/* ✅ separate sibling button */}
                 {canManage && c.id ? (
                   <button
                     type="button"
@@ -126,7 +123,42 @@ export default function ProviderCard({ provider, canManage }) {
                 ) : null}
               </div>
 
-              {/* ...existing accordion body... */}
+              {/* ✅ accordion body */}
+              {isOpen && (
+                <div
+                  id={`course-panel-${courseKey}`}
+                  className="border-t border-white/10 px-3 py-3"
+                >
+                  {c.summary ? (
+                    <div className="mb-3 text-sm text-slate-300">{c.summary}</div>
+                  ) : null}
+
+                  {sessions.length ? (
+                    <div className="space-y-2">
+                      {sessions.map((s) => (
+                        <div key={s.id} className="rounded-md border border-white/10 bg-white/5 px-3 py-2">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="text-sm text-white">
+                              {fmtDT(s.starts_at)}{" "}
+                              {s.ends_at ? `– ${fmtDT(s.ends_at)}` : ""}
+                            </div>
+                            <div className="text-xs text-slate-300">
+                              {fmtPrice(s.price_cents, s.currency)}
+                            </div>
+                          </div>
+                          <div className="mt-1 text-xs text-slate-400">
+                            {(s.delivery_method || "—")}
+                            {s.timezone ? ` • ${s.timezone}` : ""}
+                            {s.location_name ? ` • ${s.location_name}` : ""}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-slate-400">No sessions listed for this course yet.</div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
@@ -137,6 +169,7 @@ export default function ProviderCard({ provider, canManage }) {
         onClose={() => setEditorOpen(false)}
         courseId={editorCourseId}
         seedMeta={editorSeed}
+        canManage={canManage}
       />
     </section>
   );

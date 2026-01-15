@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import * as tz from "date-fns-tz";
 
 function pad2(n) {
@@ -29,7 +30,14 @@ function isoToLocalInputs(utcIso, timeZone) {
   };
 }
 
-export default function CourseEditorModal({ open, onClose, courseId, seedMeta }) {
+export default function CourseEditorModal({
+  open,
+  onClose,
+  courseId,
+  seedMeta,
+  canManage = false,
+}) {
+  const router = useRouter();
   const overlayRef = useRef(null);
 
   const [loading, setLoading] = useState(false);
@@ -61,6 +69,9 @@ export default function CourseEditorModal({ open, onClose, courseId, seedMeta })
   const [sJoinUrl, setSJoinUrl] = useState("");
   const [sPrice, setSPrice] = useState(""); // dollars
   const [sCurrency, setSCurrency] = useState("AUD");
+
+  const [deletingCourse, setDeletingCourse] = useState(false);
+  const [deletingSessionId, setDeletingSessionId] = useState(null);
 
   async function loadCourse() {
     if (!courseId) return;
@@ -209,6 +220,53 @@ export default function CourseEditorModal({ open, onClose, courseId, seedMeta })
     }
   }
 
+  async function deleteCourse() {
+    if (!canManage || !courseId) return;
+
+    const ok = window.confirm(
+      "Delete this course permanently? This will also delete all sessions. This cannot be undone."
+    );
+    if (!ok) return;
+
+    setError("");
+    setDeletingCourse(true);
+    try {
+      const res = await fetch(`/api/training/courses/${encodeURIComponent(courseId)}`, { method: "DELETE" });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || "Failed to delete course.");
+
+      onClose?.();
+      router.refresh();
+    } catch (e) {
+      setError(e?.message || "Failed to delete course.");
+    } finally {
+      setDeletingCourse(false);
+    }
+  }
+
+  async function deleteActiveSession() {
+    if (!canManage || !activeSessionId) return;
+
+    const ok = window.confirm("Delete this session permanently? This cannot be undone.");
+    if (!ok) return;
+
+    setError("");
+    setDeletingSessionId(activeSessionId);
+    try {
+      const res = await fetch(`/api/training/sessions/${encodeURIComponent(activeSessionId)}`, { method: "DELETE" });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || "Failed to delete session.");
+
+      setSessions((prev) => prev.filter((s) => s.id !== activeSessionId));
+      setActiveSessionId(null);
+      router.refresh();
+    } catch (e) {
+      setError(e?.message || "Failed to delete session.");
+    } finally {
+      setDeletingSessionId(null);
+    }
+  }
+
   return (
     <div
       className={`fixed inset-0 z-50 ${open ? "pointer-events-auto" : "pointer-events-none"}`}
@@ -310,7 +368,20 @@ export default function CourseEditorModal({ open, onClose, courseId, seedMeta })
                     <textarea rows={4} className="mt-1 w-full rounded-md border border-white/10 bg-white/10 p-2 text-white" value={description} onChange={(e) => setDescription(e.target.value)} />
                   </div>
 
-                  <div className="mt-4 flex justify-end">
+                  <div className="mt-4 flex items-center justify-between gap-2">
+                    <div>
+                      {canManage && (
+                        <button
+                          type="button"
+                          onClick={deleteCourse}
+                          disabled={deletingCourse || savingCourse || loading}
+                          className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200 hover:bg-red-500/15 disabled:opacity-50"
+                        >
+                          {deletingCourse ? "Deleting course..." : "Delete course"}
+                        </button>
+                      )}
+                    </div>
+
                     <button
                       onClick={saveCourse}
                       disabled={savingCourse || !title.trim()}
@@ -402,7 +473,24 @@ export default function CourseEditorModal({ open, onClose, courseId, seedMeta })
                               </div>
                             </div>
 
-                            <div className="mt-4 flex justify-end">
+                            <div className="mt-4 flex items-center justify-between gap-2">
+                              <div>
+                                {canManage && (
+                                  <button
+                                    type="button"
+                                    onClick={deleteActiveSession}
+                                    disabled={
+                                      deletingSessionId === activeSessionId ||
+                                      savingSessionId === activeSessionId ||
+                                      loading
+                                    }
+                                    className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200 hover:bg-red-500/15 disabled:opacity-50"
+                                  >
+                                    {deletingSessionId === activeSessionId ? "Deleting session..." : "Delete session"}
+                                  </button>
+                                )}
+                              </div>
+
                               <button
                                 onClick={saveSession}
                                 disabled={savingSessionId === activeSessionId}
