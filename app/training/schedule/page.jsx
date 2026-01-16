@@ -21,6 +21,20 @@ function ymd(d) {
   return d.toISOString().slice(0, 10);
 }
 
+function providerKey(s) {
+  if (s?.provider_id) return `id:${s.provider_id}`;
+  if (s?.provider_slug) return `slug:${s.provider_slug}`;
+  if (s?.provider) return `name:${s.provider}`;
+  return null;
+}
+
+function courseKey(s) {
+  if (s?.course_id) return `id:${s.course_id}`;
+  if (s?.course_slug) return `slug:${s.course_slug}`;
+  if (s?.course) return `name:${s.course}`;
+  return null;
+}
+
 export default async function TrainingSchedulePage({ searchParams }) {
   const enabled = String(process.env.TRAINING_SCHEDULE_ENABLED || "").toLowerCase() === "true";
   if (!enabled) return notFound();
@@ -48,15 +62,31 @@ export default async function TrainingSchedulePage({ searchParams }) {
   // Group: providers -> courses for cards
   const byProvider = new Map();
   for (const s of data.sessions || []) {
-    const pid = s.provider_id || s.provider_slug || s.provider;
-    if (!byProvider.has(pid)) {
-      byProvider.set(pid, { id: s.provider_id, name: s.provider, slug: s.provider_slug, courses: new Map() });
+    const pk = providerKey(s);
+    if (!pk) continue; // ✅ prevents the “everything else” bucket
+
+    if (!byProvider.has(pk)) {
+      byProvider.set(pk, {
+        id: s.provider_id || null,
+        name: s.provider || "Provider",
+        slug: s.provider_slug || null,
+        courses: new Map(),
+      });
     }
-    const p = byProvider.get(pid);
-    const ck = s.course_id || `${s.provider}_${s.course}`;
+
+    const p = byProvider.get(pk);
+
+    const ck = courseKey(s) || `${pk}:course:unknown`;
     if (!p.courses.has(ck)) {
-      p.courses.set(ck, { id: s.course_id, title: s.course, slug: s.course_slug, summary: s.course_summary, sessions: [] });
+      p.courses.set(ck, {
+        id: s.course_id || null,
+        title: s.course || "Course",
+        slug: s.course_slug || null,
+        summary: s.course_summary || null,
+        sessions: [],
+      });
     }
+
     p.courses.get(ck).sessions.push(s);
   }
 
@@ -98,16 +128,20 @@ export default async function TrainingSchedulePage({ searchParams }) {
       for (const c of courses || []) {
         const pid = c.consultant?.id || c.consultant_id;
         if (!pid) continue;
-        if (!byProvider.has(pid)) {
-          byProvider.set(pid, {
+
+        const pk = `id:${pid}`; // ✅ match the keying scheme above
+
+        if (!byProvider.has(pk)) {
+          byProvider.set(pk, {
             id: pid,
             name: c.consultant?.display_name || "Provider",
             slug: c.consultant?.slug || null,
             courses: new Map(),
           });
         }
-        const p = byProvider.get(pid);
-        const ck = c.id;
+
+        const p = byProvider.get(pk);
+        const ck = `id:${c.id}`;
         if (!p.courses.has(ck)) {
           p.courses.set(ck, {
             id: c.id,
