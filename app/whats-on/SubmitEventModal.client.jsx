@@ -43,6 +43,7 @@ export default function SubmitEventModal({ open, onClose }) {
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
   const [authRequired, setAuthRequired] = useState(false);
+  const [needsConsultancy, setNeedsConsultancy] = useState(false); // ✅ NEW
 
   const tags = useMemo(
     () => tagsCsv.split(",").map((t) => t.trim()).filter(Boolean),
@@ -70,6 +71,7 @@ export default function SubmitEventModal({ open, onClose }) {
     setError("");
     setOk("");
     setAuthRequired(false);
+    setNeedsConsultancy(false); // ✅ NEW
   }, [open]);
 
   async function submit() {
@@ -77,6 +79,7 @@ export default function SubmitEventModal({ open, onClose }) {
     setError("");
     setOk("");
     setAuthRequired(false);
+    setNeedsConsultancy(false); // ✅ NEW
 
     try {
       const starts_at = new Date(startsAtLocal);
@@ -117,7 +120,14 @@ export default function SubmitEventModal({ open, onClose }) {
         if (res.status === 401) {
           setAuthRequired(true);
         }
-        throw new Error(json?.error || `Failed to submit (HTTP ${res.status})`);
+
+        // ✅ Show CTA only for the "no approved consultancy" case
+        const msg = json?.error || `Failed to submit (HTTP ${res.status})`;
+        if (res.status === 403 && msg.includes("approved consultancy")) {
+          setNeedsConsultancy(true);
+        }
+
+        throw new Error(msg);
       }
 
       setOk("Submitted for review. An admin will approve or deny it.");
@@ -172,7 +182,24 @@ export default function SubmitEventModal({ open, onClose }) {
             </div>
           ) : null}
 
-          {error ? <div className="mb-3 rounded border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-100">{error}</div> : null}
+          {error ? (
+            <div className="mb-3 rounded border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-100">
+              {error}
+
+              {/* ✅ CTA appears without changing the form layout */}
+              {needsConsultancy ? (
+                <div className="mt-3">
+                  <Link
+                    href="/consultants/new"
+                    className="inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-500"
+                  >
+                    Click here to create a free registered Account
+                  </Link>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
           {ok ? <div className="mb-3 rounded border border-emerald-400/30 bg-emerald-500/10 p-3 text-sm text-emerald-100">{ok}</div> : null}
 
           <div className="space-y-3">
