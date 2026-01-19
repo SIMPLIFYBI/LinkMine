@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import CourseEditorModal from "./CourseEditorModal.client.jsx";
 
 function fmtDT(iso) {
   try {
@@ -23,13 +25,22 @@ export default function CourseDrawer({ open, onClose, courseId, seedMeta }) {
   const [course, setCourse] = useState(null);
   const [error, setError] = useState("");
   const [logoBroken, setLogoBroken] = useState(false);
+
+  const [canManage, setCanManage] = useState(false);
+  const [checkingPerms, setCheckingPerms] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
+
   const overlayRef = useRef(null);
   const openRef = useRef(open);
   const onCloseRef = useRef(onClose);
 
   // keep refs in sync so the key handler sees latest values
-  useEffect(() => { openRef.current = open; }, [open]);
-  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     setLogoBroken(false);
@@ -53,7 +64,46 @@ export default function CourseDrawer({ open, onClose, courseId, seedMeta }) {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
+  }, [open, courseId]);
+
+  // ✅ compute owner/admin permission for showing Manage button
+  useEffect(() => {
+    if (!open || !courseId) return;
+    let cancelled = false;
+
+    async function loadPerms() {
+      try {
+        setCheckingPerms(true);
+
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+
+        const res = await fetch(`/api/training/courses/${courseId}/permissions`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          cache: "no-store",
+        });
+
+        if (!res.ok) {
+          if (!cancelled) setCanManage(false);
+          return;
+        }
+
+        const json = await res.json();
+        if (!cancelled) setCanManage(!!json.canEdit);
+      } catch {
+        if (!cancelled) setCanManage(false);
+      } finally {
+        if (!cancelled) setCheckingPerms(false);
+      }
+    }
+
+    loadPerms();
+    return () => {
+      cancelled = true;
+    };
   }, [open, courseId]);
 
   // subscribe once; use refs to avoid changing deps size/order
@@ -69,22 +119,25 @@ export default function CourseDrawer({ open, onClose, courseId, seedMeta }) {
   const logo = consultant.logo_url || seedMeta?.providerLogoUrl || null;
 
   return (
-    <div
-      className={`fixed inset-0 z-50 ${open ? "pointer-events-auto" : "pointer-events-none"}`}
-      aria-hidden={!open}
-    >
+    <div className={`fixed inset-0 z-50 ${open ? "pointer-events-auto" : "pointer-events-none"}`} aria-hidden={!open}>
       {/* Overlay with fade */}
       <div
         ref={overlayRef}
-        onClick={(e) => { if (e.target === overlayRef.current) onClose?.(); }}
-        className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`}
+        onClick={(e) => {
+          if (e.target === overlayRef.current) onClose?.();
+        }}
+        className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
+          open ? "opacity-100" : "opacity-0"
+        }`}
       />
 
       {/* Sliding panel */}
       <aside
         role="dialog"
         aria-modal="true"
-        className={`absolute inset-y-0 right-0 w-full max-w-md transform bg-gradient-to-b from-slate-900 to-slate-950 shadow-2xl ring-1 ring-white/10 transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"}`}
+        className={`absolute inset-y-0 right-0 w-full max-w-md transform bg-gradient-to-b from-slate-900 to-slate-950 shadow-2xl ring-1 ring-white/10 transition-transform duration-300 ease-in-out ${
+          open ? "translate-x-0" : "translate-x-full"
+        }`}
       >
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-white/10 bg-slate-900/80 px-4 py-3">
@@ -103,17 +156,29 @@ export default function CourseDrawer({ open, onClose, courseId, seedMeta }) {
               </div>
             )}
           </div>
+
           <div className="min-w-0">
             <div className="truncate text-xs font-semibold uppercase tracking-wider text-slate-300">
               {consultant.display_name || seedMeta?.providerName || "Provider"}
             </div>
-            <div className="truncate text-base font-semibold text-white">
-              {course?.title || seedMeta?.courseTitle || "Course"}
-            </div>
+            <div className="truncate text-base font-semibold text-white">{course?.title || seedMeta?.courseTitle || "Course"}</div>
           </div>
+
+          {canManage ? (
+            <button
+              type="button"
+              onClick={() => setEditorOpen(true)}
+              disabled={checkingPerms}
+              className="ml-auto rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs text-slate-200 hover:bg-white/10 disabled:opacity-60"
+              title="Edit or delete this course and its sessions"
+            >
+              {checkingPerms ? "…" : "Manage"}
+            </button>
+          ) : null}
+
           <button
             onClick={onClose}
-            className="ml-auto rounded-md border border-white/10 px-2 py-1 text-xs text-slate-200 hover:bg-white/10"
+            className="rounded-md border border-white/10 px-2 py-1 text-xs text-slate-200 hover:bg-white/10"
           >
             Close
           </button>
@@ -165,9 +230,13 @@ export default function CourseDrawer({ open, onClose, courseId, seedMeta }) {
                 <ul className="space-y-2">
                   {course.sessions.map((s) => (
                     <li key={s.id} className="rounded-md border border-white/10 bg-white/5 p-3">
-                      <div className="text-sm text-white">{fmtDT(s.starts_at)} → {fmtDT(s.ends_at)}</div>
+                      <div className="text-sm text-white">
+                        {fmtDT(s.starts_at)} → {fmtDT(s.ends_at)}
+                      </div>
                       <div className="text-xs text-slate-400">
-                        {s.delivery_method === "online" ? "Online" : [s.location_name, s.suburb, s.state].filter(Boolean).join(", ") || "TBA"}
+                        {s.delivery_method === "online"
+                          ? "Online"
+                          : [s.location_name, s.suburb, s.state].filter(Boolean).join(", ") || "TBA"}
                         {" • "}
                         {fmtPrice(s.price_cents, s.currency)}
                       </div>
@@ -192,6 +261,15 @@ export default function CourseDrawer({ open, onClose, courseId, seedMeta }) {
           )}
         </div>
       </aside>
+
+      {/* ✅ editor modal (edit + delete lives here) */}
+      <CourseEditorModal
+        open={editorOpen}
+        onClose={() => setEditorOpen(false)}
+        courseId={courseId}
+        seedMeta={seedMeta}
+        canManage={canManage}
+      />
     </div>
   );
 }
