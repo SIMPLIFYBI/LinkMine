@@ -86,6 +86,63 @@ function extractProviderFromCourse(course) {
   return { provider_name, provider_logo_url };
 }
 
+function buildCalendarUrl({ from, to, types, region }) {
+  const sp = new URLSearchParams();
+  sp.set("from", from);
+  sp.set("to", to);
+  sp.set("types", (types || []).join(","));
+  sp.set("region", region || "ALL");
+  return `/api/calendar?${sp.toString()}`;
+}
+
+function SegGroup({ children, label }) {
+  return (
+    <div className="flex items-center gap-2">
+      {label ? <div className="text-[11px] font-medium text-slate-400">{label}</div> : null}
+      <div className="inline-flex items-center rounded-xl border border-white/10 bg-slate-950/30 p-1 shadow-sm backdrop-blur">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function uiButtonClass({ pressed = false, size = "sm" } = {}) {
+  const base =
+    "relative inline-flex items-center justify-center select-none whitespace-nowrap " +
+    "transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60 " +
+    "active:scale-[0.98]";
+
+  const sizing =
+    size === "icon"
+      ? "h-8 w-8 rounded-lg text-sm"
+      : "rounded-lg px-3 py-1.5 text-xs font-semibold";
+
+  const off =
+    "text-slate-200 border border-transparent hover:bg-white/8 hover:text-white";
+
+  const on =
+    "text-white bg-gradient-to-b from-white/18 to-white/8 " +
+    "border border-white/20 ring-1 ring-white/15 " +
+    "shadow-[0_10px_25px_-12px_rgba(255,255,255,0.35)] " +
+    "after:absolute after:inset-0 after:rounded-lg after:content-[''] " +
+    "after:shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]";
+
+  return [base, sizing, pressed ? on : off].join(" ");
+}
+
+function SegButton({ active, children, onClick }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={uiButtonClass({ pressed: !!active, size: "sm" })}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function WhatsOnPage() {
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [loading, setLoading] = useState(false);
@@ -95,6 +152,10 @@ export default function WhatsOnPage() {
   const [selected, setSelected] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
+
+  // ✅ Filters (apply to BOTH sidebar + calendar)
+  const [types, setTypes] = useState(["event", "training"]); // "event" | "training"
+  const [region, setRegion] = useState("ALL"); // "ALL" | "AU" | "INTL"
 
   const sidebarRef = useRef(null);
   const courseProviderCacheRef = useRef(new Map()); // courseId -> { provider_name, provider_logo_url }
@@ -130,101 +191,81 @@ export default function WhatsOnPage() {
         const from = calendarRange.gridStart.toISOString();
         const to = calendarRange.gridEnd.toISOString();
 
-        const [sessRes, evtRes] = await Promise.all([
-          fetch(
-            `/api/training/sessions?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&includeCompleted=false`,
-            { cache: "no-store" }
-          ),
-          fetch(`/api/events?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`, { cache: "no-store" }),
-        ]);
+        const url = buildCalendarUrl({ from, to, types, region });
+        const res = await fetch(url, { cache: "no-store" });
 
-        const sessCt = sessRes.headers.get("content-type") || "";
-        const evtCt = evtRes.headers.get("content-type") || "";
+        const ct = res.headers.get("content-type") || "";
+        const json = ct.includes("application/json") ? await res.json() : null;
 
-        const sessJson = sessCt.includes("application/json") ? await sessRes.json() : null;
-        const evtJson = evtCt.includes("application/json") ? await evtRes.json() : null;
+        if (!res.ok) throw new Error(json?.error || `Failed to load calendar items (HTTP ${res.status})`);
 
-        if (!sessRes.ok) throw new Error(sessJson?.error || `Failed to load training sessions (HTTP ${sessRes.status})`);
-        if (!evtRes.ok) throw new Error(evtJson?.error || `Failed to load events (HTTP ${evtRes.status})`);
+        const apiItems = Array.isArray(json?.items) ? json.items : [];
 
-        const sessions = Array.isArray(sessJson?.sessions) ? sessJson.sessions : [];
-        const events = Array.isArray(evtJson?.events) ? evtJson.events : [];
+        // Map API items to the shape your UI already expects
+        const normalized = apiItems
+          .map((it) => {
+            if (it?.type === "training") {
+              return {
+                type: "training",
+                id: it.id, // "training-<uuid>"
+                source_id: it.session_id,
+                course_id: it.course_id,
+                title: it.title || "Training session",
+                starts_at: it.starts_at,
+                ends_at: it.ends_at,
+                timezone: it.timezone || "UTC",
+                delivery_method: it.delivery_method || "in_person",
+                locationText: normalizeLocation({
+                  delivery_method: it.delivery_method,
+                  location_name: it.location_name,
+                  suburb: it.suburb,
+                  state: it.state,
+                }),
+                join_url: it.join_url || null,
+                external_url: null,
+                tags: Array.isArray(it.tags) ? it.tags : [],
+                price_cents: it.price_cents ?? null,
+                currency: it.currency || "AUD",
 
-        const normalized = [
-          ...sessions.map((s) => {
-            const courseMeta = s?.course_meta ?? null;
-            const meta = courseMeta?.metadata ?? {};
+                // provider enrichment will fill these if missing
+                provider_name: it.provider_name || "",
+                provider_logo_url: it.provider_logo_url || null,
 
-            const providerName =
-              courseMeta?.consultant_name ||
-              meta?.providerName ||
-              meta?.provider_name ||
-              s?.consultant?.display_name ||
-              s?.provider?.display_name ||
-              "";
+                // optional: not provided by /api/calendar currently
+                course_meta: null,
+              };
+            }
 
-            const providerLogoUrl =
-              meta?.providerLogoUrl ||
-              meta?.provider_logo_url ||
-              meta?.logo_url ||
-              s?.consultant?.logo_url ||
-              s?.provider?.logo_url ||
-              null;
+            if (it?.type === "event") {
+              return {
+                type: "event",
+                id: it.id, // "event-<uuid>"
+                source_id: it.event_id,
+                title: it.title,
+                summary: it.summary || "",
+                description: it.description || "",
+                starts_at: it.starts_at,
+                ends_at: it.ends_at,
+                timezone: it.timezone || "UTC",
+                delivery_method: it.delivery_method || "in_person",
+                locationText: normalizeLocation({
+                  delivery_method: it.delivery_method,
+                  location_name: it.location_name,
+                  suburb: it.suburb,
+                  state: it.state,
+                }),
+                join_url: it.join_url || null,
+                external_url: it.external_url || null,
+                organizer_name: it.organizer_name || "",
+                organizer_url: it.organizer_url || null,
+                tags: Array.isArray(it.tags) ? it.tags : [],
+              };
+            }
 
-            return {
-              type: "training",
-              id: `training-${s.id}`,
-              source_id: s.id,
-              course_id: s.course_id,
-              title: s.course || courseMeta?.title || "Training session",
-              starts_at: s.starts_at,
-              ends_at: s.ends_at,
-              timezone: s.timezone || "UTC",
-              delivery_method: s.delivery_method || "in_person",
-              locationText: normalizeLocation({
-                delivery_method: s.delivery_method,
-                location_name: s.location_name,
-                suburb: s.suburb,
-                state: s.state,
-              }),
-              join_url: s.join_url || null,
-              external_url: null,
-              tags: Array.isArray(courseMeta?.tags) ? courseMeta.tags : [],
-              price_cents: s.price_cents ?? null,
-              currency: s.currency || "AUD",
-
-              // ✅ used by sidebar thumbnail (CourseDrawer-style)
-              provider_name: providerName,
-              provider_logo_url: providerLogoUrl,
-
-              // ✅ optional: still pass through for CourseDrawer seedMeta usage if you want later
-              course_meta: courseMeta,
-            };
-          }),
-          ...events.map((e) => ({
-            type: "event",
-            id: `event-${e.id}`,
-            source_id: e.id,
-            title: e.title,
-            summary: e.summary || "",
-            description: e.description || "",
-            starts_at: e.starts_at,
-            ends_at: e.ends_at,
-            timezone: e.timezone || "UTC",
-            delivery_method: e.delivery_method || "in_person",
-            locationText: normalizeLocation({
-              delivery_method: e.delivery_method,
-              location_name: e.location_name,
-              suburb: e.suburb,
-              state: e.state,
-            }),
-            join_url: e.join_url || null,
-            external_url: e.external_url || null,
-            organizer_name: e.organizer_name || "",
-            organizer_url: e.organizer_url || null,
-            tags: Array.isArray(e.tags) ? e.tags : [],
-          })),
-        ].sort((a, b) => String(a.starts_at).localeCompare(String(b.starts_at)));
+            return null;
+          })
+          .filter(Boolean)
+          .sort((a, b) => String(a.starts_at).localeCompare(String(b.starts_at)));
 
         if (!cancelled) setItems(normalized);
       } catch (e) {
@@ -238,7 +279,7 @@ export default function WhatsOnPage() {
     return () => {
       cancelled = true;
     };
-  }, [calendarRange.gridStart, calendarRange.gridEnd]);
+  }, [calendarRange.gridStart, calendarRange.gridEnd, types, region]);
 
   const itemsByDay = useMemo(() => {
     const map = new Map();
@@ -357,6 +398,13 @@ export default function WhatsOnPage() {
     };
   }, [items]);
 
+  const typeKey =
+    types.includes("event") && types.includes("training")
+      ? "ALL"
+      : types.includes("event")
+        ? "EVENT"
+        : "TRAINING";
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-white">
       {/* Top bar */}
@@ -379,26 +427,26 @@ export default function WhatsOnPage() {
 
             <button
               type="button"
+              className={uiButtonClass({ size: "icon" })}
               onClick={() => setMonth((m) => addMonths(m, -1))}
-              className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-sm hover:bg-white/10"
               aria-label="Previous month"
             >
-              ←
+              ‹
             </button>
             <button
               type="button"
+              className={uiButtonClass({ pressed: true })}
               onClick={() => setMonth(startOfMonth(new Date()))}
-              className="rounded-md border border-white/10 bg-white/5 px-3 py-1 text-sm hover:bg-white/10"
             >
               Today
             </button>
             <button
               type="button"
+              className={uiButtonClass({ size: "icon" })}
               onClick={() => setMonth((m) => addMonths(m, 1))}
-              className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-sm hover:bg-white/10"
               aria-label="Next month"
             >
-              →
+              ›
             </button>
 
             <div className="ml-2 hidden sm:block text-sm font-semibold text-slate-100">{fmtMonthTitle(month)}</div>
@@ -423,6 +471,35 @@ export default function WhatsOnPage() {
           <div className="border-b border-white/10 px-4 py-3">
             <div className="text-sm font-semibold">This month</div>
             <div className="text-xs text-slate-400">{fmtMonthTitle(month)}</div>
+
+            {/* ✅ Filters live at the top of the gallery container */}
+            <div className="mt-3 flex flex-col gap-2">
+              {/* Type */}
+              <SegGroup label="Type">
+                <SegButton active={typeKey === "ALL"} onClick={() => setTypes(["event", "training"])}>
+                  All
+                </SegButton>
+                <SegButton active={typeKey === "TRAINING"} onClick={() => setTypes(["training"])}>
+                  Training
+                </SegButton>
+                <SegButton active={typeKey === "EVENT"} onClick={() => setTypes(["event"])}>
+                  Events
+                </SegButton>
+              </SegGroup>
+
+              {/* Region */}
+              <SegGroup label="Region">
+                <SegButton active={region === "ALL"} onClick={() => setRegion("ALL")}>
+                  All
+                </SegButton>
+                <SegButton active={region === "AU"} onClick={() => setRegion("AU")}>
+                  Australia
+                </SegButton>
+                <SegButton active={region === "INTL"} onClick={() => setRegion("INTL")}>
+                  International
+                </SegButton>
+              </SegGroup>
+            </div>
           </div>
 
           <div
