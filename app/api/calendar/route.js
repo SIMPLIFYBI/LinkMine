@@ -49,6 +49,111 @@ function applyRegionFilter(q, region) {
   return q.not("country", "is", null).neq("country", "AU"); // INTL
 }
 
+async function tryFetchConsultants(sb, consultantIds) {
+  // Try common table names without breaking the endpoint.
+  const candidates = [
+    { table: "consultants", select: "id,display_name,name,logo_url,thumbnail_url,avatar_url,photo_url,image_url" },
+    { table: "consultant_profiles", select: "id,display_name,name,logo_url,thumbnail_url,avatar_url,photo_url,image_url" },
+    { table: "profiles", select: "id,display_name,full_name,name,avatar_url,photo_url,image_url,logo_url,thumbnail_url" },
+  ];
+
+  for (const c of candidates) {
+    const { data, error } = await sb.from(c.table).select(c.select).in("id", consultantIds);
+    if (!error && Array.isArray(data)) return { table: c.table, rows: data, error: null };
+  }
+
+  // last attempt: return the last error from "consultants" for debugging
+  const last = await sb
+    .from("consultants")
+    .select("id,display_name,name,logo_url,thumbnail_url,avatar_url,photo_url,image_url")
+    .in("id", consultantIds);
+
+  return { table: "consultants", rows: Array.isArray(last.data) ? last.data : [], error: last.error?.message || "Unknown" };
+}
+
+function pickName(row) {
+  return row?.display_name || row?.full_name || row?.name || null;
+}
+
+function pickLogo(row) {
+  return row?.logo_url || row?.thumbnail_url || row?.avatar_url || row?.photo_url || row?.image_url || null;
+}
+
+function asObject(v) {
+  if (!v) return null;
+  if (typeof v === "object") return v;
+  if (typeof v === "string") {
+    try {
+      return JSON.parse(v);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function buildStoragePublicUrl(supabaseUrl, bucket, path) {
+  if (!supabaseUrl || !bucket || !path) return null;
+  return `${supabaseUrl.replace(/\/$/, "")}/storage/v1/object/public/${bucket}/${String(path).replace(/^\//, "")}`;
+}
+
+function pickLogoFromConsultantMetadata(supabaseUrl, metadata) {
+  const m = asObject(metadata);
+  if (!m) return null;
+
+  // 1) common direct URL keys
+  const direct =
+    m.logo_url ||
+    m.logoUrl ||
+    m.avatar_url ||
+    m.avatarUrl ||
+    m.image_url ||
+    m.imageUrl ||
+    m.photo_url ||
+    m.photoUrl;
+
+  if (typeof direct === "string" && direct.startsWith("http")) return direct;
+
+  // 2) common nested objects: { logo: { url | publicUrl | path } }
+  const logoObj = asObject(m.logo) || asObject(m.branding?.logo) || asObject(m.profile?.logo);
+  const nestedUrl = logoObj?.url || logoObj?.publicUrl;
+  if (typeof nestedUrl === "string" && nestedUrl.startsWith("http")) return nestedUrl;
+
+  // 3) storage-like values (bucket/path)
+  // e.g. { logo: { bucket: "portfolio", path: "users/.../logo/file.jpg" } }
+  const bucket = logoObj?.bucket || m.logo_bucket || m.bucket;
+  const path = logoObj?.path || logoObj?.key || m.logo_path || m.path;
+  if (bucket && path) return buildStoragePublicUrl(supabaseUrl, bucket, path);
+
+  // 4) single string path that includes bucket at start: "portfolio/users/....jpg"
+  // or "users/...jpg" with implicit bucket "portfolio"
+  const maybePath = nestedUrl || logoObj?.path || direct;
+  if (typeof maybePath === "string") {
+    if (maybePath.includes("/storage/v1/object/public/") && maybePath.startsWith("http")) return maybePath;
+
+    const cleaned = maybePath.replace(/^\//, "");
+    const parts = cleaned.split("/");
+    if (parts.length >= 2) {
+      const maybeBucket = parts[0];
+      const rest = parts.slice(1).join("/");
+      // if it already looks like your bucket
+      if (maybeBucket === "portfolio" || maybeBucket === "public") {
+        return buildStoragePublicUrl(supabaseUrl, maybeBucket, rest);
+      }
+      // fallback: assume bucket "portfolio"
+      return buildStoragePublicUrl(supabaseUrl, "portfolio", cleaned);
+    }
+  }
+
+  return null;
+}
+
+function pickNameFromConsultantMetadata(metadata) {
+  const m = asObject(metadata);
+  if (!m) return null;
+  return m.display_name || m.displayName || m.name || m.full_name || m.fullName || null;
+}
+
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -174,12 +279,53 @@ export async function GET(req) {
           join_url: row.join_url,
           tags: c?.tags ?? [],
           consultant_id: c?.consultant_id ?? null,
+
+          // ✅ filled (best-effort) below
+          provider_name: null,
+          provider_logo_url: null,
         });
       }
     }
 
+    // ✅ Consultant enrichment using consultants.metadata
+    try {
+      const consultantIds = Array.from(
+        new Set(
+          results
+            .filter((r) => r.type === "training" && r.consultant_id && UUID_RE.test(String(r.consultant_id)))
+            .map((r) => r.consultant_id)
+        )
+      );
+
+      if (consultantIds.length) {
+        const { data: consultants, error: cErr } = await sb
+          .from("consultants")
+          .select("id,metadata")
+          .in("id", consultantIds);
+
+        if (!cErr && Array.isArray(consultants) && consultants.length) {
+          const byId = new Map(consultants.map((c) => [c.id, c]));
+
+          for (const r of results) {
+            if (r.type !== "training" || !r.consultant_id) continue;
+            const c = byId.get(r.consultant_id);
+            if (!c) continue;
+
+            const meta = c.metadata;
+
+            // Fill name/logo ONLY if missing (keeps any existing values)
+            if (!r.provider_name) r.provider_name = pickNameFromConsultantMetadata(meta) || null;
+            if (!r.provider_logo_url) r.provider_logo_url = pickLogoFromConsultantMetadata(process.env.NEXT_PUBLIC_SUPABASE_URL, meta);
+          }
+        }
+      }
+    } catch {
+      // ignore enrichment failures
+    }
+
     results.sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
 
+    const payload = { filters: { types, region, from, to }, items: results };
     return NextResponse.json({ filters: { types, region, from, to }, items: results });
   } catch (e) {
     return NextResponse.json({ error: e?.message || "Server error" }, { status: 500 });

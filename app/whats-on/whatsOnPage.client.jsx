@@ -143,6 +143,187 @@ function SegButton({ active, children, onClick }) {
   );
 }
 
+function isSameMonth(a, b) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+}
+
+function fmtDayHeader(d) {
+  // Example: "Tue 7"
+  return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric" });
+}
+
+function Dot({ className }) {
+  return <span className={`inline-block h-1.5 w-1.5 rounded-full ${className}`} />;
+}
+
+function MobileMonthCalendar({
+  month,
+  setMonth,
+  calendarDays, // 42-day grid
+  countsByDayKey, // Map(dayKey -> { eventCount, trainingCount, total })
+  selectedDayKey,
+  setSelectedDayKey,
+}) {
+  const monthTitle = fmtMonthTitle(month);
+
+  return (
+    <div className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/40 backdrop-blur">
+      <div className="px-4 pt-3 pb-2">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            className={uiButtonClass({ size: "icon" })}
+            onClick={() => setMonth(addMonths(month, -1))}
+            aria-label="Previous month"
+          >
+            ‹
+          </button>
+
+          <div className="text-sm font-semibold">{monthTitle}</div>
+
+          <button
+            type="button"
+            className={uiButtonClass({ size: "icon" })}
+            onClick={() => setMonth(addMonths(month, 1))}
+            aria-label="Next month"
+          >
+            ›
+          </button>
+        </div>
+
+        {/* ✅ Match your grid (Sunday-first) */}
+        <div className="mt-2 grid grid-cols-7 text-[11px] text-slate-400">
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+            <div key={d} className="py-1 text-center">
+              {d}
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 gap-y-1 pb-2">
+          {calendarDays.map((d) => {
+            const dayKey = d.toISOString().slice(0, 10);
+            const localKey = dayKeyLocal(d.toISOString());
+            const inMonth = isSameMonth(d, month);
+
+            const counts = countsByDayKey.get(localKey) || {
+              eventCount: 0,
+              trainingCount: 0,
+              total: 0,
+            };
+
+            const shownDots =
+              (counts.eventCount > 0 ? 1 : 0) + (counts.trainingCount > 0 ? 1 : 0);
+            const overflow = Math.max(0, counts.total - shownDots);
+
+            const selected = selectedDayKey === localKey;
+
+            return (
+              <button
+                key={dayKey}
+                type="button"
+                onClick={() => setSelectedDayKey(selected ? null : localKey)}
+                className={[
+                  "mx-auto flex h-10 w-10 flex-col items-center justify-center rounded-xl",
+                  "transition-colors",
+                  selected ? "bg-white/12 ring-1 ring-white/15" : "hover:bg-white/8",
+                  inMonth ? "text-white" : "text-slate-500",
+                ].join(" ")}
+                aria-pressed={selected}
+                aria-label={d.toLocaleDateString(undefined, {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              >
+                <div className="text-sm leading-none">{d.getDate()}</div>
+
+                <div className="mt-1 flex items-center gap-1">
+                  {counts.eventCount > 0 ? <Dot className="bg-orange-400" /> : null}
+                  {counts.trainingCount > 0 ? <Dot className="bg-sky-400" /> : null}
+                  {overflow > 0 ? (
+                    <span className="text-[10px] font-semibold text-slate-300">
+                      +{overflow}
+                    </span>
+                  ) : null}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {selectedDayKey ? (
+          <div className="pb-2">
+            <button
+              type="button"
+              className={uiButtonClass()}
+              onClick={() => setSelectedDayKey(null)}
+            >
+              Clear day filter
+            </button>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function FiltersPanel({
+  typeKey,
+  setTypes,
+  region,
+  setRegion,
+  variant = "desktop", // "desktop" | "mobile"
+}) {
+  const isMobile = variant === "mobile";
+
+  return (
+    <div className="mx-auto w-full max-w-7xl px-4 pt-4">
+      <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* ✅ Desktop only heading */}
+          {!isMobile ? (
+            <div className="min-w-0">
+              <div className="text-sm font-semibold">Filters</div>
+              <div className="text-xs text-slate-400">Refine Training + Events</div>
+            </div>
+          ) : null}
+
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            {/* ✅ Mobile keeps ONLY this one filter */}
+            <SegGroup label={isMobile ? null : "Type"}>
+              <SegButton active={typeKey === "ALL"} onClick={() => setTypes(["event", "training"])}>
+                All
+              </SegButton>
+              <SegButton active={typeKey === "TRAINING"} onClick={() => setTypes(["training"])}>
+                Training
+              </SegButton>
+              <SegButton active={typeKey === "EVENT"} onClick={() => setTypes(["event"])}>
+                Events
+              </SegButton>
+            </SegGroup>
+
+            {/* ✅ Desktop only region filter */}
+            {!isMobile ? (
+              <SegGroup label="Region">
+                <SegButton active={region === "ALL"} onClick={() => setRegion("ALL")}>
+                  All
+                </SegButton>
+                <SegButton active={region === "AU"} onClick={() => setRegion("AU")}>
+                  Australia
+                </SegButton>
+                <SegButton active={region === "INTL"} onClick={() => setRegion("INTL")}>
+                  International
+                </SegButton>
+              </SegGroup>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function WhatsOnPage() {
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [loading, setLoading] = useState(false);
@@ -153,12 +334,15 @@ export default function WhatsOnPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
 
+  // ✅ Mobile day selection (filters agenda list)
+  const [selectedDayKey, setSelectedDayKey] = useState(null);
+
   // ✅ Filters (apply to BOTH sidebar + calendar)
-  const [types, setTypes] = useState(["event", "training"]); // "event" | "training"
-  const [region, setRegion] = useState("ALL"); // "ALL" | "AU" | "INTL"
+  const [types, setTypes] = useState(["event", "training"]);
+  const [region, setRegion] = useState("ALL");
 
   const sidebarRef = useRef(null);
-  const courseProviderCacheRef = useRef(new Map()); // courseId -> { provider_name, provider_logo_url }
+  const courseProviderCacheRef = useRef(new Map());
 
   const calendarRange = useMemo(() => {
     // Month grid: start on Sunday, show 6 weeks (42 days)
@@ -228,6 +412,8 @@ export default function WhatsOnPage() {
                 currency: it.currency || "AUD",
 
                 // provider enrichment will fill these if missing
+                consultant_id: it.consultant_id ?? null, // ✅ add this
+
                 provider_name: it.provider_name || "",
                 provider_logo_url: it.provider_logo_url || null,
 
@@ -281,129 +467,82 @@ export default function WhatsOnPage() {
     };
   }, [calendarRange.gridStart, calendarRange.gridEnd, types, region]);
 
-  const itemsByDay = useMemo(() => {
-    const map = new Map();
-    for (const it of items) {
-      const k = dayKeyLocal(it.starts_at);
-      if (!map.has(k)) map.set(k, []);
-      map.get(k).push(it);
-    }
-    for (const [k, arr] of map.entries()) {
-      arr.sort((a, b) => String(a.starts_at).localeCompare(String(b.starts_at)));
-      map.set(k, arr);
-    }
-    return map;
-  }, [items]);
-
-  const monthItemsForSidebar = useMemo(() => {
-    // show items for the visible month (not the whole grid)
-    const mStart = startOfMonth(month);
-    const mEnd = addMonths(mStart, 1);
-    return items.filter((it) => {
-      const d = new Date(it.starts_at);
-      return d >= mStart && d < mEnd;
-    });
-  }, [items, month]);
-
-  const sidebarGroups = useMemo(() => {
-    const groups = new Map();
-    for (const it of monthItemsForSidebar) {
-      const k = dayKeyLocal(it.starts_at);
-      if (!groups.has(k)) groups.set(k, []);
-      groups.get(k).push(it);
-    }
-    return Array.from(groups.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([k, arr]) => [k, arr.sort((x, y) => String(x.starts_at).localeCompare(String(y.starts_at)))]);
-  }, [monthItemsForSidebar]);
-
-  function openDrawer(it) {
-    setSelected(it);
-    setDrawerOpen(true);
-  }
-
-  function scrollSidebarToDay(k) {
-    const el = document.getElementById(`whats-on-day-${k}`);
-    if (el && sidebarRef.current) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-      el.classList.add("ring-2", "ring-sky-400/50");
-      window.setTimeout(() => el.classList.remove("ring-2", "ring-sky-400/50"), 700);
-    }
-  }
-
-  // ✅ After items load, lazy-fetch provider logo/name for training rows that are missing it
-  useEffect(() => {
-    let cancelled = false;
-
-    async function enrichTrainingProviders() {
-      const missingCourseIds = Array.from(
-        new Set(
-          items
-            .filter(
-              (it) =>
-                it?.type === "training" &&
-                it?.course_id &&
-                (!it.provider_logo_url || !it.provider_name)
-            )
-            .map((it) => it.course_id)
-        )
-      ).filter((courseId) => !courseProviderCacheRef.current.has(courseId));
-
-      if (missingCourseIds.length === 0) return;
-
-      const results = await Promise.allSettled(
-        missingCourseIds.map(async (courseId) => {
-          const res = await fetch(`/api/training/courses/${encodeURIComponent(courseId)}`, { cache: "no-store" });
-          const ct = res.headers.get("content-type") || "";
-          const json = ct.includes("application/json") ? await res.json() : null;
-          if (!res.ok) throw new Error(json?.error || `Failed to load course ${courseId} (HTTP ${res.status})`);
-
-          const { provider_name, provider_logo_url } = extractProviderFromCourse(json);
-          courseProviderCacheRef.current.set(courseId, { provider_name, provider_logo_url });
-          return { courseId, provider_name, provider_logo_url };
-        })
-      );
-
-      if (cancelled) return;
-
-      const updates = new Map();
-      for (const r of results) {
-        if (r.status === "fulfilled") {
-          updates.set(r.value.courseId, {
-            provider_name: r.value.provider_name,
-            provider_logo_url: r.value.provider_logo_url,
-          });
-        }
-      }
-
-      if (updates.size === 0) return;
-
-      setItems((prev) =>
-        prev.map((it) => {
-          if (it?.type !== "training" || !it?.course_id) return it;
-          const u = updates.get(it.course_id);
-          if (!u) return it;
-          return {
-            ...it,
-            provider_name: it.provider_name || u.provider_name,
-            provider_logo_url: it.provider_logo_url || u.provider_logo_url,
-          };
-        })
-      );
-    }
-
-    enrichTrainingProviders();
-    return () => {
-      cancelled = true;
-    };
-  }, [items]);
-
   const typeKey =
     types.includes("event") && types.includes("training")
       ? "ALL"
       : types.includes("event")
         ? "EVENT"
         : "TRAINING";
+
+  useEffect(() => {
+    if (!selectedDayKey) return;
+    const selectedDate = new Date(`${selectedDayKey}T00:00:00`);
+    if (!isSameMonth(selectedDate, month)) setSelectedDayKey(null);
+  }, [month, selectedDayKey]);
+
+  // Build day lookup for dots + agenda grouping (uses currently fetched/filtered items)
+  const itemsByDayKey = useMemo(() => {
+    const map = new Map();
+    for (const it of items) {
+      const k = dayKeyLocal(it.starts_at); // "YYYY-MM-DD" (local)
+      if (!map.has(k)) map.set(k, { eventCount: 0, trainingCount: 0, total: 0, items: [] });
+      const entry = map.get(k);
+      entry.items.push(it);
+      entry.total += 1;
+      if (it.type === "event") entry.eventCount += 1;
+      if (it.type === "training") entry.trainingCount += 1;
+    }
+    for (const v of map.values()) {
+      v.items.sort((a, b) => String(a.starts_at).localeCompare(String(b.starts_at)));
+    }
+    return map;
+  }, [items]);
+
+  const countsByDayKey = itemsByDayKey;
+
+  // ✅ Desktop calendar expects Map<dayKey, item[]>
+  const itemsByDay = useMemo(() => {
+    const map = new Map();
+    for (const [k, v] of itemsByDayKey.entries()) {
+      map.set(k, v.items);
+    }
+    return map;
+  }, [itemsByDayKey]);
+
+  // ✅ Sidebar groups for "This month" (desktop) and agenda groups (mobile)
+  const sidebarGroups = useMemo(() => {
+    const y = month.getFullYear();
+    const m = month.getMonth() + 1; // 1-12
+
+    const groups = [];
+    for (const [k, v] of itemsByDayKey.entries()) {
+      // k = "YYYY-MM-DD"
+      const [yy, mm] = k.split("-").map((n) => Number(n));
+      if (yy !== y || mm !== m) continue;
+      if (!v?.items?.length) continue;
+      groups.push([k, v.items]);
+    }
+
+    // sort by day key
+    groups.sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+    return groups;
+  }, [itemsByDayKey, month]);
+
+  // ✅ Mobile groups: month by default, day-filtered when a date is selected
+  const mobileGroups = useMemo(() => {
+    if (!selectedDayKey) return sidebarGroups;
+    return sidebarGroups.filter(([k]) => k === selectedDayKey);
+  }, [sidebarGroups, selectedDayKey]);
+
+  const openDrawer = (it) => {
+    setSelected(it);
+    setDrawerOpen(true);
+  };
+
+  const scrollSidebarToDay = (dayKey) => {
+    const el = document.getElementById(`whats-on-day-${dayKey}`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-white">
@@ -424,7 +563,6 @@ export default function WhatsOnPage() {
             >
               Add an Event
             </button>
-
             <button
               type="button"
               className={uiButtonClass({ size: "icon" })}
@@ -452,54 +590,129 @@ export default function WhatsOnPage() {
             <div className="ml-2 hidden sm:block text-sm font-semibold text-slate-100">{fmtMonthTitle(month)}</div>
           </div>
         </div>
+      </div>
 
-        {/* ✅ mobile placement */}
-        <div className="mx-auto w-full max-w-7xl px-4 pb-3 sm:hidden">
-          <button
-            type="button"
-            onClick={() => setSubmitOpen(true)}
-            className="w-full rounded-md bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-500"
-          >
-            Add an Event
-          </button>
+      {/* ✅ Desktop filters */}
+      <div className="hidden lg:block">
+        <FiltersPanel
+          variant="desktop"
+          typeKey={typeKey}
+          setTypes={setTypes}
+          region={region}
+          setRegion={setRegion}
+        />
+      </div>
+
+      {/* ✅ Mobile filters (no heading, type only) */}
+      <div className="lg:hidden">
+        <FiltersPanel
+          variant="mobile"
+          typeKey={typeKey}
+          setTypes={setTypes}
+          region={region}
+          setRegion={setRegion}
+        />
+      </div>
+
+      {/* ✅ Mobile: month calendar on top + agenda below */}
+      <div className="lg:hidden">
+        <MobileMonthCalendar
+          month={month}
+          setMonth={setMonth}
+          calendarDays={calendarRange.days}
+          countsByDayKey={countsByDayKey}
+          selectedDayKey={selectedDayKey}
+          setSelectedDayKey={setSelectedDayKey}
+        />
+
+        {/* Agenda list */}
+        <div className="px-4 pb-8">
+          {loading ? <div className="p-3 text-sm text-slate-300">Loading…</div> : null}
+          {error ? (
+            <div className="mb-3 rounded border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-100">
+              {error}
+            </div>
+          ) : null}
+
+          {!loading && !error && mobileGroups.length === 0 ? (
+            <div className="p-3 text-sm text-slate-300">
+              {selectedDayKey ? "No items on this day." : "No items this month."}
+            </div>
+          ) : null}
+
+          {!loading && !error
+            ? mobileGroups.map(([k, arr]) => {
+                const d = new Date(`${k}T00:00:00`);
+                const label = d.toLocaleDateString("en-AU", {
+                  weekday: "short",
+                  day: "2-digit",
+                  month: "short",
+                });
+
+                return (
+                  <div key={k} className="mb-3 rounded-xl border border-white/10 bg-white/5 p-3">
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                      {label}
+                    </div>
+
+                    <div className="space-y-2">
+                      {arr.map((it) => (
+                        <button
+                          key={it.id}
+                          type="button"
+                          onClick={() => openDrawer(it)}
+                          className="flex w-full items-start gap-2 rounded-md border border-white/10 bg-slate-950/40 px-3 py-3 text-left hover:bg-white/10"
+                        >
+                          {it.type === "training" ? (
+                            <span className="mt-0.5 h-8 w-8 shrink-0 overflow-hidden ring-1 ring-white/10">
+                              {it.provider_logo_url ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={it.provider_logo_url}
+                                  alt={it.provider_name || "Provider"}
+                                  className="h-full w-full object-cover"
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = "none";
+                                  }}
+                                />
+                              ) : (
+                                <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-sky-500/60 to-indigo-600/60 text-xs font-bold text-white">
+                                  {initials(it.provider_name || it.title)}
+                                </span>
+                              )}
+                            </span>
+                          ) : (
+                            <span className="mt-1 inline-block h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                          )}
+
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm text-white">{it.title}</div>
+                            <div className="mt-0.5 text-xs text-slate-400">
+                              {fmtTimeRange(it.starts_at, it.ends_at)} • {clampText(it.locationText, 40)}
+                            </div>
+                          </div>
+
+                          <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wider text-slate-200">
+                            {it.type === "training" ? "Training" : "Event"}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
+            : null}
         </div>
       </div>
 
-      <div className="mx-auto grid w-full max-w-7xl gap-4 px-4 py-4 lg:grid-cols-[360px_1fr]">
+      {/* ✅ Desktop: your existing 2-column layout (hide on mobile) */}
+      <div className="mx-auto hidden w-full max-w-7xl gap-4 px-4 py-4 lg:grid lg:grid-cols-[360px_1fr]">
         {/* Left sidebar */}
         <aside className="rounded-xl border border-white/10 bg-white/5">
           <div className="border-b border-white/10 px-4 py-3">
             <div className="text-sm font-semibold">This month</div>
             <div className="text-xs text-slate-400">{fmtMonthTitle(month)}</div>
-
-            {/* ✅ Filters live at the top of the gallery container */}
-            <div className="mt-3 flex flex-col gap-2">
-              {/* Type */}
-              <SegGroup label="Type">
-                <SegButton active={typeKey === "ALL"} onClick={() => setTypes(["event", "training"])}>
-                  All
-                </SegButton>
-                <SegButton active={typeKey === "TRAINING"} onClick={() => setTypes(["training"])}>
-                  Training
-                </SegButton>
-                <SegButton active={typeKey === "EVENT"} onClick={() => setTypes(["event"])}>
-                  Events
-                </SegButton>
-              </SegGroup>
-
-              {/* Region */}
-              <SegGroup label="Region">
-                <SegButton active={region === "ALL"} onClick={() => setRegion("ALL")}>
-                  All
-                </SegButton>
-                <SegButton active={region === "AU"} onClick={() => setRegion("AU")}>
-                  Australia
-                </SegButton>
-                <SegButton active={region === "INTL"} onClick={() => setRegion("INTL")}>
-                  International
-                </SegButton>
-              </SegGroup>
-            </div>
           </div>
 
           <div
@@ -544,7 +757,7 @@ export default function WhatsOnPage() {
                                   />
                                 ) : (
                                   <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-sky-500/60 to-indigo-600/60 text-xs font-bold text-white">
-                                    {(it.provider_name || "?").slice(0, 1).toUpperCase()}
+                                    {initials(it.provider_name || it.title)}
                                   </span>
                                 )}
                               </span>
@@ -657,8 +870,6 @@ export default function WhatsOnPage() {
       </div>
 
       <WhatsOnDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} item={selected} />
-
-      {/* ✅ submit modal */}
       <SubmitEventModal open={submitOpen} onClose={() => setSubmitOpen(false)} />
     </div>
   );
