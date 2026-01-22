@@ -555,7 +555,29 @@ export default function WhatsOnPage() {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            {/* ✅ Add an Event */}
+            {/* ✅ Mobile: compact "Add Event" button */}
+            <button
+              type="button"
+              onClick={() => setSubmitOpen(true)}
+              className={[
+                "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold",
+                "text-white",
+                "bg-gradient-to-b from-sky-500/90 to-indigo-600/90",
+                "ring-1 ring-white/15 shadow-[0_12px_28px_-16px_rgba(56,189,248,0.55)]",
+                "hover:from-sky-400/90 hover:to-indigo-500/90",
+                "active:scale-[0.98]",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60",
+              ].join(" ")}
+              aria-label="Add Event"
+              title="Add Event"
+            >
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/15">
+                +
+              </span>
+              <span className="leading-none">Add Event</span>
+            </button>
+
+            {/* ✅ Desktop: keep the existing full button */}
             <button
               type="button"
               onClick={() => setSubmitOpen(true)}
@@ -563,31 +585,6 @@ export default function WhatsOnPage() {
             >
               Add an Event
             </button>
-            <button
-              type="button"
-              className={uiButtonClass({ size: "icon" })}
-              onClick={() => setMonth((m) => addMonths(m, -1))}
-              aria-label="Previous month"
-            >
-              ‹
-            </button>
-            <button
-              type="button"
-              className={uiButtonClass({ pressed: true })}
-              onClick={() => setMonth(startOfMonth(new Date()))}
-            >
-              Today
-            </button>
-            <button
-              type="button"
-              className={uiButtonClass({ size: "icon" })}
-              onClick={() => setMonth((m) => addMonths(m, 1))}
-              aria-label="Next month"
-            >
-              ›
-            </button>
-
-            <div className="ml-2 hidden sm:block text-sm font-semibold text-slate-100">{fmtMonthTitle(month)}</div>
           </div>
         </div>
       </div>
@@ -788,7 +785,28 @@ export default function WhatsOnPage() {
         {/* Calendar */}
         <main className="rounded-xl border border-white/10 bg-white/5">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
-            <div className="text-sm font-semibold">{fmtMonthTitle(month)}</div>
+            <div className="flex items-center gap-2">
+              {/* ✅ Desktop month nav now lives here */}
+              <button
+                type="button"
+                className={uiButtonClass({ size: "icon" })}
+                onClick={() => setMonth((m) => addMonths(m, -1))}
+                aria-label="Previous month"
+              >
+                ‹
+              </button>
+
+              <div className="text-sm font-semibold">{fmtMonthTitle(month)}</div>
+
+              <button
+                type="button"
+                className={uiButtonClass({ size: "icon" })}
+                onClick={() => setMonth((m) => addMonths(m, 1))}
+                aria-label="Next month"
+              >
+                ›
+              </button>
+            </div>
 
             {/* ✅ Legend */}
             <div className="flex items-center gap-3 text-xs text-slate-300">
