@@ -72,9 +72,7 @@ export default function RootLayout({ children }) {
               className="absolute -bottom-px left-0 h-px w-full bg-gradient-to-r from-transparent via-sky-400/50 to-transparent"
             />
           </div>
-          <main className="flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
-            {children}
-          </main>
+          <main className="flex-1">{children}</main>
           <Footer />
           <MobileNav />
           <Toaster position="top-right" />

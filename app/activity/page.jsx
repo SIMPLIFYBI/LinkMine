@@ -3,11 +3,75 @@ export const runtime = "nodejs";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
-import JobsRequestedTable from "@/app/jobs/JobsRequestedTable"; // NEW: use the table component
+import JobsRequestedTable from "@/app/jobs/JobsRequestedTable";
 
 export const metadata = {
   title: "My Activity",
 };
+
+// --- helpers (for consultant logo in metadata jsonb) ---
+function asObject(v) {
+  if (!v) return null;
+  if (typeof v === "object") return v;
+  if (typeof v === "string") {
+    try {
+      return JSON.parse(v);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function buildStoragePublicUrl(supabaseUrl, bucket, path) {
+  if (!supabaseUrl || !bucket || !path) return null;
+  return `${supabaseUrl.replace(/\/$/, "")}/storage/v1/object/public/${bucket}/${String(path).replace(/^\//, "")}`;
+}
+
+function pickLogoFromMetadata(supabaseUrl, metadata) {
+  const m = asObject(metadata);
+  if (!m) return null;
+
+  const direct =
+    m.logo_url ||
+    m.logoUrl ||
+    m.avatar_url ||
+    m.avatarUrl ||
+    m.image_url ||
+    m.imageUrl ||
+    m.photo_url ||
+    m.photoUrl;
+
+  if (typeof direct === "string" && direct.startsWith("http")) return direct;
+
+  const logoObj = asObject(m.logo) || asObject(m.branding?.logo) || asObject(m.profile?.logo);
+  const nestedUrl = logoObj?.url || logoObj?.publicUrl;
+  if (typeof nestedUrl === "string" && nestedUrl.startsWith("http")) return nestedUrl;
+
+  const bucket = logoObj?.bucket || m.logo_bucket || m.bucket;
+  const path = logoObj?.path || logoObj?.key || m.logo_path || m.path;
+  if (bucket && path) return buildStoragePublicUrl(supabaseUrl, bucket, path);
+
+  // fallback for stored paths like "portfolio/..."
+  const maybePath = logoObj?.path || direct;
+  if (typeof maybePath === "string") {
+    const cleaned = maybePath.replace(/^\//, "");
+    if (cleaned.startsWith("http")) return cleaned;
+
+    const parts = cleaned.split("/");
+    if (parts.length >= 2) {
+      const maybeBucket = parts[0];
+      const rest = parts.slice(1).join("/");
+      if (maybeBucket === "portfolio" || maybeBucket === "public") {
+        return buildStoragePublicUrl(supabaseUrl, maybeBucket, rest);
+      }
+      // assume "portfolio" if bucket omitted
+      return buildStoragePublicUrl(supabaseUrl, "portfolio", cleaned);
+    }
+  }
+
+  return null;
+}
 
 export default async function MyActivityPage({ searchParams }) {
   const sb = await supabaseServerClient();
@@ -17,11 +81,15 @@ export default async function MyActivityPage({ searchParams }) {
     redirect(`/login?redirect=${encodeURIComponent("/activity")}`);
   }
 
-  const tab = (searchParams?.tab ?? "contacts").toLowerCase();
+  const requestedTab = String(searchParams?.tab ?? "contacts").toLowerCase();
+  const tab = ["contacts", "jobs", "favourites"].includes(requestedTab) ? requestedTab : "contacts";
 
-  // Only fetch contacts for the contacts tab
+  // Only fetch what we need per-tab
   let rows = null;
   let error = null;
+
+  let favs = null;
+  let favError = null;
 
   if (tab === "contacts") {
     const res = await sb
@@ -44,11 +112,35 @@ export default async function MyActivityPage({ searchParams }) {
     error = res.error || null;
   }
 
+  if (tab === "favourites") {
+    const res = await sb
+      .from("consultant_favourites")
+      .select(
+        `
+        id,
+        created_at,
+        consultant:consultant_id (
+          id,
+          display_name,
+          metadata
+        )
+      `
+      )
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    favs = res.data || null;
+    favError = res.error || null;
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
   return (
     <div className="mx-auto max-w-screen-lg px-4 py-8">
       <header className="mb-6">
         <h1 className="text-2xl font-semibold">My Activity</h1>
-        <p className="text-slate-400 mt-1">A private log of your activity across YouMine.</p>
+        <p className="mt-1 text-slate-400">A private log of your activity across YouMine.</p>
       </header>
 
       <TabNav activeTab={tab} />
@@ -67,15 +159,13 @@ export default async function MyActivityPage({ searchParams }) {
             {rows.map((r) => (
               <li
                 key={r.id}
-                className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 ring-1 ring-white/10 hover:border-sky-400/30 hover:bg-sky-500/5 transition"
+                className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 ring-1 ring-white/10 transition hover:border-sky-400/30 hover:bg-sky-500/5"
               >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <StatusPill status={r.status} />
-                      <h3 className="truncate text-base font-semibold text-white">
-                        {r.subject || "(no subject)"}
-                      </h3>
+                      <h3 className="truncate text-base font-semibold text-white">{r.subject || "(no subject)"}</h3>
                     </div>
                     <div className="mt-1 text-sm text-slate-400">
                       <span className="text-slate-300">{r.consultant?.display_name || "Consultant"}</span>
@@ -95,6 +185,7 @@ export default async function MyActivityPage({ searchParams }) {
                       ) : null}
                     </div>
                   </div>
+
                   <div className="shrink-0">
                     <a
                       href={`/consultants/${r.consultant?.id ?? ""}`}
@@ -104,17 +195,67 @@ export default async function MyActivityPage({ searchParams }) {
                     </a>
                   </div>
                 </div>
+
                 {r.message ? <p className="mt-3 text-sm text-slate-200/90">{r.message}</p> : null}
               </li>
             ))}
           </ul>
         )
-      ) : (
-        // My Jobs tab now shows your jobs table
+      ) : tab === "jobs" ? (
         <div className="mt-4">
           <JobsRequestedTable />
         </div>
-      )}
+      ) : tab === "favourites" ? (
+        favError ? (
+          <div className="mt-4 rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4 text-rose-100">
+            Couldn’t load your favourites. Please try again shortly.
+          </div>
+        ) : !favs || favs.length === 0 ? (
+          <div className="mt-4">
+            <FavouritesEmptyState />
+          </div>
+        ) : (
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {favs.map((f) => {
+              const c = f.consultant;
+              const logoUrl = pickLogoFromMetadata(supabaseUrl, c?.metadata);
+
+              return (
+                <Link
+                  key={f.id}
+                  href={`/consultants/${c?.id ?? ""}`}
+                  className="group rounded-2xl border border-white/10 bg-white/[0.04] p-3 ring-1 ring-white/10 transition hover:border-sky-400/30 hover:bg-sky-500/5"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-white/10 ring-1 ring-white/10">
+                      {logoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="grid h-full w-full place-items-center text-xs font-semibold text-slate-300">
+                          {(c?.display_name || "C").slice(0, 1).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-white">{c?.display_name || "Consultant"}</div>
+                      <div className="mt-0.5 text-xs text-slate-400">
+                        Favourited{" "}
+                        <time dateTime={f.created_at}>{new Date(f.created_at).toLocaleDateString()}</time>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-sky-200 opacity-90 transition group-hover:opacity-100">
+                    View profile <span aria-hidden>→</span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )
+      ) : null}
     </div>
   );
 }
@@ -123,7 +264,9 @@ function TabNav({ activeTab }) {
   const tabs = [
     { key: "contacts", label: "Direct contacts", href: "/activity?tab=contacts" },
     { key: "jobs", label: "My Jobs", href: "/activity?tab=jobs" },
+    { key: "favourites", label: "Favourites", href: "/activity?tab=favourites" },
   ];
+
   return (
     <nav
       aria-label="Activity sections"
@@ -165,9 +308,25 @@ function StatusPill({ status }) {
 function EmptyState() {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-8 text-center ring-1 ring-white/10">
-      <div className="mx-auto mb-3 h-10 w-10 rounded-full bg-sky-500/15 text-sky-300 grid place-items-center">✉️</div>
+      <div className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-full bg-sky-500/15 text-sky-300">✉️</div>
       <h3 className="text-lg font-semibold text-white">No activity yet</h3>
       <p className="mt-1 text-slate-400">When you contact a consultant, you’ll see it here.</p>
+      <a
+        href="/consultants"
+        className="mt-4 inline-flex items-center rounded-full border border-sky-400/40 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-100 hover:bg-sky-500/20"
+      >
+        Browse consultants
+      </a>
+    </div>
+  );
+}
+
+function FavouritesEmptyState() {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-8 text-center ring-1 ring-white/10">
+      <div className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-full bg-indigo-500/15 text-indigo-200">★</div>
+      <h3 className="text-lg font-semibold text-white">No favourites yet</h3>
+      <p className="mt-1 text-slate-400">Tap the favourite button on a consultant to save them here.</p>
       <a
         href="/consultants"
         className="mt-4 inline-flex items-center rounded-full border border-sky-400/40 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-100 hover:bg-sky-500/20"

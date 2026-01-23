@@ -342,8 +342,7 @@ export default function DidYouKnowSection() {
       </div>
 
       <p className="mt-5 text-[11px] text-slate-500">
-        Figures are indicative placeholders. Substitute with validated internal or public sources.
-      </p>
+        </p>
     </section>
   );
 }
