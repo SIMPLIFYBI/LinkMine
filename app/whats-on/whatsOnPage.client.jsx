@@ -555,7 +555,7 @@ export default function WhatsOnPage() {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            {/* ✅ Mobile: compact "Add Event" button */}
+            {/* ✅ Single button for all breakpoints */}
             <button
               type="button"
               onClick={() => setSubmitOpen(true)}
@@ -577,14 +577,7 @@ export default function WhatsOnPage() {
               <span className="leading-none">Add Event</span>
             </button>
 
-            {/* ✅ Desktop: keep the existing full button */}
-            <button
-              type="button"
-              onClick={() => setSubmitOpen(true)}
-              className="hidden sm:inline-flex rounded-md bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-sky-500"
-            >
-              Add an Event
-            </button>
+            {/* ❌ Removed the desktop-only "Add an Event" button */}
           </div>
         </div>
       </div>

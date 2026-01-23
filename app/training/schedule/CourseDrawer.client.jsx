@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import CourseEditorModal from "./CourseEditorModal.client.jsx";
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 function fmtDT(iso) {
   try {
     return new Date(iso).toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" });
@@ -29,6 +32,9 @@ export default function CourseDrawer({ open, onClose, courseId, seedMeta }) {
   const [canManage, setCanManage] = useState(false);
   const [checkingPerms, setCheckingPerms] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
+
+  // ✅ if we only have a slug, resolve it to an id for /consultants/[id]
+  const [resolvedConsultantId, setResolvedConsultantId] = useState(null);
 
   const overlayRef = useRef(null);
   const openRef = useRef(open);
@@ -115,8 +121,58 @@ export default function CourseDrawer({ open, onClose, courseId, seedMeta }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  useEffect(() => {
+    setResolvedConsultantId(null);
+  }, [courseId, open]);
+
   const consultant = course?.consultant || {};
   const logo = consultant.logo_url || seedMeta?.providerLogoUrl || null;
+
+  const rawConsultantId =
+    consultant?.id ||
+    consultant?.consultant_id ||
+    course?.consultant_id ||
+    seedMeta?.consultantId ||
+    seedMeta?.consultant_id ||
+    null;
+
+  const consultantId = rawConsultantId && UUID_RE.test(String(rawConsultantId)) ? String(rawConsultantId) : null;
+  const consultantSlug = consultant?.slug || seedMeta?.consultantSlug || seedMeta?.consultant_slug || null;
+
+  // ✅ resolve slug -> id (best-effort)
+  useEffect(() => {
+    if (!open) return;
+    if (consultantId) return;
+    if (!consultantSlug) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const { data, error: qErr } = await supabase
+          .from("consultants")
+          .select("id")
+          .eq("slug", consultantSlug)
+          .maybeSingle();
+
+        if (cancelled) return;
+        if (qErr) return;
+
+        const id = data?.id;
+        if (id && UUID_RE.test(String(id))) setResolvedConsultantId(String(id));
+      } catch {
+        // ignore
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, consultantId, consultantSlug]);
+
+  const providerHref = (consultantId || resolvedConsultantId)
+    ? `/consultants/${encodeURIComponent(String(consultantId || resolvedConsultantId))}`
+    : null;
 
   return (
     <div className={`fixed inset-0 z-50 ${open ? "pointer-events-auto" : "pointer-events-none"}`} aria-hidden={!open}>
@@ -248,14 +304,14 @@ export default function CourseDrawer({ open, onClose, courseId, seedMeta }) {
               )}
 
               <div className="mt-4 flex items-center gap-2">
-                {consultant.slug && (
+                {providerHref ? (
                   <a
-                    href={`/consultants/${encodeURIComponent(consultant.slug)}`}
+                    href={providerHref}
                     className="rounded-md border border-white/10 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/20"
                   >
                     View provider
                   </a>
-                )}
+                ) : null}
               </div>
             </>
           )}

@@ -1,61 +1,53 @@
 "use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import navTabs from "./navTabs";
 import UserPill from "./UserPill";
-import DirectoryTab from "@/app/components/directory/DirectoryTab";
 import Logo from "@/app/components/Logo";
 
 export default function Header() {
   const pathname = usePathname();
-  return (
-    <header className="sticky top-0 z-40 bg-slate-900/70 backdrop-blur border-b border-white/10 pt-[env(safe-area-inset-top)]">
-      <div
-        className="
-          mx-auto max-w-screen-xl px-4 h-14 flex items-center
-          md:justify-between justify-center relative
-        "
-      >
-        {/* Centered on mobile, normal flow on desktop */}
-        <Logo className="select-none" />
 
-        <nav className="flex items-center gap-1">
-          <div className="hidden md:block">
-            <DirectoryTab variant="desktop" />
+  return (
+    <header className="sticky top-0 z-40 pt-[env(safe-area-inset-top)]">
+      <div className="border-b border-white/10 bg-slate-950/60 backdrop-blur-xl shadow-[0_1px_0_0_rgba(255,255,255,0.06)]">
+        <div className="mx-auto flex h-14 max-w-screen-xl items-center gap-3 px-4">
+          {/* Left */}
+          <div className="flex min-w-0 items-center">
+            <Logo className="select-none" />
           </div>
-          <div
-            className="
-              hidden md:flex items-center gap-2 text-sm
-              whitespace-nowrap overflow-x-auto no-scrollbar
-            "
-          >
+
+          {/* Center (desktop) */}
+          <nav className="hidden md:flex flex-1 items-center justify-center gap-6">
             {(navTabs ?? []).map((t) => {
               const active = pathname === t.href || pathname?.startsWith(t.href + "/");
+
               return (
                 <Link
                   key={t.href}
                   href={t.href}
-                  className={`inline-flex items-center whitespace-nowrap rounded-full border px-3 py-2 transition ${
+                  aria-current={active ? "page" : undefined}
+                  className={[
+                    "relative text-sm font-medium tracking-tight transition-colors",
+                    "text-slate-300 hover:text-white",
+                    active ? "text-white" : "",
+                    // underline accent
                     active
-                      ? "border-sky-400/30 bg-sky-500/10 text-sky-200"
-                      : "border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10"
-                  }`}
+                      ? "after:absolute after:left-0 after:right-0 after:-bottom-2 after:h-px after:bg-gradient-to-r after:from-sky-400 after:to-indigo-400 after:opacity-100"
+                      : "after:absolute after:left-0 after:right-0 after:-bottom-2 after:h-px after:bg-white/0 after:opacity-0 hover:after:bg-white/20 hover:after:opacity-100",
+                  ].join(" ")}
                 >
                   {t.label}
                 </Link>
               );
             })}
-          </div>
-        </nav>
+          </nav>
 
-        {/* User pill: absolute on mobile so logo can center; normal flow on md+ */}
-        <div
-          className="
-            md:static absolute right-4 top-1/2 -translate-y-1/2 md:translate-y-0 md:top-auto
-            flex items-center gap-2
-          "
-        >
-          <UserPill />
+          {/* Right */}
+          <div className="ml-auto flex items-center">
+            <UserPill />
+          </div>
         </div>
       </div>
     </header>
