@@ -127,28 +127,22 @@ export default async function HomePage() {
 
   const testimonials = [
     {
-      name: "Sophie Carter",
-      role: "Operations Manager, Pilbara Mines",
-      quote:
-        "We filled a specialist role in days, not weeks. The portfolio previews gave us confidence to move fast.",
-    },
-    {
-      name: "Daniel Hayes",
+      name: "Mark Hayes",
       role: "Project Lead, CoreWorks",
       quote:
         "Clear profiles and direct contact made shortlisting effortless. We saved a heap of back-and-forth.",
     },
     {
-      name: "Priya Nair",
-      role: "Senior Geologist, TerraWest",
+      name: "",
+      role: "Senior Engineer, Open Pit Solutions",
       quote:
         "Found exactly the expertise we needed on a tight timeline. Great experience end-to-end.",
     },
     {
-      name: "Liam O’Reilly",
-      role: "Site Supervisor, Red Hill",
+      name: "",
+      role: "CTO, SimplifyBI",
       quote:
-        "Strong selection of contractors and transparent profiles. We’ll be back for the next phase.",
+        " We love the platform, this makes it som much easier to connect with clients",
     },
   ];
 

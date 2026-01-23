@@ -4,6 +4,49 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 
+// Display options and mapping helpers
+const PROVIDER_KIND_OPTIONS = [
+  {
+    value: "Operational Services",
+    label: "Operational Services",
+    desc: "Field ops, maintenance, equipment, production support.",
+  },
+  {
+    value: "Professional Services",
+    label: "Professional Services",
+    desc: "Advisory, design, studies, compliance, engineering.",
+  },
+  {
+    value: "both",
+    label: "Both",
+    desc: "Operate across operational and professional services.",
+  },
+];
+
+// Normalize old DB values to new display values
+function fromDbProviderKind(v) {
+  switch ((v || "").toLowerCase()) {
+    case "consultant":
+    case "professional_services":
+      return "Professional Services";
+    case "service_provider":
+    case "operational_services":
+      return "Operational Services";
+    case "both":
+    default:
+      return "both";
+  }
+}
+
+// Map UI selection back to DB value
+// If your DB column uses the human labels exactly, keep identity mapping.
+// If you use snake_case in DB, change the mapping targets below.
+const TO_DB_PROVIDER_KIND = {
+  "Operational Services": "Operational Services",      // or "operational_services"
+  "Professional Services": "Professional Services",    // or "professional_services"
+  both: "both",
+};
+
 const MAX_LOGO_BYTES = 300_000;
 const ALLOWED_LOGO_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
@@ -18,7 +61,7 @@ export default function EditConsultantForm({ consultant }) {
     headline: consultant.headline ?? "",
     company: (consultant.company && consultant.company.trim())
       ? consultant.company
-      : (consultant.display_name ?? ""), // seed if missing
+      : (consultant.display_name ?? ""),
     location: consultant.location ?? "",
     contact_email: consultant.contact_email ?? "",
     bio: consultant.bio ?? "",
@@ -27,6 +70,7 @@ export default function EditConsultantForm({ consultant }) {
     twitter_url: consultant.twitter_url ?? "",
     instagram_url: consultant.instagram_url ?? "",
     place_id: consultant.place_id ?? "",
+    provider_kind: fromDbProviderKind(consultant.provider_kind ?? "both"),
   });
 
   // If there was no original company value, keep company in sync with display_name edits.
@@ -155,6 +199,7 @@ export default function EditConsultantForm({ consultant }) {
       twitter_url: form.twitter_url.trim() || null,
       instagram_url: form.instagram_url.trim() || null,
       place_id: placeId || null,
+      provider_kind: TO_DB_PROVIDER_KIND[form.provider_kind] || "both",
       metadata: {
         ...(consultant.metadata || {}),
         logo: logo?.url ? { url: logo.url, path: logo.path, mime: logo.mime } : null,
@@ -189,6 +234,18 @@ export default function EditConsultantForm({ consultant }) {
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Display name" value={form.display_name} onChange={handleChange("display_name")} required />
           <Field label="Headline" value={form.headline} onChange={handleChange("headline")} />
+          <div className="md:col-span-1">
+            <label className="block text-sm text-slate-300">
+              Provider type
+              <ProviderKindSelect
+                value={form.provider_kind}
+                onChange={(v) => setForm((p) => ({ ...p, provider_kind: v }))}
+              />
+              <p className="mt-1 text-xs text-slate-400">
+                Choose whether you operate in operational services, professional services, or both.
+              </p>
+            </label>
+          </div>
           <Field label="Location" value={form.location} onChange={handleChange("location")} />
           <Field label="Contact email" type="email" value={form.contact_email} onChange={handleChange("contact_email")} />
           <div className="md:col-span-2">
@@ -410,5 +467,97 @@ function Field({ label, as = "input", hint, ...props }) {
       <Component className={shared} {...props} />
       {hint ? <p className="mt-1 text-xs text-slate-400">{hint}</p> : null}
     </label>
+  );
+}
+
+function ProviderKindSelect({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    function onDoc(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    }
+    function onKey(e) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("click", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("click", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, []);
+
+  const selected = PROVIDER_KIND_OPTIONS.find((o) => o.value === value) ?? PROVIDER_KIND_OPTIONS[2];
+
+  return (
+    <div className="relative mt-1" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full inline-flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.07] px-3 py-2 text-left text-sm text-slate-100 hover:bg-white/[0.1] focus:border-sky-400/60 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className="truncate font-medium">{selected.label}</span>
+        <svg width="16" height="16" viewBox="0 0 20 20" className="ml-2 opacity-80">
+          <path fill="currentColor" d="M5.5 7.5L10 12l4.5-4.5z" />
+        </svg>
+      </button>
+      {open && (
+        <div
+          role="listbox"
+          tabIndex={-1}
+          className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-white/10 bg-slate-900/95 ring-1 ring-white/10 shadow-2xl backdrop-blur"
+        >
+          <ul className="max-h-72 overflow-auto p-1">
+            {PROVIDER_KIND_OPTIONS.map((opt) => {
+              const active = opt.value === value;
+              return (
+                <li key={opt.value}>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={active}
+                    onClick={() => {
+                      onChange(opt.value);
+                      setOpen(false);
+                    }}
+                    className={`w-full text-left rounded-lg px-3 py-2.5 transition ${
+                      active
+                        ? "bg-sky-500/15 text-sky-100 border border-sky-400/30"
+                        : "text-slate-200 hover:bg-white/5 border border-transparent"
+                    }`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <div
+                        className={`mt-1 h-2.5 w-2.5 rounded-full ${
+                          opt.value === "Operational Services"
+                            ? "bg-indigo-400"
+                            : opt.value === "Professional Services"
+                            ? "bg-sky-400"
+                            : "bg-teal-400"
+                        }`}
+                      />
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold">{opt.label}</div>
+                        {opt.desc ? (
+                          <div className="text-xs text-slate-400">{opt.desc}</div>
+                        ) : null}
+                      </div>
+                      {active && (
+                        <svg width="16" height="16" viewBox="0 0 20 20" className="ml-auto mt-0.5 text-sky-300">
+                          <path fill="currentColor" d="M8.5 12.5l-2.5-2.5 1.4-1.4 1.1 1.1 4.1-4.1 1.4 1.4z" />
+                        </svg>
+                      )}
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }

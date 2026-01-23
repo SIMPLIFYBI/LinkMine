@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
-export default function DirectoryTab({ variant = "desktop" }) {
+export default function DirectoryTab({ variant = "desktop", label = "Services" }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -40,7 +40,7 @@ export default function DirectoryTab({ variant = "desktop" }) {
           }}
           className="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm hover:bg-white/5"
         >
-          Directory
+          {label}
           <svg width="14" height="14" viewBox="0 0 20 20" className="opacity-70">
             <path fill="currentColor" d="M5.5 7.5L10 12l4.5-4.5z" />
           </svg>
@@ -53,7 +53,7 @@ export default function DirectoryTab({ variant = "desktop" }) {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between px-1 pb-2">
-                <h2 className="text-sm font-semibold">Directory</h2>
+                <h2 className="text-sm font-semibold">{label}</h2>
                 <button onClick={() => setOpen(false)} className="text-slate-300 hover:text-white">✕</button>
               </div>
 
@@ -105,7 +105,7 @@ export default function DirectoryTab({ variant = "desktop" }) {
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        Directory
+        {label}
         <svg width="14" height="14" viewBox="0 0 20 20" className="opacity-70">
           <path fill="currentColor" d="M5.5 7.5L10 12l4.5-4.5z" />
         </svg>

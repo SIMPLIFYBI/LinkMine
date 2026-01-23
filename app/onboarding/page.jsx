@@ -97,14 +97,18 @@ export default function OnboardingPage() {
     startTransition(async () => {
       try {
         const sb = supabaseBrowser();
-        const {
-          data: { session },
-        } = await sb.auth.getSession();
-
+        const { data: { session } } = await sb.auth.getSession();
         const accessToken = session?.access_token;
-        if (!accessToken) {
-          throw new Error("Not authenticated.");
-        }
+        if (!accessToken) throw new Error("Not authenticated.");
+
+        // Build payload with only non-empty fields
+        const payload = {};
+        if (form.userType) payload.userType = form.userType;
+        if (form.organisationSize) payload.organisationSize = form.organisationSize;
+        if (form.organisationName?.trim()) payload.organisationName = form.organisationName.trim();
+        if (form.profession?.trim()) payload.profession = form.profession.trim();
+        if (form.firstName?.trim()) payload.firstName = form.firstName.trim();
+        if (form.lastName?.trim()) payload.lastName = form.lastName.trim();
 
         const res = await fetch("/api/profile", {
           method: "PATCH",
@@ -112,14 +116,7 @@ export default function OnboardingPage() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify({
-            userType: form.userType,
-            organisationSize: form.organisationSize,
-            organisationName: form.organisationName?.trim() || null,
-            profession: form.profession.trim(),
-            firstName: form.firstName?.trim() || undefined, // NEW
-            lastName: form.lastName?.trim() || undefined, // NEW
-          }),
+          body: JSON.stringify(payload),
         });
 
         if (!res.ok) {
@@ -131,6 +128,37 @@ export default function OnboardingPage() {
         setTimeout(() => router.replace("/"), 900);
       } catch (err) {
         setError(err.message || "Unable to save your profile.");
+      }
+    });
+  }
+
+  async function handleSkip() {
+    setError("");
+    setMessage("");
+    startTransition(async () => {
+      try {
+        const sb = supabaseBrowser();
+        const { data: { session } } = await sb.auth.getSession();
+        const userId = session?.user?.id;
+        if (!userId) throw new Error("Not authenticated.");
+
+        // Provide valid defaults to satisfy NOT NULL + CHECK constraints
+        const { error } = await sb
+          .from("user_profiles")
+          .upsert(
+            {
+              id: userId,
+              user_type: "unspecified",
+              organisation_size: "unspecified",
+              profession: "unspecified",
+            },
+            { onConflict: "id" }
+          );
+
+        if (error) throw error;
+        router.replace("/");
+      } catch (err) {
+        setError(err.message || "Unable to skip.");
       }
     });
   }
@@ -233,7 +261,6 @@ export default function OnboardingPage() {
             </label>
             <input
               type="text"
-              required
               value={form.profession}
               onChange={(e) => updateField("profession", e.target.value)}
               className="mt-2 w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"
@@ -279,13 +306,29 @@ export default function OnboardingPage() {
             <p className="text-sm text-emerald-300">{message}</p>
           ) : null}
 
-          <button
-            type="submit"
-            disabled={isSubmitDisabled}
-            className="w-full rounded-full bg-gradient-to-r from-sky-500 to-indigo-600 px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-60"
-          >
-            {isPending ? "Saving…" : "Continue"}
-          </button>
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex flex-col items-start gap-1">
+              <button
+                type="button"
+                onClick={handleSkip}
+                className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/10"
+                aria-label="Skip onboarding"
+              >
+                Skip for now
+              </button>
+              <p className="text-xs text-slate-400">
+                You can update these details in the Account page later on.
+              </p>
+            </div>
+            <button
+              type="submit"
+              disabled={isPending}
+              className="rounded-full bg-gradient-to-r from-sky-500 to-indigo-600 px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-60"
+              aria-label="Save profile"
+            >
+              {isPending ? "Saving…" : "Save"}
+            </button>
+          </div>
         </form>
       </section>
     </main>

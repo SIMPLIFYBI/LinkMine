@@ -26,7 +26,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/jobs" className="hover:text-sky-300">
-                  Jobs
+                  Jobs Board
                 </Link>
               </li>
               <li>
@@ -64,11 +64,6 @@ export default function Footer() {
                 >
                   info@YouMine.com.au
                 </a>
-              </li>
-              <li>
-                <Link href="/pricing" className="hover:text-sky-300">
-                  Pricing
-                </Link>
               </li>
             </ul>
           </nav>

@@ -35,6 +35,7 @@ export default async function EditConsultantPage({ params }) {
       instagram_url,
       place_id,
       status,
+      provider_kind,
       abn,
       acn,
       abn_verified,

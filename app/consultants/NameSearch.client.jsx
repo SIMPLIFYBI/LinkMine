@@ -1,39 +1,26 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
-const inputClass =
-  "h-9 w-56 sm:w-64 rounded-xl bg-slate-800/60 border border-white/10 px-3 text-sm text-slate-100 " +
-  "placeholder:text-slate-400 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-sky-500/40 " +
-  "hover:border-sky-400/40 transition";
-
-export default function NameSearch({ initialValue = "" }) {
+export default function NameSearch({ initialValue = "", onApplied }) {
+  const [value, setValue] = useState(initialValue || "");
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [value, setValue] = useState(initialValue);
 
-  useEffect(() => {
-    setValue(initialValue);
-  }, [initialValue]);
-
-  const pushSearch = (query) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("page");
-    if (query) params.set("q", query);
+  function apply(e) {
+    e?.preventDefault?.();
+    const params = new URLSearchParams(searchParams?.toString() || "");
+    const q = value.trim();
+    if (q) params.set("q", q);
     else params.delete("q");
-    const href = `${pathname}${params.toString() ? `?${params}` : ""}`;
-    router.push(href);
-  };
-
-  const onSubmit = (e) => {
-    e.preventDefault();
-    pushSearch(value.trim());
-  };
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    onApplied?.(); // close sheet
+  }
 
   return (
-    <form onSubmit={onSubmit} className="flex items-center gap-2">
+    <form onSubmit={apply} className="flex items-center gap-2">
       <div className="relative">
         <input
           type="text"
@@ -41,7 +28,7 @@ export default function NameSearch({ initialValue = "" }) {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="Search by name"
-          className={inputClass}
+          className="flex-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-400"
         />
         {value && (
           <button
@@ -58,7 +45,7 @@ export default function NameSearch({ initialValue = "" }) {
       </div>
       <button
         type="submit"
-        className="h-9 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 px-4 text-xs font-semibold text-white shadow-sm hover:from-sky-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+        className="rounded-md bg-sky-600 px-3 py-2 text-sm font-medium text-white hover:bg-sky-500"
       >
         Search
       </button>

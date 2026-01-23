@@ -5,6 +5,7 @@ import ServiceFilter from "./ServiceFilter.client.jsx";
 import NameSearch from "./NameSearch.client.jsx";
 import ServiceSlugFilter from "./ServiceSlugFilter.client.jsx";
 import MobileHeroAndFilters from "./MobileHeroAndFilters.client.jsx"; // NEW
+import ProviderKindFilter from "./ProviderKindFilter.client.jsx"; // NEW
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,43 +38,39 @@ function getSeed() {
   return Math.floor(Date.now() / SEED_BUCKET_MS);
 }
 
-// ---- Data lookups (with optional name search) ----
-async function getAllConsultantsPage(sb, page, seed, q) {
+// ---- Data lookups (with optional name search AND provider kind) ----
+async function getAllConsultantsPage(sb, page, seed, q /* , kindDb */) {
   const offset = (page - 1) * PAGE_SIZE;
 
-  // Build the base id set (optionally filtered by name)
-  let idRows = [];
-  if (q) {
-    const { data = [] } = await sb
-      .from("consultants")
-      .select("id")
-      .eq("visibility", "public")
-      .eq("status", "approved")
-      .ilike("display_name", `%${q}%`);
-    idRows = data;
-  } else {
-    const { data = [] } = await sb
-      .from("consultants")
-      .select("id")
-      .eq("visibility", "public")
-      .eq("status", "approved");
-    idRows = data;
-  }
+  // Build the base id set (optionally filtered by name and provider kind)
+  let query = sb
+    .from("consultants")
+    .select("id")
+    .eq("visibility", "public")
+    .eq("status", "approved");
 
-  const idsAll = idRows.map((r) => r.id).filter(Boolean);
+  if (q) query = query.ilike("display_name", `%${q}%`);
+  // if (kindDb) query = query.eq("provider_kind", kindDb);
+
+  const { data: idRows, error: idErr } = await query;
+  if (idErr) console.error("consultants id query error:", idErr);
+
+  const idsAll = asArray(idRows).map((r) => r.id).filter(Boolean);
   if (idsAll.length === 0) return { consultants: [], hasNext: false };
 
   const shuffled = seededShuffle(idsAll, seed);
   const hasNext = shuffled.length > page * PAGE_SIZE;
   const pageIds = shuffled.slice(offset, offset + PAGE_SIZE);
 
-  // Add the same public/approved constraints here for consistency
-  const { data: rows = [] } = await sb
+  let rowsQuery = sb
     .from("consultants")
     .select(CARD_SELECT)
     .in("id", pageIds)
     .eq("visibility", "public")
     .eq("status", "approved");
+  // if (kindDb) rowsQuery = rowsQuery.eq("provider_kind", kindDb);
+
+  const { data: rows = [] } = await rowsQuery;
 
   const byId = new Map(rows.map((r) => [r.id, r]));
   const consultants = pageIds.map((id) => byId.get(id)).filter(Boolean);
@@ -81,14 +78,11 @@ async function getAllConsultantsPage(sb, page, seed, q) {
   return { consultants, hasNext };
 }
 
-const toArray = (d) => (Array.isArray(d) ? d : []);
-const uniq = (arr) => Array.from(new Set(arr));
-
-async function getConsultantsByServiceSlug(sb, serviceSlug, page, seed, q) {
+async function getConsultantsByServiceSlug(sb, serviceSlug, page, seed, q /* , kindDb */) {
   const offset = (page - 1) * PAGE_SIZE;
 
   if (!serviceSlug) {
-    return getAllConsultantsPage(sb, page, seed, q);
+    return getAllConsultantsPage(sb, page, seed, q /* , kindDb */);
   }
 
   const { data: service } = await sb
@@ -104,33 +98,40 @@ async function getConsultantsByServiceSlug(sb, serviceSlug, page, seed, q) {
     .select("consultant_id")
     .eq("service_id", service.id);
 
-  let idsAll = uniq(toArray(linkRowsData).map((r) => r.consultant_id).filter(Boolean));
+  let idsAll = uniq(asArray(linkRowsData).map((r) => r.consultant_id).filter(Boolean));
   if (idsAll.length === 0) return { consultants: [], activeService: service, hasNext: false };
 
   // Optional name filter: intersect with ILIKE results
-  if (q) {
-    const { data: filtered = [] } = await sb
+  if (q /* || kindDb */) {
+    let filter = sb
       .from("consultants")
       .select("id")
       .in("id", idsAll)
       .eq("visibility", "public")
-      .eq("status", "approved")
-      .ilike("display_name", `%${q}%`);
-    idsAll = filtered.map((r) => r.id).filter(Boolean);
+      .eq("status", "approved");
+    if (q) filter = filter.ilike("display_name", `%${q}%`);
+    // if (kindDb) filter = filter.eq("provider_kind", kindDb);
+    const { data: filtered, error: fErr } = await filter;
+    if (fErr) console.error("consultants service filter error:", fErr);
+    const filteredIds = asArray(filtered).map((r) => r.id).filter(Boolean);
+    idsAll = filteredIds;
     if (idsAll.length === 0) return { consultants: [], activeService: service, hasNext: false };
   }
 
-  idsAll = seededShuffle(idsAll, seed);
-  const hasNext = idsAll.length > page * PAGE_SIZE;
-  const pageIds = idsAll.slice(offset, offset + PAGE_SIZE);
+  const shuffledIds = seededShuffle(idsAll, seed);
+  const hasNext = shuffledIds.length > page * PAGE_SIZE;
+  const pageIds = shuffledIds.slice(offset, offset + PAGE_SIZE);
   if (pageIds.length === 0) return { consultants: [], activeService: service, hasNext };
 
-  const { data: rows = [] } = await sb
+  let rowsQuery = sb
     .from("consultants")
     .select(CARD_SELECT)
     .in("id", pageIds)
     .eq("visibility", "public")
     .eq("status", "approved");
+  // if (kindDb) rowsQuery = rowsQuery.eq("provider_kind", kindDb);
+
+  const { data: rows = [] } = await rowsQuery;
 
   const byId = new Map(rows.map((r) => [r.id, r]));
   const consultants = pageIds.map((id) => byId.get(id)).filter(Boolean);
@@ -138,11 +139,11 @@ async function getConsultantsByServiceSlug(sb, serviceSlug, page, seed, q) {
   return { consultants, activeService: service, hasNext };
 }
 
-async function getConsultantsByCategorySlug(sb, categorySlug, page, seed, q) {
+async function getConsultantsByCategorySlug(sb, categorySlug, page, seed, q /* , kindDb */) {
   const offset = (page - 1) * PAGE_SIZE;
 
   if (!categorySlug) {
-    return getAllConsultantsPage(sb, page, seed, q);
+    return getAllConsultantsPage(sb, page, seed, q /* , kindDb */);
   }
 
   const { data: category } = await sb
@@ -154,7 +155,7 @@ async function getConsultantsByCategorySlug(sb, categorySlug, page, seed, q) {
   if (!category) return { consultants: [], activeCategory: null, hasNext: false };
 
   const { data: servicesData } = await sb.from("services").select("id").eq("category_id", category.id);
-  const serviceIds = toArray(servicesData).map((s) => s.id).filter(Boolean);
+  const serviceIds = (Array.isArray(servicesData) ? servicesData : []).map((s) => s.id).filter(Boolean);
   if (serviceIds.length === 0) return { consultants: [], activeCategory: category, hasNext: false };
 
   const { data: linkRowsData } = await sb
@@ -162,33 +163,40 @@ async function getConsultantsByCategorySlug(sb, categorySlug, page, seed, q) {
     .select("consultant_id")
     .in("service_id", serviceIds);
 
-  let idsAll = uniq(toArray(linkRowsData).map((r) => r.consultant_id).filter(Boolean));
+  let idsAll = uniq(asArray(linkRowsData).map((r) => r.consultant_id).filter(Boolean));
   if (idsAll.length === 0) return { consultants: [], activeCategory: category, hasNext: false };
 
-  // Optional name filter: intersect with ILIKE results
-  if (q) {
-    const { data: filtered = [] } = await sb
+  // Optional name/provider filter
+  if (q /* || kindDb */) {
+    let filter = sb
       .from("consultants")
       .select("id")
       .in("id", idsAll)
       .eq("visibility", "public")
-      .eq("status", "approved")
-      .ilike("display_name", `%${q}%`);
-    idsAll = filtered.map((r) => r.id).filter(Boolean);
+      .eq("status", "approved");
+    if (q) filter = filter.ilike("display_name", `%${q}%`);
+    // if (kindDb) filter = filter.eq("provider_kind", kindDb);
+    const { data: filtered, error: fErr } = await filter;
+    if (fErr) console.error("consultants category filter error:", fErr);
+    const filteredIds = asArray(filtered).map((r) => r.id).filter(Boolean);
+    idsAll = filteredIds;
     if (idsAll.length === 0) return { consultants: [], activeCategory: category, hasNext: false };
   }
 
-  idsAll = seededShuffle(idsAll, seed);
-  const hasNext = idsAll.length > page * PAGE_SIZE;
-  const pageIds = idsAll.slice(offset, offset + PAGE_SIZE);
+  const shuffledIds = seededShuffle(idsAll, seed);
+  const hasNext = shuffledIds.length > page * PAGE_SIZE;
+  const pageIds = shuffledIds.slice(offset, offset + PAGE_SIZE);
   if (pageIds.length === 0) return { consultants: [], activeCategory: category, hasNext };
 
-  const { data: rows = [] } = await sb
+  let rowsQuery = sb
     .from("consultants")
     .select(CARD_SELECT)
     .in("id", pageIds)
     .eq("visibility", "public")
     .eq("status", "approved");
+  // if (kindDb) rowsQuery = rowsQuery.eq("provider_kind", kindDb);
+
+  const { data: rows = [] } = await rowsQuery;
 
   const byId = new Map(rows.map((r) => [r.id, r]));
   const consultants = pageIds.map((id) => byId.get(id)).filter(Boolean);
@@ -235,20 +243,30 @@ export const metadata = {
   },
 };
 
+// Utils
+const uniq = (arr) => Array.from(new Set(arr));
+const asArray = (v) => (Array.isArray(v) ? v : []);
+
 export default async function ConsultantsPage({ searchParams }) {
   const sp = searchParams || {};
   const serviceSlug = typeof sp.service === "string" ? sp.service : "";
   const categorySlug = typeof sp.category === "string" ? sp.category : "";
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
+  const kindParam = typeof sp.kind === "string" ? sp.kind : ""; // "", "operational", "professional", "both"
   const requestedPage = Number.parseInt(sp.page ?? "1", 10);
   const page = Number.isNaN(requestedPage) ? 1 : Math.max(1, requestedPage);
 
   const sb = supabasePublicServer();
   const seed = getSeed();
 
+  const kindDb =
+    kindParam === "operational" ? "Operational Services" :
+    kindParam === "professional" ? "Professional Services" :
+    kindParam === "both" ? "both" : null;
+
   const dataResult = serviceSlug
-    ? await getConsultantsByServiceSlug(sb, serviceSlug, page, seed, q)
-    : await getConsultantsByCategorySlug(sb, categorySlug, page, seed, q);
+    ? await getConsultantsByServiceSlug(sb, serviceSlug, page, seed, q, kindDb)
+    : await getConsultantsByCategorySlug(sb, categorySlug, page, seed, q, kindDb);
 
   const consultants = dataResult.consultants;
   const activeCategory = dataResult.activeCategory || null;
@@ -272,6 +290,7 @@ export default async function ConsultantsPage({ searchParams }) {
     if (serviceSlug) params.set("service", serviceSlug);
     else if (categorySlug) params.set("category", categorySlug);
     if (q) params.set("q", q);
+    if (kindParam) params.set("kind", kindParam);
     if (targetPage > 1) params.set("page", String(targetPage));
     const qstr = params.toString();
     return `/consultants${qstr ? `?${qstr}` : ""}`;
@@ -351,6 +370,7 @@ export default async function ConsultantsPage({ searchParams }) {
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
             <ServiceFilter categories={allCategories} activeSlug={activeCategory?.slug || ""} />
             <ServiceSlugFilter services={allServices} activeSlug={activeService?.slug || ""} />
+            <ProviderKindFilter />
             <NameSearch initialValue={q} />
           </div>
           {(activeService || activeCategory || q) && (
@@ -379,6 +399,11 @@ export default async function ConsultantsPage({ searchParams }) {
             {!activeService && activeCategory && (
               <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 font-medium text-emerald-200">
                 Category: {activeCategory.name}
+              </span>
+            )}
+            {kindParam && (
+              <span className="rounded-full border border-fuchsia-400/30 bg-fuchsia-500/10 px-3 py-1 font-medium text-fuchsia-200">
+                Type: {kindDb || "Both"}
               </span>
             )}
             <span className="text-slate-500">

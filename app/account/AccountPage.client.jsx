@@ -228,7 +228,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
             href="/consultants/review"
             className="ml-2 rounded-full border border-amber-400/40 bg-amber-500/15 px-5 py-2 text-sm font-semibold text-amber-100 shadow-sm hover:bg-amber-500/25"
           >
-            Review accounts
+            Admin Centre
           </Link>
         )}
         <div className="ml-auto">
