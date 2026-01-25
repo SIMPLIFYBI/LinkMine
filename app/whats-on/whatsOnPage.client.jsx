@@ -776,10 +776,9 @@ export default function WhatsOnPage() {
         </aside>
 
         {/* Calendar */}
-        <main className="rounded-xl border border-white/10 bg-white/5">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
+        <main className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.06] ring-1 ring-white/10">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 bg-slate-950/25 px-4 py-3 backdrop-blur">
             <div className="flex items-center gap-2">
-              {/* ✅ Desktop month nav now lives here */}
               <button
                 type="button"
                 className={uiButtonClass({ size: "icon" })}
@@ -789,7 +788,7 @@ export default function WhatsOnPage() {
                 ‹
               </button>
 
-              <div className="text-sm font-semibold">{fmtMonthTitle(month)}</div>
+              <div className="text-sm font-semibold text-white">{fmtMonthTitle(month)}</div>
 
               <button
                 type="button"
@@ -801,10 +800,10 @@ export default function WhatsOnPage() {
               </button>
             </div>
 
-            {/* ✅ Legend */}
-            <div className="flex items-center gap-3 text-xs text-slate-300">
+            {/* Legend */}
+            <div className="flex items-center gap-3 text-xs text-slate-200">
               <div className="flex items-center gap-2">
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-indigo-400" />
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-sky-400" />
                 <span>Training</span>
               </div>
               <div className="flex items-center gap-2">
@@ -812,11 +811,11 @@ export default function WhatsOnPage() {
                 <span>Event</span>
               </div>
 
-              <div className="hidden sm:block text-xs text-slate-400">Month view</div>
+              <div className="hidden sm:block text-xs text-slate-300/80">Month view</div>
             </div>
           </div>
 
-          <div className="grid grid-cols-7 border-b border-white/10 text-xs text-slate-300">
+          <div className="grid grid-cols-7 border-b border-white/10 bg-white/[0.04] text-[11px] font-semibold text-slate-200/90">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
               <div key={d} className="px-3 py-2">
                 {d}
@@ -835,12 +834,27 @@ export default function WhatsOnPage() {
               return (
                 <div
                   key={dayKey}
-                  className={`min-h-[120px] border-b border-r border-white/10 p-2 sm:min-h-[140px] ${
-                    inMonth ? "bg-transparent" : "bg-slate-950/30"
-                  }`}
+                  className={[
+
+                    "min-h-[128px] border-b border-r border-white/10 p-2 sm:min-h-[148px]",
+                    "transition-colors",
+                    inMonth ? "bg-white/[0.03] hover:bg-white/[0.05]" : "bg-slate-950/35",
+                  ].join(" ")}
                 >
                   <div className="mb-2 flex items-center justify-between">
-                    <div className={`text-xs font-semibold ${inMonth ? "text-slate-200" : "text-slate-500"}`}>{d.getDate()}</div>
+                    <div
+                      className={[
+
+                        "inline-flex h-6 w-6 items-center justify-center rounded-lg text-xs font-bold",
+                        inMonth ? "bg-white/10 text-white ring-1 ring-white/10" : "bg-white/5 text-slate-400",
+                      ].join(" ")}
+                    >
+                      {d.getDate()}
+                    </div>
+
+                    {dayItems.length ? (
+                      <div className="text-[11px] font-semibold text-slate-200/70">{dayItems.length}</div>
+                    ) : null}
                   </div>
 
                   <div className="space-y-1">
@@ -849,17 +863,25 @@ export default function WhatsOnPage() {
                         key={it.id}
                         type="button"
                         onClick={() => openDrawer(it)}
-                        className={`group flex w-full items-center gap-2 rounded-md border border-white/10 px-2 py-1 text-left text-xs hover:bg-white/10 ${
-                          it.type === "training" ? "bg-indigo-500/10" : "bg-emerald-500/10"
-                        }`}
+                        className={[
+
+                          "group flex w-full items-center gap-2 rounded-lg border px-2 py-1.5 text-left text-xs",
+                          "backdrop-blur transition",
+                          "hover:bg-white/10",
+                          it.type === "training"
+                            ? "border-sky-400/20 bg-sky-400/10 text-slate-50"
+                            : "border-emerald-400/20 bg-emerald-400/10 text-slate-50",
+                        ].join(" ")}
                         title={it.title}
                       >
                         <span
-                          className={`inline-block h-2 w-2 rounded-full ${
-                            it.type === "training" ? "bg-indigo-400" : "bg-emerald-400"
-                          }`}
+                          className={[
+
+                            "inline-block h-2 w-2 rounded-full",
+                            it.type === "training" ? "bg-sky-400" : "bg-emerald-400",
+                          ].join(" ")}
                         />
-                        <span className="min-w-0 flex-1 truncate text-slate-100">{it.title}</span>
+                        <span className="min-w-0 flex-1 truncate">{it.title}</span>
                       </button>
                     ))}
 
@@ -867,7 +889,7 @@ export default function WhatsOnPage() {
                       <button
                         type="button"
                         onClick={() => scrollSidebarToDay(dayKey)}
-                        className="w-full rounded-md border border-white/10 bg-white/5 px-2 py-1 text-left text-xs text-slate-200 hover:bg-white/10"
+                        className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-2 py-1.5 text-left text-xs font-semibold text-slate-100 hover:bg-white/[0.08]"
                       >
                         +{extra} more
                       </button>
