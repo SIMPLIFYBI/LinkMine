@@ -23,7 +23,7 @@ function fmtPrice(cents, currency = "AUD") {
   }
 }
 
-export default function CourseDrawer({ open, onClose, courseId, seedMeta }) {
+export default function CourseDrawer({ open, onClose, courseId, seedMeta, onChanged, onDeleted }) {
   const [loading, setLoading] = useState(false);
   const [course, setCourse] = useState(null);
   const [error, setError] = useState("");
@@ -325,6 +325,8 @@ export default function CourseDrawer({ open, onClose, courseId, seedMeta }) {
         courseId={courseId}
         seedMeta={seedMeta}
         canManage={canManage}
+        onChanged={onChanged}
+        onDeleted={onDeleted}
       />
     </div>
   );

@@ -2,6 +2,81 @@ import { supabaseServerClient } from "@/lib/supabaseServerClient";
 
 export const runtime = "nodejs";
 
+export async function GET(_req, { params }) {
+  try {
+    const p = await params;
+    const consultantId = p?.consultantId;
+    if (!consultantId) {
+      return new Response(JSON.stringify({ error: "Missing consultant id" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const sb = await supabaseServerClient();
+    const { data, error } = await sb
+      .from("training_courses")
+      .select(`
+        id,
+        consultant_id,
+        title,
+        slug,
+        summary,
+        description,
+        category,
+        tags,
+        level,
+        duration_hours,
+        delivery_default,
+        status,
+        sessions:training_sessions (
+          id,
+          starts_at,
+          ends_at,
+          timezone,
+          delivery_method,
+          location_name,
+          suburb,
+          state,
+          country,
+          join_url,
+          price_cents,
+          currency,
+          gst_included,
+          status
+        )
+      `)
+      .eq("consultant_id", consultantId)
+      .eq("status", "published");
+
+    if (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const courses = (data || [])
+      .map((course) => ({
+        ...course,
+        sessions: (course.sessions || [])
+          .filter((session) => session.status === "scheduled")
+          .sort((a, b) => String(a.starts_at || "").localeCompare(String(b.starts_at || ""))),
+      }))
+      .sort((a, b) => String(a.title || "").localeCompare(String(b.title || "")));
+
+    return new Response(JSON.stringify({ courses }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+    });
+  } catch {
+    return new Response(JSON.stringify({ error: "Unexpected error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}
+
 function slugify(s = "") {
   return String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "").slice(0, 80);
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { zonedTimeToUtc } from "date-fns-tz";
 
-export default function AddCourseForm({ consultantId, onDone }) {
+export default function AddCourseForm({ consultantId, onDone, reloadOnSuccess = true }) {
   // Course fields
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
@@ -153,8 +153,12 @@ export default function AddCourseForm({ consultantId, onDone }) {
       });
       const json = await res.json();
       if (!res.ok || json.error) throw new Error(json.error || "Failed to create course");
-      onDone?.();
-      window.location.reload();
+      onDone?.({ id: json.id, title: body.title });
+      if (reloadOnSuccess) {
+        window.location.reload();
+        return;
+      }
+      setBusy(false);
     } catch (err) {
       setError(err.message || "Something went wrong");
       setBusy(false);

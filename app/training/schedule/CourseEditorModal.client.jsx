@@ -30,12 +30,22 @@ function isoToLocalInputs(utcIso, timeZone) {
   };
 }
 
+function getDefaultTimeZone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  } catch {
+    return "UTC";
+  }
+}
+
 export default function CourseEditorModal({
   open,
   onClose,
   courseId,
   seedMeta,
   canManage = false,
+  onChanged,
+  onDeleted,
 }) {
   const router = useRouter();
   const overlayRef = useRef(null);
@@ -72,6 +82,30 @@ export default function CourseEditorModal({
 
   const [deletingCourse, setDeletingCourse] = useState(false);
   const [deletingSessionId, setDeletingSessionId] = useState(null);
+  const [creatingSession, setCreatingSession] = useState(false);
+  const [showNewSessionForm, setShowNewSessionForm] = useState(false);
+
+  const [nDate, setNDate] = useState("");
+  const [nStart, setNStart] = useState("");
+  const [nEnd, setNEnd] = useState("");
+  const [nTimezone, setNTimezone] = useState(() => getDefaultTimeZone());
+  const [nDelivery, setNDelivery] = useState("in_person");
+  const [nLocation, setNLocation] = useState("");
+  const [nJoinUrl, setNJoinUrl] = useState("");
+  const [nPrice, setNPrice] = useState("");
+  const [nCurrency, setNCurrency] = useState("AUD");
+
+  function resetNewSessionForm() {
+    setNDate("");
+    setNStart("");
+    setNEnd("");
+    setNTimezone(getDefaultTimeZone());
+    setNDelivery("in_person");
+    setNLocation("");
+    setNJoinUrl("");
+    setNPrice("");
+    setNCurrency("AUD");
+  }
 
   async function loadCourse() {
     if (!courseId) return;
@@ -104,7 +138,25 @@ export default function CourseEditorModal({
       setDeliveryDefault(c.delivery_default || "in_person");
       setDescription(c.description || "");
 
-      setActiveSessionId(null);
+      const preferredSession =
+        sess.find((session) => session.id === activeSessionId) || sess[0] || null;
+
+      if (preferredSession) {
+        selectSession(preferredSession);
+        setShowNewSessionForm(false);
+      } else {
+        setActiveSessionId(null);
+        setSDate("");
+        setSStart("");
+        setSEnd("");
+        setSTimezone("");
+        setSDelivery("in_person");
+        setSLocation("");
+        setSJoinUrl("");
+        setSPrice("");
+        setSCurrency("AUD");
+        setShowNewSessionForm(Boolean(canManage));
+      }
     } catch (e) {
       setError(e.message || "Failed to load course.");
     } finally {
@@ -115,6 +167,7 @@ export default function CourseEditorModal({
   useEffect(() => {
     if (!open) return;
     loadCourse();
+    resetNewSessionForm();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, courseId]);
 
@@ -173,6 +226,7 @@ export default function CourseEditorModal({
       if (!res.ok) throw new Error((json && (json.error || json.message)) || `HTTP ${res.status}: ${text.slice(0, 200)}`);
 
       await loadCourse();
+      onChanged?.();
     } catch (e) {
       setError(e.message || "Failed to save course.");
     } finally {
@@ -213,10 +267,62 @@ export default function CourseEditorModal({
       if (!res.ok) throw new Error((json && (json.error || json.message)) || `HTTP ${res.status}: ${text.slice(0, 200)}`);
 
       await loadCourse();
+      onChanged?.();
     } catch (e) {
       setError(e.message || "Failed to save session.");
     } finally {
       setSavingSessionId(null);
+    }
+  }
+
+  async function createSession() {
+    if (!canManage || !courseId) return;
+
+    setCreatingSession(true);
+    setError("");
+    try {
+      if (!nDate || !nStart || !nEnd || !nTimezone) {
+        throw new Error("New session date, start, end and timezone are required.");
+      }
+
+      const starts_at = fromZoned(nDate, nStart, nTimezone);
+      const ends_at = fromZoned(nDate, nEnd, nTimezone);
+
+      const payload = {
+        sessions: [
+          {
+            timezone: nTimezone,
+            starts_at,
+            ends_at,
+            delivery_method: nDelivery,
+            location_name: nDelivery === "online" ? null : (nLocation || null),
+            join_url: nDelivery === "online" || nDelivery === "hybrid" ? (nJoinUrl || null) : null,
+            price_cents: nPrice === "" ? null : Math.round(Number(nPrice) * 100),
+            currency: nCurrency || "AUD",
+            status: "scheduled",
+          },
+        ],
+      };
+
+      const res = await fetch(`/api/training/courses/${encodeURIComponent(courseId)}/sessions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const ct = res.headers.get("content-type") || "";
+      const text = await res.text();
+      const json = ct.includes("application/json") ? JSON.parse(text) : null;
+      if (!res.ok) throw new Error((json && (json.error || json.message)) || `HTTP ${res.status}: ${text.slice(0, 200)}`);
+
+      await loadCourse();
+      resetNewSessionForm();
+      setShowNewSessionForm(false);
+      onChanged?.();
+    } catch (e) {
+      setError(e.message || "Failed to create session.");
+    } finally {
+      setCreatingSession(false);
     }
   }
 
@@ -235,6 +341,7 @@ export default function CourseEditorModal({
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || "Failed to delete course.");
 
+      onDeleted?.();
       onClose?.();
       router.refresh();
     } catch (e) {
@@ -257,8 +364,9 @@ export default function CourseEditorModal({
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || "Failed to delete session.");
 
-      setSessions((prev) => prev.filter((s) => s.id !== activeSessionId));
       setActiveSessionId(null);
+      await loadCourse();
+      onChanged?.();
       router.refresh();
     } catch (e) {
       setError(e?.message || "Failed to delete session.");
@@ -394,7 +502,100 @@ export default function CourseEditorModal({
 
                 {/* Sessions */}
                 <div className="mt-4 rounded-lg border border-white/10 bg-white/5 p-4">
-                  <div className="mb-3 text-sm font-semibold text-white">Sessions</div>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="text-sm font-semibold text-white">Sessions</div>
+                    {canManage ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (showNewSessionForm) resetNewSessionForm();
+                          setShowNewSessionForm((prev) => !prev);
+                        }}
+                        className="rounded-md border border-sky-400/30 bg-sky-500/10 px-3 py-1.5 text-sm font-semibold text-sky-100 hover:bg-sky-500/20"
+                      >
+                        {showNewSessionForm ? "Close new session" : "+ Add session"}
+                      </button>
+                    ) : null}
+                  </div>
+
+                  {showNewSessionForm ? (
+                    <div className="mb-4 rounded-md border border-sky-400/20 bg-sky-500/10 p-4">
+                      <div className="mb-3 text-sm font-semibold text-white">New session</div>
+
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        <div>
+                          <label className="block text-sm text-slate-200">Date</label>
+                          <input type="date" className="mt-1 w-full rounded-md border border-white/10 bg-white/10 p-2 text-white" value={nDate} onChange={(e) => setNDate(e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-slate-200">Start</label>
+                          <input type="time" className="mt-1 w-full rounded-md border border-white/10 bg-white/10 p-2 text-white" value={nStart} onChange={(e) => setNStart(e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-slate-200">End</label>
+                          <input type="time" className="mt-1 w-full rounded-md border border-white/10 bg-white/10 p-2 text-white" value={nEnd} onChange={(e) => setNEnd(e.target.value)} />
+                        </div>
+                      </div>
+
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <label className="block text-sm text-slate-200">Timezone</label>
+                          <input className="mt-1 w-full rounded-md border border-white/10 bg-white/10 p-2 text-white" value={nTimezone} onChange={(e) => setNTimezone(e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-slate-200">Delivery</label>
+                          <select className="mt-1 w-full rounded-md border border-white/10 bg-white/10 p-2 text-white" value={nDelivery} onChange={(e) => setNDelivery(e.target.value)}>
+                            <option value="in_person">In person</option>
+                            <option value="online">Online</option>
+                            <option value="hybrid">Hybrid</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <label className="block text-sm text-slate-200">Location (if not online)</label>
+                          <input className="mt-1 w-full rounded-md border border-white/10 bg-white/10 p-2 text-white" value={nLocation} onChange={(e) => setNLocation(e.target.value)} disabled={nDelivery === "online"} />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-slate-200">Join URL (online/hybrid)</label>
+                          <input className="mt-1 w-full rounded-md border border-white/10 bg-white/10 p-2 text-white" value={nJoinUrl} onChange={(e) => setNJoinUrl(e.target.value)} disabled={!(nDelivery === "online" || nDelivery === "hybrid")} />
+                        </div>
+                      </div>
+
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <label className="block text-sm text-slate-200">Price (AUD dollars)</label>
+                          <input type="number" min="0" step="1" className="mt-1 w-full rounded-md border border-white/10 bg-white/10 p-2 text-white" value={nPrice} onChange={(e) => setNPrice(e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-slate-200">Currency</label>
+                          <input className="mt-1 w-full rounded-md border border-white/10 bg-white/10 p-2 text-white" value={nCurrency} onChange={(e) => setNCurrency(e.target.value)} />
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            resetNewSessionForm();
+                            setShowNewSessionForm(false);
+                          }}
+                          className="rounded-md border border-white/10 px-3 py-2 text-sm text-slate-200 hover:bg-white/10"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={createSession}
+                          disabled={creatingSession}
+                          className="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-500 disabled:opacity-50"
+                        >
+                          {creatingSession ? "Adding..." : "Add session"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
 
                   {sessions.length ? (
                     <div className="grid gap-4 md:grid-cols-2">
