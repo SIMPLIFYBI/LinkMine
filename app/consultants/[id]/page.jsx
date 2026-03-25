@@ -11,6 +11,7 @@ import TrackView from "./TrackView.client.jsx";
 import ContactConsultantButton from "./ContactConsultantButton.client.jsx";
 import ConsultantTabs from "./ConsultantTabs";
 import PermissionsGate from "./PermissionsGate.client.jsx";
+import ConsultantTrainingSection from "./ConsultantTrainingSection.client.jsx";
 
 // Small formatting helpers for public display
 function formatAbn(abn) {
@@ -55,11 +56,56 @@ async function getConsultant(id) {
     .select("id", { head: true, count: "exact" })
     .eq("consultant_id", id);
 
+  const { data: trainingCourses } = await sb
+    .from("training_courses")
+    .select(`
+      id,
+      consultant_id,
+      title,
+      slug,
+      summary,
+      description,
+      category,
+      tags,
+      level,
+      duration_hours,
+      delivery_default,
+      status,
+      sessions:training_sessions (
+        id,
+        starts_at,
+        ends_at,
+        timezone,
+        delivery_method,
+        location_name,
+        suburb,
+        state,
+        country,
+        join_url,
+        price_cents,
+        currency,
+        gst_included,
+        status
+      )
+    `)
+    .eq("consultant_id", id)
+    .eq("status", "published");
+
+  const normalizedTrainingCourses = (trainingCourses || [])
+    .map((course) => ({
+      ...course,
+      sessions: (course.sessions || [])
+        .filter((session) => session.status === "scheduled")
+        .sort((a, b) => String(a.starts_at || "").localeCompare(String(b.starts_at || ""))),
+    }))
+    .sort((a, b) => String(a.title || "").localeCompare(String(b.title || "")));
+
   return {
     consultant: data,
     services: (svc || []).map((r) => r.service).filter(Boolean),
     ports: ports || [],
     viewsCount: viewsCount || 0,
+    trainingCourses: normalizedTrainingCourses,
   };
 }
 
@@ -68,7 +114,7 @@ export default async function ConsultantPage(props) {
   const data = await getConsultant(consultantId);
   if (!data) return notFound();
 
-  const { consultant, services, ports, viewsCount } = data;
+  const { consultant, services, ports, viewsCount, trainingCourses } = data;
 
   const place = consultant.place_id
     ? await fetchPlaceDetails(consultant.place_id)
@@ -178,6 +224,12 @@ export default async function ConsultantPage(props) {
               </p>
             )}
           </article>
+
+          <ConsultantTrainingSection
+            consultantId={consultant.id}
+            consultantName={consultant.display_name}
+            initialCourses={trainingCourses}
+          />
 
           {ports.length ? (
             <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-slate-100 shadow-sm ring-1 ring-white/5">
