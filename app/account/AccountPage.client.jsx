@@ -224,12 +224,20 @@ export default function AccountPageClient({ initialTab = "account" }) {
       <div className="mb-10 flex flex-wrap items-center gap-4">
         <AccountTabs tabs={TABS} active={activeTab} onChange={(key) => setActiveTab(key)} />
         {isAdmin && (
-          <Link
-            href="/consultants/review"
-            className="ml-2 rounded-full border border-amber-400/40 bg-amber-500/15 px-5 py-2 text-sm font-semibold text-amber-100 shadow-sm hover:bg-amber-500/25"
-          >
-            Admin Centre
-          </Link>
+          <>
+            <Link
+              href="/consultants/review"
+              className="ml-2 rounded-full border border-amber-400/40 bg-amber-500/15 px-5 py-2 text-sm font-semibold text-amber-100 shadow-sm hover:bg-amber-500/25"
+            >
+              Admin Centre
+            </Link>
+            <Link
+              href="/admin/social"
+              className="rounded-full border border-cyan-400/35 bg-cyan-500/15 px-5 py-2 text-sm font-semibold text-cyan-100 shadow-sm hover:bg-cyan-500/25"
+            >
+              Social Studio
+            </Link>
+          </>
         )}
         <div className="ml-auto">
           <button
