@@ -181,13 +181,13 @@ function WhatsOnPreview({ data }) {
             <div className="text-[14px] uppercase tracking-[0.3em] text-slate-300">Live now</div>
             <div className="mt-4 text-[66px] font-semibold leading-none">{formatNumber(data.totalCount)}</div>
             <div className="mt-5 grid grid-cols-2 gap-3 text-[18px] text-slate-200">
-              <div className="rounded-2xl bg-[#0f2530] px-4 py-3">
-                <div className="text-[12px] uppercase tracking-[0.22em] text-cyan-200/80">Training</div>
-                <div className="mt-2 text-[28px] font-semibold">{formatNumber(data.trainingCount)}</div>
+              <div className="flex min-h-[116px] flex-col items-center justify-center rounded-2xl bg-[#0f2530] px-4 py-3 text-center">
+                <div className="text-[12px] uppercase tracking-[0.22em] text-cyan-200/80 [text-indent:0.22em]">Training</div>
+                <div className="mt-2 text-[28px] font-semibold leading-none">{formatNumber(data.trainingCount)}</div>
               </div>
-              <div className="rounded-2xl bg-[#182634] px-4 py-3">
-                <div className="text-[12px] uppercase tracking-[0.22em] text-amber-200/80">Events</div>
-                <div className="mt-2 text-[28px] font-semibold">{formatNumber(data.eventCount)}</div>
+              <div className="flex min-h-[116px] flex-col items-center justify-center rounded-2xl bg-[#182634] px-4 py-3 text-center">
+                <div className="text-[12px] uppercase tracking-[0.22em] text-amber-200/80 [text-indent:0.22em]">Events</div>
+                <div className="mt-2 text-[28px] font-semibold leading-none">{formatNumber(data.eventCount)}</div>
               </div>
             </div>
           </div>

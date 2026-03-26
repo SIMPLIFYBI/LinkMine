@@ -125,7 +125,7 @@ export default function JobsRequestedTable() {
 
   if (!user) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-16 text-center text-sm text-slate-300">
+      <div className="jobs-empty rounded-2xl border border-white/10 bg-white/5 px-4 py-16 text-center text-sm text-slate-300">
         Sign in to view the jobs you’ve requested.
       </div>
     );
@@ -133,7 +133,7 @@ export default function JobsRequestedTable() {
 
   if (status === "loading") {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-16 text-center text-sm text-slate-300">
+      <div className="jobs-empty rounded-2xl border border-white/10 bg-white/5 px-4 py-16 text-center text-sm text-slate-300">
         Loading your jobs…
       </div>
     );
@@ -141,7 +141,7 @@ export default function JobsRequestedTable() {
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-rose-400/40 bg-rose-500/10 px-4 py-16 text-center text-sm text-rose-100">
+      <div className="jobs-empty rounded-2xl border border-rose-400/40 bg-rose-500/10 px-4 py-16 text-center text-sm text-rose-100">
         {error}
       </div>
     );
@@ -149,7 +149,7 @@ export default function JobsRequestedTable() {
 
   if (!rows.length) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-16 text-center text-sm text-slate-300">
+      <div className="jobs-empty rounded-2xl border border-white/10 bg-white/5 px-4 py-16 text-center text-sm text-slate-300">
         You haven’t requested any jobs yet.
       </div>
     );
@@ -157,7 +157,7 @@ export default function JobsRequestedTable() {
 
   return (
     <>
-      <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/5 shadow-lg ring-1 ring-white/5">
+      <div className="jobs-surface overflow-x-auto rounded-2xl border border-white/10 bg-white/5 shadow-lg ring-1 ring-white/5">
         <table className="min-w-full divide-y divide-white/10 text-sm text-slate-200">
           <thead className="bg-white/10 text-xs uppercase tracking-wide text-slate-300">
             <tr>

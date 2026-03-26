@@ -3,14 +3,14 @@
 export default function JobsTableSection({ jobs }) {
   if (!jobs?.length) {
     return (
-      <p className="text-center text-sm text-slate-300">
+      <p className="jobs-empty rounded-3xl border border-white/10 bg-white/5 px-6 py-16 text-center text-sm text-slate-300">
         No public jobs available right now. Check back soon.
       </p>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/5 shadow-lg ring-1 ring-white/5">
+    <div className="jobs-surface overflow-x-auto rounded-2xl border border-white/10 bg-white/5 shadow-lg ring-1 ring-white/5">
       <table className="min-w-full divide-y divide-white/10 text-sm text-slate-200">
         <thead className="bg-white/10 text-xs uppercase tracking-wide text-slate-300">
           <tr>

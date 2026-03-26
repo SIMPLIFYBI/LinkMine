@@ -316,7 +316,7 @@ export default function MyJobsClient() {
     <div className="relative">
       {listingModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
-          <div className="relative w-full max-w-3xl rounded-3xl border border-white/15 bg-white/10/80 p-8 text-slate-100 shadow-2xl backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-white/10 supports-[backdrop-filter]:backdrop-blur-2xl supports-[backdrop-filter]:backdrop-saturate-150">
+          <div className="jobs-modal-shell relative w-full max-w-3xl rounded-3xl border border-white/15 bg-white/10/80 p-8 text-slate-100 shadow-2xl backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-white/10 supports-[backdrop-filter]:backdrop-blur-2xl supports-[backdrop-filter]:backdrop-saturate-150">
             <button
               type="button"
               onClick={() => setListingModalOpen(false)}
@@ -359,7 +359,7 @@ export default function MyJobsClient() {
         </div>
       )}
 
-      <div className="mx-auto max-w-3xl space-y-6 px-6 py-8">
+      <div className="jobs-form-shell mx-auto max-w-3xl space-y-6 rounded-[2rem] border border-white/10 bg-white/[0.03] px-6 py-8">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold">My Jobs</h1>

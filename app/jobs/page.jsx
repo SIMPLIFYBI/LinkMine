@@ -56,11 +56,12 @@ export default async function JobsRootPage({ searchParams }) {
   const hasNext = raw.length > PAGE_SIZE;
   const jobs = hasNext ? raw.slice(0, PAGE_SIZE) : raw;
   const hasPrev = page > 1;
+  const totalOpen = jobs.length;
 
   return (
-    <main className="pb-8">
+    <main className="jobs-page pb-8" data-jobs-theme="signal">
       {/* Mobile-only hero (lightened overlay) */}
-      <section className="relative md:hidden left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw] overflow-hidden border-b border-white/10">
+      <section className="jobs-hero relative md:hidden left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw] overflow-hidden border-b border-white/10">
         <Image
           src={HERO_IMG}
           alt="Open pit mine haul road with a dump truck"
@@ -81,7 +82,7 @@ export default async function JobsRootPage({ searchParams }) {
 
         <div className="relative z-10 px-6 py-6">
           {/* Glass panel for text (light tint); remove if not needed */}
-          <div className="inline-block rounded-xl bg-black/25 backdrop-blur-[3px] px-4 py-4 border border-white/10 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.4)]">
+          <div className="jobs-hero-panel inline-block rounded-xl bg-black/25 backdrop-blur-[3px] px-4 py-4 border border-white/10 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.4)]">
             <h1
               className="text-xl font-bold tracking-tight text-white"
               style={{
@@ -100,6 +101,9 @@ export default async function JobsRootPage({ searchParams }) {
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2">
+              <span className="jobs-pill inline-flex items-center rounded-full border border-white/20 bg-white/8 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-100/85">
+                {totalOpen} live now
+              </span>
               <Link
                 href="/account?tab=notifications"
                 prefetch
@@ -128,7 +132,7 @@ export default async function JobsRootPage({ searchParams }) {
       </section>
 
       {/* Existing desktop/tablet hero (hidden on mobile) */}
-      <section className="relative hidden md:block left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw] min-h-[260px] overflow-hidden border-b border-white/10">
+      <section className="jobs-hero relative hidden md:block left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw] min-h-[260px] overflow-hidden border-b border-white/10">
         <Image
           src={HERO_IMG}
           alt="Open pit mine haul road with a dump truck"
@@ -138,11 +142,18 @@ export default async function JobsRootPage({ searchParams }) {
           className="object-cover"
         />
         <div className="relative z-10 mx-auto flex max-w-6xl items-end justify-between px-4 py-8 sm:px-6 md:py-12">
-          <div>
+          <div className="jobs-hero-panel max-w-[58rem] rounded-[2rem] border border-white/10 bg-slate-950/26 px-6 py-6 backdrop-blur-md">
+            <div className="section-label">Hiring signal</div>
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Mining jobs board</h1>
             <p className="mt-1 max-w-[60ch] text-slate-200">
               Find and post roles across geology, drilling, operations, and more.
             </p>
+
+            <div className="mt-4 flex flex-wrap gap-2 text-xs uppercase tracking-[0.24em] text-slate-200/85">
+              <span className="jobs-pill inline-flex items-center rounded-full border border-white/15 bg-white/8 px-3 py-2">{totalOpen} roles on this page</span>
+              <span className="jobs-pill inline-flex items-center rounded-full border border-white/15 bg-white/8 px-3 py-2">Direct consultant reach</span>
+              <span className="jobs-pill inline-flex items-center rounded-full border border-white/15 bg-white/8 px-3 py-2">Public + private posting</span>
+            </div>
 
             {/* CTA row */}
             <div className="mt-3 flex flex-wrap gap-2">
@@ -175,7 +186,7 @@ export default async function JobsRootPage({ searchParams }) {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-sky-500/40 via-cyan-400/30 to-sky-500/40" />
       </section>
 
-      <div className="mx-auto -mt-6 max-w-6xl px-4">
+      <div className="jobs-shell mx-auto -mt-6 max-w-6xl px-4">
         <JobsPageTabs
           boardJobs={jobs}
           boardPage={page}

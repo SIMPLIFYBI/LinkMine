@@ -34,7 +34,6 @@ export default function RootLayout({ children }) {
         className="
           min-h-screen supports-[height:100dvh]:min-h-[100dvh]
           flex flex-col
-          bg-gradient-to-b from-[#0a1b3f] to-[#0b234f]
           text-slate-100 antialiased
         "
       >

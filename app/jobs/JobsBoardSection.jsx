@@ -5,20 +5,20 @@ import Link from "next/link";
 export default function JobsBoardSection({ jobs }) {
   if (!jobs?.length) {
     return (
-      <p className="text-center text-sm text-slate-300">
+      <p className="jobs-empty rounded-3xl border border-white/10 bg-white/5 px-6 py-16 text-center text-sm text-slate-300">
         No public jobs available right now. Check back soon.
       </p>
     );
   }
 
   return (
-    <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+    <section className="jobs-card-grid grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
       {jobs.map((job) => (
         <article
           key={job.id}
-          className="flex h-full flex-col rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg ring-1 ring-white/5 transition hover:border-sky-300/60 hover:ring-sky-400/30"
+          className="jobs-card flex h-full flex-col rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg ring-1 ring-white/5 transition hover:border-sky-300/60 hover:ring-sky-400/30"
         >
-          <div className="mb-3 flex items-center justify-between text-xs uppercase tracking-wide text-slate-400">
+          <div className="jobs-card-meta mb-3 flex items-center justify-between text-xs uppercase tracking-wide text-slate-400">
             <span>{job.service?.name || "General"}</span>
             <span>{job.listing_type}</span>
           </div>
@@ -47,7 +47,7 @@ export default function JobsBoardSection({ jobs }) {
             <Link
               href={`/jobs/${job.id}`}
               prefetch
-              className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-slate-100 hover:border-sky-300/60 hover:bg-sky-500/10"
+              className="jobs-card-cta inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-slate-100 hover:border-sky-300/60 hover:bg-sky-500/10"
             >
               View job
             </Link>
