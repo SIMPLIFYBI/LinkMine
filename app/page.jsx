@@ -389,7 +389,7 @@ export default async function HomePage() {
         id="search"
         className="
           relative left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw]
-          pb-6
+          pb-6 md:hidden
         "
       >
         {/* Inline separator line flush at very top */}
