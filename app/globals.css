@@ -120,6 +120,11 @@ body::before {
     to { opacity: 1; transform: translateY(0); }
   }
 
+  .talenthub-carousel-mask {
+    mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
+  }
+
   .jobs-page {
     position: relative;
   }
