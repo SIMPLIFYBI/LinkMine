@@ -53,10 +53,14 @@ export default function CourseEditorModal({
   const [loading, setLoading] = useState(false);
   const [savingCourse, setSavingCourse] = useState(false);
   const [savingSessionId, setSavingSessionId] = useState(null);
+  const [bookingActionId, setBookingActionId] = useState(null);
+  const [loadingSessionBookings, setLoadingSessionBookings] = useState(false);
   const [error, setError] = useState("");
 
   const [course, setCourse] = useState(null);
   const [sessions, setSessions] = useState([]);
+  const [sessionBookings, setSessionBookings] = useState([]);
+  const [sessionBookingCounts, setSessionBookingCounts] = useState(null);
 
   // course fields
   const [title, setTitle] = useState("");
@@ -77,6 +81,10 @@ export default function CourseEditorModal({
   const [sDelivery, setSDelivery] = useState("in_person");
   const [sLocation, setSLocation] = useState("");
   const [sJoinUrl, setSJoinUrl] = useState("");
+  const [sBookingUrl, setSBookingUrl] = useState("");
+  const [sCapacity, setSCapacity] = useState("");
+  const [sBookingsEnabled, setSBookingsEnabled] = useState(false);
+  const [sAvailabilityDisplay, setSAvailabilityDisplay] = useState("remaining_places");
   const [sPrice, setSPrice] = useState(""); // dollars
   const [sCurrency, setSCurrency] = useState("AUD");
 
@@ -92,6 +100,10 @@ export default function CourseEditorModal({
   const [nDelivery, setNDelivery] = useState("in_person");
   const [nLocation, setNLocation] = useState("");
   const [nJoinUrl, setNJoinUrl] = useState("");
+  const [nBookingUrl, setNBookingUrl] = useState("");
+  const [nCapacity, setNCapacity] = useState("");
+  const [nBookingsEnabled, setNBookingsEnabled] = useState(false);
+  const [nAvailabilityDisplay, setNAvailabilityDisplay] = useState("remaining_places");
   const [nPrice, setNPrice] = useState("");
   const [nCurrency, setNCurrency] = useState("AUD");
 
@@ -103,6 +115,10 @@ export default function CourseEditorModal({
     setNDelivery("in_person");
     setNLocation("");
     setNJoinUrl("");
+    setNBookingUrl("");
+    setNCapacity("");
+    setNBookingsEnabled(false);
+    setNAvailabilityDisplay("remaining_places");
     setNPrice("");
     setNCurrency("AUD");
   }
@@ -153,6 +169,10 @@ export default function CourseEditorModal({
         setSDelivery("in_person");
         setSLocation("");
         setSJoinUrl("");
+        setSBookingUrl("");
+        setSCapacity("");
+        setSBookingsEnabled(false);
+        setSAvailabilityDisplay("remaining_places");
         setSPrice("");
         setSCurrency("AUD");
         setShowNewSessionForm(Boolean(canManage));
@@ -171,6 +191,42 @@ export default function CourseEditorModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, courseId]);
 
+  useEffect(() => {
+    if (!open || !canManage || !activeSessionId) {
+      setSessionBookings([]);
+      setSessionBookingCounts(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadSessionBookings() {
+      setLoadingSessionBookings(true);
+      try {
+        const res = await fetch(`/api/training/sessions/${encodeURIComponent(activeSessionId)}/bookings`, { cache: "no-store" });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json?.error || "Failed to load attendees.");
+        if (!cancelled) {
+          setSessionBookings(Array.isArray(json?.bookings) ? json.bookings : []);
+          setSessionBookingCounts(json?.counts || null);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setError(e.message || "Failed to load attendees.");
+          setSessionBookings([]);
+          setSessionBookingCounts(null);
+        }
+      } finally {
+        if (!cancelled) setLoadingSessionBookings(false);
+      }
+    }
+
+    loadSessionBookings();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, canManage, activeSessionId]);
+
   function selectSession(s) {
     setActiveSessionId(s.id);
 
@@ -186,6 +242,10 @@ export default function CourseEditorModal({
     setSDelivery(s.delivery_method || "in_person");
     setSLocation(s.location_name || s.location || "");
     setSJoinUrl(s.join_url || "");
+    setSBookingUrl(s.booking_url || "");
+    setSCapacity(s.capacity != null ? String(s.capacity) : "");
+    setSBookingsEnabled(Boolean(s.bookings_enabled));
+    setSAvailabilityDisplay(s.availability_display || "remaining_places");
     setSPrice(s.price_cents != null ? String((s.price_cents / 100).toFixed(0)) : "");
     setSCurrency(s.currency || "AUD");
 
@@ -251,6 +311,10 @@ export default function CourseEditorModal({
         delivery_method: sDelivery,
         location_name: sDelivery === "online" ? null : (sLocation || null),
         join_url: sDelivery === "online" || sDelivery === "hybrid" ? (sJoinUrl || null) : null,
+        booking_url: sBookingUrl.trim() || null,
+        capacity: sCapacity !== "" && Number.isFinite(Number(sCapacity)) ? Number(sCapacity) : null,
+        bookings_enabled: sBookingsEnabled,
+        availability_display: sAvailabilityDisplay,
         price_cents: sPrice === "" ? null : Math.round(Number(sPrice) * 100),
         currency: sCurrency || "AUD",
       };
@@ -297,6 +361,10 @@ export default function CourseEditorModal({
             delivery_method: nDelivery,
             location_name: nDelivery === "online" ? null : (nLocation || null),
             join_url: nDelivery === "online" || nDelivery === "hybrid" ? (nJoinUrl || null) : null,
+            booking_url: nBookingUrl.trim() || null,
+            capacity: nCapacity !== "" && Number.isFinite(Number(nCapacity)) ? Number(nCapacity) : null,
+            bookings_enabled: nBookingsEnabled,
+            availability_display: nAvailabilityDisplay,
             price_cents: nPrice === "" ? null : Math.round(Number(nPrice) * 100),
             currency: nCurrency || "AUD",
             status: "scheduled",
@@ -372,6 +440,27 @@ export default function CourseEditorModal({
       setError(e?.message || "Failed to delete session.");
     } finally {
       setDeletingSessionId(null);
+    }
+  }
+
+  async function updateBookingStatus(bookingId, status) {
+    if (!bookingId) return;
+    setBookingActionId(bookingId);
+    setError("");
+    try {
+      const res = await fetch(`/api/training/bookings/${encodeURIComponent(bookingId)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || "Failed to update booking.");
+      await loadCourse();
+      onChanged?.();
+    } catch (e) {
+      setError(e.message || "Failed to update booking.");
+    } finally {
+      setBookingActionId(null);
     }
   }
 
@@ -574,6 +663,44 @@ export default function CourseEditorModal({
                         </div>
                       </div>
 
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <label className="block text-sm text-slate-200">Capacity</label>
+                          <input type="number" min="0" className="mt-1 w-full rounded-md border border-white/10 bg-white/10 p-2 text-white" value={nCapacity} onChange={(e) => setNCapacity(e.target.value)} />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-slate-200">Booking redirect URL</label>
+                          <input className="mt-1 w-full rounded-md border border-white/10 bg-white/10 p-2 text-white" value={nBookingUrl} onChange={(e) => setNBookingUrl(e.target.value)} placeholder="https://trainer-site.example.com/checkout" />
+                        </div>
+                      </div>
+
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <label className="block text-sm text-slate-200">Availability display</label>
+                          <div className="relative mt-1">
+                            <select
+                              className="w-full appearance-none rounded-xl border border-white/10 bg-slate-900/90 px-3 py-2 pr-10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] outline-none transition focus:border-sky-400/60 focus:ring-2 focus:ring-sky-400/20"
+                              value={nAvailabilityDisplay}
+                              onChange={(e) => setNAvailabilityDisplay(e.target.value)}
+                            >
+                              <option className="bg-slate-950 text-white" value="remaining_places">Show remaining places</option>
+                              <option className="bg-slate-950 text-white" value="availability_only">Show availability only</option>
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
+                              <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.51a.75.75 0 0 1-1.08 0l-4.25-4.51a.75.75 0 0 1 .02-1.06Z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-end">
+                          <label className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-300">
+                            <input type="checkbox" className="h-4 w-4" checked={nBookingsEnabled} onChange={(e) => setNBookingsEnabled(e.target.checked)} />
+                            Enable bookings
+                          </label>
+                        </div>
+                      </div>
+
                       <div className="mt-4 flex items-center justify-end gap-2">
                         <button
                           type="button"
@@ -674,6 +801,44 @@ export default function CourseEditorModal({
                               </div>
                             </div>
 
+                            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                              <div>
+                                <label className="block text-sm text-slate-200">Capacity</label>
+                                <input type="number" min="0" className="mt-1 w-full rounded-md border border-white/10 bg-white/10 p-2 text-white" value={sCapacity} onChange={(e) => setSCapacity(e.target.value)} />
+                              </div>
+                              <div>
+                                <label className="block text-sm text-slate-200">Booking redirect URL</label>
+                                <input className="mt-1 w-full rounded-md border border-white/10 bg-white/10 p-2 text-white" value={sBookingUrl} onChange={(e) => setSBookingUrl(e.target.value)} placeholder="https://trainer-site.example.com/checkout" />
+                              </div>
+                            </div>
+
+                            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                              <div>
+                                <label className="block text-sm text-slate-200">Availability display</label>
+                                <div className="relative mt-1">
+                                  <select
+                                    className="w-full appearance-none rounded-xl border border-white/10 bg-slate-900/90 px-3 py-2 pr-10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] outline-none transition focus:border-sky-400/60 focus:ring-2 focus:ring-sky-400/20"
+                                    value={sAvailabilityDisplay}
+                                    onChange={(e) => setSAvailabilityDisplay(e.target.value)}
+                                  >
+                                    <option className="bg-slate-950 text-white" value="remaining_places">Show remaining places</option>
+                                    <option className="bg-slate-950 text-white" value="availability_only">Show availability only</option>
+                                  </select>
+                                  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
+                                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                                      <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.51a.75.75 0 0 1-1.08 0l-4.25-4.51a.75.75 0 0 1 .02-1.06Z" clipRule="evenodd" />
+                                    </svg>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-end">
+                                <label className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-300">
+                                  <input type="checkbox" className="h-4 w-4" checked={sBookingsEnabled} onChange={(e) => setSBookingsEnabled(e.target.checked)} />
+                                  Enable bookings
+                                </label>
+                              </div>
+                            </div>
+
                             <div className="mt-4 flex items-center justify-between gap-2">
                               <div>
                                 {canManage && (
@@ -700,6 +865,79 @@ export default function CourseEditorModal({
                                 {savingSessionId === activeSessionId ? "Saving..." : "Save session"}
                               </button>
                             </div>
+
+                            {canManage ? (
+                              <div className="mt-5 rounded-md border border-white/10 bg-white/5 p-3">
+                                <div className="flex items-center justify-between gap-3">
+                                  <div className="text-sm font-semibold text-white">Attendees</div>
+                                  <div className="text-xs text-slate-400">
+                                    {loadingSessionBookings
+                                      ? "Loading..."
+                                      : sessionBookingCounts
+                                        ? `${sessionBookingCounts.pending || 0} pending • ${sessionBookingCounts.confirmed || 0} confirmed • ${sessionBookingCounts.waitlisted || 0} waitlisted • ${sessionBookingCounts.cancelled || 0} cancelled`
+                                        : "No attendee data yet"}
+                                  </div>
+                                </div>
+
+                                {loadingSessionBookings ? (
+                                  <div className="mt-3 text-sm text-slate-300">Loading attendees…</div>
+                                ) : sessionBookings.length ? (
+                                  <div className="mt-3 space-y-3">
+                                    {sessionBookings.map((booking) => (
+                                      <div key={booking.id} className="rounded-md border border-white/10 bg-slate-950/40 p-3">
+                                        <div className="flex flex-wrap items-start justify-between gap-3">
+                                          <div>
+                                            <div className="text-sm font-semibold text-white">{booking.booking_name}</div>
+                                            <div className="mt-1 text-xs text-slate-300">{booking.booking_email}</div>
+                                            {booking.booking_phone ? <div className="mt-1 text-xs text-slate-400">{booking.booking_phone}</div> : null}
+                                          </div>
+                                          <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${
+                                            booking.status === "pending"
+                                              ? "border border-amber-300/25 bg-amber-400/10 text-amber-100"
+                                              : booking.status === "waitlisted"
+                                                ? "border border-fuchsia-300/25 bg-fuchsia-400/10 text-fuchsia-100"
+                                                : booking.status === "cancelled"
+                                                  ? "border border-red-300/25 bg-red-400/10 text-red-100"
+                                                  : "border border-cyan-300/20 bg-cyan-400/10 text-cyan-100"
+                                          }`}>
+                                            {booking.status}
+                                          </span>
+                                        </div>
+
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                          <button
+                                            type="button"
+                                            onClick={() => updateBookingStatus(booking.id, "confirmed")}
+                                            disabled={bookingActionId === booking.id || booking.status === "confirmed"}
+                                            className="rounded-md border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/15 disabled:opacity-40"
+                                          >
+                                            Confirm
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => updateBookingStatus(booking.id, "waitlisted")}
+                                            disabled={bookingActionId === booking.id || booking.status === "waitlisted"}
+                                            className="rounded-md border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/15 disabled:opacity-40"
+                                          >
+                                            Waitlist
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => updateBookingStatus(booking.id, "cancelled")}
+                                            disabled={bookingActionId === booking.id || booking.status === "cancelled"}
+                                            className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-100 hover:bg-red-500/15 disabled:opacity-40"
+                                          >
+                                            Cancel
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="mt-3 text-sm text-slate-300">No attendees yet for this session.</div>
+                                )}
+                              </div>
+                            ) : null}
                           </>
                         ) : (
                           <div className="text-sm text-slate-300">Select a session to edit.</div>

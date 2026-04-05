@@ -27,7 +27,11 @@ export default function CourseDrawer({ open, onClose, courseId, seedMeta, onChan
   const [loading, setLoading] = useState(false);
   const [course, setCourse] = useState(null);
   const [error, setError] = useState("");
+  const [actionMessage, setActionMessage] = useState("");
   const [logoBroken, setLogoBroken] = useState(false);
+  const [viewerSession, setViewerSession] = useState(null);
+  const [sessionSummaries, setSessionSummaries] = useState({});
+  const [bookingBusyId, setBookingBusyId] = useState(null);
 
   const [canManage, setCanManage] = useState(false);
   const [checkingPerms, setCheckingPerms] = useState(false);
@@ -53,6 +57,27 @@ export default function CourseDrawer({ open, onClose, courseId, seedMeta, onChan
   }, [courseId]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function loadViewerSession() {
+      const { data } = await supabase.auth.getSession();
+      if (!cancelled) {
+        setViewerSession(data?.session ?? null);
+      }
+    }
+
+    loadViewerSession();
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!cancelled) setViewerSession(nextSession ?? null);
+    });
+
+    return () => {
+      cancelled = true;
+      sub?.subscription?.unsubscribe?.();
+    };
+  }, []);
+
+  useEffect(() => {
     if (!open || !courseId) return;
     let cancelled = false;
     setLoading(true);
@@ -74,6 +99,40 @@ export default function CourseDrawer({ open, onClose, courseId, seedMeta, onChan
       cancelled = true;
     };
   }, [open, courseId]);
+
+  useEffect(() => {
+    if (!open || !course?.sessions?.length) {
+      setSessionSummaries({});
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadSessionSummaries() {
+      try {
+        const results = await Promise.all(
+          course.sessions.map(async (session) => {
+            const res = await fetch(`/api/training/sessions/${encodeURIComponent(session.id)}/bookings`, { cache: "no-store" });
+            const json = await res.json().catch(() => ({}));
+            return [session.id, res.ok ? json : null];
+          })
+        );
+
+        if (!cancelled) {
+          setSessionSummaries(Object.fromEntries(results));
+        }
+      } catch {
+        if (!cancelled) {
+          setSessionSummaries({});
+        }
+      }
+    }
+
+    loadSessionSummaries();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, course]);
 
   // ✅ compute owner/admin permission for showing Manage button
   useEffect(() => {
@@ -174,6 +233,64 @@ export default function CourseDrawer({ open, onClose, courseId, seedMeta, onChan
     ? `/consultants/${encodeURIComponent(String(consultantId || resolvedConsultantId))}`
     : null;
 
+  async function refreshSessionSummary(sessionId) {
+    const res = await fetch(`/api/training/sessions/${encodeURIComponent(sessionId)}/bookings`, { cache: "no-store" });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json?.error || "Failed to refresh booking status.");
+    setSessionSummaries((current) => ({ ...current, [sessionId]: json }));
+  }
+
+  async function handleBookSession(session) {
+    setError("");
+    setActionMessage("");
+
+    if (!viewerSession) {
+      const redirect = typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : "/account";
+      window.location.href = `/login?redirect=${encodeURIComponent(redirect)}`;
+      return;
+    }
+
+    try {
+      setBookingBusyId(session.id);
+      const res = await fetch(`/api/training/sessions/${encodeURIComponent(session.id)}/bookings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || "Failed to book session.");
+
+      await refreshSessionSummary(session.id);
+      setActionMessage("Booking request sent. We’ll email you once the trainer reviews it.");
+    } catch (e) {
+      setError(e.message || "Failed to book session.");
+    } finally {
+      setBookingBusyId(null);
+    }
+  }
+
+  async function handleCancelBooking(booking) {
+    if (!booking?.id) return;
+    setError("");
+    setActionMessage("");
+    try {
+      setBookingBusyId(booking.session_id);
+      const res = await fetch(`/api/training/bookings/${encodeURIComponent(booking.id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "cancelled" }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || "Failed to cancel booking.");
+      await refreshSessionSummary(booking.session_id);
+      setActionMessage("Booking cancelled.");
+    } catch (e) {
+      setError(e.message || "Failed to cancel booking.");
+    } finally {
+      setBookingBusyId(null);
+    }
+  }
+
   return (
     <div className={`fixed inset-0 z-50 ${open ? "pointer-events-auto" : "pointer-events-none"}`} aria-hidden={!open}>
       {/* Overlay with fade */}
@@ -244,6 +361,7 @@ export default function CourseDrawer({ open, onClose, courseId, seedMeta, onChan
         <div className="h-[calc(100%-52px)] overflow-y-auto px-4 py-4">
           {loading && <div className="text-slate-400">Loading…</div>}
           {error && <div className="rounded border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-100">{error}</div>}
+          {actionMessage && <div className="mb-3 rounded border border-emerald-400/30 bg-emerald-500/10 p-3 text-sm text-emerald-100">{actionMessage}</div>}
           {!loading && !error && (
             <>
               {course?.summary && <p className="mb-3 text-sm text-slate-300">{course.summary}</p>}
@@ -286,6 +404,23 @@ export default function CourseDrawer({ open, onClose, courseId, seedMeta, onChan
                 <ul className="space-y-2">
                   {course.sessions.map((s) => (
                     <li key={s.id} className="rounded-md border border-white/10 bg-white/5 p-3">
+                      {(() => {
+                        const summary = sessionSummaries[s.id] || null;
+                        const availability = summary?.availability || null;
+                        const currentBooking = summary?.currentBooking || null;
+                        const bookingBusy = bookingBusyId === s.id;
+                        const canBook = Boolean(s.bookings_enabled);
+                        const hasPlaces = availability?.hasAvailability ?? true;
+                        const availabilityText = !canBook
+                          ? "Bookings disabled"
+                          : availability?.displayMode === "availability_only"
+                            ? hasPlaces ? "Places available" : "Currently full"
+                            : availability?.remainingPlaces != null
+                              ? `${availability.remainingPlaces} places left`
+                              : "Places available";
+
+                        return (
+                          <>
                       <div className="text-sm text-white">
                         {fmtDT(s.starts_at)} → {fmtDT(s.ends_at)}
                       </div>
@@ -296,6 +431,67 @@ export default function CourseDrawer({ open, onClose, courseId, seedMeta, onChan
                         {" • "}
                         {fmtPrice(s.price_cents, s.currency)}
                       </div>
+                      <div className="mt-2 text-xs text-slate-400">
+                        {s.bookings_enabled
+                          ? s.availability_display === "availability_only"
+                            ? "Bookings enabled • Shows availability"
+                            : `Bookings enabled${s.capacity != null ? ` • Capacity ${s.capacity}` : ""}`
+                          : "Bookings disabled"}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-300">{availabilityText}</div>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        {canBook ? (
+                          currentBooking && currentBooking.status !== "cancelled" ? (
+                            <>
+                              <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${
+                                currentBooking.status === "pending"
+                                  ? "border border-amber-300/25 bg-amber-400/10 text-amber-100"
+                                  : currentBooking.status === "waitlisted"
+                                    ? "border border-fuchsia-300/25 bg-fuchsia-400/10 text-fuchsia-100"
+                                    : "border border-cyan-300/25 bg-cyan-400/10 text-cyan-100"
+                              }`}>
+                                {currentBooking.status === "pending"
+                                  ? "Requested"
+                                  : currentBooking.status === "waitlisted"
+                                    ? "Waitlisted"
+                                    : "Booked"}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleCancelBooking(currentBooking)}
+                                disabled={bookingBusy}
+                                className="rounded-md border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/15 disabled:opacity-50"
+                              >
+                                {bookingBusy ? "Updating..." : "Cancel booking"}
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleBookSession(s)}
+                              disabled={bookingBusy}
+                              className="rounded-md bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-500 disabled:opacity-50"
+                            >
+                              {bookingBusy ? "Saving..." : "Book session"}
+                            </button>
+                          )
+                        ) : null}
+
+                        {s.booking_url ? (
+                          <a
+                            href={s.booking_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="rounded-md border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/15"
+                          >
+                            Provider site
+                          </a>
+                        ) : null}
+                      </div>
+                          </>
+                        );
+                      })()}
                     </li>
                   ))}
                 </ul>

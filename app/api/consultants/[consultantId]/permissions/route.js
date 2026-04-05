@@ -58,7 +58,7 @@ export async function GET(req, ctx) {
   }
 
   const [consultantRes, favRes, adminRes] = await Promise.all([
-    userSb.from("consultants").select("id, claimed_by").eq("id", consultantId).maybeSingle(),
+    userSb.from("consultants").select("id, claimed_by, user_id").eq("id", consultantId).maybeSingle(),
     userSb
       .from("consultant_favourites")
       .select("id")
@@ -75,7 +75,7 @@ export async function GET(req, ctx) {
     return NextResponse.json({ error: "Consultant not found" }, { status: 404 });
   }
 
-  const isOwner = consultantRes.data.claimed_by === user.id;
+  const isOwner = consultantRes.data.claimed_by === user.id || consultantRes.data.user_id === user.id;
   const isAdmin = Boolean(adminRes.data);
   const canEdit = isOwner || isAdmin;
   const initialFavourite = Boolean(favRes.data);

@@ -30,7 +30,8 @@ export async function GET(req) {
         `
         id, course_id, starts_at, ends_at, timezone, delivery_method,
         location_name, suburb, state, country,
-        join_url, price_cents, currency, gst_included, status,
+        join_url, booking_url, capacity, bookings_enabled, availability_display,
+        price_cents, currency, gst_included, status,
         course:training_courses ( id, title, slug )
       `
       )
@@ -62,6 +63,10 @@ export async function GET(req) {
       state: s.state,
       country: s.country,
       join_url: s.join_url,
+      booking_url: s.booking_url,
+      capacity: s.capacity,
+      bookings_enabled: s.bookings_enabled,
+      availability_display: s.availability_display,
       price_cents: s.price_cents,
       currency: s.currency,
       gst_included: s.gst_included,

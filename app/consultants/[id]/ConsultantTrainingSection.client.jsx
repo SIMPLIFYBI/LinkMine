@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import AddCourseForm from "@/app/training/schedule/AddCourseForm.client.jsx";
 import CourseDrawer from "@/app/training/schedule/CourseDrawer.client.jsx";
@@ -16,6 +17,22 @@ function fmtDateTime(iso) {
 
 function nextSession(course) {
   return (course?.sessions || []).find((session) => session?.starts_at) || null;
+}
+
+function bookingSummaryLabel(course, summary) {
+  const upcoming = nextSession(course);
+  if (!upcoming) return "No session scheduled";
+  if (!upcoming.bookings_enabled) return "Bookings disabled";
+
+  const availability = summary?.availability || null;
+  if (!availability) return upcoming.capacity != null ? `Capacity ${upcoming.capacity}` : "Bookings open";
+  if (availability.displayMode === "availability_only") {
+    return availability.hasAvailability ? "Places available" : "Currently full";
+  }
+  if (availability.remainingPlaces != null) {
+    return `${availability.remainingPlaces} places left`;
+  }
+  return "Bookings open";
 }
 
 function sessionCountLabel(count) {
@@ -88,7 +105,10 @@ export default function ConsultantTrainingSection({
   consultantName,
   initialCourses = [],
 }) {
+  const searchParams = useSearchParams();
+  const queryHandledRef = useRef(false);
   const [courses, setCourses] = useState(initialCourses);
+  const [availabilityBySessionId, setAvailabilityBySessionId] = useState({});
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
   const [loadingPermissions, setLoadingPermissions] = useState(true);
@@ -164,6 +184,37 @@ export default function ConsultantTrainingSection({
   }, [initialCourses]);
 
   useEffect(() => {
+    const sessionIds = Array.from(new Set(courses.map((course) => nextSession(course)?.id).filter(Boolean)));
+    if (!sessionIds.length) {
+      setAvailabilityBySessionId({});
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadAvailability() {
+      try {
+        const results = await Promise.all(
+          sessionIds.map(async (sessionId) => {
+            const res = await fetch(`/api/training/sessions/${encodeURIComponent(sessionId)}/bookings`, { cache: "no-store" });
+            const json = await res.json().catch(() => ({}));
+            return [sessionId, res.ok ? json : null];
+          })
+        );
+
+        if (!cancelled) setAvailabilityBySessionId(Object.fromEntries(results));
+      } catch {
+        if (!cancelled) setAvailabilityBySessionId({});
+      }
+    }
+
+    loadAvailability();
+    return () => {
+      cancelled = true;
+    };
+  }, [courses]);
+
+  useEffect(() => {
     loadPermissions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [consultantId]);
@@ -173,6 +224,22 @@ export default function ConsultantTrainingSection({
     const timer = window.setTimeout(() => setNotice(""), 3200);
     return () => window.clearTimeout(timer);
   }, [notice]);
+
+  useEffect(() => {
+    if (queryHandledRef.current) return;
+    if (loadingPermissions || !canEdit) return;
+
+    const trainingIntent = searchParams?.get("training");
+    const courseId = searchParams?.get("course");
+    if (trainingIntent !== "manage" || !courseId) return;
+
+    const matchedCourse = courses.find((course) => course.id === courseId);
+    if (!matchedCourse) return;
+
+    queryHandledRef.current = true;
+    setDrawerCourse(null);
+    setEditorCourse(matchedCourse);
+  }, [canEdit, courses, loadingPermissions, searchParams]);
 
   if (!hasCourses && !canEdit && !loadingPermissions) return null;
 
@@ -234,6 +301,7 @@ export default function ConsultantTrainingSection({
             {courses.map((course) => {
               const upcoming = nextSession(course);
               const count = course.sessions?.length || 0;
+              const availabilitySummary = upcoming?.id ? availabilityBySessionId[upcoming.id] : null;
 
               return (
                 <div
@@ -265,7 +333,7 @@ export default function ConsultantTrainingSection({
                     ) : null}
                   </div>
 
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
                     <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
                       <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Upcoming</div>
                       <div className="mt-1 text-sm text-white">{upcoming ? fmtDateTime(upcoming.starts_at) : "No session scheduled"}</div>
@@ -274,6 +342,11 @@ export default function ConsultantTrainingSection({
                     <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
                       <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Schedule</div>
                       <div className="mt-1 text-sm text-white">{sessionCountLabel(count)}</div>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Availability</div>
+                      <div className="mt-1 text-sm text-white">{bookingSummaryLabel(course, availabilitySummary)}</div>
                     </div>
                   </div>
 

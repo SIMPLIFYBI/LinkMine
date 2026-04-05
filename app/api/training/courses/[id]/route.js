@@ -51,7 +51,8 @@ export async function GET(_req, { params }) {
         ),
         sessions:training_sessions (
           id, starts_at, ends_at, timezone, delivery_method,
-          location_name, suburb, state, country, join_url,
+          location_name, suburb, state, country, join_url, booking_url,
+          capacity, bookings_enabled, availability_display,
           price_cents, currency, gst_included, status
         )
       `)

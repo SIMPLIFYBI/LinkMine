@@ -29,7 +29,10 @@ export default function AddCourseForm({ consultantId, onDone, reloadOnSuccess = 
       state: "",
       country: "AU",
       join_url: "",
+      booking_url: "",
       capacity: "",
+      bookings_enabled: false,
+      availability_display: "remaining_places",
       price: "",
       currency: "AUD",
       gst_included: true,
@@ -83,7 +86,10 @@ export default function AddCourseForm({ consultantId, onDone, reloadOnSuccess = 
         state: "",
         country: "AU",
         join_url: "",
+        booking_url: "",
         capacity: "",
+        bookings_enabled: false,
+        availability_display: "remaining_places",
         price: "",
         currency: "AUD",
         gst_included: true,
@@ -134,7 +140,10 @@ export default function AddCourseForm({ consultantId, onDone, reloadOnSuccess = 
         state: s.delivery_method === "online" ? null : (s.state || null),
         country: s.delivery_method === "online" ? "AU" : (s.country || "AU"),
         join_url: s.delivery_method === "online" || s.delivery_method === "hybrid" ? (s.join_url || null) : null,
+        booking_url: s.booking_url?.trim() || null,
         capacity: s.capacity !== "" && Number.isFinite(Number(s.capacity)) ? Number(s.capacity) : null,
+        bookings_enabled: !!s.bookings_enabled,
+        availability_display: s.availability_display || "remaining_places",
         price_cents: s.price !== "" && Number.isFinite(Number(s.price)) ? Math.round(Number(s.price) * 100) : null,
         currency: s.currency || "AUD",
         gst_included: !!s.gst_included,
@@ -302,12 +311,48 @@ export default function AddCourseForm({ consultantId, onDone, reloadOnSuccess = 
                   </div>
                 )}
 
-                <div className="grid gap-4 sm:grid-cols-3 mt-3">
+                <div className="mt-3 grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-sm text-slate-200">Capacity</label>
                     <input type="number" min="0" className="mt-1 w-full rounded-md border border-white/10 bg-white/10 p-2 text-white"
                       value={r.capacity} onChange={(e) => updateRow(r.key, { capacity: e.target.value })} />
                   </div>
+                  <div>
+                    <label className="block text-sm text-slate-200">Booking redirect URL</label>
+                    <input className="mt-1 w-full rounded-md border border-white/10 bg-white/10 p-2 text-white"
+                      value={r.booking_url} onChange={(e) => updateRow(r.key, { booking_url: e.target.value })} placeholder="https://trainer-site.example.com/checkout" />
+                  </div>
+                </div>
+
+                <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-sm text-slate-200">Availability display</label>
+                    <div className="relative mt-1">
+                      <select
+                        className="w-full appearance-none rounded-xl border border-white/10 bg-slate-900/90 px-3 py-2 pr-10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] outline-none transition focus:border-sky-400/60 focus:ring-2 focus:ring-sky-400/20"
+                        value={r.availability_display}
+                        onChange={(e) => updateRow(r.key, { availability_display: e.target.value })}
+                      >
+                        <option className="bg-slate-950 text-white" value="remaining_places">Show remaining places</option>
+                        <option className="bg-slate-950 text-white" value="availability_only">Show availability only</option>
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
+                        <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                          <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.51a.75.75 0 0 1-1.08 0l-4.25-4.51a.75.75 0 0 1 .02-1.06Z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-end">
+                    <label className="inline-flex w-full items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-300">
+                      <input type="checkbox" className="h-4 w-4"
+                        checked={r.bookings_enabled} onChange={(e) => updateRow(r.key, { bookings_enabled: e.target.checked })} />
+                      Enable bookings
+                    </label>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-sm text-slate-200">Price (AUD)</label>
                     <input type="number" min="0" step="1" className="mt-1 w-full rounded-md border border-white/10 bg-white/10 p-2 text-white"

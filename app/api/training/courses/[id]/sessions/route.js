@@ -72,7 +72,17 @@ export async function POST(req, { params }) {
       ends_at: s.ends_at,
       delivery_method: s.delivery_method || "in_person",
       location_name: s.location_name ?? null,
+      suburb: s.suburb ?? null,
+      state: s.state ?? null,
+      country: s.country ?? "AU",
       join_url: s.join_url ?? null,
+      booking_url: s.booking_url ?? null,
+      capacity: s.capacity ?? null,
+      bookings_enabled: s.bookings_enabled ?? false,
+      availability_display: s.availability_display ?? "remaining_places",
+      price_cents: s.price_cents ?? null,
+      currency: s.currency ?? "AUD",
+      gst_included: s.gst_included ?? true,
       status: s.status || "scheduled",
     }));
 

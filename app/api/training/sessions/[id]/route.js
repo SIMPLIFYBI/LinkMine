@@ -51,9 +51,17 @@ export async function PATCH(req, { params }) {
     if (typeof body.ends_at === "string") patch.ends_at = body.ends_at;
     if (typeof body.delivery_method === "string") patch.delivery_method = body.delivery_method;
     if (body.location_name !== undefined) patch.location_name = body.location_name;
+    if (body.suburb !== undefined) patch.suburb = body.suburb;
+    if (body.state !== undefined) patch.state = body.state;
+    if (body.country !== undefined) patch.country = body.country;
     if (body.join_url !== undefined) patch.join_url = body.join_url;
+    if (body.booking_url !== undefined) patch.booking_url = body.booking_url;
+    if (body.capacity !== undefined) patch.capacity = body.capacity;
+    if (body.bookings_enabled !== undefined) patch.bookings_enabled = Boolean(body.bookings_enabled);
+    if (typeof body.availability_display === "string") patch.availability_display = body.availability_display;
     if (body.price_cents !== undefined) patch.price_cents = body.price_cents;
     if (typeof body.currency === "string") patch.currency = body.currency;
+    if (body.gst_included !== undefined) patch.gst_included = Boolean(body.gst_included);
 
     // Validate time ordering (prevents training_sessions_time_check failures)
     const starts = new Date(patch.starts_at ?? row.starts_at);

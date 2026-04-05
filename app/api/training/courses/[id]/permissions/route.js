@@ -47,9 +47,8 @@ export async function GET(req, { params }) {
     const { data: owned, error: ownedErr } = await sb
       .from("consultants")
       .select("id")
-      .eq("claimed_by", userId)
-      .eq("status", "approved")
       .eq("id", courseRow.consultant_id)
+      .or(`user_id.eq.${userId},claimed_by.eq.${userId}`)
       .maybeSingle();
 
     if (ownedErr) return NextResponse.json({ error: ownedErr.message }, { status: 500 });

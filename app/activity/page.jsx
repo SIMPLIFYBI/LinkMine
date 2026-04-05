@@ -82,7 +82,7 @@ export default async function MyActivityPage({ searchParams }) {
   }
 
   const requestedTab = String(searchParams?.tab ?? "contacts").toLowerCase();
-  const tab = ["contacts", "jobs", "favourites"].includes(requestedTab) ? requestedTab : "contacts";
+  const tab = ["contacts", "jobs", "favourites", "training"].includes(requestedTab) ? requestedTab : "contacts";
 
   // Only fetch what we need per-tab
   let rows = null;
@@ -90,6 +90,9 @@ export default async function MyActivityPage({ searchParams }) {
 
   let favs = null;
   let favError = null;
+
+  let trainingBookings = null;
+  let trainingError = null;
 
   if (tab === "contacts") {
     const res = await sb
@@ -132,6 +135,51 @@ export default async function MyActivityPage({ searchParams }) {
 
     favs = res.data || null;
     favError = res.error || null;
+  }
+
+  if (tab === "training") {
+    const res = await sb
+      .from("training_session_bookings")
+      .select(`
+        id,
+        booked_at,
+        cancelled_at,
+        booking_name,
+        booking_email,
+        booking_phone,
+        status,
+        session:training_sessions!inner (
+          id,
+          starts_at,
+          ends_at,
+          timezone,
+          delivery_method,
+          location_name,
+          suburb,
+          state,
+          country,
+          join_url,
+          booking_url,
+          price_cents,
+          currency,
+          course:training_courses!inner (
+            id,
+            title,
+            slug,
+            consultant:consultants!inner (
+              id,
+              display_name,
+              metadata
+            )
+          )
+        )
+      `)
+      .eq("user_id", user.id)
+      .order("booked_at", { ascending: false })
+      .limit(100);
+
+    trainingBookings = res.data || null;
+    trainingError = res.error || null;
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -255,6 +303,96 @@ export default async function MyActivityPage({ searchParams }) {
             })}
           </div>
         )
+      ) : tab === "training" ? (
+        trainingError ? (
+          <div className="mt-4 rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4 text-rose-100">
+            Couldn’t load your training bookings. Please try again shortly.
+          </div>
+        ) : !trainingBookings || trainingBookings.length === 0 ? (
+          <div className="mt-4">
+            <TrainingEmptyState />
+          </div>
+        ) : (
+          <ul className="mt-4 space-y-3">
+            {trainingBookings.map((booking) => {
+              const session = booking.session;
+              const course = session?.course;
+              const consultant = course?.consultant;
+              const logoUrl = pickLogoFromMetadata(supabaseUrl, consultant?.metadata);
+
+              return (
+                <li
+                  key={booking.id}
+                  className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 ring-1 ring-white/10 transition hover:border-sky-400/30 hover:bg-sky-500/5"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-3">
+                        <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-white/10 ring-1 ring-white/10">
+                          {logoUrl ? (
+                            <img src={logoUrl} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="grid h-full w-full place-items-center text-xs font-semibold text-slate-300">
+                              {(consultant?.display_name || "T").slice(0, 1).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <TrainingStatusPill status={booking.status} />
+                            <h3 className="truncate text-base font-semibold text-white">{course?.title || "Training booking"}</h3>
+                          </div>
+                          <div className="mt-1 text-sm text-slate-400">
+                            <span className="text-slate-300">{consultant?.display_name || "Provider"}</span>
+                            <span className="mx-2 text-slate-500">•</span>
+                            <time dateTime={booking.booked_at}>{new Date(booking.booked_at).toLocaleString()}</time>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Session</div>
+                          <div className="mt-1 text-sm text-white">{session?.starts_at ? new Date(session.starts_at).toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" }) : "TBA"}</div>
+                        </div>
+                        <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Delivery</div>
+                          <div className="mt-1 text-sm text-white">{session?.delivery_method === "online" ? "Online" : [session?.location_name, session?.suburb, session?.state].filter(Boolean).join(", ") || "TBA"}</div>
+                        </div>
+                        <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Price</div>
+                          <div className="mt-1 text-sm text-white">{session?.price_cents != null ? (session.price_cents / 100).toLocaleString("en-AU", { style: "currency", currency: session.currency || "AUD", minimumFractionDigits: 0 }) : "TBA"}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 flex-wrap items-center gap-2">
+                      {consultant?.id ? (
+                        <a
+                          href={`/consultants/${consultant.id}`}
+                          className="inline-flex items-center gap-1 rounded-full border border-sky-400/40 bg-sky-500/10 px-3 py-1.5 text-sm font-semibold text-sky-100 hover:bg-sky-500/20"
+                        >
+                          View provider <span aria-hidden>→</span>
+                        </a>
+                      ) : null}
+                      {session?.booking_url ? (
+                        <a
+                          href={session.booking_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-semibold text-slate-100 hover:bg-white/10"
+                        >
+                          Provider site
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )
       ) : null}
     </div>
   );
@@ -265,6 +403,7 @@ function TabNav({ activeTab }) {
     { key: "contacts", label: "Direct contacts", href: "/activity?tab=contacts" },
     { key: "jobs", label: "My Jobs", href: "/activity?tab=jobs" },
     { key: "favourites", label: "Favourites", href: "/activity?tab=favourites" },
+    { key: "training", label: "Training", href: "/activity?tab=training" },
   ];
 
   return (
@@ -321,6 +460,17 @@ function EmptyState() {
   );
 }
 
+function TrainingStatusPill({ status }) {
+  const map = {
+    pending: "border-amber-400/40 bg-amber-500/10 text-amber-100",
+    confirmed: "border-emerald-400/40 bg-emerald-500/10 text-emerald-100",
+    waitlisted: "border-amber-400/40 bg-amber-500/10 text-amber-100",
+    cancelled: "border-rose-400/40 bg-rose-500/10 text-rose-100",
+  };
+  const cls = map[status] || "border-white/20 bg-white/10 text-slate-100";
+  return <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold ${cls}`}>{status}</span>;
+}
+
 function FavouritesEmptyState() {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-8 text-center ring-1 ring-white/10">
@@ -332,6 +482,22 @@ function FavouritesEmptyState() {
         className="mt-4 inline-flex items-center rounded-full border border-sky-400/40 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-100 hover:bg-sky-500/20"
       >
         Browse consultants
+      </a>
+    </div>
+  );
+}
+
+function TrainingEmptyState() {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-8 text-center ring-1 ring-white/10">
+      <div className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-full bg-sky-500/15 text-sky-300">⌁</div>
+      <h3 className="text-lg font-semibold text-white">No training bookings yet</h3>
+      <p className="mt-1 text-slate-400">When you book or join a waitlist for a session, it will appear here.</p>
+      <a
+        href="/training/schedule"
+        className="mt-4 inline-flex items-center rounded-full border border-sky-400/40 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-100 hover:bg-sky-500/20"
+      >
+        Browse training
       </a>
     </div>
   );
