@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import AddCourseForm from "@/app/training/schedule/AddCourseForm.client.jsx";
 import CourseDrawer from "@/app/training/schedule/CourseDrawer.client.jsx";
 import CourseEditorModal from "@/app/training/schedule/CourseEditorModal.client.jsx";
 
@@ -43,63 +42,6 @@ function classNames(...parts) {
   return parts.filter(Boolean).join(" ");
 }
 
-function AddTrainingDrawer({ open, onClose, consultantId, consultantName, onCreated }) {
-  const overlayRef = useRef(null);
-
-  return (
-    <div className={classNames("fixed inset-0 z-50", open ? "pointer-events-auto" : "pointer-events-none")} aria-hidden={!open}>
-      <div
-        ref={overlayRef}
-        onClick={(event) => {
-          if (event.target === overlayRef.current) onClose?.();
-        }}
-        className={classNames(
-          "absolute inset-0 bg-black/55 backdrop-blur-sm transition-opacity duration-300",
-          open ? "opacity-100" : "opacity-0"
-        )}
-      />
-
-      <aside
-        role="dialog"
-        aria-modal="true"
-        className={classNames(
-          "absolute inset-y-0 right-0 w-full max-w-2xl transform border-l border-white/10 bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 shadow-2xl ring-1 ring-white/10 transition-transform duration-300 ease-out",
-          open ? "translate-x-0" : "translate-x-full"
-        )}
-      >
-        <div className="flex items-start justify-between gap-4 border-b border-white/10 bg-white/[0.04] px-5 py-4">
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-300">Training manager</div>
-            <h3 className="mt-1 text-lg font-semibold text-white">Add training for {consultantName}</h3>
-            <p className="mt-1 text-sm text-slate-300">Create a course, add session dates, and publish it straight to What&apos;s On.</p>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-medium text-slate-200 hover:bg-white/10"
-          >
-            Close
-          </button>
-        </div>
-
-        <div className="h-[calc(100%-92px)] overflow-y-auto px-5 py-5">
-          <div className="rounded-3xl border border-sky-400/15 bg-white/[0.04] p-4 shadow-[0_18px_60px_-36px_rgba(56,189,248,0.45)] ring-1 ring-white/10">
-            <AddCourseForm
-              consultantId={consultantId}
-              reloadOnSuccess={false}
-              onDone={async (payload) => {
-                await onCreated?.(payload);
-                onClose?.();
-              }}
-            />
-          </div>
-        </div>
-      </aside>
-    </div>
-  );
-}
-
 export default function ConsultantTrainingSection({
   consultantId,
   consultantName,
@@ -114,9 +56,9 @@ export default function ConsultantTrainingSection({
   const [loadingPermissions, setLoadingPermissions] = useState(true);
   const [error, setError] = useState("");
 
-  const [addOpen, setAddOpen] = useState(false);
   const [drawerCourse, setDrawerCourse] = useState(null);
-  const [editorCourse, setEditorCourse] = useState(null);
+  const [managerOpen, setManagerOpen] = useState(false);
+  const [managerCourseId, setManagerCourseId] = useState(null);
   const [notice, setNotice] = useState("");
 
   const hasCourses = courses.length > 0;
@@ -130,14 +72,11 @@ export default function ConsultantTrainingSection({
     };
   }, [consultantId, consultantName, drawerCourse]);
 
-  const editorSeed = useMemo(() => {
-    if (!editorCourse) return null;
-    return {
-      providerName: consultantName,
-      consultantId,
-      courseTitle: editorCourse.title,
-    };
-  }, [consultantId, consultantName, editorCourse]);
+  const managerSeed = useMemo(() => ({
+    providerName: consultantName,
+    consultantId,
+    courseTitle: courses.find((course) => course.id === managerCourseId)?.title || null,
+  }), [consultantId, consultantName, courses, managerCourseId]);
 
   async function loadCourses() {
     setLoadingCourses(true);
@@ -238,7 +177,8 @@ export default function ConsultantTrainingSection({
 
     queryHandledRef.current = true;
     setDrawerCourse(null);
-    setEditorCourse(matchedCourse);
+    setManagerCourseId(matchedCourse.id);
+    setManagerOpen(true);
   }, [canEdit, courses, loadingPermissions, searchParams]);
 
   if (!hasCourses && !canEdit && !loadingPermissions) return null;
@@ -259,19 +199,19 @@ export default function ConsultantTrainingSection({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-200">
-            {hasCourses ? `${courses.length} course${courses.length === 1 ? "" : "s"}` : "No courses yet"}
-          </span>
           {loadingPermissions ? (
             <span className="h-10 w-28 animate-pulse rounded-full bg-white/10" />
           ) : canEdit ? (
             <button
               type="button"
-              onClick={() => setAddOpen(true)}
+              onClick={() => {
+                setManagerCourseId(courses[0]?.id || null);
+                setManagerOpen(true);
+              }}
               className="inline-flex items-center gap-2 rounded-full border border-sky-300/40 bg-gradient-to-r from-sky-500/90 to-cyan-500/80 px-4 py-2 text-sm font-semibold text-slate-950 shadow-[0_16px_32px_-18px_rgba(56,189,248,0.7)] transition hover:translate-y-[-1px] hover:from-sky-400 hover:to-cyan-400"
             >
-              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-950/15 text-sm">+</span>
-              Add training
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-950/15 text-sm">≡</span>
+              Manage training
             </button>
           ) : null}
         </div>
@@ -325,7 +265,10 @@ export default function ConsultantTrainingSection({
                     {canEdit ? (
                       <button
                         type="button"
-                        onClick={() => setEditorCourse(course)}
+                        onClick={() => {
+                          setManagerCourseId(course.id);
+                          setManagerOpen(true);
+                        }}
                         className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100 hover:bg-white/10"
                       >
                         Manage
@@ -392,30 +335,18 @@ export default function ConsultantTrainingSection({
             {canEdit ? (
               <button
                 type="button"
-                onClick={() => setAddOpen(true)}
+                onClick={() => {
+                  setManagerCourseId(null);
+                  setManagerOpen(true);
+                }}
                 className="mt-5 rounded-full border border-sky-300/35 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-100 hover:bg-sky-500/20"
               >
-                Create first course
+                Manage training
               </button>
             ) : null}
           </div>
         )}
       </div>
-
-      <AddTrainingDrawer
-        open={addOpen}
-        onClose={() => setAddOpen(false)}
-        consultantId={consultantId}
-        consultantName={consultantName}
-        onCreated={async (payload) => {
-          await loadCourses();
-          if (payload?.id) {
-            const createdCourse = { id: payload.id, title: payload.title || "Training course" };
-            setDrawerCourse(createdCourse);
-          }
-          setNotice("Training added. You can keep editing sessions and details from here.");
-        }}
-      />
 
       <CourseDrawer
         open={Boolean(drawerCourse)}
@@ -431,22 +362,25 @@ export default function ConsultantTrainingSection({
       />
 
       <CourseEditorModal
-        open={Boolean(editorCourse)}
-        onClose={() => setEditorCourse(null)}
-        courseId={editorCourse?.id || null}
-        seedMeta={editorSeed}
+        open={managerOpen}
+        onClose={() => setManagerOpen(false)}
+        courseId={managerCourseId || null}
+        seedMeta={managerSeed}
         canManage={canEdit}
         onChanged={async () => {
           await loadCourses();
-          if (editorCourse?.id) {
-            setDrawerCourse((current) => (current?.id === editorCourse.id ? { ...current, title: editorCourse.title } : current));
+          if (managerCourseId) {
+            setDrawerCourse((current) => (current?.id === managerCourseId ? { ...current } : current));
           }
           setNotice("Training updated.");
         }}
         onDeleted={async () => {
-          setEditorCourse(null);
           await loadCourses();
           setNotice("Training removed.");
+        }}
+        onCreated={async () => {
+          await loadCourses();
+          setNotice("Training added. You can keep editing everything from the manager.");
         }}
       />
     </article>
