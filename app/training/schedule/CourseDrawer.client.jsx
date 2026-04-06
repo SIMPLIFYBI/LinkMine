@@ -232,6 +232,11 @@ export default function CourseDrawer({ open, onClose, courseId, seedMeta, onChan
   const providerHref = (consultantId || resolvedConsultantId)
     ? `/consultants/${encodeURIComponent(String(consultantId || resolvedConsultantId))}`
     : null;
+  const editorSeed = {
+    providerName: course?.consultant?.display_name || seedMeta?.providerName,
+    consultantId: course?.consultant?.id || seedMeta?.consultantId || null,
+    courseTitle: course?.title || seedMeta?.courseTitle,
+  };
 
   async function refreshSessionSummary(sessionId) {
     const res = await fetch(`/api/training/sessions/${encodeURIComponent(sessionId)}/bookings`, { cache: "no-store" });
@@ -519,7 +524,7 @@ export default function CourseDrawer({ open, onClose, courseId, seedMeta, onChan
         open={editorOpen}
         onClose={() => setEditorOpen(false)}
         courseId={courseId}
-        seedMeta={seedMeta}
+        seedMeta={editorSeed}
         canManage={canManage}
         onChanged={onChanged}
         onDeleted={onDeleted}
