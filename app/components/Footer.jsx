@@ -1,24 +1,32 @@
+"use client";
+
 import Link from "next/link";
 import Logo from "@/app/components/Logo";
+import { useTheme } from "@/app/components/ThemeProvider";
 
 export default function Footer() {
+  const { theme } = useTheme();
+  const isLight = theme === "light";
+
   return (
     <footer
       role="contentinfo"
-      className="w-full border-t border-white/10 bg-gradient-to-t from-slate-950 via-slate-900/95 to-slate-900/90 backdrop-blur-md supports-[backdrop-filter]:backdrop-blur-md"
+      className={isLight
+        ? "w-full border-t border-slate-200/80 bg-gradient-to-t from-white via-slate-50/95 to-slate-100/90 backdrop-blur-md supports-[backdrop-filter]:backdrop-blur-md"
+        : "w-full border-t border-white/10 bg-gradient-to-t from-slate-950 via-slate-900/95 to-slate-900/90 backdrop-blur-md supports-[backdrop-filter]:backdrop-blur-md"}
     >
       <div className="mx-auto max-w-6xl px-4 py-10">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <Logo className="inline-block" />
-            <p className="mt-3 text-sm text-slate-300">
+            <p className={isLight ? "mt-3 text-sm text-slate-600" : "mt-3 text-sm text-slate-300"}>
               Connect mining clients with trusted consultants and contractors.
             </p>
           </div>
 
           <nav aria-label="Explore">
-            <h4 className="text-sm font-semibold text-slate-100">Explore</h4>
-            <ul className="mt-3 space-y-2 text-sm text-slate-300">
+            <h4 className={isLight ? "text-sm font-semibold text-slate-900" : "text-sm font-semibold text-slate-100"}>Explore</h4>
+            <ul className={isLight ? "mt-3 space-y-2 text-sm text-slate-600" : "mt-3 space-y-2 text-sm text-slate-300"}>
               <li>
                 <Link href="/consultants" className="hover:text-sky-300">
                   Consultants
@@ -39,8 +47,8 @@ export default function Footer() {
 
           {/* Landing index: now styled like other footer links */}
           <nav aria-label="Discover">
-            <h4 className="text-sm font-semibold text-slate-100">Discover</h4>
-            <ul className="mt-3 space-y-2 text-sm text-slate-300">
+            <h4 className={isLight ? "text-sm font-semibold text-slate-900" : "text-sm font-semibold text-slate-100"}>Discover</h4>
+            <ul className={isLight ? "mt-3 space-y-2 text-sm text-slate-600" : "mt-3 space-y-2 text-sm text-slate-300"}>
               <li>
                 <Link href="/landing" className="hover:text-sky-300">
                   Explore regions & specialties
@@ -50,8 +58,8 @@ export default function Footer() {
           </nav>
 
           <nav aria-label="Company">
-            <h4 className="text-sm font-semibold text-slate-100">Company</h4>
-            <ul className="mt-3 space-y-2 text-sm text-slate-300">
+            <h4 className={isLight ? "text-sm font-semibold text-slate-900" : "text-sm font-semibold text-slate-100"}>Company</h4>
+            <ul className={isLight ? "mt-3 space-y-2 text-sm text-slate-600" : "mt-3 space-y-2 text-sm text-slate-300"}>
               <li>
                 <Link href="/about" className="hover:text-sky-300">
                   About
@@ -69,8 +77,8 @@ export default function Footer() {
           </nav>
 
           <nav aria-label="Legal" className="lg:col-start-4">
-            <h4 className="text-sm font-semibold text-slate-100">Legal</h4>
-            <ul className="mt-3 space-y-2 text-sm text-slate-300">
+            <h4 className={isLight ? "text-sm font-semibold text-slate-900" : "text-sm font-semibold text-slate-100"}>Legal</h4>
+            <ul className={isLight ? "mt-3 space-y-2 text-sm text-slate-600" : "mt-3 space-y-2 text-sm text-slate-300"}>
               <li>
                 <Link href="/terms" className="hover:text-sky-300">
                   Terms
@@ -85,9 +93,9 @@ export default function Footer() {
           </nav>
         </div>
 
-        <div className="mt-8 border-t border-white/10 pt-4 text-xs text-slate-400 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className={isLight ? "mt-8 flex flex-col gap-2 border-t border-slate-200/80 pt-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between" : "mt-8 border-t border-white/10 pt-4 text-xs text-slate-400 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"}>
           <span>© {new Date().getFullYear()} YouMine. All rights reserved.</span>
-          <span className="text-slate-500">Built for the mining industry.</span>
+          <span className={isLight ? "text-slate-400" : "text-slate-500"}>Built for the mining industry.</span>
         </div>
       </div>
     </footer>

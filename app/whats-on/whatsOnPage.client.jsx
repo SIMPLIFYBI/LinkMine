@@ -5,6 +5,8 @@ import WhatsOnDrawer from "./whatsOnDrawer.client.jsx";
 import SubmitEventModal from "./SubmitEventModal.client.jsx";
 import styles from "./whatsOn.module.css";
 
+const DATE_LABEL_LOCALE = "en-AU";
+
 function startOfMonth(d) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
 }
@@ -149,7 +151,7 @@ function isSameMonth(a, b) {
 
 function fmtDayHeader(d) {
   // Example: "Tue 7"
-  return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric" });
+  return d.toLocaleDateString(DATE_LABEL_LOCALE, { weekday: "short", day: "numeric" });
 }
 
 function Dot({ className }) {
@@ -230,7 +232,7 @@ function MobileMonthCalendar({
                   inMonth ? "text-white" : "text-slate-500",
                 ].join(" ")}
                 aria-pressed={selected}
-                aria-label={d.toLocaleDateString(undefined, {
+                aria-label={d.toLocaleDateString(DATE_LABEL_LOCALE, {
                   year: "numeric",
                   month: "long",
                   day: "numeric",
@@ -367,6 +369,7 @@ export default function WhatsOnPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
 
     async function load() {
       setLoading(true);
@@ -376,7 +379,7 @@ export default function WhatsOnPage() {
         const to = calendarRange.gridEnd.toISOString();
 
         const url = buildCalendarUrl({ from, to, types, region });
-        const res = await fetch(url, { cache: "no-store" });
+  const res = await fetch(url, { cache: "no-store", signal: controller.signal });
 
         const ct = res.headers.get("content-type") || "";
         const json = ct.includes("application/json") ? await res.json() : null;
@@ -455,6 +458,7 @@ export default function WhatsOnPage() {
 
         if (!cancelled) setItems(normalized);
       } catch (e) {
+        if (e?.name === "AbortError") return;
         if (!cancelled) setError(e.message || "Failed to load.");
       } finally {
         if (!cancelled) setLoading(false);
@@ -464,6 +468,7 @@ export default function WhatsOnPage() {
     load();
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [calendarRange.gridStart, calendarRange.gridEnd, types, region]);
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { zonedTimeToUtc } from "date-fns-tz";
+import { fromZonedTime } from "date-fns-tz";
 
 export default function AddCourseForm({ consultantId, onDone, reloadOnSuccess = true }) {
   // Course fields
@@ -67,7 +67,7 @@ export default function AddCourseForm({ consultantId, onDone, reloadOnSuccess = 
     if (!dateStr || !timeStr) return null;
 
     // Interpret the input as a wall-clock time in `timeZone`, then convert to UTC.
-    const utcDate = zonedTimeToUtc(`${dateStr} ${timeStr}`, timeZone);
+    const utcDate = fromZonedTime(`${dateStr} ${timeStr}`, timeZone);
     return utcDate.toISOString();
   }
 

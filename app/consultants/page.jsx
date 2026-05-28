@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
 import AddConsultantButton from "@/app/components/consultants/AddConsultantButton";
 import ServiceFilter from "./ServiceFilter.client.jsx";
@@ -12,196 +13,63 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const PAGE_SIZE = 15;
-const CARD_SELECT = "id, slug, display_name, headline, location, visibility, status, metadata";
-
-// ---- Shuffle helpers ----
 const SEED_BUCKET_MS = 5 * 60 * 1000;
-function mulberry32(seed) {
-  let t = seed >>> 0;
-  return function () {
-    t += 0x6D2B79F5;
-    let r = Math.imul(t ^ (t >>> 15), t | 1);
-    r ^= r + Math.imul(r ^ (r >>> 7), r | 61);
-    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
-  };
-}
-function seededShuffle(arr, seed) {
-  const a = arr.slice();
-  const rand = mulberry32(seed);
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [a[i], a[j] ] = [a[j], a[i]];
-  }
-  return a;
-}
 function getSeed() {
   return Math.floor(Date.now() / SEED_BUCKET_MS);
 }
 
-// ---- Data lookups (with optional name search AND provider kind) ----
-async function getAllConsultantsPage(sb, page, seed, q /* , kindDb */) {
-  const offset = (page - 1) * PAGE_SIZE;
+const getConsultantsDirectoryReferenceData = unstable_cache(
+  async () => {
+    const sb = supabasePublicServer();
 
-  // Build the base id set (optionally filtered by name and provider kind)
-  let query = sb
-    .from("consultants")
-    .select("id")
-    .eq("visibility", "public")
-    .eq("status", "approved");
+    const [{ data: categories = [] }, { data: services = [] }] = await Promise.all([
+      sb
+        .from("service_categories")
+        .select("id, name, slug")
+        .order("position", { ascending: true })
+        .order("name", { ascending: true }),
+      sb
+        .from("services")
+        .select("id, name, slug, category_id")
+        .order("name", { ascending: true }),
+    ]);
 
-  if (q) query = query.ilike("display_name", `%${q}%`);
-  // if (kindDb) query = query.eq("provider_kind", kindDb);
+    return { categories, services };
+  },
+  ["consultants-directory-reference-data"],
+  { revalidate: 3600 }
+);
 
-  const { data: idRows, error: idErr } = await query;
-  if (idErr) console.error("consultants id query error:", idErr);
+async function getConsultantsDirectoryPageViaRpc(
+  sb,
+  { serviceSlug, categorySlug, q, providerKind, page, seed }
+) {
+  const { data, error } = await sb.rpc("get_consultants_directory_page", {
+    p_service_slug: serviceSlug || null,
+    p_category_slug: categorySlug || null,
+    p_q: q || null,
+    p_provider_kind: providerKind || null,
+    p_page: page,
+    p_page_size: PAGE_SIZE,
+    p_seed_bucket: String(seed),
+  });
 
-  const idsAll = asArray(idRows).map((r) => r.id).filter(Boolean);
-  if (idsAll.length === 0) return { consultants: [], hasNext: false };
-
-  const shuffled = seededShuffle(idsAll, seed);
-  const hasNext = shuffled.length > page * PAGE_SIZE;
-  const pageIds = shuffled.slice(offset, offset + PAGE_SIZE);
-
-  let rowsQuery = sb
-    .from("consultants")
-    .select(CARD_SELECT)
-    .in("id", pageIds)
-    .eq("visibility", "public")
-    .eq("status", "approved");
-  // if (kindDb) rowsQuery = rowsQuery.eq("provider_kind", kindDb);
-
-  const { data: rows = [] } = await rowsQuery;
-
-  const byId = new Map(rows.map((r) => [r.id, r]));
-  const consultants = pageIds.map((id) => byId.get(id)).filter(Boolean);
-
-  return { consultants, hasNext };
-}
-
-async function getConsultantsByServiceSlug(sb, serviceSlug, page, seed, q /* , kindDb */) {
-  const offset = (page - 1) * PAGE_SIZE;
-
-  if (!serviceSlug) {
-    return getAllConsultantsPage(sb, page, seed, q /* , kindDb */);
+  if (error) {
+    console.error("consultants directory rpc error:", error);
+    throw new Error(error.message || "Could not load consultants directory.");
   }
 
-  const { data: service } = await sb
-    .from("services")
-    .select("id, name, slug")
-    .eq("slug", serviceSlug)
-    .maybeSingle();
-
-  if (!service) return { consultants: [], activeService: null, hasNext: false };
-
-  const { data: linkRowsData } = await sb
-    .from("consultant_services")
-    .select("consultant_id")
-    .eq("service_id", service.id);
-
-  let idsAll = uniq(asArray(linkRowsData).map((r) => r.consultant_id).filter(Boolean));
-  if (idsAll.length === 0) return { consultants: [], activeService: service, hasNext: false };
-
-  // Optional name filter: intersect with ILIKE results
-  if (q /* || kindDb */) {
-    let filter = sb
-      .from("consultants")
-      .select("id")
-      .in("id", idsAll)
-      .eq("visibility", "public")
-      .eq("status", "approved");
-    if (q) filter = filter.ilike("display_name", `%${q}%`);
-    // if (kindDb) filter = filter.eq("provider_kind", kindDb);
-    const { data: filtered, error: fErr } = await filter;
-    if (fErr) console.error("consultants service filter error:", fErr);
-    const filteredIds = asArray(filtered).map((r) => r.id).filter(Boolean);
-    idsAll = filteredIds;
-    if (idsAll.length === 0) return { consultants: [], activeService: service, hasNext: false };
-  }
-
-  const shuffledIds = seededShuffle(idsAll, seed);
-  const hasNext = shuffledIds.length > page * PAGE_SIZE;
-  const pageIds = shuffledIds.slice(offset, offset + PAGE_SIZE);
-  if (pageIds.length === 0) return { consultants: [], activeService: service, hasNext };
-
-  let rowsQuery = sb
-    .from("consultants")
-    .select(CARD_SELECT)
-    .in("id", pageIds)
-    .eq("visibility", "public")
-    .eq("status", "approved");
-  // if (kindDb) rowsQuery = rowsQuery.eq("provider_kind", kindDb);
-
-  const { data: rows = [] } = await rowsQuery;
-
-  const byId = new Map(rows.map((r) => [r.id, r]));
-  const consultants = pageIds.map((id) => byId.get(id)).filter(Boolean);
-
-  return { consultants, activeService: service, hasNext };
-}
-
-async function getConsultantsByCategorySlug(sb, categorySlug, page, seed, q /* , kindDb */) {
-  const offset = (page - 1) * PAGE_SIZE;
-
-  if (!categorySlug) {
-    return getAllConsultantsPage(sb, page, seed, q /* , kindDb */);
-  }
-
-  const { data: category } = await sb
-    .from("service_categories")
-    .select("id, name, slug")
-    .eq("slug", categorySlug)
-    .maybeSingle();
-
-  if (!category) return { consultants: [], activeCategory: null, hasNext: false };
-
-  const { data: servicesData } = await sb.from("services").select("id").eq("category_id", category.id);
-  const serviceIds = (Array.isArray(servicesData) ? servicesData : []).map((s) => s.id).filter(Boolean);
-  if (serviceIds.length === 0) return { consultants: [], activeCategory: category, hasNext: false };
-
-  const { data: linkRowsData } = await sb
-    .from("consultant_services")
-    .select("consultant_id")
-    .in("service_id", serviceIds);
-
-  let idsAll = uniq(asArray(linkRowsData).map((r) => r.consultant_id).filter(Boolean));
-  if (idsAll.length === 0) return { consultants: [], activeCategory: category, hasNext: false };
-
-  // Optional name/provider filter
-  if (q /* || kindDb */) {
-    let filter = sb
-      .from("consultants")
-      .select("id")
-      .in("id", idsAll)
-      .eq("visibility", "public")
-      .eq("status", "approved");
-    if (q) filter = filter.ilike("display_name", `%${q}%`);
-    // if (kindDb) filter = filter.eq("provider_kind", kindDb);
-    const { data: filtered, error: fErr } = await filter;
-    if (fErr) console.error("consultants category filter error:", fErr);
-    const filteredIds = asArray(filtered).map((r) => r.id).filter(Boolean);
-    idsAll = filteredIds;
-    if (idsAll.length === 0) return { consultants: [], activeCategory: category, hasNext: false };
-  }
-
-  const shuffledIds = seededShuffle(idsAll, seed);
-  const hasNext = shuffledIds.length > page * PAGE_SIZE;
-  const pageIds = shuffledIds.slice(offset, offset + PAGE_SIZE);
-  if (pageIds.length === 0) return { consultants: [], activeCategory: category, hasNext };
-
-  let rowsQuery = sb
-    .from("consultants")
-    .select(CARD_SELECT)
-    .in("id", pageIds)
-    .eq("visibility", "public")
-    .eq("status", "approved");
-  // if (kindDb) rowsQuery = rowsQuery.eq("provider_kind", kindDb);
-
-  const { data: rows = [] } = await rowsQuery;
-
-  const byId = new Map(rows.map((r) => [r.id, r]));
-  const consultants = pageIds.map((id) => byId.get(id)).filter(Boolean);
-
-  return { consultants, activeCategory: category, hasNext };
+  const rows = asArray(data);
+  const hasNextFromRpc = rows[0]?.has_next;
+  return {
+    consultants: rows
+      .map(({ has_next, ...consultant }) => consultant)
+      .slice(0, PAGE_SIZE),
+    hasNext:
+      typeof hasNextFromRpc === "boolean"
+        ? hasNextFromRpc
+        : rows.length > PAGE_SIZE,
+  };
 }
 
 // --- Utility: derive a location phrase from query slugs for SEO flavor ---
@@ -248,7 +116,7 @@ const uniq = (arr) => Array.from(new Set(arr));
 const asArray = (v) => (Array.isArray(v) ? v : []);
 
 export default async function ConsultantsPage({ searchParams }) {
-  const sp = searchParams || {};
+  const sp = (await searchParams) || {};
   const serviceSlug = typeof sp.service === "string" ? sp.service : "";
   const categorySlug = typeof sp.category === "string" ? sp.category : "";
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
@@ -264,26 +132,37 @@ export default async function ConsultantsPage({ searchParams }) {
     kindParam === "professional" ? "Professional Services" :
     kindParam === "both" ? "both" : null;
 
-  const dataResult = serviceSlug
-    ? await getConsultantsByServiceSlug(sb, serviceSlug, page, seed, q, kindDb)
-    : await getConsultantsByCategorySlug(sb, categorySlug, page, seed, q, kindDb);
+  const [
+    directoryPage,
+    referenceData,
+  ] = await Promise.all([
+    getConsultantsDirectoryPageViaRpc(sb, {
+      serviceSlug,
+      categorySlug,
+      page,
+      seed,
+      q,
+      providerKind: kindDb,
+    }),
+    getConsultantsDirectoryReferenceData(),
+  ]);
 
-  const consultants = dataResult.consultants;
-  const activeCategory = dataResult.activeCategory || null;
-  const activeService = dataResult.activeService || null;
-  const hasNext = Boolean(dataResult.hasNext);
+  const allCategories = referenceData.categories || [];
+  const allServices = referenceData.services || [];
+
+  const consultants = directoryPage.consultants;
+  const activeService = allServices.find((service) => service.slug === serviceSlug) || null;
+  const activeCategory = allCategories.find((category) => category.slug === categorySlug) || null;
+  const hasNext = Boolean(directoryPage.hasNext);
   const hasPrev = page > 1;
 
-  const { data: allCategories = [] } = await sb
-    .from("service_categories")
-    .select("id, name, slug")
-    .order("position", { ascending: true })
-    .order("name", { ascending: true });
-
-  const { data: allServices = [] } = await sb
-    .from("services")
-    .select("id, name, slug")
-    .order("name", { ascending: true });
+  const effectiveCategoryId = activeCategory?.id || activeService?.category_id || null;
+  const effectiveCategory = effectiveCategoryId
+    ? allCategories.find((category) => category.id === effectiveCategoryId) || null
+    : null;
+  const visibleServices = effectiveCategoryId
+    ? allServices.filter((service) => service.category_id === effectiveCategoryId)
+    : allServices;
 
   const buildPageHref = (targetPage) => {
     const params = new URLSearchParams();
@@ -356,10 +235,10 @@ export default async function ConsultantsPage({ searchParams }) {
       {/* Mobile hero + floating filter sheet trigger */}
       <MobileHeroAndFilters
         categories={allCategories}
-        services={allServices}
+        services={visibleServices}
         q={q}
         activeService={activeService}
-        activeCategory={activeCategory}
+        activeCategory={effectiveCategory}
         hasActive={Boolean(activeService || activeCategory || q)}
         consultantsCount={consultants.length}
       />
@@ -368,8 +247,8 @@ export default async function ConsultantsPage({ searchParams }) {
       <section className="hidden md:block rounded-2xl border border-white/10 bg-white/[0.02] backdrop-blur-sm p-4 shadow-sm ring-1 ring-white/5 space-y-3">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
-            <ServiceFilter categories={allCategories} activeSlug={activeCategory?.slug || ""} />
-            <ServiceSlugFilter services={allServices} activeSlug={activeService?.slug || ""} />
+            <ServiceFilter categories={allCategories} activeSlug={effectiveCategory?.slug || ""} />
+            <ServiceSlugFilter services={visibleServices} activeSlug={activeService?.slug || ""} />
             <ProviderKindFilter />
             <NameSearch initialValue={q} />
           </div>

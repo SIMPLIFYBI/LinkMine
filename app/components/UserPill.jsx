@@ -2,9 +2,12 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "../../lib/supabaseBrowser";
+import { useTheme } from "@/app/components/ThemeProvider";
 
 export default function UserPill() {
   const [email, setEmail] = useState(null);
+  const { theme } = useTheme();
+  const isLight = theme === "light";
 
   useEffect(() => {
     const sb = supabaseBrowser();
@@ -32,9 +35,9 @@ export default function UserPill() {
       href={href}
       className={`
         inline-flex items-center gap-2 rounded-full
-        border border-white/10 bg-white/5
+        ${isLight ? "border border-slate-200/80 bg-white/88 text-slate-700 hover:border-slate-300 hover:bg-slate-50" : "border border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10"}
         ${hideLabelOnMobile ? "px-2 py-1.5 sm:px-3" : "px-3 py-1.5"}
-        text-sm text-slate-200 hover:border-white/20 hover:bg-white/10 transition
+        text-sm transition
       `}
       aria-label={email ? `Account (${email})` : "Log in"}
     >

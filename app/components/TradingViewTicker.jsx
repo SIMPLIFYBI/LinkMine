@@ -1,15 +1,19 @@
 // TradingViewWidget.jsx
 "use client";
 import { useEffect, useRef, memo } from "react";
+import { useTheme } from "@/app/components/ThemeProvider";
 
 function TradingViewTicker() {
-  const containerRef = useRef(null);
+  const widgetRef = useRef(null);
+  const initializedRef = useRef(false);
+  const { theme } = useTheme();
+  const isLight = theme === "light";
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    const widget = widgetRef.current;
+    if (!widget || initializedRef.current) return;
 
-    container.innerHTML = "";
+    initializedRef.current = true;
     const script = document.createElement("script");
     script.src =
       "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
@@ -50,26 +54,23 @@ function TradingViewTicker() {
           { "proName": "ASX:PDN", "title": "Paladin Energy" },
           { "proName": "ASX:DYL", "title": "Deep Yellow" }
         ],
-        "colorTheme": "dark",
+        "colorTheme": "${isLight ? "light" : "dark"}",
         "isTransparent": true,
         "displayMode": "adaptive",
         "showSymbolLogo": true,
         "locale": "en"
       }`;
-    container.appendChild(script);
-
-    return () => {
-      container.innerHTML = "";
-    };
+    widget.replaceChildren(script);
   }, []);
 
   return (
-    <div className="bg-slate-900/60 backdrop-blur">
+    <div
+      className={isLight ? "border-b border-slate-200/80 bg-white/80 backdrop-blur-xl" : "bg-slate-900/60 backdrop-blur"}
+    >
       <div
-        ref={containerRef}
         className="tradingview-widget-container w-full px-4"
       >
-        <div className="tradingview-widget-container__widget" />
+        <div ref={widgetRef} className="tradingview-widget-container__widget" />
         <div className="tradingview-widget-copyright">
           <a
             href="https://www.tradingview.com/markets/"

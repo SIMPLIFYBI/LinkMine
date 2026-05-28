@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import navTabs from "./navTabs";
+import { useTheme } from "@/app/components/ThemeProvider";
 
 function Icon({ name, active }) {
   const cls = active ? "text-white" : "text-slate-300";
@@ -89,6 +90,8 @@ function pickIconForTab(tab) {
 
 export default function MobileNav() {
   const pathname = usePathname();
+  const { theme } = useTheme();
+  const isLight = theme === "light";
   const scrollerRef = useRef(null);
   const rafRef = useRef(null);
 
@@ -145,16 +148,16 @@ export default function MobileNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
       {/* glass shell */}
-      <div className="border-t border-white/10 bg-slate-950/55 backdrop-blur-xl shadow-[0_-12px_48px_-28px_rgba(0,0,0,0.6)]">
+      <div className={isLight ? "border-t border-slate-200/80 bg-white/78 backdrop-blur-xl shadow-[0_-12px_48px_-28px_rgba(148,163,184,0.35)]" : "border-t border-white/10 bg-slate-950/55 backdrop-blur-xl shadow-[0_-12px_48px_-28px_rgba(0,0,0,0.6)]"}>
         <div className="mx-auto max-w-screen-xl">
           <div className="relative h-14">
             {/* edge fades (no arrow overlay) */}
             <div
-              className="pointer-events-none absolute left-0 top-0 h-full w-10 bg-gradient-to-r from-slate-950/80 to-transparent transition-opacity"
+              className={isLight ? "pointer-events-none absolute left-0 top-0 h-full w-10 bg-gradient-to-r from-white/90 to-transparent transition-opacity" : "pointer-events-none absolute left-0 top-0 h-full w-10 bg-gradient-to-r from-slate-950/80 to-transparent transition-opacity"}
               style={{ opacity: leftFade }}
             />
             <div
-              className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-slate-950/80 to-transparent transition-opacity"
+              className={isLight ? "pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-white/90 to-transparent transition-opacity" : "pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-slate-950/80 to-transparent transition-opacity"}
               style={{ opacity: rightFade }}
             />
 
@@ -179,8 +182,12 @@ export default function MobileNav() {
                       "grid place-items-center",
                       "transition",
                       active
-                        ? "bg-white/[0.08] ring-1 ring-white/15"
-                        : "bg-transparent hover:bg-white/[0.06]",
+                        ? isLight
+                          ? "bg-sky-100/90 ring-1 ring-sky-200"
+                          : "bg-white/[0.08] ring-1 ring-white/15"
+                        : isLight
+                          ? "bg-transparent hover:bg-slate-100/85"
+                          : "bg-transparent hover:bg-white/[0.06]",
                       "focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50",
                     ].join(" ")}
                   >
@@ -193,7 +200,7 @@ export default function MobileNav() {
                       <div
                         className={[
                           "mt-1 text-[10px] font-semibold tracking-tight",
-                          active ? "text-white" : "text-slate-300",
+                          active ? (isLight ? "text-slate-900" : "text-white") : (isLight ? "text-slate-500" : "text-slate-300"),
                         ].join(" ")}
                       >
                         {tab.label}

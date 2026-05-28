@@ -3,7 +3,7 @@
 import AddCourseForm from "@/app/training/schedule/AddCourseForm.client.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import * as tz from "date-fns-tz";
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 function classNames(...parts) {
   return parts.filter(Boolean).join(" ");
@@ -14,15 +14,11 @@ function pad2(n) {
 }
 
 function toZoned(utcIso, timeZone) {
-  const fn = tz.toZonedTime ?? tz.utcToZonedTime;
-  if (typeof fn !== "function") throw new Error("date-fns-tz missing toZonedTime/utcToZonedTime");
-  return fn(new Date(utcIso), timeZone);
+  return toZonedTime(new Date(utcIso), timeZone);
 }
 
 function fromZoned(dateStr, timeStr, timeZone) {
-  const fn = tz.fromZonedTime ?? tz.zonedTimeToUtc;
-  if (typeof fn !== "function") throw new Error("date-fns-tz missing fromZonedTime/zonedTimeToUtc");
-  const d = fn(`${dateStr} ${timeStr}`, timeZone);
+  const d = fromZonedTime(`${dateStr} ${timeStr}`, timeZone);
   return d.toISOString();
 }
 

@@ -3,7 +3,6 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import AccountPageClient from "./AccountPage.client.jsx";
-import WelcomeEmailPing from "./WelcomeEmailPing.client";
 
 export const dynamic = "force-dynamic"; // Avoid static optimization & searchParams warnings
 
@@ -22,7 +21,6 @@ function AccountPageWrapper() {
 export default function Page() {
   return (
     <>
-      <WelcomeEmailPing />
       <Suspense
         fallback={
           <main className="p-10">
