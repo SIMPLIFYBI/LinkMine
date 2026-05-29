@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
+import { siteUrl } from "@/lib/siteUrl";
 import AddConsultantButton from "@/app/components/consultants/AddConsultantButton";
 import ServiceFilter from "./ServiceFilter.client.jsx";
 import NameSearch from "./NameSearch.client.jsx";
@@ -9,11 +10,30 @@ import MobileHeroAndFilters from "./MobileHeroAndFilters.client.jsx"; // NEW
 import ProviderKindFilter from "./ProviderKindFilter.client.jsx"; // NEW
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 300;
 
 const PAGE_SIZE = 15;
 const SEED_BUCKET_MS = 5 * 60 * 1000;
+
+function formatSlugLabel(value) {
+  return String(value || "")
+    .split("-")
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
+}
+
+function buildConsultantsListingHref({ serviceSlug, categorySlug, q, kindParam, page }) {
+  const params = new URLSearchParams();
+  if (serviceSlug) params.set("service", serviceSlug);
+  else if (categorySlug) params.set("category", categorySlug);
+  if (q) params.set("q", q);
+  if (kindParam) params.set("kind", kindParam);
+  if (page > 1) params.set("page", String(page));
+  const query = params.toString();
+  return `/consultants${query ? `?${query}` : ""}`;
+}
+
 function getSeed() {
   return Math.floor(Date.now() / SEED_BUCKET_MS);
 }
@@ -87,29 +107,78 @@ function buildJsonLd(consultants) {
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": "Mining Engineering Consultants Directory",
+    "name": "Mining Consultants & Contractors Directory",
+    "url": siteUrl("/consultants"),
+    "numberOfItems": consultants.length,
     "itemListElement": consultants.map((c, i) => ({
-      "@type": "Organization",
+      "@type": "ListItem",
       "position": i + 1,
-      "name": c.display_name,
-      "url": `https://youmine.example/consultants/${c.id}`,
-      ...(c.location ? { "address": { "@type": "PostalAddress", "addressLocality": c.location } } : {})
-    }))
+      "url": siteUrl(`/consultants/${c.id}`),
+      "item": {
+        "@type": "Organization",
+        "name": c.display_name,
+        ...(c.headline ? { "description": c.headline } : {}),
+        ...(c.location
+          ? { "address": { "@type": "PostalAddress", "addressLocality": c.location } }
+          : {}),
+        ...(c?.metadata?.logo?.url ? { "image": c.metadata.logo.url } : {}),
+      },
+    })),
   };
 }
 
-export const metadata = {
-  title: "Mining Consultants & Contractors Directory · YouMine",
-  description: "Discover verified mining consultants and contractors, view portfolios, and contact directly.",
-  alternates: {
-    canonical: "/consultants",
-  },
-  openGraph: {
-    title: "Mining Consultants & Contractors Directory · YouMine",
-    description: "Discover verified mining consultants and contractors, view portfolios, and contact directly.",
-    url: "/consultants",
-  },
-};
+export async function generateMetadata({ searchParams }) {
+  const sp = (await searchParams) || {};
+  const serviceSlug = typeof sp.service === "string" ? sp.service : "";
+  const categorySlug = typeof sp.category === "string" ? sp.category : "";
+  const q = typeof sp.q === "string" ? sp.q.trim() : "";
+  const kindParam = typeof sp.kind === "string" ? sp.kind : "";
+  const requestedPage = Number.parseInt(sp.page ?? "1", 10);
+  const page = Number.isNaN(requestedPage) ? 1 : Math.max(1, requestedPage);
+
+  const focusLabel = serviceSlug
+    ? formatSlugLabel(serviceSlug)
+    : categorySlug
+    ? formatSlugLabel(categorySlug)
+    : "Mining Consultants & Contractors Directory";
+  const titlePrefix = q
+    ? `Search results for \"${q}\"`
+    : focusLabel === "Mining Consultants & Contractors Directory"
+    ? focusLabel
+    : `${focusLabel} consultants`;
+  const title = page > 1 ? `${titlePrefix} · Page ${page}` : titlePrefix;
+  const description = q
+    ? `Browse consultant search results for ${q} on YouMine${page > 1 ? `, page ${page}` : ""}.`
+    : `Discover verified mining consultants and contractors${
+        focusLabel === "Mining Consultants & Contractors Directory" ? "" : ` for ${focusLabel}`
+      } on YouMine${page > 1 ? `, page ${page}` : ""}.`;
+  const canonical = buildConsultantsListingHref({ serviceSlug, categorySlug, q, kindParam, page });
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical,
+    },
+    robots: q
+      ? {
+          index: false,
+          follow: true,
+        }
+      : undefined,
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["/og-image.png"],
+    },
+  };
+}
 
 // Utils
 const uniq = (arr) => Array.from(new Set(arr));
@@ -164,16 +233,14 @@ export default async function ConsultantsPage({ searchParams }) {
     ? allServices.filter((service) => service.category_id === effectiveCategoryId)
     : allServices;
 
-  const buildPageHref = (targetPage) => {
-    const params = new URLSearchParams();
-    if (serviceSlug) params.set("service", serviceSlug);
-    else if (categorySlug) params.set("category", categorySlug);
-    if (q) params.set("q", q);
-    if (kindParam) params.set("kind", kindParam);
-    if (targetPage > 1) params.set("page", String(targetPage));
-    const qstr = params.toString();
-    return `/consultants${qstr ? `?${qstr}` : ""}`;
-  };
+  const buildPageHref = (targetPage) =>
+    buildConsultantsListingHref({
+      serviceSlug,
+      categorySlug,
+      q,
+      kindParam,
+      page: targetPage,
+    });
 
   const locationPhrase = deriveLocationPhrase(serviceSlug, categorySlug);
   const jsonLd = buildJsonLd(consultants);
@@ -304,9 +371,11 @@ export default async function ConsultantsPage({ searchParams }) {
           </div>
         ) : (
           consultants.map((c) => (
-            <article
+            <Link
               key={c.id}
-              className="relative rounded-xl border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/5 transition hover:border-white/20 hover:bg-white/[0.06]"
+              href={`/consultants/${c.id}`}
+              prefetch
+              className="relative block rounded-xl border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/5 transition hover:border-white/20 hover:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-sky-500/40"
             >
               <div className="flex items-start gap-3">
                 {c?.metadata?.logo?.url ? (
@@ -328,16 +397,10 @@ export default async function ConsultantsPage({ searchParams }) {
                   {c.location && <div className="mt-1 text-xs text-slate-400">{c.location}</div>}
                 </div>
               </div>
-              <div className="mt-3">
-                <Link
-                  href={`/consultants/${c.id}`}
-                  prefetch
-                  className="inline-flex items-center rounded-md bg-gradient-to-r from-sky-600 to-indigo-600 px-3 py-1.5 text-xs font-medium"
-                >
-                  View Profile
-                </Link>
+              <div className="mt-3 text-xs font-medium text-sky-300">
+                View profile
               </div>
-            </article>
+            </Link>
           ))
         )}
       </section>

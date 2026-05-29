@@ -7,18 +7,41 @@ import Link from "next/link"; // NEW
 export const runtime = "nodejs";
 export const revalidate = 180;
 
-export const metadata = {
-  title: "Mining Jobs Board · YouMine",
-  description: "Browse open mining jobs and connect directly with consultants and contractors.",
-  alternates: {
-    canonical: "/jobs",
-  },
-  openGraph: {
-    title: "Mining Jobs Board · YouMine",
-    description: "Browse open mining jobs and connect directly with consultants and contractors.",
-    url: "/jobs",
-  },
-};
+function buildJobsListingHref(page) {
+  if (!page || page <= 1) return "/jobs";
+  const params = new URLSearchParams({ page: String(page) });
+  return `/jobs?${params.toString()}`;
+}
+
+export async function generateMetadata({ searchParams }) {
+  const sp = (await searchParams) || {};
+  const requestedPage = Number.parseInt(sp?.page ?? "1", 10);
+  const page = Number.isNaN(requestedPage) ? 1 : Math.max(1, requestedPage);
+  const title = page > 1 ? `Mining Jobs Board · Page ${page}` : "Mining Jobs Board";
+  const description = `Browse open mining jobs and connect directly with consultants and contractors${
+    page > 1 ? ` on page ${page}` : ""
+  }.`;
+  const canonical = buildJobsListingHref(page);
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["/og-image.png"],
+    },
+  };
+}
 
 const PAGE_SIZE = 16;
 const HERO_IMG = "/OpenPit2.png"; // was "/Pictures/youmine_hero.webp"

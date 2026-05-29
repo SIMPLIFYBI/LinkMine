@@ -13,6 +13,33 @@ import ConsultantTabs from "./ConsultantTabs";
 import PermissionsGate from "./PermissionsGate.client.jsx";
 import ConsultantTrainingSection from "./ConsultantTrainingSection.client.jsx";
 
+function truncateText(value, maxLength = 160) {
+  const normalized = String(value || "").replace(/\s+/g, " ").trim();
+  if (!normalized) return "";
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, Math.max(0, maxLength - 1)).trimEnd()}...`;
+}
+
+function buildConsultantDescription(consultant, services) {
+  const serviceNames = Array.isArray(services)
+    ? services.map((service) => service?.name).filter(Boolean)
+    : [];
+  const parts = [];
+
+  if (consultant?.headline) parts.push(consultant.headline);
+  if (consultant?.location) parts.push(`Based in ${consultant.location}.`);
+  if (serviceNames.length) {
+    parts.push(`Services include ${serviceNames.slice(0, 3).join(", ")}.`);
+  } else if (consultant?.bio) {
+    parts.push(consultant.bio);
+  }
+
+  return truncateText(
+    parts.join(" ") || `View ${consultant?.display_name || "this consultant"} on YouMine.`,
+    160
+  );
+}
+
 // Small formatting helpers for public display
 function formatAbn(abn) {
   const d = String(abn || "").replace(/\D/g, "").slice(0, 11);
@@ -110,6 +137,62 @@ async function getConsultant(id) {
     ports: ports || [],
     viewsCount: viewsCount || 0,
     trainingCourses: normalizedTrainingCourses,
+  };
+}
+
+export async function generateMetadata(props) {
+  const { id: consultantId } = await props.params;
+  const data = await getConsultant(consultantId);
+
+  if (!data) {
+    return {
+      title: "Consultant not found · YouMine",
+      description: "This consultant profile is no longer available on YouMine.",
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  const { consultant, services } = data;
+  const titleParts = [consultant.display_name];
+
+  if (consultant.location) {
+    titleParts.push(`Mining consultant in ${consultant.location}`);
+  } else if (consultant.headline) {
+    titleParts.push(consultant.headline);
+  }
+
+  const description = buildConsultantDescription(consultant, services);
+  const image = consultant?.metadata?.logo?.url || "/og-image.png";
+  const canonical = `/consultants/${consultant.id}`;
+
+  return {
+    title: titleParts.join(" · "),
+    description,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title: titleParts.join(" · "),
+      description,
+      url: canonical,
+      siteName: "YouMine",
+      type: "profile",
+      images: [
+        {
+          url: image,
+          alt: `${consultant.display_name} on YouMine`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: titleParts.join(" · "),
+      description,
+      images: [image],
+    },
   };
 }
 
