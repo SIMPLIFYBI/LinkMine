@@ -4,12 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 
-export default function ServiceFinder({ className = "" }) {
+export default function ServiceFinder({ className = "", initialCategories = null }) {
   const router = useRouter();
   const sb = supabaseBrowser();
 
-  const [loading, setLoading] = useState(true);
-  const [cats, setCats] = useState([]);
+  const [loading, setLoading] = useState(!Array.isArray(initialCategories));
+  const [cats, setCats] = useState(Array.isArray(initialCategories) ? initialCategories : []);
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [highlight, setHighlight] = useState(0);
@@ -19,6 +19,8 @@ export default function ServiceFinder({ className = "" }) {
   const listRef = useRef(null);
 
   useEffect(() => {
+    if (Array.isArray(initialCategories)) return;
+
     let mounted = true;
     (async () => {
       setLoading(true);
@@ -43,7 +45,7 @@ export default function ServiceFinder({ className = "" }) {
     return () => {
       mounted = false;
     };
-  }, []); // eslint-disable-line
+  }, [initialCategories, sb]);
 
   const flatOptions = useMemo(() => {
     const items = [];

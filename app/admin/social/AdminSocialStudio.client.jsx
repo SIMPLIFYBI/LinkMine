@@ -7,6 +7,11 @@ const EXPORT_WIDTH = 1080;
 const EXPORT_HEIGHT = 1350;
 const PREVIEW_SCALE = 0.38;
 
+function formatConsultantOptionLabel(option) {
+  if (!option) return "";
+  return `${option.name || ""}${option.location ? ` • ${option.location}` : ""}`;
+}
+
 function formatNumber(value) {
   return new Intl.NumberFormat("en-AU").format(value || 0);
 }
@@ -419,10 +424,13 @@ function AnalyticsPreview({ data }) {
 export default function AdminSocialStudio({ data }) {
   const [activeTab, setActiveTab] = useState("whatsOn");
   const [selectedConsultantId, setSelectedConsultantId] = useState(data.consultantFeature.selectedId || "");
+  const [consultantSearch, setConsultantSearch] = useState("");
+  const [isConsultantMenuOpen, setIsConsultantMenuOpen] = useState(false);
   const [status, setStatus] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const previewRefs = useRef({});
+  const consultantPickerRef = useRef(null);
 
   useEffect(() => {
     if (!isFullscreenOpen) return undefined;
@@ -448,6 +456,50 @@ export default function AdminSocialStudio({ data }) {
     if (!data.consultantFeature?.byId) return data.consultantFeature?.active;
     return data.consultantFeature.byId[selectedConsultantId] || data.consultantFeature.active;
   }, [data.consultantFeature, selectedConsultantId]);
+
+  const selectedConsultantOption = useMemo(() => {
+    return (data.consultantFeature?.options || []).find((option) => option.id === selectedConsultantId) || null;
+  }, [data.consultantFeature, selectedConsultantId]);
+
+  const filteredConsultantOptions = useMemo(() => {
+    const options = data.consultantFeature?.options || [];
+    const query = consultantSearch.trim().toLowerCase();
+
+    if (!query) return options;
+
+    const filtered = options.filter((option) => {
+      const haystack = `${option.name || ""} ${option.location || ""}`.toLowerCase();
+      return haystack.includes(query);
+    });
+
+    return filtered;
+  }, [consultantSearch, data.consultantFeature]);
+
+  useEffect(() => {
+    if (!isConsultantMenuOpen) return undefined;
+
+    function handlePointerDown(event) {
+      if (consultantPickerRef.current && !consultantPickerRef.current.contains(event.target)) {
+        setIsConsultantMenuOpen(false);
+        setConsultantSearch("");
+      }
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setIsConsultantMenuOpen(false);
+        setConsultantSearch("");
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isConsultantMenuOpen]);
 
   const tabs = useMemo(
     () => [
@@ -559,17 +611,67 @@ export default function AdminSocialStudio({ data }) {
           {active.id === "consultantFeature" && data.consultantFeature.options?.length ? (
             <div className="mt-4">
               <label className="block text-[11px] uppercase tracking-[0.24em] text-slate-500">Choose consultant</label>
-              <select
-                value={selectedConsultantId}
-                onChange={(event) => setSelectedConsultantId(event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-white/12 bg-black/25 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40"
-              >
-                {data.consultantFeature.options.map((option) => (
-                  <option key={option.id} value={option.id} className="bg-slate-950 text-slate-100">
-                    {option.name}{option.location ? ` • ${option.location}` : ""}
-                  </option>
-                ))}
-              </select>
+              <div className="relative mt-2" ref={consultantPickerRef}>
+                <input
+                  type="search"
+                  value={isConsultantMenuOpen ? consultantSearch : formatConsultantOptionLabel(selectedConsultantOption)}
+                  onFocus={() => setIsConsultantMenuOpen(true)}
+                  onChange={(event) => {
+                    setConsultantSearch(event.target.value);
+                    setIsConsultantMenuOpen(true);
+                  }}
+                  placeholder="Search by consultant or location"
+                  className="w-full rounded-2xl border border-white/12 bg-black/25 px-4 py-3 pr-10 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300/40"
+                  aria-expanded={isConsultantMenuOpen}
+                  aria-haspopup="listbox"
+                />
+                <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">
+                  <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4 fill-current">
+                    <path d="M5.5 7.5 10 12l4.5-4.5" />
+                  </svg>
+                </div>
+                {isConsultantMenuOpen ? (
+                  <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-white/12 bg-slate-950/98 shadow-2xl ring-1 ring-white/10 backdrop-blur">
+                    <div className="border-b border-white/8 px-4 py-2 text-xs text-slate-400">
+                      {filteredConsultantOptions.length} consultant{filteredConsultantOptions.length === 1 ? "" : "s"} shown
+                    </div>
+                    <div role="listbox" className="max-h-72 overflow-auto p-2">
+                      {filteredConsultantOptions.length ? (
+                        filteredConsultantOptions.map((option) => {
+                          const isSelected = option.id === selectedConsultantId;
+                          return (
+                            <button
+                              key={option.id}
+                              type="button"
+                              role="option"
+                              aria-selected={isSelected}
+                              onMouseDown={(event) => event.preventDefault()}
+                              onClick={() => {
+                                setSelectedConsultantId(option.id);
+                                setConsultantSearch("");
+                                setIsConsultantMenuOpen(false);
+                              }}
+                              className={[
+                                "w-full rounded-xl px-3 py-3 text-left transition",
+                                isSelected
+                                  ? "bg-cyan-400/15 text-cyan-50 ring-1 ring-cyan-300/30"
+                                  : "text-slate-100 hover:bg-white/5",
+                              ].join(" ")}
+                            >
+                              <div className="text-sm font-medium">{option.name}</div>
+                              {option.location ? (
+                                <div className="mt-1 text-xs text-slate-400">{option.location}</div>
+                              ) : null}
+                            </button>
+                          );
+                        })
+                      ) : (
+                        <div className="rounded-xl px-3 py-3 text-sm text-slate-400">No consultants match this search</div>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             </div>
           ) : null}
           <div className="mt-4 flex flex-col gap-3">

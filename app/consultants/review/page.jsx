@@ -2,13 +2,17 @@ import ConsultantReviewClient from "./ConsultantReviewClient";
 import StatsCards from "./StatsCards";
 import Tabs from "./Tabs";
 import InProgressClient from "./InProgressClient";
+import LandingPagesList from "./LandingPagesList";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default function ConsultantReviewPage({ searchParams }) {
-  const tab = (searchParams?.tab || "dashboard").toLowerCase();
-  const active = ["dashboard", "review", "in-progress"].includes(tab) ? tab : "dashboard";
+export default async function ConsultantReviewPage({ searchParams }) {
+  const sp = (await searchParams) || {};
+  const tab = (sp?.tab || "dashboard").toLowerCase();
+  const active = ["dashboard", "review", "in-progress", "landing-pages"].includes(tab)
+    ? tab
+    : "dashboard";
 
   return (
     <div className="space-y-6">
@@ -26,6 +30,11 @@ export default function ConsultantReviewPage({ searchParams }) {
       {active === "in-progress" && (
         <div className="space-y-6">
           <InProgressClient />
+        </div>
+      )}
+      {active === "landing-pages" && (
+        <div className="space-y-6">
+          <LandingPagesList />
         </div>
       )}
     </div>

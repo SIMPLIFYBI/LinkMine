@@ -53,9 +53,34 @@ async function getStatsAndFeatured() {
       .order("name", { ascending: true })
       .limit(9);
 
-    return { featured, categories };
+    const [{ data: allCategories = [] }, { data: services = [] }] = await Promise.all([
+      sb
+        .from("service_categories")
+        .select("id, name, slug")
+        .order("position", { ascending: true })
+        .order("name", { ascending: true }),
+      sb
+        .from("services")
+        .select("id, name, slug, category_id")
+        .order("name", { ascending: true }),
+    ]);
+
+    const searchCategories = allCategories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+      services: services
+        .filter((service) => service.category_id === category.id)
+        .map((service) => ({
+          id: service.id,
+          name: service.name,
+          slug: service.slug,
+        })),
+    }));
+
+    return { featured, categories, searchCategories };
   } catch {
-    return { featured: [], categories: [] };
+    return { featured: [], categories: [], searchCategories: [] };
   }
 }
 
@@ -85,7 +110,7 @@ function CategoryIcon({ slug }) {
 
 export default async function HomePage() {
   const showPreview = true;
-  const { featured, categories } = await getStatsAndFeatured();
+  const { featured, categories, searchCategories } = await getStatsAndFeatured();
 
   // Deterministic daily rotation (UTC) for featured
   const tzOffsetMinutes = 0;
@@ -389,7 +414,7 @@ export default async function HomePage() {
         id="search"
         className="
           relative left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw]
-          pb-6 md:hidden
+          pb-6
         "
       >
         {/* Inline separator line flush at very top */}
@@ -419,7 +444,7 @@ export default async function HomePage() {
         {/* Content wrapper (adds internal top spacing below line) */}
         <div className="mx-auto w-full max-w-screen-md px-6 sm:px-8 pt-5">
           <p className="section-label mb-2">Search</p>
-          <ServiceFinder className="mt-2" />
+          <ServiceFinder className="mt-2" initialCategories={searchCategories} />
         </div>
       </section>
 

@@ -13,7 +13,8 @@ export async function generateStaticParams() {
 
 // Dynamic metadata
 export async function generateMetadata({ params }) {
-  const entry = getLandingEntry(params.slug);
+  const resolvedParams = await params;
+  const entry = getLandingEntry(resolvedParams.slug);
   if (!entry) {
     return { title: "YouMine", description: "Consultants marketplace" };
   }
@@ -115,7 +116,8 @@ async function fetchShowcase(entry) {
 
 // Page component
 export default async function LandingPage({ params }) {
-  const entry = getLandingEntry(params.slug);
+  const resolvedParams = await params;
+  const entry = getLandingEntry(resolvedParams.slug);
   if (!entry) return notFound();
 
   const browseHref = entry.categorySlug

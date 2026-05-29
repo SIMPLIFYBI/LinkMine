@@ -4,7 +4,7 @@ const entry = {
   description:
     "Independent mining safety consultants across Australia for risk assessments, critical controls, incident investigation, safety leadership, contractor management and regulatory compliance.",
   // Use this category for the consultant showcase filter:
-  categorySlug: "environmental-services",
+  categorySlug: "environmental-safety",
   hero: {
     heading: "Mining Safety Consultants — Australia",
     subheading:
