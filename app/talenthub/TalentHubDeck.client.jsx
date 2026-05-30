@@ -137,7 +137,7 @@ function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef =
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
-      className={`group relative touch-pan-y overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(7,20,34,0.98),rgba(8,17,28,0.98))] text-left shadow-[0_30px_110px_-48px_rgba(8,145,178,0.85)] transition hover:-translate-y-1 hover:border-cyan-300/30 hover:shadow-[0_36px_130px_-50px_rgba(8,145,178,0.95)] focus:outline-none focus:ring-2 focus:ring-cyan-300/40 ${className}`}
+      className={`group relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(7,20,34,0.98),rgba(8,17,28,0.98))] text-left shadow-[0_30px_110px_-48px_rgba(8,145,178,0.85)] transition hover:-translate-y-1 hover:border-cyan-300/30 hover:shadow-[0_36px_130px_-50px_rgba(8,145,178,0.95)] focus:outline-none focus:ring-2 focus:ring-cyan-300/40 ${className}`}
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_26%),radial-gradient(circle_at_82%_14%,rgba(56,189,248,0.16),transparent_20%)]" />
       <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:34px_34px]" />
@@ -473,7 +473,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
           <div className="relative talenthub-carousel-mask">
             <div
               ref={trackRef}
-              className="no-scrollbar flex touch-pan-y snap-x snap-mandatory gap-5 overflow-x-auto px-[10vw] py-2 scroll-smooth md:px-[16vw]"
+              className="no-scrollbar flex touch-pan-x snap-x snap-mandatory gap-5 overflow-x-auto px-[10vw] py-2 scroll-smooth md:px-[16vw]"
             >
               {displayedWorkers.map((worker, index) => (
                 <WorkerCard

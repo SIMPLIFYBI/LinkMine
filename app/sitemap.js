@@ -1,12 +1,11 @@
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
+import { hasSupabasePublicConfig } from "@/lib/supabaseEnv";
 import { siteUrl } from "@/lib/siteUrl";
 import { landingPages } from "@/app/landing/registry";
 
 export const revalidate = 86400; // 24h
 
 export default async function sitemap() {
-  const sb = supabasePublicServer();
-
   const core = [
     "/",
     "/consultants",
@@ -27,18 +26,34 @@ export default async function sitemap() {
     priority: 0.7,
   }));
 
-  const [{ data: consultants = [] }, { data: jobs = [] }] = await Promise.all([
-    sb
-      .from("consultants")
-      .select("id")
-      .eq("visibility", "public")
-      .eq("status", "approved"),
-    sb
-      .from("jobs")
-      .select("id, created_at")
-      .or("listing_type.eq.Public,listing_type.eq.Both")
-      .eq("status", "open"),
-  ]);
+  if (!hasSupabasePublicConfig()) {
+    return [...core, ...landingEntries];
+  }
+
+  const sb = supabasePublicServer();
+
+  let consultants = [];
+  let jobs = [];
+
+  try {
+    const [consultantsResult, jobsResult] = await Promise.all([
+      sb
+        .from("consultants")
+        .select("id")
+        .eq("visibility", "public")
+        .eq("status", "approved"),
+      sb
+        .from("jobs")
+        .select("id, created_at")
+        .or("listing_type.eq.Public,listing_type.eq.Both")
+        .eq("status", "open"),
+    ]);
+
+    consultants = consultantsResult?.data || [];
+    jobs = jobsResult?.data || [];
+  } catch {
+    return [...core, ...landingEntries];
+  }
 
   const consultantEntries = consultants.map((consultant) => ({
     url: siteUrl(`/consultants/${consultant.id}`),

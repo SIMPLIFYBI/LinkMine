@@ -3,7 +3,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { supabase } from "@/lib/supabaseClient";
-import { redirectTo } from "@/lib/siteUrl";
+import { getAuthExchangeUrl, getAuthRedirectUrl } from "@/lib/mobileRuntime";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +35,7 @@ function AuthInner() {
     // Handle magic link callback (?code=...)
     const code = searchParams.get("code");
     if (code) {
-      supabase.auth.exchangeCodeForSession(window.location.href).then(({ error }) => {
+      supabase.auth.exchangeCodeForSession(getAuthExchangeUrl(window.location.href)).then(({ error }) => {
         if (error) toast.error(error.message);
         else {
           toast.success("Signed in");
@@ -64,7 +64,7 @@ function AuthInner() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
-      options: { emailRedirectTo: redirectTo("/auth") },
+      options: { emailRedirectTo: getAuthRedirectUrl() },
     });
     setLoading(false);
     if (error) return toast.error(error.message);

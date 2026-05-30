@@ -22,6 +22,10 @@ function textareaClasses() {
   return `${inputClasses()} min-h-[132px] resize-y`;
 }
 
+function selectOptionStyle() {
+  return { backgroundColor: "#08111c", color: "#f8fafc" };
+}
+
 function groupedRoleOptions(roleOptions) {
   const grouped = new Map();
 
@@ -248,10 +252,15 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
             <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">Working rights</div>
             <div className="mt-5 space-y-3">
               <FieldShell label="Working rights category" hint="Maps to the working_rights_slug field on the worker record.">
-                <select className={inputClasses()} value={profile.workingRightsSlug} onChange={(event) => updateField("workingRightsSlug", event.target.value)}>
-                  <option value="">Select working rights</option>
+                <select
+                  className={`${inputClasses()} bg-[linear-gradient(180deg,rgba(8,17,28,0.98),rgba(7,20,34,0.98))] text-white [color-scheme:dark]`}
+                  value={profile.workingRightsSlug}
+                  onChange={(event) => updateField("workingRightsSlug", event.target.value)}
+                  style={selectOptionStyle()}
+                >
+                  <option value="" style={selectOptionStyle()}>Select working rights</option>
                   {(workingRightsOptions || []).map((option) => (
-                    <option key={option.slug} value={option.slug}>{option.name}</option>
+                    <option key={option.slug} value={option.slug} style={selectOptionStyle()}>{option.name}</option>
                   ))}
                 </select>
               </FieldShell>
@@ -262,9 +271,22 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
             <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">Roles</div>
             <div className="mt-5 space-y-5">
               {groupedRoleOptions(roleOptions).map(([groupName, options]) => (
-                <div key={groupName}>
-                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{groupName}</div>
-                  <div className="mt-3 grid gap-3">
+                <details
+                  key={groupName}
+                  open={options.some((option) => profile.roleCategoryIds.includes(option.id))}
+                  className="group overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/15"
+                >
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 text-left marker:hidden transition hover:bg-white/[0.03]">
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{groupName}</div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        {options.filter((option) => profile.roleCategoryIds.includes(option.id)).length} selected
+                      </div>
+                    </div>
+                    <span className="text-lg text-slate-400 transition group-open:rotate-180">⌄</span>
+                  </summary>
+
+                  <div className="grid gap-3 border-t border-white/10 px-4 py-4">
                     {options.map((option) => {
                       const checked = profile.roleCategoryIds.includes(option.id);
                       return (
@@ -283,7 +305,7 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
                       );
                     })}
                   </div>
-                </div>
+                </details>
               ))}
             </div>
           </section>

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">YouMine</string>
+    <string name="title_activity_main">YouMine</string>
+    <string name="package_name">io.youmine.app</string>
+    <string name="custom_url_scheme">io.youmine.app</string>
+</resources>

@@ -6,9 +6,17 @@
   "scripts": {
     "dev": "next dev -p 3004",
     "build": "next build",
-    "start": "next start -p 3004"
+    "start": "next start -p 3004",
+    "cap:doctor": "npx cap doctor",
+    "cap:copy": "npx cap copy",
+    "cap:sync": "npx cap sync",
+    "cap:sync:android": "npx cap sync android",
+    "cap:sync:ios": "npx cap sync ios"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
+    "@capacitor/ios": "^8.3.4",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.40.0",
@@ -23,6 +31,7 @@
     "react-hot-toast": "^2.6.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.3.4",
     "@tailwindcss/postcss": "^4.1.13",
     "autoprefixer": "^10.4.21",
     "dotenv": "^17.2.3",

@@ -50,6 +50,21 @@ To get started with the YouMine application:
 - Basic metrics and favourites.
 - Responsive design powered by Tailwind CSS.
 
+## Mobile App Shell
+
+Capacitor is configured in this repo for native Android and iOS shells.
+
+- `capacitor.config.ts` uses `CAPACITOR_SERVER_URL` when provided.
+- If `CAPACITOR_SERVER_URL` is not set, it falls back to `NEXT_PUBLIC_SITE_URL` or `SITE_URL`.
+- This means native builds can point at the hosted YouMine web app without changing the normal Next.js web build.
+
+Useful commands:
+
+```bash
+npm run cap:doctor
+npm run cap:sync
+```
+
 ## Contributing
 Contributions are welcome! Please open an issue or submit a pull request for enhancements or bug fixes.
 
