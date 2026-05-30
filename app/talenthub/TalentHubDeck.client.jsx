@@ -1,6 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { supabaseBrowser } from "@/lib/supabaseBrowser";
+import WorkerFavouriteButton from "./WorkerFavouriteButton.client";
+import MyProfileForm from "./MyProfileForm.client";
+
+const tabs = [
+  { key: "candidates", label: "Candidates" },
+  { key: "favourites", label: "Favourites" },
+  { key: "my-profile", label: "My Profile" },
+];
 
 function Badge({ children, tone = "neutral" }) {
   const classes = {
@@ -18,6 +27,8 @@ function Badge({ children, tone = "neutral" }) {
 }
 
 function WorkerDetailModal({ worker, onClose }) {
+  if (!worker) return null;
+
   useEffect(() => {
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -33,8 +44,6 @@ function WorkerDetailModal({ worker, onClose }) {
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [onClose]);
-
-  if (!worker) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 py-6 backdrop-blur-xl" onClick={onClose}>
@@ -114,13 +123,21 @@ function WorkerDetailModal({ worker, onClose }) {
 }
 
 function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef = null }) {
+  function handleKeyDown(event) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onOpen();
+    }
+  }
 
   return (
-    <button
+    <div
       ref={cardRef}
-      type="button"
       onClick={onOpen}
-      className={`group relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(7,20,34,0.98),rgba(8,17,28,0.98))] text-left shadow-[0_30px_110px_-48px_rgba(8,145,178,0.85)] transition hover:-translate-y-1 hover:border-cyan-300/30 hover:shadow-[0_36px_130px_-50px_rgba(8,145,178,0.95)] ${className}`}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      className={`group relative touch-pan-y overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(7,20,34,0.98),rgba(8,17,28,0.98))] text-left shadow-[0_30px_110px_-48px_rgba(8,145,178,0.85)] transition hover:-translate-y-1 hover:border-cyan-300/30 hover:shadow-[0_36px_130px_-50px_rgba(8,145,178,0.95)] focus:outline-none focus:ring-2 focus:ring-cyan-300/40 ${className}`}
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_26%),radial-gradient(circle_at_82%_14%,rgba(56,189,248,0.16),transparent_20%)]" />
       <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:34px_34px]" />
@@ -132,9 +149,12 @@ function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef =
             <h2 className={`${compact ? "mt-3 text-2xl" : "mt-4 text-3xl sm:text-[2.2rem]"} font-semibold tracking-tight text-white`}>{worker.displayName}</h2>
             <p className={`${compact ? "mt-2 line-clamp-2 text-sm" : "mt-2 text-sm sm:text-base"} max-w-2xl leading-7 text-slate-200`}>{worker.headline}</p>
           </div>
-          <span className="rounded-full border border-white/12 bg-white/[0.06] px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100 transition group-hover:bg-white/[0.12]">
-            Open
-          </span>
+          <div className="flex items-center gap-2">
+            <WorkerFavouriteButton workerId={worker.id} />
+            <span className="rounded-full border border-white/12 bg-white/[0.06] px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100 transition group-hover:bg-white/[0.12]">
+              Open
+            </span>
+          </div>
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2">
@@ -194,20 +214,87 @@ function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef =
           <span>Tap to open</span>
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 
-export default function TalentHubDeck({ workers }) {
+export default function TalentHubDeck({ workers, currentProfile, roleOptions, workingRightsOptions }) {
+  const sb = supabaseBrowser();
+  const [activeTab, setActiveTab] = useState("candidates");
   const [selectedWorkerId, setSelectedWorkerId] = useState(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [favouriteIds, setFavouriteIds] = useState([]);
+  const [favouritesLoaded, setFavouritesLoaded] = useState(false);
   const trackRef = useRef(null);
   const itemRefs = useRef([]);
-  const selectedWorker = workers.find((worker) => worker.id === selectedWorkerId) || null;
+  const displayedWorkers = activeTab === "favourites"
+    ? workers.filter((worker) => favouriteIds.includes(worker.id))
+    : workers;
+  const selectedWorker = displayedWorkers.find((worker) => worker.id === selectedWorkerId) || null;
 
   useEffect(() => {
-    itemRefs.current = itemRefs.current.slice(0, workers.length);
-  }, [workers.length]);
+    itemRefs.current = itemRefs.current.slice(0, displayedWorkers.length);
+  }, [displayedWorkers.length]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadFavourites() {
+      const { data: auth } = await sb.auth.getUser();
+      const userId = auth?.user?.id || null;
+
+      if (!mounted) return;
+      if (!userId) {
+        setFavouriteIds([]);
+        setFavouritesLoaded(true);
+        return;
+      }
+
+      const { data, error } = await sb
+        .from("worker_favourites")
+        .select("worker_id")
+        .eq("user_id", userId);
+
+      if (!mounted) return;
+      if (error) {
+        setFavouriteIds([]);
+        setFavouritesLoaded(true);
+        return;
+      }
+
+      setFavouriteIds((data || []).map((row) => row.worker_id).filter(Boolean));
+      setFavouritesLoaded(true);
+    }
+
+    loadFavourites();
+
+    return () => {
+      mounted = false;
+    };
+  }, [sb]);
+
+  useEffect(() => {
+    function onFavouriteChanged(event) {
+      const workerId = event?.detail?.workerId;
+      const favourite = Boolean(event?.detail?.favourite);
+      if (!workerId) return;
+
+      setFavouriteIds((current) => {
+        if (favourite) {
+          return current.includes(workerId) ? current : [...current, workerId];
+        }
+        return current.filter((id) => id !== workerId);
+      });
+    }
+
+    window.addEventListener("worker-favourite-changed", onFavouriteChanged);
+    return () => window.removeEventListener("worker-favourite-changed", onFavouriteChanged);
+  }, []);
+
+  useEffect(() => {
+    setActiveIndex(0);
+    setSelectedWorkerId(null);
+  }, [activeTab]);
 
   useEffect(() => {
     const container = trackRef.current;
@@ -251,30 +338,113 @@ export default function TalentHubDeck({ workers }) {
       window.removeEventListener("resize", onScroll);
       if (frame != null) cancelAnimationFrame(frame);
     };
-  }, [workers.length]);
+  }, [displayedWorkers.length]);
 
   function scrollToIndex(index) {
-    const boundedIndex = Math.max(0, Math.min(index, workers.length - 1));
+    const boundedIndex = Math.max(0, Math.min(index, displayedWorkers.length - 1));
     const element = itemRefs.current[boundedIndex];
     if (!element) return;
     element.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
     setActiveIndex(boundedIndex);
   }
 
-  if (!workers.length) {
+  const emptyCandidates = !workers.length;
+  const emptyFavourites = favouritesLoaded && favouriteIds.length === 0;
+
+  if (activeTab === "my-profile") {
     return (
-      <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] px-6 py-16 text-center text-slate-300 shadow-[0_28px_80px_-44px_rgba(15,23,42,0.9)]">
-        <h2 className="text-xl font-semibold text-white">No workers are live yet.</h2>
-        <p className="mt-3 text-sm leading-7 text-slate-400">
-          The tables are ready, but there are no approved public workers to render in the deck yet.
-        </p>
-      </div>
+      <>
+        <div>
+          <nav className="flex gap-3 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1 text-sm text-slate-100">
+            {tabs.map((tab) => {
+              const isActive = tab.key === activeTab;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex-1 whitespace-nowrap rounded-full px-4 py-2 font-semibold transition ${
+                    isActive ? "bg-cyan-300 text-slate-950 shadow" : "text-slate-300 hover:bg-white/5"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </nav>
+
+          <MyProfileForm
+            initialProfile={currentProfile}
+            roleOptions={roleOptions}
+            workingRightsOptions={workingRightsOptions}
+          />
+        </div>
+
+        <WorkerDetailModal worker={selectedWorker} onClose={() => setSelectedWorkerId(null)} />
+      </>
+    );
+  }
+
+  if ((activeTab === "candidates" && emptyCandidates) || (activeTab === "favourites" && emptyFavourites)) {
+    return (
+      <>
+        <div>
+          <nav className="flex gap-3 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1 text-sm text-slate-100">
+            {tabs.map((tab) => {
+              const isActive = tab.key === activeTab;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex-1 whitespace-nowrap rounded-full px-4 py-2 font-semibold transition ${
+                    isActive ? "bg-cyan-300 text-slate-950 shadow" : "text-slate-300 hover:bg-white/5"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="mt-6 rounded-[2rem] border border-white/10 bg-white/[0.04] px-6 py-16 text-center text-slate-300 shadow-[0_28px_80px_-44px_rgba(15,23,42,0.9)]">
+            <h2 className="text-xl font-semibold text-white">
+              {activeTab === "favourites" ? "No favourites yet." : "No workers are live yet."}
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-slate-400">
+              {activeTab === "favourites"
+                ? "Favourite a candidate to keep them in a shortlist here."
+                : "The tables are ready, but there are no approved public workers to render in the deck yet."}
+            </p>
+          </div>
+        </div>
+
+        <WorkerDetailModal worker={selectedWorker} onClose={() => setSelectedWorkerId(null)} />
+      </>
     );
   }
 
   return (
     <>
       <div>
+        <nav className="mb-6 flex gap-3 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1 text-sm text-slate-100">
+          {tabs.map((tab) => {
+            const isActive = tab.key === activeTab;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex-1 whitespace-nowrap rounded-full px-4 py-2 font-semibold transition ${
+                  isActive ? "bg-cyan-300 text-slate-950 shadow" : "text-slate-300 hover:bg-white/5"
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </nav>
+
         <section className="relative overflow-hidden rounded-[2.25rem] border border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.54),rgba(2,6,23,0.12))] px-4 py-6 shadow-[0_36px_110px_-54px_rgba(8,145,178,0.95)] sm:px-6 sm:py-8">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.12),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(56,189,248,0.1),transparent_18%)]" />
           <button
@@ -291,7 +461,7 @@ export default function TalentHubDeck({ workers }) {
           <button
             type="button"
             onClick={() => scrollToIndex(activeIndex + 1)}
-            disabled={activeIndex === workers.length - 1}
+            disabled={activeIndex === displayedWorkers.length - 1}
             className="absolute right-4 top-1/2 z-20 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/12 bg-slate-950/72 text-slate-100 backdrop-blur-xl transition hover:bg-slate-900/90 disabled:cursor-not-allowed disabled:opacity-30 md:inline-flex"
             aria-label="Show next worker"
           >
@@ -303,9 +473,9 @@ export default function TalentHubDeck({ workers }) {
           <div className="relative talenthub-carousel-mask">
             <div
               ref={trackRef}
-              className="no-scrollbar flex snap-x snap-mandatory gap-5 overflow-x-auto px-[10vw] py-2 scroll-smooth md:px-[16vw]"
+              className="no-scrollbar flex touch-pan-y snap-x snap-mandatory gap-5 overflow-x-auto px-[10vw] py-2 scroll-smooth md:px-[16vw]"
             >
-              {workers.map((worker, index) => (
+              {displayedWorkers.map((worker, index) => (
                 <WorkerCard
                   key={worker.id}
                   worker={worker}
@@ -332,7 +502,7 @@ export default function TalentHubDeck({ workers }) {
             <button
               type="button"
               onClick={() => scrollToIndex(activeIndex + 1)}
-              disabled={activeIndex === workers.length - 1}
+              disabled={activeIndex === displayedWorkers.length - 1}
               className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/16 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Next
@@ -340,7 +510,7 @@ export default function TalentHubDeck({ workers }) {
           </div>
 
           <div className="mt-4 flex items-center justify-center gap-2 text-[11px] uppercase tracking-[0.22em] text-slate-400">
-            {workers.map((worker, index) => (
+            {displayedWorkers.map((worker, index) => (
               <button
                 key={`${worker.id}-dot`}
                 type="button"
