@@ -1,4 +1,8 @@
+import dotenv from "dotenv";
 import type { CapacitorConfig } from "@capacitor/cli";
+
+dotenv.config({ path: ".env.local" });
+dotenv.config();
 
 const serverUrl = String(
   process.env.CAPACITOR_SERVER_URL ||
