@@ -10,6 +10,7 @@ import Footer from "./components/Footer";
 import Script from "next/script";
 import GA4 from "@/app/components/GA4.client";
 import ThemeProvider from "@/app/components/ThemeProvider";
+import NativeAppUrlListener from "@/app/components/NativeAppUrlListener.client";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -89,6 +90,7 @@ export default function RootLayout({ children }) {
         )}
         <ThemeProvider>
           <AuthProvider>
+            <NativeAppUrlListener />
             <Header />
             <div className="relative">
               <TradingViewTicker />

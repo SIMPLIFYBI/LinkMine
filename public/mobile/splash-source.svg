@@ -1,71 +1,96 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2048 2048" width="2048" height="2048" role="img" aria-label="YouMine Splash Screen">
   <defs>
-    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+    <linearGradient id="bg" x1="0.08" x2="0.92" y1="0.08" y2="0.96">
       <stop offset="0%" stop-color="#020617"/>
-      <stop offset="58%" stop-color="#0f172a"/>
-      <stop offset="100%" stop-color="#1e293b"/>
+      <stop offset="54%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#111827"/>
     </linearGradient>
 
-    <radialGradient id="topGlow" cx="28%" cy="22%" r="70%">
+    <radialGradient id="topGlow" cx="24%" cy="18%" r="68%">
       <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.26"/>
-      <stop offset="42%" stop-color="#0ea5e9" stop-opacity="0.1"/>
+      <stop offset="36%" stop-color="#0ea5e9" stop-opacity="0.12"/>
       <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0"/>
     </radialGradient>
 
-    <radialGradient id="bottomGlow" cx="78%" cy="76%" r="54%">
+    <radialGradient id="bottomGlow" cx="82%" cy="78%" r="50%">
       <stop offset="0%" stop-color="#6366f1" stop-opacity="0.22"/>
-      <stop offset="45%" stop-color="#6366f1" stop-opacity="0.08"/>
+      <stop offset="42%" stop-color="#6366f1" stop-opacity="0.1"/>
       <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
     </radialGradient>
+
+    <linearGradient id="markGradient" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#08b7d6"/>
+      <stop offset="56%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#5567f2"/>
+    </linearGradient>
+
+    <linearGradient id="textGradient" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="55%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+
+    <radialGradient id="panelSheen" cx="26%" cy="18%" r="76%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="34%" stop-color="#ffffff" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="letterFill" x1="0.12" x2="0.88" y1="0.08" y2="0.92">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e0f2fe"/>
+    </linearGradient>
+
+    <filter id="panelShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="48" stdDeviation="56" flood-color="#020617" flood-opacity="0.45"/>
+    </filter>
+
+    <filter id="markGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="22" stdDeviation="32" flood-color="#0ea5e9" flood-opacity="0.28"/>
+    </filter>
   </defs>
 
   <rect width="2048" height="2048" fill="url(#bg)"/>
   <rect width="2048" height="2048" fill="url(#topGlow)"/>
   <rect width="2048" height="2048" fill="url(#bottomGlow)"/>
 
-  <g transform="translate(1024 860)">
-    <rect x="-260" y="-260" width="520" height="520" rx="120" fill="#0ea5e9" opacity="0.12"/>
-    <rect x="-220" y="-220" width="440" height="440" rx="96" fill="url(#bg)" stroke="#38bdf8" stroke-opacity="0.28" stroke-width="6"/>
-    <text
-      x="0"
-      y="24"
-      text-anchor="middle"
-      dominant-baseline="central"
-      font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"
-      font-weight="800"
-      font-size="180"
-      letter-spacing="-10"
-      fill="#e2e8f0"
-    >
-      YM
-    </text>
+  <g transform="translate(1024 818)" filter="url(#panelShadow)">
+    <rect x="-320" y="-320" width="640" height="640" rx="148" fill="url(#markGradient)"/>
+    <rect x="-320" y="-320" width="640" height="640" rx="148" fill="url(#panelSheen)"/>
+    <rect x="-298" y="-298" width="596" height="596" rx="126" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="3"/>
+
+    <g filter="url(#markGlow)" fill="url(#letterFill)">
+      <path d="M -194 -178 L -126 -178 L -56 -28 L -56 232 L -126 232 L -126 0 L -194 -178 Z"/>
+      <path d="M 6 -178 L 74 -178 L 140 -24 L 206 -178 L 274 -178 L 176 42 L 176 232 L 106 232 L 106 42 L 6 -178 Z"/>
+    </g>
   </g>
 
-  <g transform="translate(1024 1240)">
+  <g transform="translate(1024 1276)">
     <text
       x="0"
       y="0"
       text-anchor="middle"
       font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"
-      font-weight="700"
-      font-size="112"
-      fill="#f8fafc"
+      font-weight="800"
+      font-size="136"
+      letter-spacing="-5"
+      fill="url(#textGradient)"
     >
-      YouMine
+      YouMine.
     </text>
     <text
       x="0"
-      y="112"
+      y="126"
       text-anchor="middle"
       font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"
       font-weight="500"
-      font-size="54"
-      letter-spacing="8"
-      fill="#7dd3fc"
-      fill-opacity="0.82"
+      font-size="48"
+      letter-spacing="10"
+      fill="#cbd5e1"
+      fill-opacity="0.78"
     >
-      MINING TALENT, JOBS AND CONSULTANTS
+      MOBILE ACCESS TO MINING TALENT AND WORK
     </text>
   </g>
 </svg>

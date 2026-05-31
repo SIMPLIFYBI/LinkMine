@@ -7,6 +7,7 @@
     "dev": "next dev -p 3004",
     "build": "next build",
     "start": "next start -p 3004",
+    "assets:android-icons": "node scripts/export-android-icons.mjs",
     "cap:doctor": "npx cap doctor",
     "cap:copy": "npx cap copy",
     "cap:sync": "npx cap sync",
@@ -15,6 +16,7 @@
   },
   "dependencies": {
     "@capacitor/android": "^8.3.4",
+    "@capacitor/app": "^8.1.0",
     "@capacitor/core": "^8.3.4",
     "@capacitor/ios": "^8.3.4",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
@@ -38,6 +40,7 @@
     "eslint": "^9.36.0",
     "eslint-config-next": "^15.5.4",
     "postcss": "^8.5.6",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4.1.13"
   }
 }

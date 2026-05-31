@@ -2,38 +2,33 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="YouMine App Icon">
   <defs>
     <linearGradient id="iconBg" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0%" stop-color="#06b6d4"/>
-      <stop offset="55%" stop-color="#0ea5e9"/>
-      <stop offset="100%" stop-color="#6366f1"/>
+      <stop offset="0%" stop-color="#08b7d6"/>
+      <stop offset="56%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#5567f2"/>
     </linearGradient>
 
-    <radialGradient id="iconGlow" cx="24%" cy="18%" r="88%">
+    <radialGradient id="sheen" cx="26%" cy="18%" r="76%">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="0.24"/>
-      <stop offset="36%" stop-color="#ffffff" stop-opacity="0.08"/>
+      <stop offset="34%" stop-color="#ffffff" stop-opacity="0.08"/>
       <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
     </radialGradient>
 
+    <linearGradient id="letterFill" x1="0.12" x2="0.88" y1="0.08" y2="0.92">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e0f2fe"/>
+    </linearGradient>
+
     <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feDropShadow dx="0" dy="28" stdDeviation="42" flood-color="#020617" flood-opacity="0.4"/>
+      <feDropShadow dx="0" dy="24" stdDeviation="28" flood-color="#082f49" flood-opacity="0.28"/>
     </filter>
   </defs>
 
-  <rect x="0" y="0" width="1024" height="1024" rx="224" fill="url(#iconBg)"/>
-  <rect x="0" y="0" width="1024" height="1024" rx="224" fill="url(#iconGlow)"/>
+  <rect width="1024" height="1024" rx="232" fill="url(#iconBg)"/>
+  <rect width="1024" height="1024" rx="232" fill="url(#sheen)"/>
+  <rect x="26" y="26" width="972" height="972" rx="206" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
 
-  <g filter="url(#shadow)">
-    <text
-      x="50%"
-      y="51%"
-      text-anchor="middle"
-      dominant-baseline="central"
-      font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"
-      font-weight="800"
-      font-size="420"
-      letter-spacing="-24"
-      fill="#071026"
-    >
-      YM
-    </text>
+  <g filter="url(#shadow)" fill="url(#letterFill)">
+    <path d="M 250 252 L 340 252 L 432 450 L 432 760 L 340 760 L 340 488 L 250 252 Z"/>
+    <path d="M 512 252 L 602 252 L 690 454 L 778 252 L 868 252 L 736 542 L 736 760 L 644 760 L 644 542 L 512 252 Z"/>
   </g>
 </svg>
