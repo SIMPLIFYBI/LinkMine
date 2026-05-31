@@ -11,3 +11,6 @@ coverage/
 !.env.example
 .env.local
 .vercel
+
+# Android Studio local project state
+android/.idea/
