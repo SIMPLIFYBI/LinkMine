@@ -142,7 +142,7 @@ function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef =
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_26%),radial-gradient(circle_at_82%_14%,rgba(56,189,248,0.16),transparent_20%)]" />
       <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:34px_34px]" />
 
-      <div className={`relative flex h-full flex-col ${compact ? "p-5" : "p-6 sm:p-8"}`}>
+      <div className={`relative flex flex-col ${compact ? "p-5" : "p-6 sm:p-8"}`}>
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="section-label">Candidate deck</p>
@@ -163,7 +163,7 @@ function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef =
           {worker.workingRights ? <Badge>{worker.workingRights}</Badge> : null}
         </div>
 
-        <div className={`mt-6 grid flex-1 gap-5 ${compact ? "grid-cols-1" : "md:grid-cols-[1.05fr_0.95fr]"}`}>
+        <div className="mt-6 flex-1">
           <section className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-5">
             <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">Brief CV overview</div>
             <p className={`${compact ? "line-clamp-4" : ""} mt-4 text-sm leading-7 text-slate-200`}>{worker.bioPreview}</p>
@@ -179,32 +179,6 @@ function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef =
                   No roles linked yet.
                 </div>
               ) : null}
-            </div>
-          </section>
-
-          <section className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">Recent experience</div>
-              <div className="text-xs text-slate-500">{compact ? "Top 2" : "Top 3"}</div>
-            </div>
-
-            <div className="mt-4 space-y-3">
-              {worker.experiences.length ? worker.experiences.slice(0, compact ? 2 : 3).map((experience, index) => (
-                <article key={`${worker.id}-${index}`} className="rounded-2xl border border-white/10 bg-black/15 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-semibold text-white">{experience.roleTitle}</div>
-                      {experience.company ? <div className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-400">{experience.company}</div> : null}
-                    </div>
-                    {experience.dateRange ? <div className="text-xs text-slate-400">{experience.dateRange}</div> : null}
-                  </div>
-                  {experience.description ? <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-300">{experience.description}</p> : null}
-                </article>
-              )) : (
-                <div className="rounded-2xl border border-dashed border-white/10 px-4 py-8 text-sm text-slate-400">
-                  No experience entries yet.
-                </div>
-              )}
             </div>
           </section>
         </div>
@@ -480,7 +454,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
                   key={worker.id}
                   worker={worker}
                   compact={false}
-                  className={`h-[620px] w-[78vw] min-w-[78vw] shrink-0 snap-center md:h-[640px] md:w-[68vw] md:min-w-[68vw] xl:w-[58vw] xl:min-w-[58vw] transition duration-300 ${activeIndex === index ? "scale-100 opacity-100" : "scale-[0.92] opacity-45"}`}
+                  className={`w-[78vw] min-w-[78vw] shrink-0 snap-center md:w-[68vw] md:min-w-[68vw] xl:w-[58vw] xl:min-w-[58vw] transition duration-300 ${activeIndex === index ? "scale-100 opacity-100" : "scale-[0.92] opacity-45"}`}
                   onOpen={() => setSelectedWorkerId(worker.id)}
                   cardRef={(element) => {
                     itemRefs.current[index] = element;
