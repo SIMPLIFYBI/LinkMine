@@ -22,6 +22,21 @@ const assets = [
     width: 4000,
   },
   {
+    input: path.join(brandRoot, "youmine-wordmark-elevated-gradient.svg"),
+    output: path.join(exportRoot, "youmine-wordmark-elevated-gradient-4200w.png"),
+    width: 4200,
+  },
+  {
+    input: path.join(brandRoot, "youmine-wordmark-elevated-black.svg"),
+    output: path.join(exportRoot, "youmine-wordmark-elevated-black-4200w.png"),
+    width: 4200,
+  },
+  {
+    input: path.join(brandRoot, "youmine-wordmark-elevated-white.svg"),
+    output: path.join(exportRoot, "youmine-wordmark-elevated-white-4200w.png"),
+    width: 4200,
+  },
+  {
     input: path.join(brandRoot, "youmine-stacked-gradient.svg"),
     output: path.join(exportRoot, "youmine-stacked-gradient-2800w.png"),
     width: 2800,
