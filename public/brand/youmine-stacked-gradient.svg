@@ -1,26 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 980" width="1200" height="980" role="img" aria-label="YouMine stacked wordmark gradient">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 980" width="1200" height="980" role="img" aria-label="YouMine short mark gradient">
   <defs>
-    <linearGradient id="stackedGradient" x1="0" x2="1" y1="0" y2="1">
+    <linearGradient id="shortGradient" x1="0" x2="1" y1="0" y2="1">
       <stop offset="0%" stop-color="#0ea5e9"/>
       <stop offset="100%" stop-color="#6366f1"/>
     </linearGradient>
     <style>
-      .lineA {
+      .mark {
         font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        font-size: 250px;
-        font-weight: 800;
-        letter-spacing: -0.055em;
-      }
-      .lineB {
-        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        font-size: 286px;
+        font-size: 430px;
         font-weight: 800;
         letter-spacing: -0.06em;
       }
     </style>
   </defs>
   <rect width="1200" height="980" fill="none"/>
-  <text x="120" y="372" class="lineA" fill="url(#stackedGradient)">You</text>
-  <text x="120" y="662" class="lineB" fill="url(#stackedGradient)">Mine.</text>
+  <text x="50%" y="53%" text-anchor="middle" dominant-baseline="central" class="mark" fill="url(#shortGradient)">YM.</text>
 </svg>
