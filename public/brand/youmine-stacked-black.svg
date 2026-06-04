@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 980" width="1200" height="980" role="img" aria-label="YouMine stacked wordmark black">
+  <defs>
+    <style>
+      .lineA {
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 250px;
+        font-weight: 800;
+        letter-spacing: -0.055em;
+      }
+      .lineB {
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 286px;
+        font-weight: 800;
+        letter-spacing: -0.06em;
+      }
+    </style>
+  </defs>
+  <rect width="1200" height="980" fill="none"/>
+  <text x="120" y="372" class="lineA" fill="#0f172a">You</text>
+  <text x="120" y="662" class="lineB" fill="#0f172a">Mine.</text>
+</svg>

@@ -7,6 +7,89 @@ const EXPORT_WIDTH = 1080;
 const EXPORT_HEIGHT = 1350;
 const PREVIEW_SCALE = 0.38;
 
+const BRANDING_ASSETS = [
+  {
+    id: "wordmark-gradient",
+    family: "Core wordmark",
+    label: "Gradient wordmark",
+    description: "Closest match to the live header logo for digital or premium merch.",
+    previewSrc: "/brand/youmine-wordmark-gradient.svg",
+    svgHref: "/brand/youmine-wordmark-gradient.svg",
+    pngHref: "/brand/exports/youmine-wordmark-gradient-4000w.png",
+    surfaceClass: "bg-[linear-gradient(135deg,#eff6ff,#dbeafe_45%,#eef2ff)]",
+  },
+  {
+    id: "wordmark-black",
+    family: "Core wordmark",
+    label: "Black wordmark",
+    description: "For light garments, embroidery guides, and one-colour print jobs.",
+    previewSrc: "/brand/youmine-wordmark-black.svg",
+    svgHref: "/brand/youmine-wordmark-black.svg",
+    pngHref: "/brand/exports/youmine-wordmark-black-4000w.png",
+    surfaceClass: "bg-white",
+  },
+  {
+    id: "wordmark-white",
+    family: "Core wordmark",
+    label: "White wordmark",
+    description: "For dark shirts, hoodies, banners, and reverse print applications.",
+    previewSrc: "/brand/youmine-wordmark-white.svg",
+    svgHref: "/brand/youmine-wordmark-white.svg",
+    pngHref: "/brand/exports/youmine-wordmark-white-4000w.png",
+    surfaceClass: "bg-[linear-gradient(145deg,#020617,#0f172a_52%,#111827)]",
+  },
+  {
+    id: "stacked-gradient",
+    family: "Stacked mark",
+    label: "Stacked gradient",
+    description: "More compact for square placements like stickers, hang tags, and posters.",
+    previewSrc: "/brand/youmine-stacked-gradient.svg",
+    svgHref: "/brand/youmine-stacked-gradient.svg",
+    pngHref: "/brand/exports/youmine-stacked-gradient-2800w.png",
+    surfaceClass: "bg-[linear-gradient(145deg,#f8fafc,#e0f2fe_44%,#eef2ff)]",
+  },
+  {
+    id: "stacked-black",
+    family: "Stacked mark",
+    label: "Stacked black",
+    description: "Compact one-colour version for labels, caps, and laser engraving references.",
+    previewSrc: "/brand/youmine-stacked-black.svg",
+    svgHref: "/brand/youmine-stacked-black.svg",
+    pngHref: "/brand/exports/youmine-stacked-black-2800w.png",
+    surfaceClass: "bg-white",
+  },
+  {
+    id: "stacked-white",
+    family: "Stacked mark",
+    label: "Stacked white",
+    description: "Best for dark square placements and reverse print layouts.",
+    previewSrc: "/brand/youmine-stacked-white.svg",
+    svgHref: "/brand/youmine-stacked-white.svg",
+    pngHref: "/brand/exports/youmine-stacked-white-2800w.png",
+    surfaceClass: "bg-[linear-gradient(160deg,#020617,#111827_60%,#0f172a)]",
+  },
+  {
+    id: "print-black",
+    family: "Print pack",
+    label: "Print-safe black",
+    description: "Looser spacing for large-format printing, signage, and supplier artboards.",
+    previewSrc: "/brand/youmine-wordmark-print-black.svg",
+    svgHref: "/brand/youmine-wordmark-print-black.svg",
+    pngHref: "/brand/exports/youmine-wordmark-print-black-4800w.png",
+    surfaceClass: "bg-white",
+  },
+  {
+    id: "print-white",
+    family: "Print pack",
+    label: "Print-safe white",
+    description: "Reverse version for dark large-format prints and apparel mockups.",
+    previewSrc: "/brand/youmine-wordmark-print-white.svg",
+    svgHref: "/brand/youmine-wordmark-print-white.svg",
+    pngHref: "/brand/exports/youmine-wordmark-print-white-4800w.png",
+    surfaceClass: "bg-[linear-gradient(145deg,#030712,#111827_55%,#0f172a)]",
+  },
+];
+
 function formatConsultantOptionLabel(option) {
   if (!option) return "";
   return `${option.name || ""}${option.location ? ` • ${option.location}` : ""}`;
@@ -64,6 +147,73 @@ function CloseIcon() {
     <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path strokeLinecap="round" strokeLinejoin="round" d="m6 6 12 12M18 6 6 18" />
     </svg>
+  );
+}
+
+function FileTypePill({ children }) {
+  return (
+    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/6 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-300">
+      {children}
+    </span>
+  );
+}
+
+function BrandingAssetCard({ asset, onDownload }) {
+  return (
+    <article className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <div className={`flex min-h-[220px] items-center justify-center px-8 py-8 ${asset.surfaceClass}`}>
+        <img src={asset.previewSrc} alt={asset.label} className="max-h-[150px] w-auto max-w-full object-contain" />
+      </div>
+
+      <div className="space-y-4 p-5">
+        <div>
+          <div className="text-[11px] uppercase tracking-[0.26em] text-slate-500">{asset.family}</div>
+          <h3 className="mt-2 text-lg font-semibold text-white">{asset.label}</h3>
+          <p className="mt-2 text-sm leading-6 text-slate-300">{asset.description}</p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <FileTypePill>SVG</FileTypePill>
+          <FileTypePill>PNG</FileTypePill>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => onDownload(asset.svgHref, `${asset.id}.svg`)}
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-white/12 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:bg-white/10"
+          >
+            <DownloadIcon />
+            Download SVG
+          </button>
+          <button
+            type="button"
+            onClick={() => onDownload(asset.pngHref, `${asset.id}.png`)}
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+          >
+            <DownloadIcon />
+            Download PNG
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function BrandingGallery({ assets, onDownload }) {
+  return (
+    <div className="space-y-5">
+      <div className="rounded-[1.75rem] border border-cyan-300/18 bg-cyan-400/[0.06] px-5 py-4 text-sm leading-6 text-slate-200">
+        These assets are built from the live YouMine wordmark styling for fast merch use. SVG is best for scale,
+        while the PNG exports are ready for mockups and supplier uploads.
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-2">
+        {assets.map((asset) => (
+          <BrandingAssetCard key={asset.id} asset={asset} onDownload={onDownload} />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -432,6 +582,14 @@ export default function AdminSocialStudio({ data }) {
   const previewRefs = useRef({});
   const consultantPickerRef = useRef(null);
 
+  const brandingGroups = useMemo(() => {
+    return BRANDING_ASSETS.reduce((groups, asset) => {
+      if (!groups[asset.family]) groups[asset.family] = [];
+      groups[asset.family].push(asset);
+      return groups;
+    }, {});
+  }, []);
+
   useEffect(() => {
     if (!isFullscreenOpen) return undefined;
 
@@ -547,13 +705,40 @@ export default function AdminSocialStudio({ data }) {
         insights: data.analytics.metrics.map((metric) => `${metric.label}: ${formatNumber(metric.value)}`),
         content: <AnalyticsPreview data={data.analytics} />,
       },
+      {
+        id: "branding",
+        label: "Branding",
+        description: "Download merch-ready YouMine logo variants in SVG and PNG.",
+        caption: "Use SVG for print and scaling. Use transparent PNGs for mockups, uploads, and quick production handoff.",
+        insights: [
+          `${BRANDING_ASSETS.length} downloadable logo variants`,
+          `${Object.keys(brandingGroups).length} branding families: ${Object.keys(brandingGroups).join(" • ")}`,
+          "Includes core wordmark, stacked layouts, and print-safe variants",
+        ],
+        content: <BrandingGallery assets={BRANDING_ASSETS} onDownload={handleBrandDownload} />,
+      },
     ],
-    [activeConsultantFeature, data]
+    [activeConsultantFeature, brandingGroups, data]
   );
 
   const active = tabs.find((tab) => tab.id === activeTab) || tabs[0];
 
+  function handleBrandDownload(href, filename) {
+    const link = document.createElement("a");
+    link.href = href;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setStatus(`${filename} download started.`);
+  }
+
   async function handleDownload() {
+    if (active.id === "branding") {
+      setStatus("Use the SVG and PNG buttons on each branding card to download the exact variant you need.");
+      return;
+    }
+
     const node = previewRefs.current[active.id];
     if (!node) return;
 
@@ -675,23 +860,31 @@ export default function AdminSocialStudio({ data }) {
             </div>
           ) : null}
           <div className="mt-4 flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={handleDownload}
-              disabled={isDownloading}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <DownloadIcon />
-              {isDownloading ? "Preparing PNG..." : "Download PNG"}
-            </button>
-            <button
-              type="button"
-              onClick={handleCopyCaption}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:bg-white/10"
-            >
-              <CopyIcon />
-              Copy caption
-            </button>
+            {active.id === "branding" ? (
+              <div className="rounded-2xl border border-white/8 bg-white/5 px-4 py-4 text-sm leading-6 text-slate-300">
+                Pick a variant in the Branding tab and download either the SVG or the transparent PNG directly from its card.
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  disabled={isDownloading}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <DownloadIcon />
+                  {isDownloading ? "Preparing PNG..." : "Download PNG"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopyCaption}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:bg-white/10"
+                >
+                  <CopyIcon />
+                  Copy caption
+                </button>
+              </>
+            )}
           </div>
           {status ? <div className="mt-3 text-sm text-cyan-100">{status}</div> : null}
         </div>
@@ -708,12 +901,14 @@ export default function AdminSocialStudio({ data }) {
         </div>
 
         <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/50 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-          <div className="text-[11px] uppercase tracking-[0.28em] text-slate-400">Export copy</div>
+          <div className="text-[11px] uppercase tracking-[0.28em] text-slate-400">
+            {active.id === "branding" ? "Branding notes" : "Export copy"}
+          </div>
           <pre className="mt-4 whitespace-pre-wrap rounded-2xl border border-white/8 bg-black/20 px-4 py-4 text-sm leading-6 text-slate-300">
             {active.caption}
           </pre>
           <div className="mt-4 rounded-2xl border border-white/8 bg-white/5 px-4 py-3 text-xs uppercase tracking-[0.2em] text-slate-500">
-            Refreshed {formatGeneratedAt(data.generatedAt)}
+            {active.id === "branding" ? `${BRANDING_ASSETS.length} assets ready for download` : `Refreshed ${formatGeneratedAt(data.generatedAt)}`}
           </div>
         </div>
 
@@ -746,18 +941,22 @@ export default function AdminSocialStudio({ data }) {
           </div>
         </div>
 
-        <PreviewShell
-          previewRef={(node) => {
-            previewRefs.current[active.id] = node;
-          }}
-          onOpen={() => setIsFullscreenOpen(true)}
-          title={active.label}
-        >
-          {active.content}
-        </PreviewShell>
+        {active.id === "branding" ? (
+          active.content
+        ) : (
+          <PreviewShell
+            previewRef={(node) => {
+              previewRefs.current[active.id] = node;
+            }}
+            onOpen={() => setIsFullscreenOpen(true)}
+            title={active.label}
+          >
+            {active.content}
+          </PreviewShell>
+        )}
       </section>
 
-      {isFullscreenOpen ? (
+      {isFullscreenOpen && active.id !== "branding" ? (
         <FullscreenPreview title={active.label} onClose={() => setIsFullscreenOpen(false)}>
           {active.content}
         </FullscreenPreview>
