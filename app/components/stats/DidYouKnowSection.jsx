@@ -282,10 +282,6 @@ export default function DidYouKnowSection() {
       <h2 className="text-xl sm:text-2xl font-semibold text-white tracking-tight">
         Industry insights at a glance
       </h2>
-      <p className="mt-2 max-w-2xl text-sm text-slate-300">
-        Quick visual stats highlighting scale and momentum. Replace these placeholder values with your
-        verified data when ready.
-      </p>
 
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         <StatCard
