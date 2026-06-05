@@ -125,11 +125,11 @@ function ContactModal({ consultantId, user, onClose }) {
   });
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const handle = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const submit = async (e) => {
-    e.preventDefault();
+  const sendMessage = async () => {
     setSending(true);
     setStatus(null);
     try {
@@ -147,6 +147,11 @@ function ContactModal({ consultantId, user, onClose }) {
     } finally {
       setSending(false);
     }
+  };
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setConfirmOpen(true);
   };
 
   return (
@@ -215,6 +220,10 @@ function ContactModal({ consultantId, user, onClose }) {
               </div>
             )}
 
+            <p className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+              Contact may only be used for genuine work-related enquiries.
+            </p>
+
             {/* Action bar */}
             <div className="mt-2 flex items-center gap-2 pb-2">
               <button
@@ -235,6 +244,42 @@ function ContactModal({ consultantId, user, onClose }) {
           </form>
         </div>
       </div>
+
+      {confirmOpen ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-5 shadow-xl ring-1 ring-white/10">
+            <h4 className="text-base font-semibold text-white">Confirm message purpose</h4>
+            <p className="mt-2 text-sm text-slate-300">
+              This contact form may only be used for genuine work-related enquiries about the
+              services offered on YouMine.
+            </p>
+            <p className="mt-2 text-sm text-slate-400">
+              By continuing, you confirm this message is not unsolicited marketing, an investment
+              proposal, fundraising, or any other unrelated outreach.
+            </p>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmOpen(false)}
+                className="inline-flex items-center justify-center rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-slate-200 hover:border-sky-300/60 hover:bg-sky-500/10"
+              >
+                Go back
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setConfirmOpen(false);
+                  await sendMessage();
+                }}
+                disabled={sending}
+                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {sending ? "Sending…" : "I agree, send it"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

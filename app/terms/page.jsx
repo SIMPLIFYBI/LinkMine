@@ -124,6 +124,12 @@ export default function TermsPage() {
             <li>No unlawful, infringing, deceptive, defamatory, or harmful activity.</li>
             <li>No attempts to bypass security, scrape at scale, or disrupt the Service.</li>
             <li>No posting of Content that you do not have the right to share.</li>
+            <li>
+              No use of the Service, directory, or contact features to send unsolicited promotions,
+              investment proposals, fundraising requests, lead-generation messages, phishing attempts,
+              scams, or other messages unrelated to genuinely engaging or discussing mining industry work
+              or services offered through YouMine.
+            </li>
             <li>Respect rate limits, privacy, and other users’ rights.</li>
           </ul>
         </Section>
@@ -154,6 +160,12 @@ export default function TermsPage() {
             <li>Use the directory and filters to evaluate suitability; perform your own due diligence.</li>
             <li>Any engagement terms are between you and the Consultant.</li>
             <li>You must not misrepresent a brief, budget, or urgency to solicit free work.</li>
+            <li>
+              You may contact Consultants only for the genuine purpose of enquiring about, discussing,
+              or engaging the work or services they provide. You must not use YouMine contact details or
+              contact tools for unrelated commercial solicitation, mass outreach, marketing, investment
+              pitches, or any deceptive or fraudulent approach.
+            </li>
           </ul>
         </Section>
 
@@ -173,6 +185,11 @@ export default function TermsPage() {
             </li>
             <li>
               We may remove or restrict Content or accounts that violate these Terms or applicable law.
+            </li>
+            <li>
+              We may investigate and act on misuse of contact features, including spam, scam attempts,
+              irrelevant bulk outreach, or messages that are not genuinely related to available work or
+              professional services on YouMine.
             </li>
             <li>
               You warrant that your Content does not infringe third‑party rights and complies with law.

@@ -11,6 +11,7 @@ import { getBlockedUserMessage, isBlockedEmail } from "@/lib/blockedUsers";
 const POSTMARK_TOKEN = process.env.POSTMARK_TOKEN || process.env.POSTMARK_SERVER_TOKEN;
 const FROM_EMAIL = process.env.POSTMARK_FROM_EMAIL || "info@youmine.com.au";
 const FROM_NAME = process.env.POSTMARK_FROM_NAME || "YouMine";
+const MONITORING_EMAIL = (process.env.CONTACT_MONITOR_EMAIL || "info@youmine.com.au").trim().toLowerCase();
 
 export async function POST(req, { params }) {
   try {
@@ -147,9 +148,14 @@ export async function POST(req, { params }) {
     // 2) Try to send email and update status
     try {
       const client = new Postmark(POSTMARK_TOKEN);
+      const monitoringEmail = MONITORING_EMAIL && MONITORING_EMAIL !== String(toEmail || "").trim().toLowerCase()
+        ? MONITORING_EMAIL
+        : undefined;
+
       const sendRes = await client.sendEmail({
         From: `${FROM_NAME} <${FROM_EMAIL}>`,
         To: toEmail,
+        Bcc: monitoringEmail,
         Subject: `YouMine enquiry: ${subject.trim()}`,
         HtmlBody,
         TextBody,
