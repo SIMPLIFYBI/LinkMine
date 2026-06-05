@@ -11,6 +11,108 @@ const tabs = [
   { key: "my-profile", label: "My Profile" },
 ];
 
+function formatExperienceWindow(startDate, endDate, isCurrent) {
+  if (!startDate && !endDate && !isCurrent) return null;
+
+  const formatter = new Intl.DateTimeFormat("en-AU", {
+    month: "short",
+    year: "numeric",
+  });
+
+  const start = startDate ? formatter.format(new Date(startDate)) : null;
+  const end = isCurrent ? "Now" : endDate ? formatter.format(new Date(endDate)) : null;
+
+  if (start && end) return `${start} - ${end}`;
+  return start || end;
+}
+
+function formatAvailabilityPreview(profile) {
+  if (profile?.availableNow) {
+    return { tone: "now", label: "Available now" };
+  }
+
+  if (profile?.availableFrom) {
+    return {
+      tone: "later",
+      label: `Available from ${new Intl.DateTimeFormat("en-AU", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }).format(new Date(profile.availableFrom))}`,
+    };
+  }
+
+  return null;
+}
+
+function createWorkerPreview(profile, roleOptions, workingRightsOptions) {
+  const displayName = profile?.publicProfileName || profile?.displayName || "Unnamed worker";
+  const bio = String(profile?.bio || "").trim();
+  const selectedRoleIds = new Set(profile?.roleCategoryIds || []);
+  const roles = (roleOptions || [])
+    .filter((option) => selectedRoleIds.has(option.id))
+    .map((option) => ({ name: option.name, slug: option.slug }));
+  const workingRights = (workingRightsOptions || []).find(
+    (option) => option.slug === profile?.workingRightsSlug
+  )?.name || null;
+  const experiences = (profile?.experiences || [])
+    .slice()
+    .sort((a, b) => Number(a?.position ?? 0) - Number(b?.position ?? 0))
+    .slice(0, 3)
+    .map((experience) => ({
+      roleTitle: experience?.roleTitle || "",
+      company: experience?.company || "",
+      description: experience?.description || "",
+      dateRange: formatExperienceWindow(experience?.startDate, experience?.endDate, experience?.isCurrent),
+    }));
+
+  return {
+    id: profile?.id,
+    displayName,
+    headline: profile?.headline || "Mining professional ready for the next opportunity.",
+    bioPreview: bio ? bio.slice(0, 240) : "No bio added yet.",
+    location: profile?.location || "Location not specified",
+    roles,
+    availability: formatAvailabilityPreview(profile),
+    workingRights,
+    experiences,
+  };
+}
+
+function TalentHubTabs({ activeTab, onChange, showCta = false }) {
+  return (
+    <div className={showCta ? "mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" : ""}>
+      <nav className="flex gap-3 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1 text-sm text-slate-100">
+        {tabs.map((tab) => {
+          const isActive = tab.key === activeTab;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => onChange(tab.key)}
+              className={`flex-1 whitespace-nowrap rounded-full px-4 py-2 font-semibold transition ${
+                isActive ? "bg-cyan-300 text-slate-950 shadow" : "text-slate-300 hover:bg-white/5"
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      {showCta ? (
+        <button
+          type="button"
+          onClick={() => onChange("my-profile")}
+          className="inline-flex items-center justify-center rounded-full border border-cyan-300/30 bg-cyan-400/10 px-5 py-2.5 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/16"
+        >
+          Add my profile
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function Badge({ children, tone = "neutral" }) {
   const classes = {
     neutral: "border-white/12 bg-white/[0.05] text-slate-200",
@@ -197,18 +299,29 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
   const [activeTab, setActiveTab] = useState("candidates");
   const [selectedWorkerId, setSelectedWorkerId] = useState(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [workersState, setWorkersState] = useState(workers);
+  const [currentProfileState, setCurrentProfileState] = useState(currentProfile);
   const [favouriteIds, setFavouriteIds] = useState([]);
   const [favouritesLoaded, setFavouritesLoaded] = useState(false);
+  const [pendingFocusWorkerId, setPendingFocusWorkerId] = useState(null);
   const trackRef = useRef(null);
   const itemRefs = useRef([]);
   const displayedWorkers = activeTab === "favourites"
-    ? workers.filter((worker) => favouriteIds.includes(worker.id))
-    : workers;
+    ? workersState.filter((worker) => favouriteIds.includes(worker.id))
+    : workersState;
   const selectedWorker = displayedWorkers.find((worker) => worker.id === selectedWorkerId) || null;
 
   useEffect(() => {
     itemRefs.current = itemRefs.current.slice(0, displayedWorkers.length);
   }, [displayedWorkers.length]);
+
+  useEffect(() => {
+    setWorkersState(workers);
+  }, [workers]);
+
+  useEffect(() => {
+    setCurrentProfileState(currentProfile);
+  }, [currentProfile]);
 
   useEffect(() => {
     let mounted = true;
@@ -271,6 +384,17 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
   }, [activeTab]);
 
   useEffect(() => {
+    if (activeTab !== "candidates" || !pendingFocusWorkerId) return;
+
+    const index = displayedWorkers.findIndex((worker) => worker.id === pendingFocusWorkerId);
+    if (index < 0) return;
+
+    scrollToIndex(index);
+    setSelectedWorkerId(pendingFocusWorkerId);
+    setPendingFocusWorkerId(null);
+  }, [activeTab, displayedWorkers, pendingFocusWorkerId]);
+
+  useEffect(() => {
     const container = trackRef.current;
     if (!container) return undefined;
 
@@ -322,35 +446,41 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
     setActiveIndex(boundedIndex);
   }
 
-  const emptyCandidates = !workers.length;
+  async function handleProfileSaved(savedProfile) {
+    setCurrentProfileState(savedProfile);
+
+    const savedWorker = createWorkerPreview(savedProfile, roleOptions, workingRightsOptions);
+    if (savedWorker?.id) {
+      setWorkersState((current) => {
+        const existingIndex = current.findIndex((worker) => worker.id === savedWorker.id);
+        if (existingIndex === -1) {
+          return [savedWorker, ...current];
+        }
+
+        const next = current.slice();
+        next[existingIndex] = savedWorker;
+        return next;
+      });
+      setPendingFocusWorkerId(savedWorker.id);
+    }
+
+    setActiveTab("candidates");
+  }
+
+  const emptyCandidates = !workersState.length;
   const emptyFavourites = favouritesLoaded && favouriteIds.length === 0;
 
   if (activeTab === "my-profile") {
     return (
       <>
         <div>
-          <nav className="flex gap-3 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1 text-sm text-slate-100">
-            {tabs.map((tab) => {
-              const isActive = tab.key === activeTab;
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`flex-1 whitespace-nowrap rounded-full px-4 py-2 font-semibold transition ${
-                    isActive ? "bg-cyan-300 text-slate-950 shadow" : "text-slate-300 hover:bg-white/5"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </nav>
+          <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} />
 
           <MyProfileForm
-            initialProfile={currentProfile}
+            initialProfile={currentProfileState}
             roleOptions={roleOptions}
             workingRightsOptions={workingRightsOptions}
+            onSave={handleProfileSaved}
           />
         </div>
 
@@ -363,23 +493,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
     return (
       <>
         <div>
-          <nav className="flex gap-3 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1 text-sm text-slate-100">
-            {tabs.map((tab) => {
-              const isActive = tab.key === activeTab;
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`flex-1 whitespace-nowrap rounded-full px-4 py-2 font-semibold transition ${
-                    isActive ? "bg-cyan-300 text-slate-950 shadow" : "text-slate-300 hover:bg-white/5"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </nav>
+          <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} showCta />
 
           <div className="mt-6 rounded-[2rem] border border-white/10 bg-white/[0.04] px-6 py-16 text-center text-slate-300 shadow-[0_28px_80px_-44px_rgba(15,23,42,0.9)]">
             <h2 className="text-xl font-semibold text-white">
@@ -401,23 +515,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
   return (
     <>
       <div>
-        <nav className="mb-6 flex gap-3 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1 text-sm text-slate-100">
-          {tabs.map((tab) => {
-            const isActive = tab.key === activeTab;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex-1 whitespace-nowrap rounded-full px-4 py-2 font-semibold transition ${
-                  isActive ? "bg-cyan-300 text-slate-950 shadow" : "text-slate-300 hover:bg-white/5"
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
+        <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} showCta />
 
         <section className="relative overflow-hidden rounded-[2.25rem] border border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.54),rgba(2,6,23,0.12))] px-4 py-6 shadow-[0_36px_110px_-54px_rgba(8,145,178,0.95)] sm:px-6 sm:py-8">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.12),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(56,189,248,0.1),transparent_18%)]" />

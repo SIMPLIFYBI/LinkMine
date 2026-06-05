@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function FieldShell({ label, hint, children }) {
   return (
@@ -54,8 +54,14 @@ function createEmptyExperience(position = 0) {
   };
 }
 
-export default function MyProfileForm({ initialProfile, roleOptions, workingRightsOptions }) {
+export default function MyProfileForm({ initialProfile, roleOptions, workingRightsOptions, onSave }) {
   const [profile, setProfile] = useState(initialProfile);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState(null);
+
+  useEffect(() => {
+    setProfile(initialProfile);
+  }, [initialProfile]);
 
   function updateField(field, value) {
     setProfile((current) => ({ ...current, [field]: value }));
@@ -93,8 +99,36 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
     }));
   }
 
+  async function handleSave() {
+    setSaving(true);
+    setStatus(null);
+
+    try {
+      const res = await fetch("/api/workers/me/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profile),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to save profile.");
+      }
+
+      const savedProfile = data?.profile || profile;
+      setProfile(savedProfile);
+      if (onSave) {
+        await onSave(savedProfile);
+      }
+    } catch (error) {
+      setStatus({ ok: false, msg: error?.message || "Failed to save profile." });
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
-    <section className="mt-6 rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.54),rgba(2,6,23,0.18))] px-4 py-6 shadow-[0_36px_110px_-54px_rgba(8,145,178,0.95)] sm:px-6 sm:py-8">
+    <section className="mt-6 rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.54),rgba(2,6,23,0.18))] px-4 py-6 pb-[calc(env(safe-area-inset-bottom)+9rem)] shadow-[0_36px_110px_-54px_rgba(8,145,178,0.95)] sm:px-6 sm:py-8 sm:pb-32">
       <div className="flex flex-col gap-4 border-b border-white/10 pb-6 md:flex-row md:items-end md:justify-between">
         <div>
           <div className="section-label">Worker profile</div>
@@ -319,6 +353,25 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
               <li>Experience entries should be ordered with the most relevant roles first.</li>
             </ul>
           </section>
+        </div>
+      </div>
+
+      <div className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] z-40 flex justify-center px-4 sm:bottom-5">
+        <div className="pointer-events-auto flex w-full max-w-xl items-center justify-between gap-3 rounded-[1.5rem] border border-cyan-300/20 bg-slate-950/92 px-4 py-3 shadow-[0_24px_80px_-30px_rgba(8,145,178,0.9)] backdrop-blur-xl">
+          <div className="min-w-0">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/85">My Profile</div>
+            <div className="truncate text-sm text-slate-300">
+              {status?.msg || "Save changes to publish this profile back into the candidate deck."}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="inline-flex shrink-0 items-center justify-center rounded-full border border-cyan-300/30 bg-cyan-400/12 px-5 py-2.5 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/18 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {saving ? "Saving..." : "Save"}
+          </button>
         </div>
       </div>
     </section>
