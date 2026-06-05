@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { supabase } from "@/lib/supabaseClient";
 import { getAuthExchangeUrl, getAuthRedirectUrl } from "@/lib/mobileRuntime";
+import { getBlockedUserMessage, isBlockedEmail } from "@/lib/blockedUsers";
 
 export const dynamic = "force-dynamic";
 
@@ -38,8 +39,18 @@ function AuthInner() {
       supabase.auth.exchangeCodeForSession(getAuthExchangeUrl(window.location.href)).then(({ error }) => {
         if (error) toast.error(error.message);
         else {
-          toast.success("Signed in");
-          router.replace("/account");
+          supabase.auth.getUser().then(async ({ data }) => {
+            const signedInEmail = data?.user?.email || null;
+            if (isBlockedEmail(signedInEmail)) {
+              await supabase.auth.signOut();
+              toast.error(getBlockedUserMessage());
+              router.replace("/");
+              return;
+            }
+
+            toast.success("Signed in");
+            router.replace("/account");
+          });
         }
       });
     }
@@ -61,9 +72,15 @@ function AuthInner() {
 
   const sendMagicLink = async (e) => {
     e.preventDefault();
+    const normalizedEmail = email.trim().toLowerCase();
+    if (isBlockedEmail(normalizedEmail)) {
+      toast.error(getBlockedUserMessage());
+      return;
+    }
+
     setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
+      email: normalizedEmail,
       options: { emailRedirectTo: getAuthRedirectUrl() },
     });
     setLoading(false);

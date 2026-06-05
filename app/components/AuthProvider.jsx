@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { isBlockedEmail } from "@/lib/blockedUsers";
 
 const AuthCtx = createContext({ session: null, user: null, token: null, loading: true });
 export function useAuth() { return useContext(AuthCtx); }
@@ -10,6 +11,7 @@ export default function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const fetchPatched = useRef(false);
+  const blockedHandled = useRef(false);
 
   // Load current session and subscribe to changes
   useEffect(() => {
@@ -37,6 +39,23 @@ export default function AuthProvider({ children }) {
   }, []);
 
   // Patch window.fetch once. Adds Authorization for same-origin /api calls.
+  useEffect(() => {
+    const email = session?.user?.email || null;
+    if (!email) {
+      blockedHandled.current = false;
+      return;
+    }
+    if (!isBlockedEmail(email) || blockedHandled.current) return;
+
+    blockedHandled.current = true;
+    supabase.auth.signOut().finally(() => {
+      setSession(null);
+      if (typeof window !== "undefined") {
+        window.location.replace("/");
+      }
+    });
+  }, [session]);
+
   useEffect(() => {
     if (fetchPatched.current) return;
     fetchPatched.current = true;

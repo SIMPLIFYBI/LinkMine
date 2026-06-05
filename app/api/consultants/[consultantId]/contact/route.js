@@ -6,6 +6,7 @@ import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import { ServerClient as Postmark } from "postmark";
 import { siteUrl } from "@/lib/siteUrl";
 import { buildContactConsultantEmail } from "@/lib/emails/contactConsultant";
+import { getBlockedUserMessage, isBlockedEmail } from "@/lib/blockedUsers";
 
 const POSTMARK_TOKEN = process.env.POSTMARK_TOKEN || process.env.POSTMARK_SERVER_TOKEN;
 const FROM_EMAIL = process.env.POSTMARK_FROM_EMAIL || "info@youmine.com.au";
@@ -23,6 +24,9 @@ export async function POST(req, { params }) {
     const user = auth?.user;
     if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    if (isBlockedEmail(user.email)) {
+      return NextResponse.json({ error: getBlockedUserMessage() }, { status: 403 });
     }
 
     const body = await req.json().catch(() => ({}));
@@ -83,6 +87,10 @@ export async function POST(req, { params }) {
       email: (email?.trim() || user.email || "").toLowerCase(),
       phone: (phone || "").trim(),
     };
+
+    if (isBlockedEmail(sender.email)) {
+      return NextResponse.json({ error: getBlockedUserMessage() }, { status: 403 });
+    }
 
     const referrer = req.headers.get("referer") || null;
     const utm = {};

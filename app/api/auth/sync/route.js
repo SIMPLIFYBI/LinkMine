@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
+import { getBlockedUserMessage, isBlockedEmail } from "@/lib/blockedUsers";
 
 async function sbFromCookies() {
   const jar = await cookies();
@@ -27,6 +28,10 @@ export async function POST(req) {
   const sb = await sbFromCookies();
   const { data, error } = await sb.auth.setSession({ access_token, refresh_token });
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 401 });
+  if (isBlockedEmail(data?.user?.email)) {
+    await sb.auth.signOut();
+    return NextResponse.json({ ok: false, error: getBlockedUserMessage() }, { status: 403 });
+  }
   return NextResponse.json({ ok: true, user: data.user ?? null });
 }
 
