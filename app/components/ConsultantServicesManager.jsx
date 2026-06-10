@@ -3,15 +3,25 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { authedFetch } from "@/lib/authedFetch";
 
+function marketLabel(value) {
+  return value === "oil_gas" ? "Oil & Gas" : "Mining";
+}
+
+function marketQueryValue(value) {
+  return value === "oil_gas" ? "oil-gas" : "mining";
+}
+
 export default function ConsultantServicesManager({ consultantId, canEdit = false }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState("");
-  const [assigned, setAssigned] = useState([]);      // [{ id, name, slug }]
-  const [categories, setCategories] = useState([]);  // [{ id, name, services: [{ id, name, slug }] }]
+  const [activeMarket, setActiveMarket] = useState("mining");
+  const [assigned, setAssigned] = useState([]);      // [{ id, name, slug, market }]
+  const [categoriesByMarket, setCategoriesByMarket] = useState({ mining: [], oil_gas: [] });
 
   const assignedIds = useMemo(() => new Set(assigned.map(s => s.id)), [assigned]);
+  const categories = categoriesByMarket[activeMarket] || [];
 
   const filteredCategories = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -39,13 +49,21 @@ export default function ConsultantServicesManager({ consultantId, canEdit = fals
     (async () => {
       setLoading(true);
       try {
-        const [a, b] = await Promise.all([
+        const [a, miningDirectory, oilGasDirectory] = await Promise.all([
           fetchJson(`/api/consultants/${consultantId}/services`, { cache: "no-store" }),
-          fetchJson(`/api/directory`, { cache: "no-store" }),
+          fetchJson(`/api/directory?market=mining`, { cache: "no-store" }),
+          fetchJson(`/api/directory?market=oil-gas`, { cache: "no-store" }),
         ]);
         if (!cancelled) {
-          setAssigned(a.json?.services || []);
-          setCategories(b.json?.categories || []);
+          const assignedServices = a.json?.services || [];
+          setAssigned(assignedServices);
+          setCategoriesByMarket({
+            mining: miningDirectory.json?.categories || [],
+            oil_gas: oilGasDirectory.json?.categories || [],
+          });
+          if (assignedServices.some((service) => service.market === "oil_gas") && !assignedServices.some((service) => service.market !== "oil_gas")) {
+            setActiveMarket("oil_gas");
+          }
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -63,7 +81,9 @@ export default function ConsultantServicesManager({ consultantId, canEdit = fals
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok || !json.ok) return alert(json.error || "Failed to add");
-    const svc = categories.flatMap(c => c.services || []).find(s => s.id === id);
+    const svc = Object.values(categoriesByMarket).flatMap((marketCategories) =>
+      (marketCategories || []).flatMap(c => c.services || [])
+    ).find(s => s.id === id);
     if (svc && !assignedIds.has(id)) setAssigned(prev => [...prev, svc]);
   }
 
@@ -103,9 +123,10 @@ export default function ConsultantServicesManager({ consultantId, canEdit = fals
               key={s.id}
               className="inline-flex items-center gap-1 rounded-full bg-white/5 border border-white/10 px-3 py-1 text-xs"
             >
-              <Link href={`/consultants?service=${encodeURIComponent(s.slug)}`} className="hover:underline">
+              <Link href={`/consultants?market=${marketQueryValue(s.market)}&service=${encodeURIComponent(s.slug)}`} className="hover:underline">
                 {s.name}
               </Link>
+              <span className="text-slate-500">· {marketLabel(s.market)}</span>
               {canEdit && (
                 <button
                   onClick={() => removeService(s.id)}
@@ -137,10 +158,33 @@ export default function ConsultantServicesManager({ consultantId, canEdit = fals
             </div>
 
             <div className="px-4 py-3">
+              <div className="mb-3 inline-flex rounded-full border border-white/15 bg-slate-950/60 p-1">
+                {["mining", "oil_gas"].map((market) => {
+                  const active = market === activeMarket;
+                  return (
+                    <button
+                      key={market}
+                      type="button"
+                      onClick={() => setActiveMarket(market)}
+                      className={[
+                        "rounded-full px-4 py-2 text-xs font-semibold transition",
+                        active
+                          ? market === "oil_gas"
+                            ? "bg-amber-400 text-slate-950"
+                            : "bg-sky-400 text-slate-950"
+                          : "text-slate-300 hover:bg-white/10 hover:text-white",
+                      ].join(" ")}
+                    >
+                      {marketLabel(market)}
+                    </button>
+                  );
+                })}
+              </div>
+
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search services…"
+                placeholder={`Search ${marketLabel(activeMarket)} services…`}
                 className="w-full rounded-md bg-slate-900/60 border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sky-500/40"
               />
 

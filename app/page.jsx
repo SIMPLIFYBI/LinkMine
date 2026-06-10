@@ -7,48 +7,90 @@ import ServiceFinder from "@/app/components/ServiceFinder";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
 import AddProfileSmartCTA from "@/app/components/consultants/AddProfileSmartCTA.client.jsx";
 import DidYouKnowSection from "./components/stats/DidYouKnowSection.jsx";
+import {
+  siteMarketLabel,
+} from "@/lib/siteMarket";
+import { getResolvedSiteMarket } from "@/lib/siteMarketServer";
 
 const heroImage = "/Pictures/pexels-urtimud-89-76108288-14263363.jpg";
 
-export const metadata = {
-  title: "YouMine — Find mining consultants and contractors fast",
-  description:
-    "YouMine connects mining clients with trusted consultants and contractors. Browse services, view portfolios, and contact experts directly.",
-  alternates: { canonical: "/" },
-  openGraph: {
-    title: "YouMine — Find mining consultants and contractors fast",
-    description:
-      "Discover trusted mining consultants and contractors by service. View portfolios and contact experts directly.",
-    url: "/",
-    siteName: "YouMine",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "YouMine" }],
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "YouMine — Find mining consultants and contractors fast",
-    description:
-      "Discover trusted mining consultants and contractors by service. View portfolios and contact experts directly.",
-    images: ["/og-image.png"],
-  },
-};
+function getHomeCopy(market) {
+  if (market === "oil_gas") {
+    return {
+      title: "YouMine — Find oil & gas consultants and contractors fast",
+      description:
+        "YouMine connects oil & gas teams with trusted consultants and contractors. Browse services, view portfolios, and contact experts directly.",
+      heroAlt: "YouMine — consultants and contractors in oil and gas",
+      heroTitle: "Match with the right oil & gas expert today.",
+      heroDescription:
+        "Discover trusted consultants and contractors across subsurface, wells, facilities, operations, and project delivery.",
+      overviewTitle: "Connect oil & gas teams with trusted contractors & consultants",
+      overviewDescription:
+        "YouMine helps operators, asset teams, and project leads find qualified oil & gas contractors and consultants fast — with portfolios, verified business details, service categories, and Google-linked profiles.",
+      featuredTitle: "Featured oil & gas consultants",
+      industryLabel: "oil & gas",
+    };
+  }
 
-async function getStatsAndFeatured() {
+  return {
+    title: "YouMine — Find mining consultants and contractors fast",
+    description:
+      "YouMine connects mining clients with trusted consultants and contractors. Browse services, view portfolios, and contact experts directly.",
+    heroAlt: "YouMine — consultants and contractors in mining",
+    heroTitle: "Match with the right mining expert today.",
+    heroDescription:
+      "Discover trusted consultants and contractors, review portfolios, and contact directly.",
+    overviewTitle: "Connect mining clients with trusted contractors & consultants",
+    overviewDescription:
+      "YouMine helps mining companies find qualified contractors and consultants fast — with portfolios, verified business details, service categories, and Google-linked profiles. For consultants, it’s the easiest way to showcase your work, build credibility, and track profile metrics.",
+    featuredTitle: "Featured consultants",
+    industryLabel: "mining",
+  };
+}
+
+export async function generateMetadata() {
+  const { market } = await getResolvedSiteMarket();
+  const copy = getHomeCopy(market);
+
+  return {
+    title: copy.title,
+    description: copy.description,
+    alternates: { canonical: "/" },
+    openGraph: {
+      title: copy.title,
+      description: copy.description,
+      url: "/",
+      siteName: "YouMine",
+      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "YouMine" }],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: copy.title,
+      description: copy.description,
+      images: ["/og-image.png"],
+    },
+  };
+}
+
+async function getStatsAndFeatured(market) {
   try {
     const sb = supabasePublicServer();
 
-    const { data: featured = [] } = await sb
-      .from("consultants")
-      .select("id, display_name, headline, location, metadata")
-      .eq("visibility", "public")
-      .eq("status", "approved")
-      .order("created_at", { ascending: false })
-      .limit(24);
+    const { data: featuredRows = [] } = await sb.rpc("get_consultants_directory_page", {
+      p_page: 1,
+      p_page_size: 24,
+      p_seed_bucket: "home-featured",
+      p_market: market,
+    });
+
+    const featured = (featuredRows || []).map(({ has_next, ...consultant }) => consultant);
 
     // LIMIT TO 9 categories for 3x3 layout
     const { data: categories = [] } = await sb
       .from("service_categories")
       .select("id, name, slug")
+      .eq("market", market)
       .order("position", { ascending: true })
       .order("name", { ascending: true })
       .limit(9);
@@ -57,11 +99,13 @@ async function getStatsAndFeatured() {
       sb
         .from("service_categories")
         .select("id, name, slug")
+        .eq("market", market)
         .order("position", { ascending: true })
         .order("name", { ascending: true }),
       sb
         .from("services")
         .select("id, name, slug, category_id")
+        .eq("market", market)
         .order("name", { ascending: true }),
     ]);
 
@@ -110,7 +154,10 @@ function CategoryIcon({ slug }) {
 
 export default async function HomePage() {
   const showPreview = true;
-  const { featured, categories, searchCategories } = await getStatsAndFeatured();
+  const { market } = await getResolvedSiteMarket();
+  const marketName = siteMarketLabel(market);
+  const copy = getHomeCopy(market);
+  const { featured, categories, searchCategories } = await getStatsAndFeatured(market);
 
   // Deterministic daily rotation (UTC) for featured
   const tzOffsetMinutes = 0;
@@ -208,12 +255,12 @@ export default async function HomePage() {
   };
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pb-10">
+    <main className="site-market-shell mx-auto flex max-w-6xl flex-col gap-10 px-4 pb-10" data-market={market}>
       {/* Hero */}
       <section className="relative left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw] min-h-[240px] md:min-h-[300px] overflow-hidden">
         <Image
           src={heroImage}
-          alt="YouMine — consultants and contractors in mining"
+          alt={copy.heroAlt}
           fill
           priority
           sizes="100vw"
@@ -222,10 +269,10 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/25 via-slate-900/45 to-slate-950/85" />
         <div className="relative z-10 flex h-full flex-col items-center justify-center gap-5 px-6 py-10 text-center sm:px-12 md:py-14">
           <h1 className="max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl leading-tight">
-            Match with the right mining expert today.
+            {copy.heroTitle}
           </h1>
           <p className="max-w-2xl text-base text-slate-200 sm:text-lg">
-            Discover trusted consultants and contractors, review portfolios, and contact directly.
+            {copy.heroDescription}
           </p>
           <div className="mt-4 flex gap-2">
             <Link href="/signup" className="flex-1">
@@ -289,10 +336,10 @@ export default async function HomePage() {
           <div className="space-y-4 order-2 md:order-1">
             <p className="section-label">Overview</p>
             <h2 className="text-2xl font-semibold md:text-[32px]">
-              Connect mining clients with trusted contractors & consultants
+              {copy.overviewTitle}
             </h2>
             <p className="text-slate-300">
-              YouMine helps mining companies find qualified contractors and consultants fast — with portfolios, verified business details, service categories, and Google-linked profiles. For consultants, it’s the easiest way to showcase your work, build credibility, and track profile metrics.
+              {copy.overviewDescription}
             </p>
             <div className="mt-4 flex gap-2">
               <Link href="/jobs" className="inline-flex flex-1 sm:flex-none">
@@ -403,7 +450,7 @@ export default async function HomePage() {
               </div>
             )}
             <p className="text-[10px] text-slate-500">
-              Choose a category to filter consultants by their offered services.
+              Choose a category to filter {copy.industryLabel} consultants by their offered services.
             </p>
           </div>
         </div>
@@ -452,7 +499,7 @@ export default async function HomePage() {
       <section id="featured" className="mx-auto w-full max-w-screen-lg px-4 fade-in-up">
         <p className="section-label mb-2">Featured</p>
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-base font-semibold text-white">Featured consultants</h3>
+          <h3 className="text-base font-semibold text-white">{copy.featuredTitle}</h3>
           <Link href="/consultants" className="text-xs text-sky-300 underline-offset-2 hover:underline">
             View all
           </Link>

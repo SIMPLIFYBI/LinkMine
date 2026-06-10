@@ -9,7 +9,7 @@ export default function Logo({ className = "" }) {
       className={`select-none inline-flex items-center ${className}`}
     >
       <span
-        className="text-xl leading-none font-bold tracking-tight bg-gradient-to-r from-sky-500 to-indigo-500 bg-clip-text text-transparent"
+        className="site-market-logo text-xl leading-none font-bold tracking-tight bg-clip-text text-transparent"
       >
         YouMine.
       </span>

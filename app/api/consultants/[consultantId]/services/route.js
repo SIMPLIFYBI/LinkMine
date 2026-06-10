@@ -24,7 +24,7 @@ export async function GET(req, { params }) {
 
     const { data: services, error: e2 } = await sb
       .from("services")
-      .select("id, name, slug")
+      .select("id, name, slug, market")
       .in("id", ids);
     if (e2) return NextResponse.json({ ok: false, error: e2.message }, { status: 500 });
     return NextResponse.json({ ok: true, services: services || [] });

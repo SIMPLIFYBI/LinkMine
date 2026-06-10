@@ -7,6 +7,10 @@ import { supabase } from "@/lib/supabaseClient";
 const MAX_HEADLINE = 120;
 const MAX_SERVICES = 15; // safety cap
 
+function marketLabel(value) {
+  return value === "oil_gas" ? "Oil & Gas" : "Mining";
+}
+
 export default function ProfileSetupBasic({ services = [] }) {
   const router = useRouter();
 
@@ -18,21 +22,41 @@ export default function ProfileSetupBasic({ services = [] }) {
   // Services state
   const [selected, setSelected] = useState(new Set()); // service ids
   const [servicesOpen, setServicesOpen] = useState(false);
+  const [activeMarket, setActiveMarket] = useState("mining");
 
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
 
-  const grouped = useMemo(() => {
-    const byCat = new Map();
+  const groupedByMarket = useMemo(() => {
+    const byMarket = new Map();
     for (const s of services) {
+      const market = s?.market === "oil_gas" ? "oil_gas" : "mining";
       const cat = s?.category?.name || "Other";
+      if (!byMarket.has(market)) byMarket.set(market, new Map());
+      const byCat = byMarket.get(market);
       if (!byCat.has(cat)) byCat.set(cat, []);
       byCat.get(cat).push(s);
     }
-    // sort items within each group for predictability
-    for (const list of byCat.values()) list.sort((a, b) => a.name.localeCompare(b.name));
-    return Array.from(byCat.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    return {
+      mining: Array.from(byMarket.get("mining")?.entries() || [])
+        .map(([category, list]) => [category, [...list].sort((a, b) => a.name.localeCompare(b.name))])
+        .sort((a, b) => a[0].localeCompare(b[0])),
+      oil_gas: Array.from(byMarket.get("oil_gas")?.entries() || [])
+        .map(([category, list]) => [category, [...list].sort((a, b) => a.name.localeCompare(b.name))])
+        .sort((a, b) => a[0].localeCompare(b[0])),
+    };
   }, [services]);
+
+  const selectedByMarket = useMemo(() => {
+    const lookup = new Map(services.map((service) => [service.id, service.market === "oil_gas" ? "oil_gas" : "mining"]));
+    let mining = 0;
+    let oil_gas = 0;
+    for (const id of selected) {
+      if (lookup.get(id) === "oil_gas") oil_gas += 1;
+      else mining += 1;
+    }
+    return { mining, oil_gas };
+  }, [selected, services]);
 
   function toggleService(id) {
     setSelected((prev) => {
@@ -152,7 +176,16 @@ export default function ProfileSetupBasic({ services = [] }) {
           >
             {selectedCount > 0 ? "Edit services" : "Add services"}
           </button>
-          <p className="text-xs text-slate-400">Pick at least one. You can add more later.</p>
+          <p className="text-xs text-slate-400">
+            Pick at least one. You can add mining services, Oil & Gas services, or both.
+          </p>
+          {selectedCount > 0 ? (
+            <p className="text-xs text-slate-500">
+              {selectedByMarket.mining > 0 ? `${selectedByMarket.mining} Mining` : null}
+              {selectedByMarket.mining > 0 && selectedByMarket.oil_gas > 0 ? " • " : null}
+              {selectedByMarket.oil_gas > 0 ? `${selectedByMarket.oil_gas} Oil & Gas` : null}
+            </p>
+          ) : null}
         </div>
 
         {msg && (
@@ -181,10 +214,12 @@ export default function ProfileSetupBasic({ services = [] }) {
       {/* Services picker overlay */}
       {servicesOpen && (
         <ServicesPicker
-          grouped={grouped}
+          activeMarket={activeMarket}
+          groupedByMarket={groupedByMarket}
           selected={selected}
           onToggle={toggleService}
           onClose={() => setServicesOpen(false)}
+          onMarketChange={setActiveMarket}
           maxSelect={MAX_SERVICES}
         />
       )}
@@ -209,8 +244,9 @@ function Field({ label, value, onChange, type = "text", required = false, placeh
   );
 }
 
-function ServicesPicker({ grouped, selected, onToggle, onClose, maxSelect }) {
+function ServicesPicker({ groupedByMarket, activeMarket, selected, onToggle, onClose, onMarketChange, maxSelect }) {
   const [q, setQ] = useState("");
+  const grouped = groupedByMarket?.[activeMarket] || [];
 
   function isMatch(name) {
     if (!q.trim()) return true;
@@ -234,6 +270,29 @@ function ServicesPicker({ grouped, selected, onToggle, onClose, maxSelect }) {
           >
             Close
           </button>
+        </div>
+
+        <div className="mt-4 inline-flex rounded-full border border-white/15 bg-slate-950/60 p-1">
+          {["mining", "oil_gas"].map((market) => {
+            const active = market === activeMarket;
+            return (
+              <button
+                key={market}
+                type="button"
+                onClick={() => onMarketChange(market)}
+                className={[
+                  "rounded-full px-4 py-2 text-xs font-semibold transition",
+                  active
+                    ? market === "oil_gas"
+                      ? "bg-amber-400 text-slate-950"
+                      : "bg-sky-400 text-slate-950"
+                    : "text-slate-300 hover:bg-white/10 hover:text-white",
+                ].join(" ")}
+              >
+                {marketLabel(market)}
+              </button>
+            );
+          })}
         </div>
 
         <div className="mt-3 grid gap-3">

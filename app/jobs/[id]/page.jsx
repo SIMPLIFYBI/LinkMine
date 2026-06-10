@@ -21,7 +21,7 @@ function buildJobDescription(job) {
   if (job?.location) parts.push(`Location: ${job.location}.`);
   if (job?.description) parts.push(job.description);
 
-  return truncateText(parts.join(" ") || `View ${job?.title || "this mining job"} on YouMine.`, 160);
+  return truncateText(parts.join(" ") || `View ${job?.title || "this job"} on YouMine.`, 160);
 }
 
 async function getJob(id) {

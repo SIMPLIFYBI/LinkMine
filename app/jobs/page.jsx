@@ -3,6 +3,7 @@ import Image from "next/image";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
 import LearnAboutPostingModal from "./LearnAboutPostingModal.client"; // NEW
 import Link from "next/link"; // NEW
+import { getResolvedSiteMarket } from "@/lib/siteMarketServer";
 
 export const runtime = "nodejs";
 export const revalidate = 180;
@@ -15,10 +16,12 @@ function buildJobsListingHref(page) {
 
 export async function generateMetadata({ searchParams }) {
   const sp = (await searchParams) || {};
+  const { market } = await getResolvedSiteMarket();
   const requestedPage = Number.parseInt(sp?.page ?? "1", 10);
   const page = Number.isNaN(requestedPage) ? 1 : Math.max(1, requestedPage);
-  const title = page > 1 ? `Mining Jobs Board · Page ${page}` : "Mining Jobs Board";
-  const description = `Browse open mining jobs and connect directly with consultants and contractors${
+  const boardLabel = market === "oil_gas" ? "Oil & Gas Jobs Board" : "Mining Jobs Board";
+  const title = page > 1 ? `${boardLabel} · Page ${page}` : boardLabel;
+  const description = `Browse open ${market === "oil_gas" ? "oil and gas" : "mining"} jobs and connect directly with consultants and contractors${
     page > 1 ? ` on page ${page}` : ""
   }.`;
   const canonical = buildJobsListingHref(page);
@@ -46,8 +49,35 @@ export async function generateMetadata({ searchParams }) {
 const PAGE_SIZE = 16;
 const HERO_IMG = "/OpenPit2.png"; // was "/Pictures/youmine_hero.webp"
 
+function getJobsContent(market) {
+  if (market === "oil_gas") {
+    return {
+      theme: "forge",
+      title: "Oil & Gas jobs board",
+      subtitle:
+        "Find and post roles across subsurface, wells, production, facilities, integrity, and project delivery.",
+      label: "Field demand",
+      pill: "Operator + contractor reach",
+      alt: "Industrial operations hiring board",
+      usePhoto: false,
+    };
+  }
+
+  return {
+    theme: "signal",
+    title: "Mining jobs board",
+    subtitle: "Find and post roles across geology, drilling, operations, and more.",
+    label: "Hiring signal",
+    pill: "Direct consultant reach",
+    alt: "Open pit mine haul road with a dump truck",
+    usePhoto: true,
+  };
+}
+
 export default async function JobsRootPage({ searchParams }) {
   const sp = await searchParams;
+  const { market } = await getResolvedSiteMarket();
+  const content = getJobsContent(market);
 
   const page = Math.max(1, Number.parseInt(sp?.page ?? "1", 10));
   const from = (page - 1) * PAGE_SIZE;
@@ -82,17 +112,21 @@ export default async function JobsRootPage({ searchParams }) {
   const totalOpen = jobs.length;
 
   return (
-    <main className="jobs-page pb-8" data-jobs-theme="signal">
+    <main className="jobs-page pb-8" data-jobs-theme={content.theme}>
       {/* Mobile-only hero (lightened overlay) */}
       <section className="jobs-hero relative md:hidden left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw] overflow-hidden border-b border-white/10">
-        <Image
-          src={HERO_IMG}
-          alt="Open pit mine haul road with a dump truck"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-        />
+        {content.usePhoto ? (
+          <Image
+            src={HERO_IMG}
+            alt={content.alt}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-[linear-gradient(145deg,rgba(18,12,8,0.98)_0%,rgba(44,22,10,0.96)_40%,rgba(55,24,14,0.94)_100%)]" />
+        )}
 
         {/* Lightened scrim layers */}
         <div className="absolute inset-0 pointer-events-none">
@@ -112,7 +146,7 @@ export default async function JobsRootPage({ searchParams }) {
                 textShadow: "0 1px 2px rgba(0,0,0,0.45), 0 0 3px rgba(0,0,0,0.28)"
               }}
             >
-              Mining jobs board
+              {content.title}
             </h1>
             <p
               className="mt-2 text-[13px] leading-relaxed text-slate-100"
@@ -120,7 +154,7 @@ export default async function JobsRootPage({ searchParams }) {
                 textShadow: "0 1px 2px rgba(0,0,0,0.4)"
               }}
             >
-              Find and post roles across geology, drilling, operations, and more.
+              {content.subtitle}
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -156,25 +190,29 @@ export default async function JobsRootPage({ searchParams }) {
 
       {/* Existing desktop/tablet hero (hidden on mobile) */}
       <section className="jobs-hero relative hidden md:block left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw] min-h-[260px] overflow-hidden border-b border-white/10">
-        <Image
-          src={HERO_IMG}
-          alt="Open pit mine haul road with a dump truck"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-        />
+        {content.usePhoto ? (
+          <Image
+            src={HERO_IMG}
+            alt={content.alt}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-[linear-gradient(145deg,rgba(18,12,8,0.98)_0%,rgba(44,22,10,0.96)_40%,rgba(55,24,14,0.94)_100%)]" />
+        )}
         <div className="relative z-10 mx-auto flex max-w-6xl items-end justify-between px-4 py-8 sm:px-6 md:py-12">
           <div className="jobs-hero-panel max-w-[58rem] rounded-[2rem] border border-white/10 bg-slate-950/26 px-6 py-6 backdrop-blur-md">
-            <div className="section-label">Hiring signal</div>
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Mining jobs board</h1>
+            <div className="section-label">{content.label}</div>
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{content.title}</h1>
             <p className="mt-1 max-w-[60ch] text-slate-200">
-              Find and post roles across geology, drilling, operations, and more.
+              {content.subtitle}
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2 text-xs uppercase tracking-[0.24em] text-slate-200/85">
               <span className="jobs-pill inline-flex items-center rounded-full border border-white/15 bg-white/8 px-3 py-2">{totalOpen} roles on this page</span>
-              <span className="jobs-pill inline-flex items-center rounded-full border border-white/15 bg-white/8 px-3 py-2">Direct consultant reach</span>
+              <span className="jobs-pill inline-flex items-center rounded-full border border-white/15 bg-white/8 px-3 py-2">{content.pill}</span>
               <span className="jobs-pill inline-flex items-center rounded-full border border-white/15 bg-white/8 px-3 py-2">Public + private posting</span>
             </div>
 

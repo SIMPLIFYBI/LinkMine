@@ -2,6 +2,12 @@ import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
 import { siteUrl } from "@/lib/siteUrl";
+import {
+  normaliseSiteMarket as normaliseMarketParam,
+  siteMarketLabel as marketLabel,
+  siteMarketToUrlValue as marketParamToUrlValue,
+} from "@/lib/siteMarket";
+import { getResolvedSiteMarket } from "@/lib/siteMarketServer";
 import AddConsultantButton from "@/app/components/consultants/AddConsultantButton";
 import ServiceFilter from "./ServiceFilter.client.jsx";
 import NameSearch from "./NameSearch.client.jsx";
@@ -11,6 +17,7 @@ import ProviderKindFilter from "./ProviderKindFilter.client.jsx"; // NEW
 
 export const runtime = "nodejs";
 export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 15;
 const SEED_BUCKET_MS = 5 * 60 * 1000;
@@ -23,8 +30,10 @@ function formatSlugLabel(value) {
     .join(" ");
 }
 
-function buildConsultantsListingHref({ serviceSlug, categorySlug, q, kindParam, page }) {
+function buildConsultantsListingHref({ market, serviceSlug, categorySlug, q, kindParam, page }) {
   const params = new URLSearchParams();
+  const marketValue = marketParamToUrlValue(normaliseMarketParam(market));
+  if (marketValue !== "mining") params.set("market", marketValue);
   if (serviceSlug) params.set("service", serviceSlug);
   else if (categorySlug) params.set("category", categorySlug);
   if (q) params.set("q", q);
@@ -39,18 +48,21 @@ function getSeed() {
 }
 
 const getConsultantsDirectoryReferenceData = unstable_cache(
-  async () => {
+  async (market) => {
     const sb = supabasePublicServer();
+    const marketDb = normaliseMarketParam(market);
 
     const [{ data: categories = [] }, { data: services = [] }] = await Promise.all([
       sb
         .from("service_categories")
-        .select("id, name, slug")
+        .select("id, name, slug, market")
+        .eq("market", marketDb)
         .order("position", { ascending: true })
         .order("name", { ascending: true }),
       sb
         .from("services")
-        .select("id, name, slug, category_id")
+        .select("id, name, slug, category_id, market")
+        .eq("market", marketDb)
         .order("name", { ascending: true }),
     ]);
 
@@ -62,7 +74,7 @@ const getConsultantsDirectoryReferenceData = unstable_cache(
 
 async function getConsultantsDirectoryPageViaRpc(
   sb,
-  { serviceSlug, categorySlug, q, providerKind, page, seed }
+  { market, serviceSlug, categorySlug, q, providerKind, page, seed }
 ) {
   const { data, error } = await sb.rpc("get_consultants_directory_page", {
     p_service_slug: serviceSlug || null,
@@ -72,6 +84,7 @@ async function getConsultantsDirectoryPageViaRpc(
     p_page: page,
     p_page_size: PAGE_SIZE,
     p_seed_bucket: String(seed),
+    p_market: normaliseMarketParam(market),
   });
 
   if (error) {
@@ -103,12 +116,14 @@ function deriveLocationPhrase(serviceSlug, categorySlug) {
 }
 
 // --- JSON-LD builder (optional SEO enrichment) ---
-function buildJsonLd(consultants) {
+function buildJsonLd(consultants, market) {
+  const marketName = marketLabel(market);
+  const canonical = buildConsultantsListingHref({ market, page: 1 });
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": "Mining Consultants & Contractors Directory",
-    "url": siteUrl("/consultants"),
+    "name": `${marketName} Consultants & Contractors Directory`,
+    "url": siteUrl(canonical),
     "numberOfItems": consultants.length,
     "itemListElement": consultants.map((c, i) => ({
       "@type": "ListItem",
@@ -129,6 +144,7 @@ function buildJsonLd(consultants) {
 
 export async function generateMetadata({ searchParams }) {
   const sp = (await searchParams) || {};
+  const { market } = await getResolvedSiteMarket(typeof sp.market === "string" ? sp.market : null);
   const serviceSlug = typeof sp.service === "string" ? sp.service : "";
   const categorySlug = typeof sp.category === "string" ? sp.category : "";
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
@@ -140,19 +156,19 @@ export async function generateMetadata({ searchParams }) {
     ? formatSlugLabel(serviceSlug)
     : categorySlug
     ? formatSlugLabel(categorySlug)
-    : "Mining Consultants & Contractors Directory";
+    : `${marketLabel(market)} Consultants & Contractors Directory`;
   const titlePrefix = q
     ? `Search results for \"${q}\"`
-    : focusLabel === "Mining Consultants & Contractors Directory"
+    : focusLabel === `${marketLabel(market)} Consultants & Contractors Directory`
     ? focusLabel
     : `${focusLabel} consultants`;
   const title = page > 1 ? `${titlePrefix} · Page ${page}` : titlePrefix;
   const description = q
     ? `Browse consultant search results for ${q} on YouMine${page > 1 ? `, page ${page}` : ""}.`
-    : `Discover verified mining consultants and contractors${
-        focusLabel === "Mining Consultants & Contractors Directory" ? "" : ` for ${focusLabel}`
+    : `Discover verified ${marketLabel(market).toLowerCase()} consultants and contractors${
+        focusLabel === `${marketLabel(market)} Consultants & Contractors Directory` ? "" : ` for ${focusLabel}`
       } on YouMine${page > 1 ? `, page ${page}` : ""}.`;
-  const canonical = buildConsultantsListingHref({ serviceSlug, categorySlug, q, kindParam, page });
+  const canonical = buildConsultantsListingHref({ market, serviceSlug, categorySlug, q, kindParam, page });
 
   return {
     title,
@@ -186,6 +202,7 @@ const asArray = (v) => (Array.isArray(v) ? v : []);
 
 export default async function ConsultantsPage({ searchParams }) {
   const sp = (await searchParams) || {};
+  const { market } = await getResolvedSiteMarket(typeof sp.market === "string" ? sp.market : null);
   const serviceSlug = typeof sp.service === "string" ? sp.service : "";
   const categorySlug = typeof sp.category === "string" ? sp.category : "";
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
@@ -201,11 +218,9 @@ export default async function ConsultantsPage({ searchParams }) {
     kindParam === "professional" ? "Professional Services" :
     kindParam === "both" ? "both" : null;
 
-  const [
-    directoryPage,
-    referenceData,
-  ] = await Promise.all([
+  const [directoryPage, referenceData] = await Promise.all([
     getConsultantsDirectoryPageViaRpc(sb, {
+      market,
       serviceSlug,
       categorySlug,
       page,
@@ -213,7 +228,7 @@ export default async function ConsultantsPage({ searchParams }) {
       q,
       providerKind: kindDb,
     }),
-    getConsultantsDirectoryReferenceData(),
+    getConsultantsDirectoryReferenceData(market),
   ]);
 
   const allCategories = referenceData.categories || [];
@@ -237,35 +252,41 @@ export default async function ConsultantsPage({ searchParams }) {
     buildConsultantsListingHref({
       serviceSlug,
       categorySlug,
+      market,
       q,
       kindParam,
       page: targetPage,
     });
 
   const locationPhrase = deriveLocationPhrase(serviceSlug, categorySlug);
-  const jsonLd = buildJsonLd(consultants);
+  const jsonLd = buildJsonLd(consultants, market);
+  const marketName = marketLabel(market);
 
   return (
     <main
+      data-market={market}
       className="mx-auto w-full max-w-6xl px-6 pt-0 md:pt-10 space-y-0 md:space-y-10 pb-24 sm:pb-12"
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 4.5rem)" }}
     >
+      <div className="consultants-market-shell contents" data-market={market}>
       {/* Desktop dual hero only */}
       <section className="hidden md:grid gap-6 lg:grid-cols-2">
         <div className="
-          group relative overflow-hidden rounded-3xl
-          border border-sky-400/30 bg-gradient-to-br from-slate-900/70 via-sky-900/30 to-indigo-900/40
-          p-6 backdrop-blur-xl shadow-lg ring-1 ring-sky-300/20
+          consultants-market-hero group relative overflow-hidden rounded-3xl
+          p-6 backdrop-blur-xl ring-1 ring-white/10
         ">
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -top-20 -left-28 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl" />
             <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl" />
           </div>
-          <h1 className="relative text-2xl md:text-3xl font-bold tracking-tight text-white">
-            Discover Mining Professionals
+          <div className="consultants-market-kicker relative text-[11px] font-semibold uppercase tracking-[0.24em]">
+            {marketName} Directory
+          </div>
+          <h1 className="relative mt-3 text-2xl md:text-3xl font-bold tracking-tight text-white">
+            Discover {marketName} Professionals
           </h1>
           <p className="relative mt-3 text-sm leading-relaxed text-slate-200">
-            Discover vetted mine consultants and contractors across {locationPhrase}. Compare expertise,
+            Discover vetted {marketName.toLowerCase()} consultants and contractors across {locationPhrase}. Compare expertise,
             disciplines, locations, and capabilities to deliver studies, projects, design, operations, and optimization.
           </p>
           <div className="relative mt-6 text-xs text-slate-400">
@@ -274,9 +295,8 @@ export default async function ConsultantsPage({ searchParams }) {
         </div>
 
         <div className="
-          relative rounded-3xl border border-emerald-400/30
-          bg-gradient-to-br from-slate-900/70 via-emerald-900/30 to-cyan-900/40
-          p-5 backdrop-blur-xl shadow-lg ring-1 ring-emerald-300/20
+          consultants-market-secondary relative rounded-3xl
+          p-5 backdrop-blur-xl shadow-lg ring-1 ring-white/10
         ">
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -top-16 -left-20 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl" />
@@ -286,7 +306,7 @@ export default async function ConsultantsPage({ searchParams }) {
             Join YouMine
           </h2>
           <p className="relative mt-3 text-sm leading-relaxed text-slate-200">
-            List your company or contractor profile, showcase capabilities, and connect with clients seeking specialist mining expertise.
+            List your company or contractor profile, showcase capabilities, and connect with clients seeking specialist {marketName.toLowerCase()} expertise.
           </p>
           <div className="relative mt-3 flex flex-wrap gap-2">
             <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[11px] font-medium text-slate-100/90 backdrop-blur-sm">Free to list</span>
@@ -294,13 +314,14 @@ export default async function ConsultantsPage({ searchParams }) {
             <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[11px] font-medium text-slate-100/90 backdrop-blur-sm">Own your profile</span>
           </div>
           <div className="relative mt-3 inline-flex">
-            <AddConsultantButton className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-900 shadow hover:bg-slate-100 transition" />
+            <AddConsultantButton className="consultants-market-cta rounded-full px-5 py-2 text-sm font-semibold shadow transition hover:brightness-110" />
           </div>
         </div>
       </section>
 
       {/* Mobile hero + floating filter sheet trigger */}
       <MobileHeroAndFilters
+        market={market}
         categories={allCategories}
         services={visibleServices}
         q={q}
@@ -311,7 +332,7 @@ export default async function ConsultantsPage({ searchParams }) {
       />
 
       {/* Filters (desktop only) */}
-      <section className="hidden md:block rounded-2xl border border-white/10 bg-white/[0.02] backdrop-blur-sm p-4 shadow-sm ring-1 ring-white/5 space-y-3">
+      <section className="consultants-market-panel hidden md:block rounded-2xl backdrop-blur-sm p-4 ring-1 ring-white/5 space-y-3">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
             <ServiceFilter categories={allCategories} activeSlug={effectiveCategory?.slug || ""} />
@@ -321,7 +342,7 @@ export default async function ConsultantsPage({ searchParams }) {
           </div>
           {(activeService || activeCategory || q) && (
             <Link
-              href="/consultants"
+              href={buildConsultantsListingHref({ market, page: 1 })}
               prefetch
               className="h-9 inline-flex items-center rounded-xl border border-white/10 bg-white/10 px-4 text-xs font-semibold text-slate-100 backdrop-blur-md hover:bg-white/15 transition focus:outline-none focus:ring-2 focus:ring-sky-500/40"
             >
@@ -352,6 +373,9 @@ export default async function ConsultantsPage({ searchParams }) {
                 Type: {kindDb || "Both"}
               </span>
             )}
+            <span className="consultants-market-chip rounded-full px-3 py-1 font-medium">
+              Market: {marketName}
+            </span>
             <span className="text-slate-500">
               {consultants.length} result{consultants.length === 1 ? "" : "s"}
             </span>
@@ -375,7 +399,7 @@ export default async function ConsultantsPage({ searchParams }) {
               key={c.id}
               href={`/consultants/${c.id}`}
               prefetch
-              className="relative block rounded-xl border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/5 transition hover:border-white/20 hover:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+              className="consultants-market-card relative block rounded-xl p-5 ring-1 ring-white/5 transition focus:outline-none focus:ring-2 focus:ring-sky-500/40"
             >
               <div className="flex items-start gap-3">
                 {c?.metadata?.logo?.url ? (
@@ -397,7 +421,7 @@ export default async function ConsultantsPage({ searchParams }) {
                   {c.location && <div className="mt-1 text-xs text-slate-400">{c.location}</div>}
                 </div>
               </div>
-              <div className="mt-3 text-xs font-medium text-sky-300">
+              <div className="consultants-market-kicker mt-3 text-xs font-medium">
                 View profile
               </div>
             </Link>
@@ -429,6 +453,7 @@ export default async function ConsultantsPage({ searchParams }) {
           Next
         </Link>
       </div>
+      </div>
 
       <div className="h-8 sm:h-0" aria-hidden="true" />
 
@@ -438,7 +463,7 @@ export default async function ConsultantsPage({ searchParams }) {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             ...jsonLd,
-            name: "Mine Consultants & Contractors Directory",
+            name: `${marketName} Consultants & Contractors Directory`,
           }),
         }}
       />

@@ -6,8 +6,13 @@ import ServiceFilter from "./ServiceFilter.client.jsx";
 import ServiceSlugFilter from "./ServiceSlugFilter.client.jsx";
 import ProviderKindFilter from "@/app/consultants/ProviderKindFilter.client";
 import AddConsultantButton from "@/app/components/consultants/AddConsultantButton";
+import {
+  siteMarketLabel as marketLabel,
+  siteMarketToUrlValue as marketParamToUrlValue,
+} from "@/lib/siteMarket";
 
 export default function MobileHeroAndFilters({
+  market = "mining",
   categories,
   services,
   q,
@@ -27,6 +32,7 @@ export default function MobileHeroAndFilters({
     kind === "both" ? "Both" : "";
   const anyActive = hasActive || !!kind;
   const sheetRef = useRef(null);
+  const marketName = marketLabel(market);
 
   // Prevent body scroll when sheet is open
   useEffect(() => {
@@ -53,8 +59,9 @@ export default function MobileHeroAndFilters({
 
   const handleReset = useCallback(() => {
     setOpen(false);
-    router.push("/consultants");
-  }, [router]);
+    const marketValue = marketParamToUrlValue(market);
+    router.push(marketValue === "mining" ? "/consultants" : `/consultants?market=${marketValue}`);
+  }, [market, router]);
 
   // Accessibility: close on Escape
   useEffect(() => {
@@ -101,13 +108,13 @@ export default function MobileHeroAndFilters({
 
   return (
     // Full-width strip on mobile: cancel page padding
-    <div className="md:hidden relative -mx-6">
+    <div className="consultants-market-shell md:hidden relative -mx-6" data-market={market}>
       {/* Hero strip */}
       <div
         className="
+          consultants-market-mobile-hero
           relative overflow-hidden
           border-y border-white/10
-          bg-gradient-to-br from-slate-950 via-slate-900/90 to-slate-800/90
           px-6 py-6
           backdrop-blur-xl shadow-lg ring-1 ring-white/10
         "
@@ -117,17 +124,17 @@ export default function MobileHeroAndFilters({
       >
         {/* Ambient glows */}
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-20 -left-24 h-56 w-56 rounded-full bg-sky-500/10 blur-3xl" />
-          <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl" />
+          <div className="absolute -top-20 -left-24 h-56 w-56 rounded-full bg-[rgba(var(--consultants-accent-rgb),0.15)] blur-3xl" />
+          <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-[rgba(var(--consultants-accent-soft-rgb),0.16)] blur-3xl" />
         </div>
 
         <div className="relative flex items-start justify-between gap-4">
           <div className="flex-1">
             <h1 className="text-xl font-bold text-white tracking-tight">
-              Mining Consultants
+              {marketName} Consultants
             </h1>
             <p className="mt-2 text-[13px] leading-relaxed text-slate-300">
-              Browse vetted consultants & contractors. Tap filters to refine by
+              Browse vetted {marketName.toLowerCase()} consultants & contractors. Tap filters to refine by
               discipline, category, or name.
             </p>
 
@@ -138,14 +145,14 @@ export default function MobileHeroAndFilters({
                   relative inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px] font-semibold text-white
                   bg-white/5 backdrop-blur-sm border border-white/15
                   before:absolute before:inset-0 before:rounded-full before:border before:border-transparent
-                  before:bg-[radial-gradient(circle_at_30%_20%,rgba(56,189,248,0.35),transparent_60%)]
+                  before:bg-[radial-gradient(circle_at_30%_20%,rgba(var(--consultants-accent-rgb),0.35),transparent_60%)]
                   hover:bg-white/10 hover:border-white/25 transition
                   shadow-[0_0_0_1px_rgba(255,255,255,0.05),0_4px_12px_-2px_rgba(0,0,0,0.4)]
                   active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-sky-500/40
                 "
               >
                 <span className="relative flex items-center">
-                  <span className="mr-1 inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 shadow-sm" />
+                  <span className="mr-1 inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-[linear-gradient(135deg,rgb(var(--consultants-accent-rgb)),rgb(var(--consultants-accent-soft-rgb)))] shadow-sm" />
                   Add your profile
                 </span>
               </AddConsultantButton>
@@ -161,6 +168,7 @@ export default function MobileHeroAndFilters({
             {activeService && <span>Service {activeService.name} • </span>}
             {!activeService && activeCategory && <span>Category {activeCategory.name} • </span>}
             {kind && <span>Type {kindLabel} • </span>}
+            <span>Market {marketName} • </span>
             <span>
               {consultantsCount} result{consultantsCount === 1 ? "" : "s"}
             </span>
@@ -183,9 +191,9 @@ export default function MobileHeroAndFilters({
           aria-label="Open filters"
           onClick={() => setOpen(true)}
           className={`
+            consultants-market-mobile-fab
             group relative inline-flex h-12 w-12 items-center justify-center rounded-2xl
             border border-white/20
-            bg-[linear-gradient(135deg,#0ea5e9_0%,#6366f1_48%,#8b5cf6_80%,#ec4899_115%)]
             text-white
             shadow-[0_4px_16px_-2px_rgba(0,0,0,0.55),0_0_0_1px_rgba(255,255,255,0.06)]
             backdrop-blur-md
@@ -236,9 +244,9 @@ export default function MobileHeroAndFilters({
           role="dialog"
           aria-modal="true"
           className={`
+            consultants-market-mobile-sheet
             absolute inset-x-0 bottom-0 flex max-h-[88%] flex-col overflow-hidden
             rounded-t-3xl border border-white/10
-            bg-gradient-to-br from-slate-950/95 via-slate-900/90 to-slate-800/90
             backdrop-blur-xl shadow-2xl transition-transform duration-300
             ${open ? "translate-y-0" : "translate-y-full"}
           `}

@@ -1,4 +1,5 @@
 import React, { Suspense } from "react";
+import { cookies } from "next/headers";
 import "./globals.css";
 import { Inter } from "next/font/google";
 import { Toaster } from "react-hot-toast";
@@ -11,6 +12,7 @@ import Script from "next/script";
 import GA4 from "@/app/components/GA4.client";
 import ThemeProvider from "@/app/components/ThemeProvider";
 import NativeAppUrlListener from "@/app/components/NativeAppUrlListener.client";
+import { getResolvedSiteMarket } from "@/lib/siteMarketServer";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -36,7 +38,14 @@ export const metadata = {
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 const enableAnalytics = GA_ID && process.env.NODE_ENV === "production";
 
-export default function RootLayout({ children }) {
+async function getHeaderContext() {
+  const { market, isAdmin } = await getResolvedSiteMarket();
+  return { currentMarket: market, isAdmin };
+}
+
+export default async function RootLayout({ children }) {
+  const { currentMarket, isAdmin } = await getHeaderContext();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -58,6 +67,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body
+        data-market={currentMarket}
         className="
           min-h-screen supports-[height:100dvh]:min-h-[100dvh]
           flex flex-col
@@ -91,16 +101,16 @@ export default function RootLayout({ children }) {
         <ThemeProvider>
           <AuthProvider>
             <NativeAppUrlListener />
-            <Header />
+            <Header currentMarket={currentMarket} isAdmin={isAdmin} />
             <div className="relative">
               <TradingViewTicker />
               <div
                 aria-hidden="true"
-                className="absolute -bottom-px left-0 h-px w-full bg-gradient-to-r from-transparent via-sky-400/50 to-transparent"
+                className="site-market-header-accent absolute -bottom-px left-0 h-px w-full"
               />
             </div>
             <main className="flex-1">{children}</main>
-            <Footer />
+            <Footer currentMarket={currentMarket} />
             <MobileNav />
             <Toaster position="top-right" />
           </AuthProvider>

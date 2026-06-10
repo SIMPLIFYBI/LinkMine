@@ -3,10 +3,13 @@
 import Link from "next/link";
 import Logo from "@/app/components/Logo";
 import { useTheme } from "@/app/components/ThemeProvider";
+import { siteMarketLabel } from "@/lib/siteMarket";
 
-export default function Footer() {
+export default function Footer({ currentMarket = "mining" }) {
   const { theme } = useTheme();
   const isLight = theme === "light";
+  const marketName = siteMarketLabel(currentMarket);
+  const industryLabel = currentMarket === "oil_gas" ? "oil & gas" : "mining";
 
   return (
     <footer
@@ -20,7 +23,7 @@ export default function Footer() {
           <div>
             <Logo className="inline-block" />
             <p className={isLight ? "mt-3 text-sm text-slate-600" : "mt-3 text-sm text-slate-300"}>
-              Connect mining clients with trusted consultants and contractors.
+              Connect {industryLabel} clients with trusted consultants and contractors.
             </p>
           </div>
 
@@ -95,7 +98,7 @@ export default function Footer() {
 
         <div className={isLight ? "mt-8 flex flex-col gap-2 border-t border-slate-200/80 pt-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between" : "mt-8 border-t border-white/10 pt-4 text-xs text-slate-400 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"}>
           <span>© {new Date().getFullYear()} YouMine. All rights reserved.</span>
-          <span className={isLight ? "text-slate-400" : "text-slate-500"}>Built for the mining industry.</span>
+          <span className={isLight ? "text-slate-400" : "text-slate-500"}>Built for the {marketName} market.</span>
         </div>
       </div>
     </footer>

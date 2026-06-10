@@ -18,7 +18,7 @@ export default async function NewConsultantPage() {
   const sp = supabasePublicServer();
   const { data: services = [] } = await sp
     .from("services")
-    .select("id, name, slug, category:category_id ( name, slug )")
+    .select("id, name, slug, market, category:category_id ( name, slug )")
     .order("name", { ascending: true });
 
   return (

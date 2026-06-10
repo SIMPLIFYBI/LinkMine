@@ -1,15 +1,14 @@
 "use client";
 
-"use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import navTabs from "./navTabs";
 import UserPill from "./UserPill";
 import Logo from "@/app/components/Logo";
 import { useTheme } from "@/app/components/ThemeProvider";
+import MarketToggle from "@/app/components/MarketToggle.client";
 
-export default function Header() {
+export default function Header({ currentMarket = "mining", isAdmin = false }) {
   const pathname = usePathname();
   const { theme } = useTheme();
   const isLight = theme === "light";
@@ -23,8 +22,9 @@ export default function Header() {
       >
         <div className="mx-auto flex h-14 max-w-screen-xl items-center gap-3 px-4">
           {/* Left */}
-          <div className="flex min-w-0 items-center">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <Logo className="select-none" />
+            {isAdmin ? <MarketToggle market={currentMarket} /> : null}
           </div>
 
           {/* Center (desktop) */}
