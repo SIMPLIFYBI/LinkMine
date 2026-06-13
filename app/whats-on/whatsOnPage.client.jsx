@@ -1,6 +1,9 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { supabaseBrowser } from "@/lib/supabaseBrowser";
 import WhatsOnDrawer from "./whatsOnDrawer.client.jsx";
 import SubmitEventModal from "./SubmitEventModal.client.jsx";
 import styles from "./whatsOn.module.css";
@@ -95,6 +98,41 @@ function buildCalendarUrl({ from, to, types, region }) {
   sp.set("types", (types || []).join(","));
   sp.set("region", region || "ALL");
   return `/api/calendar?${sp.toString()}`;
+}
+
+function TrainingAccessModal({ open, onClose, mode = "consultancy" }) {
+  if (!open) return null;
+
+  const title = mode === "auth" ? "Create your consultancy account to add training" : "You need a consultancy profile to add training";
+  const message =
+    mode === "auth"
+      ? "Training listings are managed through your consultancy profile. Create your consultancy account to continue."
+      : "Training listings are managed through your consultancy profile. Create one first, then you can publish training from there.";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button type="button" aria-label="Close training access prompt" className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-md rounded-3xl border border-white/10 bg-slate-950 p-6 text-white shadow-2xl ring-1 ring-white/10">
+        <div className="text-lg font-semibold">{title}</div>
+        <p className="mt-2 text-sm text-slate-300">{message}</p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link
+            href="/consultants/new"
+            className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-500"
+          >
+            Create consultancy account
+          </Link>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex items-center justify-center rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function SegGroup({ children, label }) {
@@ -327,6 +365,7 @@ function FiltersPanel({
 }
 
 export default function WhatsOnPage() {
+  const router = useRouter();
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -335,6 +374,9 @@ export default function WhatsOnPage() {
   const [selected, setSelected] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
+  const [trainingPromptOpen, setTrainingPromptOpen] = useState(false);
+  const [trainingPromptMode, setTrainingPromptMode] = useState("consultancy");
+  const [trainingRouting, setTrainingRouting] = useState(false);
 
   // ✅ Mobile day selection (filters agenda list)
   const [selectedDayKey, setSelectedDayKey] = useState(null);
@@ -345,6 +387,52 @@ export default function WhatsOnPage() {
 
   const sidebarRef = useRef(null);
   const courseProviderCacheRef = useRef(new Map());
+
+  async function handleAddTraining() {
+    if (trainingRouting) return;
+
+    setTrainingRouting(true);
+    setTrainingPromptOpen(false);
+
+    try {
+      const sb = supabaseBrowser();
+      const {
+        data: { user },
+      } = await sb.auth.getUser();
+
+      if (!user) {
+        setTrainingPromptMode("auth");
+        setTrainingPromptOpen(true);
+        return;
+      }
+
+      const { data: consultants, error: consultantError } = await sb
+        .from("consultants")
+        .select("id")
+        .or(`user_id.eq.${user.id},claimed_by.eq.${user.id}`)
+        .order("display_name", { ascending: true })
+        .limit(1);
+
+      if (consultantError) {
+        throw consultantError;
+      }
+
+      const consultantId = consultants?.[0]?.id || null;
+      if (!consultantId) {
+        setTrainingPromptMode("consultancy");
+        setTrainingPromptOpen(true);
+        return;
+      }
+
+      router.push(`/consultants/${encodeURIComponent(consultantId)}?training=manage`);
+    } catch (err) {
+      console.error("Failed to resolve training destination", err);
+      setTrainingPromptMode("consultancy");
+      setTrainingPromptOpen(true);
+    } finally {
+      setTrainingRouting(false);
+    }
+  }
 
   const calendarRange = useMemo(() => {
     // Month grid: start on Sunday, show 6 weeks (42 days)
@@ -560,7 +648,6 @@ export default function WhatsOnPage() {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            {/* ✅ Single button for all breakpoints */}
             <button
               type="button"
               onClick={() => setSubmitOpen(true)}
@@ -582,7 +669,28 @@ export default function WhatsOnPage() {
               <span className="leading-none">Add Event</span>
             </button>
 
-            {/* ❌ Removed the desktop-only "Add an Event" button */}
+            <button
+              type="button"
+              onClick={handleAddTraining}
+              disabled={trainingRouting}
+              className={[
+                "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold",
+                "text-white",
+                "bg-white/5",
+                "ring-1 ring-white/15 shadow-[0_12px_28px_-16px_rgba(15,23,42,0.9)]",
+                "hover:bg-white/10",
+                "active:scale-[0.98]",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60",
+                trainingRouting ? "opacity-70" : "",
+              ].join(" ")}
+              aria-label="Add Training"
+              title="Add Training"
+            >
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/10">
+                +
+              </span>
+              <span className="leading-none">{trainingRouting ? "Opening…" : "Add Training"}</span>
+            </button>
           </div>
         </div>
       </div>
@@ -909,6 +1017,7 @@ export default function WhatsOnPage() {
 
       <WhatsOnDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} item={selected} />
       <SubmitEventModal open={submitOpen} onClose={() => setSubmitOpen(false)} />
+      <TrainingAccessModal open={trainingPromptOpen} onClose={() => setTrainingPromptOpen(false)} mode={trainingPromptMode} />
     </div>
   );
 }

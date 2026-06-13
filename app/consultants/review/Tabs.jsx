@@ -17,6 +17,7 @@ export default function Tabs() {
   const tabs = [
     { key: "dashboard", label: "Dashboard" },
     { key: "review", label: "Review" },
+    { key: "jobs", label: "Jobs" },
     { key: "in-progress", label: "Consultants" }, // renamed
     { key: "landing-pages", label: "Landing Pages" },
   ];

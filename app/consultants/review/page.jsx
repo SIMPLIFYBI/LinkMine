@@ -10,7 +10,7 @@ export const revalidate = 0;
 export default async function ConsultantReviewPage({ searchParams }) {
   const sp = (await searchParams) || {};
   const tab = (sp?.tab || "dashboard").toLowerCase();
-  const active = ["dashboard", "review", "in-progress", "landing-pages"].includes(tab)
+  const active = ["dashboard", "review", "jobs", "in-progress", "landing-pages"].includes(tab)
     ? tab
     : "dashboard";
 
@@ -25,6 +25,16 @@ export default async function ConsultantReviewPage({ searchParams }) {
       {active === "review" && (
         <div className="space-y-6">
           <ConsultantReviewClient />
+        </div>
+      )}
+      {active === "jobs" && (
+        <div className="space-y-6">
+          <ConsultantReviewClient
+            initialTab="jobs"
+            availableTabs={["jobs"]}
+            heading="Jobs review"
+            description="Approve, suspend, reopen, or delete job listings."
+          />
         </div>
       )}
       {active === "in-progress" && (

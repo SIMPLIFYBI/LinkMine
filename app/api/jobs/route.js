@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { postmarkClient, jobEmailPayload } from "@/lib/postmark";
 
 export const runtime = "nodejs";
 
@@ -52,7 +51,7 @@ export async function POST(req) {
   }
 
   // Sanitize status (server decides)
-  payload.status = 'open';
+  payload.status = 'pending';
 
   if ("consultant_ids" in payload) {
     return NextResponse.json(
@@ -86,64 +85,5 @@ export async function POST(req) {
 
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
 
-  // NEW: enqueue notifications for the job's category
-  try {
-    await sb.rpc("queue_job_notifications", { p_job_id: data.id });
-  } catch (e) {
-    console.error("queue_job_notifications failed:", e?.message || e);
-  }
-
-  // NEW: nudge the dispatcher to send immediately (non-blocking with a short timeout)
-  try {
-    const base = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
-    const secret = process.env.CRON_SECRET || process.env.NOTIFY_CRON_SECRET;
-    if (base && secret) {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 2000); // cap at ~2s
-
-      // Kick off the dispatcher; it will process queued items
-      fetch(`${base}/api/notifications/jobs/dispatch`, {
-        method: "POST",
-        headers: { "x-cron-secret": secret },
-        signal: controller.signal,
-        cache: "no-store",
-      })
-        .catch(() => {}) // ignore network errors (we’ll rely on cron if needed)
-        .finally(() => clearTimeout(timeout));
-    }
-  } catch {
-    // best-effort; ignore
-  }
-
-  const { data: consultants, error: consultantsError } = await sb
-    .from("consultants")
-    .select("id, display_name, contact_email")
-    .in("id", payload.recipient_ids);
-
-  if (consultantsError) {
-    return NextResponse.json({ ok: false, error: consultantsError.message }, { status: 500 });
-  }
-
-  const client = postmarkClient();
-  const from = process.env.EMAIL_FROM;
-  if (!from) {
-    return NextResponse.json({ ok: false, error: "EMAIL_FROM missing" }, { status: 500 });
-  }
-
-  const log = [];
-  for (const consultant of consultants ?? []) {
-    if (!consultant.contact_email) continue;
-    const message = jobEmailPayload({
-      to: consultant.contact_email,
-      from,
-      job: data,
-      consultant,
-    });
-    const response = await client.sendEmail(message);
-    log.push({ consultant_id: consultant.id, message_id: response.MessageID, submitted_at: response.SubmittedAt });
-  }
-
-  await sb.from("jobs").update({ email_log: log }).eq("id", data.id);
-
-  return NextResponse.json({ ok: true, job: { ...data, email_log: log } });
+  return NextResponse.json({ ok: true, job: data, moderation: "pending" });
 }

@@ -64,9 +64,12 @@ export async function PATCH(req, { params }) {
     "contact_name",
     "contact_email",
     "recipient_ids",
-    "status", // includes soft delete or manual close
+    "status",
   ];
   const update = Object.fromEntries(Object.entries(patch).filter(([k]) => allowed.includes(k)));
+  if (!isAdmin && "status" in update) {
+    delete update.status;
+  }
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ ok: false, error: "No changes" }, { status: 400 });
   }

@@ -6,6 +6,10 @@ import { supabaseBrowser } from "@/lib/supabaseBrowser";
 function StatusPill({ status }) {
   const s = (status || "").toLowerCase();
   const map = {
+    pending: {
+      cls: "border-amber-300/40 bg-amber-400/10 text-amber-100",
+      label: "Pending",
+    },
     open: {
       cls: "border-emerald-400/40 bg-emerald-500/10 text-emerald-100",
       label: "Open",
@@ -103,7 +107,7 @@ export default function JobsRequestedTable() {
       company: job.company || "—",
       location: job.location || "—",
       owner: job.created_by || "—",
-      status: job.status || "open",
+      status: job.status || "pending",
       closeDate: job.close_date ? formatDate(job.close_date) : "—",
       createdAt: job.created_at ? new Date(job.created_at).toLocaleDateString() : "—",
       raw: job,
@@ -278,6 +282,7 @@ export default function JobsRequestedTable() {
       {editing && (
         <EditJobModal
           job={editing}
+          isAdmin={isAdmin}
           onClose={() => setEditing(null)}
           onSaved={(updated) => {
             refreshRow(updated);
@@ -298,7 +303,7 @@ function formatDate(iso) {
   }
 }
 
-function EditJobModal({ job, onClose, onSaved }) {
+function EditJobModal({ job, onClose, onSaved, isAdmin = false }) {
   const [form, setForm] = useState({
     title: job.title || "",
     location: job.location || "",
@@ -310,7 +315,7 @@ function EditJobModal({ job, onClose, onSaved }) {
     description: job.description || "",
     contact_name: job.contact_name || "",
     contact_email: job.contact_email || "",
-    status: job.status || "open", // NEW
+    status: job.status || "pending",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -467,36 +472,43 @@ function EditJobModal({ job, onClose, onSaved }) {
             />
           </label>
 
-          <label className="grid gap-2">
-            <span className="text-sm">Status</span>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { value: "open", label: "Open" },
-                { value: "paused", label: "Paused" },
-                { value: "closed", label: "Closed" },
-              ].map((opt) => {
-                const active = form.status === opt.value;
-                return (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setField("status", opt.value)}
-                    className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
-                      active
-                        ? "bg-sky-500 text-slate-900 shadow-sm"
-                        : "bg-white/10 text-slate-100 hover:bg-sky-500/20"
-                    }`}
-                    aria-pressed={active}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
+          {isAdmin ? (
+            <label className="grid gap-2">
+              <span className="text-sm">Status</span>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { value: "pending", label: "Pending" },
+                  { value: "open", label: "Open" },
+                  { value: "paused", label: "Paused" },
+                  { value: "closed", label: "Closed" },
+                ].map((opt) => {
+                  const active = form.status === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setField("status", opt.value)}
+                      className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+                        active
+                          ? "bg-sky-500 text-slate-900 shadow-sm"
+                          : "bg-white/10 text-slate-100 hover:bg-sky-500/20"
+                      }`}
+                      aria-pressed={active}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-slate-400">
+                Pending: awaiting approval. Open: visible. Paused: hidden from public board. Closed: archived.
+              </p>
+            </label>
+          ) : (
+            <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-3 text-xs text-slate-300">
+              Job status is managed through admin review.
             </div>
-            <p className="text-xs text-slate-400">
-              Open: visible. Paused: hidden from public board. Closed: archived (still viewable).
-            </p>
-          </label>
+          )}
 
           <div className="flex items-center justify-end gap-2 pt-2">
             <button

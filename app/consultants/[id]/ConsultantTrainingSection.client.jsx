@@ -170,14 +170,18 @@ export default function ConsultantTrainingSection({
 
     const trainingIntent = searchParams?.get("training");
     const courseId = searchParams?.get("course");
-    if (trainingIntent !== "manage" || !courseId) return;
+    if (trainingIntent !== "manage") return;
 
-    const matchedCourse = courses.find((course) => course.id === courseId);
-    if (!matchedCourse) return;
+    if (courseId) {
+      const matchedCourse = courses.find((course) => course.id === courseId);
+      if (!matchedCourse) return;
+      setManagerCourseId(matchedCourse.id);
+    } else {
+      setManagerCourseId(courses[0]?.id || null);
+    }
 
     queryHandledRef.current = true;
     setDrawerCourse(null);
-    setManagerCourseId(matchedCourse.id);
     setManagerOpen(true);
   }, [canEdit, courses, loadingPermissions, searchParams]);
 

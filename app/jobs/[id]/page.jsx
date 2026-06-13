@@ -51,6 +51,7 @@ async function getJob(id) {
       `
     )
     .eq("id", id)
+    .in("status", ["open", "closed", "paused"])
     .single(),
     authSb
       .from("job_page_views")

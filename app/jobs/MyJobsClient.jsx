@@ -274,7 +274,7 @@ export default function MyJobsClient() {
 
     // Redirect to jobs board so user can see their posting (if Public / Both)
     // Note: Private jobs will not appear there; adjust if you prefer a different destination.
-    router.push("/jobs"); // NEW redirect
+    router.push("/activity?tab=jobs");
 
     setStatus("idle");
   }
@@ -364,7 +364,7 @@ export default function MyJobsClient() {
           <div>
             <h1 className="text-2xl font-semibold">My Jobs</h1>
             <p className="text-sm text-slate-200/70">
-              Draft invitations, reach out directly, or post publicly for interest.
+              Draft invitations, reach out directly, or post publicly after admin approval.
             </p>
           </div>
           <button
@@ -390,6 +390,10 @@ export default function MyJobsClient() {
               Choose a listing style to continue.
             </span>
           )}
+        </div>
+
+        <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          New job submissions go to admin review first. Public visibility and consultant invite emails only happen after approval.
         </div>
 
         {/* category picker (mandatory) */}
@@ -729,7 +733,7 @@ export default function MyJobsClient() {
               disabled={status !== "idle"}
               className="rounded bg-green-600 px-3 py-2 font-medium hover:bg-green-500 disabled:opacity-60"
             >
-              {status === "creating" ? "Creating..." : "Post job"}
+              {status === "creating" ? "Submitting..." : "Submit job for approval"}
             </button>
             {error && <div className="text-sm text-red-500">{error}</div>}
           </form>
