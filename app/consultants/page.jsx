@@ -332,7 +332,7 @@ export default async function ConsultantsPage({ searchParams }) {
       />
 
       {/* Filters (desktop only) */}
-      <section className="consultants-market-panel hidden md:block rounded-2xl backdrop-blur-sm p-4 ring-1 ring-white/5 space-y-3">
+      <section className="hidden py-3 md:block md:py-4 space-y-3">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
             <ServiceFilter categories={allCategories} activeSlug={effectiveCategory?.slug || ""} />

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
+import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import ContactEmailClient from "./ContactEmailClient";
+import TrackView from "./TrackView.client";
 
 export const runtime = "nodejs";
 export const revalidate = 180; // cache detail for 3 minutes
@@ -26,8 +28,10 @@ function buildJobDescription(job) {
 
 async function getJob(id) {
   const sb = supabasePublicServer();
+  const authSb = await supabaseServerClient();
 
-  const { data: job } = await sb
+  const [{ data: job }, { count: viewsCount = 0 }] = await Promise.all([
+    sb
     .from("jobs")
     .select(
       `
@@ -47,9 +51,19 @@ async function getJob(id) {
       `
     )
     .eq("id", id)
-    .single();
+    .single(),
+    authSb
+      .from("job_page_views")
+      .select("id", { head: true, count: "exact" })
+      .eq("job_id", id),
+  ]);
 
-  return job || null;
+  if (!job) return null;
+
+  return {
+    ...job,
+    viewsCount: viewsCount || 0,
+  };
 }
 
 export async function generateMetadata({ params }) {
@@ -115,6 +129,8 @@ export default async function JobDetailPage({ params }) {
 
   return (
     <main className="mx-auto w-full max-w-4xl px-6 py-12 space-y-8">
+      <TrackView jobId={job.id} source="job_detail" />
+
       <header className="space-y-2 text-center">
         <h1 className="text-3xl font-semibold text-slate-50">{job.title}</h1>
         <p className="text-sm text-slate-300">
@@ -122,6 +138,9 @@ export default async function JobDetailPage({ params }) {
           {" • "}
           {job.service?.name || "Uncategorised"}
         </p>
+        <div className="inline-flex items-center rounded-full border border-white/15 bg-white/8 px-3 py-1 text-xs font-medium text-slate-200">
+          {Number(job.viewsCount || 0).toLocaleString()} view{Number(job.viewsCount || 0) === 1 ? "" : "s"}
+        </div>
       </header>
 
       <section className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4">

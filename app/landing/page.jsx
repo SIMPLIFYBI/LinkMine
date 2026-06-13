@@ -10,6 +10,9 @@ import miningConsultantsBrisbaneQueensland from "./content/mining-consultants-br
 import miningConsultantsPerthWA from "./content/mining-consultants-perth-western-australia";
 import openPitEngineeringAustralia from "./content/open-pit-engineering-consultants-australia";
 import miningSafetyAustralia from "./content/mining-safety-consultants-australia";
+import reservoirEngineeringAustralia from "./content/reservoir-engineering-consultants-australia";
+import offshoreSubseaEngineeringAustralia from "./content/offshore-subsea-engineering-consultants-australia";
+import assetIntegrityAustralia from "./content/asset-integrity-consultants-australia";
 
 const MINING_LANDING_PAGES = [
   {
@@ -65,50 +68,24 @@ const MINING_LANDING_PAGES = [
 
 const OIL_GAS_LANDING_PAGES = [
   {
-    slug: "subsurface-reservoir",
-    title: "Subsurface and reservoir specialists",
-    badge: "Oil & Gas hub",
-    summary: "Browse consultants for reservoir studies, petrophysics, production forecasting, reserves work, and integration support.",
+    slug: reservoirEngineeringAustralia.slug,
+    title: reservoirEngineeringAustralia.title,
+    badge: "Subsurface",
+    summary: "Reservoir engineering consultants for reserves, forecasting, surveillance, simulation support and field development decisions.",
   },
   {
-    slug: "field-development-planning",
-    title: "Field development planning support",
-    badge: "Planning",
-    summary: "Explore specialists for concept select, FDP support, surface-subsurface integration, and development screening.",
+    slug: offshoreSubseaEngineeringAustralia.slug,
+    title: offshoreSubseaEngineeringAustralia.title,
+    badge: "Offshore + subsea",
+    summary: "Offshore and subsea engineering consultants for pipelines, marine structures, brownfield modifications and installation support.",
   },
   {
-    slug: "drilling-wells-field-execution",
-    title: "Wells and field execution experts",
-    badge: "Execution",
-    summary: "Find consultants for well planning, campaign support, completions, workovers, intervention, and site supervision.",
-  },
-  {
-    slug: "production-facilities",
-    title: "Production and facilities specialists",
-    badge: "Operations",
-    summary: "Connect with experts in production operations, facility optimisation, commissioning, flow assurance, and debottlenecking.",
-  },
-  {
-    slug: "asset-integrity-maintenance-reliability",
-    title: "Integrity and reliability support",
+    slug: assetIntegrityAustralia.slug,
+    title: assetIntegrityAustralia.title,
     badge: "Integrity",
-    summary: "Shortlist consultants for asset integrity, corrosion, NDT, reliability programs, shutdowns, and equipment performance.",
-  },
-  {
-    slug: "environment-safety-regulatory",
-    title: "Environment, safety, and regulatory advisory",
-    badge: "Risk + compliance",
-    summary: "Browse specialists in approvals, process safety, HSE systems, compliance reporting, and decommissioning support.",
+    summary: "Asset integrity consultants for corrosion, inspection, shutdowns, reliability, maintenance strategy and brownfield performance uplift.",
   },
 ];
-
-function buildLandingConsultantsHref(market, categorySlug) {
-  const params = new URLSearchParams();
-  const marketValue = siteMarketToUrlValue(market);
-  if (marketValue !== "mining") params.set("market", marketValue);
-  params.set("category", categorySlug);
-  return `/consultants?${params.toString()}`;
-}
 
 function getLandingContent(market) {
   if (market === "oil_gas") {
@@ -116,8 +93,8 @@ function getLandingContent(market) {
       title: "Discover oil and gas consultants by specialty",
       description: "Browse focused entry points for oil and gas consultants across subsurface, wells, facilities, integrity, and project delivery.",
       eyebrow: "Oil & Gas hubs",
-      heading: "Discover consultants by specialty and delivery phase",
-      intro: "Jump into focused entry points for core Oil & Gas disciplines. Each hub sends you straight into the filtered consultants directory.",
+      heading: "Discover oil and gas consultants through focused search pages",
+      intro: "Start with high-intent landing pages built around specialist Oil & Gas search themes, then move into the filtered consultants directory.",
       pages: OIL_GAS_LANDING_PAGES,
     };
   }
@@ -164,7 +141,7 @@ export default async function LandingIndexPage() {
           {content.pages.map((page) => (
             <Link
               key={page.slug}
-              href={market === "oil_gas" ? buildLandingConsultantsHref(market, page.slug) : `/landing/${page.slug}`}
+              href={`/landing/${page.slug}`}
               className="site-market-card group relative flex flex-col justify-between overflow-hidden rounded-2xl border p-4 shadow-sm ring-1 ring-white/5 transition hover:-translate-y-[2px] hover:bg-white/[0.06]"
             >
               <div>
@@ -181,7 +158,7 @@ export default async function LandingIndexPage() {
               </div>
               <div className="site-market-kicker mt-4 flex items-center justify-between text-xs">
                 <span className="inline-flex items-center gap-1">
-                  {market === "oil_gas" ? "Open directory" : "View page"}
+                  View page
                   <svg
                     className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
                     viewBox="0 0 20 20"

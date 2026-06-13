@@ -7,6 +7,9 @@ import miningPerth from "./content/mining-consultants-perth-western-australia";
 import miningQld from "./content/mining-consultants-brisbane-queensland";
 import environmentalServices from "./content/environmental-services-mining-australia";
 import miningSafetyAustralia from "./content/mining-safety-consultants-australia"; // NEW
+import reservoirEngineeringAustralia from "./content/reservoir-engineering-consultants-australia";
+import offshoreSubseaEngineeringAustralia from "./content/offshore-subsea-engineering-consultants-australia";
+import assetIntegrityAustralia from "./content/asset-integrity-consultants-australia";
 
 const entries = [
   geotech,
@@ -16,6 +19,9 @@ const entries = [
   miningQld,
   environmentalServices,
   miningSafetyAustralia, // NEW
+  reservoirEngineeringAustralia,
+  offshoreSubseaEngineeringAustralia,
+  assetIntegrityAustralia,
 ].map(validateEntry);
 
 export const landingPages = entries;

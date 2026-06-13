@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getLandingEntry, landingPages } from "../registry";
 import { HeroSection } from "../components/HeroSection";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
+import { siteMarketToUrlValue } from "@/lib/siteMarket";
 
 export const revalidate = 3600;
 
@@ -120,11 +121,14 @@ export default async function LandingPage({ params }) {
   const entry = getLandingEntry(resolvedParams.slug);
   if (!entry) return notFound();
 
-  const browseHref = entry.categorySlug
-    ? `/consultants?category=${encodeURIComponent(entry.categorySlug)}`
-    : entry.serviceSlug
-    ? `/consultants?service=${encodeURIComponent(entry.serviceSlug)}`
-    : "/consultants";
+  const marketValue = entry.market ? siteMarketToUrlValue(entry.market) : "mining";
+  const consultantsParams = new URLSearchParams();
+  if (marketValue !== "mining") consultantsParams.set("market", marketValue);
+  if (entry.categorySlug) consultantsParams.set("category", entry.categorySlug);
+  if (entry.serviceSlug) consultantsParams.set("service", entry.serviceSlug);
+
+  const browseHref = consultantsParams.toString() ? `/consultants?${consultantsParams.toString()}` : "/consultants";
+  const allHref = marketValue !== "mining" ? `/consultants?market=${encodeURIComponent(marketValue)}` : "/consultants";
 
   const showcaseConsultants = await fetchShowcase(entry);
 
@@ -142,7 +146,7 @@ export default async function LandingPage({ params }) {
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pb-16">
-      <HeroSection hero={entry.hero} browseHref={browseHref} />
+      <HeroSection hero={entry.hero} browseHref={browseHref} allHref={allHref} />
 
       {entry.showcase && (
         <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 ring-1 ring-white/10">
