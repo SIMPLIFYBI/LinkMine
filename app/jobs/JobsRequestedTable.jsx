@@ -29,11 +29,12 @@ function StatusPill({ status }) {
 
 export default function JobsRequestedTable() {
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [jobs, setJobs] = useState([]);
   const [status, setStatus] = useState("loading");
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(null); // job being edited
-  const [busyId, setBusyId] = useState(null);   // for delete action feedback
+  const [busyKey, setBusyKey] = useState(null);   // for row action feedback
 
   useEffect(() => {
     const sb = supabaseBrowser();
@@ -43,11 +44,14 @@ export default function JobsRequestedTable() {
 
       if (current?.id) {
         setStatus("loading");
-        sb
+        Promise.all([
+          sb.from("app_admins").select("user_id").eq("user_id", current.id).maybeSingle(),
+          sb
           .from("jobs")
           .select(
             `
               id,
+              created_by,
               title,
               listing_type,
               preferred_payment_type,
@@ -61,18 +65,23 @@ export default function JobsRequestedTable() {
               created_at
             `
           )
-          .eq("created_by", current.id)
-          .neq("status", "deleted") // hide soft-deleted jobs
-          .order("created_at", { ascending: false })
-          .then(({ data, error }) => {
-            if (error) {
-              setError(error.message);
-              setJobs([]);
-            } else {
-              setJobs(data ?? []);
-            }
+          .neq("status", "deleted")
+          .order("created_at", { ascending: false }),
+        ]).then(([adminRes, jobsRes]) => {
+          const admin = Boolean(adminRes?.data);
+          setIsAdmin(admin);
+
+          if (jobsRes.error) {
+            setError(jobsRes.error.message);
+            setJobs([]);
             setStatus("idle");
-          });
+            return;
+          }
+
+          const allJobs = jobsRes.data ?? [];
+          setJobs(admin ? allJobs : allJobs.filter((job) => job.created_by === current.id));
+          setStatus("idle");
+        });
       } else {
         setStatus("idle");
       }
@@ -93,6 +102,7 @@ export default function JobsRequestedTable() {
       urgency: job.urgency || "—",
       company: job.company || "—",
       location: job.location || "—",
+      owner: job.created_by || "—",
       status: job.status || "open",
       closeDate: job.close_date ? formatDate(job.close_date) : "—",
       createdAt: job.created_at ? new Date(job.created_at).toLocaleDateString() : "—",
@@ -108,9 +118,28 @@ export default function JobsRequestedTable() {
     );
   }
 
+  async function updateStatus(id, nextStatus) {
+    setBusyKey(`${id}:${nextStatus}`);
+    try {
+      const res = await fetch(`/api/jobs/${id}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || `Failed (${res.status})`);
+      refreshRow(json.job);
+    } catch (e) {
+      alert(e.message || String(e));
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
   async function softDelete(id) {
     if (!confirm("Delete this job?")) return; // simplified message
-    setBusyId(id);
+    setBusyKey(`${id}:delete`);
     try {
       const res = await fetch(`/api/jobs/${id}`, { method: "DELETE", credentials: "include" });
       const json = await res.json().catch(() => ({}));
@@ -119,7 +148,7 @@ export default function JobsRequestedTable() {
     } catch (e) {
       alert(e.message || String(e));
     } finally {
-      setBusyId(null);
+      setBusyKey(null);
     }
   }
 
@@ -162,6 +191,7 @@ export default function JobsRequestedTable() {
           <thead className="bg-white/10 text-xs uppercase tracking-wide text-slate-300">
             <tr>
               <th className="px-4 py-3 text-left">Title</th>
+              {isAdmin ? <th className="px-4 py-3 text-left">Owner</th> : null}
               <th className="px-4 py-3 text-left">Listing</th>
               <th className="px-4 py-3 text-left">Service</th>
               <th className="px-4 py-3 text-center">Invited</th>
@@ -179,6 +209,9 @@ export default function JobsRequestedTable() {
                 <td className="px-4 py-3 font-semibold text-slate-50">
                   {row.title}
                 </td>
+                {isAdmin ? (
+                  <td className="px-4 py-3 text-xs text-slate-400">{row.owner}</td>
+                ) : null}
                 <td className="px-4 py-3">{row.listing}</td>
                 <td className="px-4 py-3">{row.serviceName}</td>
                 <td className="px-4 py-3 text-center tabular-nums">{row.recipients}</td>
@@ -191,6 +224,22 @@ export default function JobsRequestedTable() {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-2">
+                    {isAdmin ? (
+                      <button
+                        type="button"
+                        disabled={busyKey === `${row.id}:${row.status === "paused" ? "open" : "paused"}`}
+                        onClick={() => updateStatus(row.id, row.status === "paused" ? "open" : "paused")}
+                        className="inline-flex h-8 items-center justify-center rounded-full border border-amber-400/40 bg-amber-500/10 px-3 text-xs font-semibold text-amber-100 hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                        title={row.status === "paused" ? "Reopen" : "Suspend"}
+                        aria-label={row.status === "paused" ? "Reopen" : "Suspend"}
+                      >
+                        {busyKey === `${row.id}:${row.status === "paused" ? "open" : "paused"}`
+                          ? "Saving..."
+                          : row.status === "paused"
+                          ? "Reopen"
+                          : "Suspend"}
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       onClick={() => setEditing(row.raw)}
@@ -205,10 +254,10 @@ export default function JobsRequestedTable() {
                     </button>
                     <button
                       type="button"
-                      disabled={busyId === row.id}
+                      disabled={busyKey === `${row.id}:delete`}
                       onClick={() => softDelete(row.id)}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-rose-400/40 bg-rose-500/10 text-rose-100 hover:bg-rose-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
-                      title={busyId === row.id ? "Deleting…" : "Delete"}
+                      title={busyKey === `${row.id}:delete` ? "Deleting…" : "Delete"}
                       aria-label="Delete"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">

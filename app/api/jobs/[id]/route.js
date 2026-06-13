@@ -20,11 +20,31 @@ async function userClient() {
   );
 }
 
-export async function PATCH(req, { params }) {
+async function getActor() {
   const u = await userClient();
   const a = await supabaseServerClient();
   const { data: auth } = await u.auth.getUser();
-  const user = auth?.user;
+  const user = auth?.user || null;
+
+  if (!user) {
+    return { user: null, adminClient: a, isAdmin: false };
+  }
+
+  const { data: adminRow } = await a
+    .from("app_admins")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  return {
+    user,
+    adminClient: a,
+    isAdmin: Boolean(adminRow),
+  };
+}
+
+export async function PATCH(req, { params }) {
+  const { user, adminClient: a, isAdmin } = await getActor();
   if (!user) return NextResponse.json({ ok: false, error: "Not signed in" }, { status: 401 });
 
   const patch = await req.json().catch(() => ({}));
@@ -51,37 +71,45 @@ export async function PATCH(req, { params }) {
     return NextResponse.json({ ok: false, error: "No changes" }, { status: 400 });
   }
 
-  const { data, error } = await a
+  let query = a
     .from("jobs")
     .update(update)
-    .eq("id", params.id)
-    .eq("created_by", user.id)
-    .select(`
+    .eq("id", params.id);
+
+  if (!isAdmin) {
+    query = query.eq("created_by", user.id);
+  }
+
+  const { data, error } = await query.select(`
       id, title, description, location, company,
       preferred_payment_type, urgency, listing_type,
       service_id, category_id, close_date,
-      contact_name, contact_email, recipient_ids, status, created_at
+      contact_name, contact_email, recipient_ids, status, created_at, created_by
     `)
     .single();
 
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  if (!data) return NextResponse.json({ ok: false, error: "Job not found" }, { status: 404 });
   return NextResponse.json({ ok: true, job: data });
 }
 
 export async function DELETE(_req, { params }) {
   // Soft delete: set status='deleted'
-  const u = await userClient();
-  const a = await supabaseServerClient();
-  const { data: auth } = await u.auth.getUser();
-  const user = auth?.user;
+  const { user, adminClient: a, isAdmin } = await getActor();
   if (!user) return NextResponse.json({ ok: false, error: "Not signed in" }, { status: 401 });
 
-  const { error } = await a
+  let query = a
     .from("jobs")
     .update({ status: "deleted" })
-    .eq("id", params.id)
-    .eq("created_by", user.id);
+    .eq("id", params.id);
+
+  if (!isAdmin) {
+    query = query.eq("created_by", user.id);
+  }
+
+  const { data, error } = await query.select("id").maybeSingle();
 
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  if (!data) return NextResponse.json({ ok: false, error: "Job not found" }, { status: 404 });
   return NextResponse.json({ ok: true });
 }
