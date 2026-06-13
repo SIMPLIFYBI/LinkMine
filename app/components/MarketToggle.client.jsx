@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useTransition } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useTheme } from "@/app/components/ThemeProvider";
 import {
   SITE_MARKET_COOKIE,
@@ -20,9 +20,9 @@ function writeMarketCookie(value) {
 export default function MarketToggle({ market = "mining" }) {
   const currentMarket = normaliseSiteMarket(market);
   const pathname = usePathname();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { theme } = useTheme();
+  const [isPending, startTransition] = useTransition();
   const isLight = theme === "light";
 
   const handleSwitch = useCallback((nextMarket) => {
@@ -30,9 +30,10 @@ export default function MarketToggle({ market = "mining" }) {
     if (resolvedMarket === currentMarket) return;
 
     writeMarketCookie(resolvedMarket);
-    document.body?.setAttribute("data-market", resolvedMarket);
 
-    if (pathname?.startsWith("/consultants")) {
+    const currentPath = pathname || "/";
+
+    if (currentPath.startsWith("/consultants")) {
       const params = new URLSearchParams(searchParams?.toString() || "");
       params.delete("service");
       params.delete("category");
@@ -43,12 +44,17 @@ export default function MarketToggle({ market = "mining" }) {
       else params.set("market", marketValue);
 
       const query = params.toString();
-      router.push(query ? `${pathname}?${query}` : pathname);
+      const nextUrl = query ? `${currentPath}?${query}` : currentPath;
+      window.location.assign(nextUrl);
       return;
     }
 
-    router.refresh();
-  }, [currentMarket, pathname, router, searchParams]);
+    const currentQuery = searchParams?.toString();
+    const nextUrl = currentQuery ? `${currentPath}?${currentQuery}` : currentPath;
+    startTransition(() => {
+      window.location.assign(nextUrl);
+    });
+  }, [currentMarket, pathname, searchParams, startTransition]);
 
   return (
     <div
@@ -68,8 +74,9 @@ export default function MarketToggle({ market = "mining" }) {
             key={value}
             type="button"
             onClick={() => handleSwitch(value)}
+            disabled={isPending}
             className={[
-              "rounded-full px-2.5 py-1.5 text-[11px] font-semibold transition sm:px-3",
+              "rounded-full px-2.5 py-1.5 text-[11px] font-semibold transition disabled:cursor-wait disabled:opacity-70 sm:px-3",
               active
                 ? value === "oil_gas"
                   ? "bg-amber-400 text-slate-950"
