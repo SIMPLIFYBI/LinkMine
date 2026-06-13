@@ -125,6 +125,11 @@ function formatConsultantOptionLabel(option) {
   return `${option.name || ""}${option.location ? ` • ${option.location}` : ""}`;
 }
 
+function formatJobOptionLabel(option) {
+  if (!option) return "";
+  return `${option.title || ""}${option.company ? ` • ${option.company}` : ""}${option.location ? ` • ${option.location}` : ""}`;
+}
+
 function formatNumber(value) {
   return new Intl.NumberFormat("en-AU").format(value || 0);
 }
@@ -266,8 +271,34 @@ function TabButton({ active, label, description, onClick }) {
 }
 
 function PreviewShell({ children, previewRef, onOpen, title }) {
+  const containerRef = useRef(null);
+  const [availableWidth, setAvailableWidth] = useState(EXPORT_WIDTH * PREVIEW_SCALE);
+
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return undefined;
+
+    const updateWidth = () => {
+      setAvailableWidth(node.clientWidth || EXPORT_WIDTH * PREVIEW_SCALE);
+    };
+
+    updateWidth();
+
+    const observer = new ResizeObserver(() => {
+      updateWidth();
+    });
+
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  const previewScale = Math.min(PREVIEW_SCALE, availableWidth / EXPORT_WIDTH);
+
   return (
-    <div className="overflow-x-auto rounded-[1.75rem] border border-white/10 bg-slate-950/70 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-6">
+    <div className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/70 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-6">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <div className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Preview</div>
@@ -296,10 +327,12 @@ function PreviewShell({ children, previewRef, onOpen, title }) {
         aria-label={`Open ${title} preview full screen`}
         className="cursor-zoom-in rounded-[1.5rem] outline-none ring-0 transition hover:scale-[1.005] focus-visible:ring-2 focus-visible:ring-cyan-300/50"
       >
-        <div style={{ width: EXPORT_WIDTH * PREVIEW_SCALE, height: EXPORT_HEIGHT * PREVIEW_SCALE }}>
-          <div style={{ transform: `scale(${PREVIEW_SCALE})`, transformOrigin: "top left" }}>
-            <div ref={previewRef} style={{ width: EXPORT_WIDTH, height: EXPORT_HEIGHT }}>
-              {children}
+        <div ref={containerRef} className="w-full overflow-hidden">
+          <div style={{ width: EXPORT_WIDTH * previewScale, height: EXPORT_HEIGHT * previewScale }}>
+            <div style={{ transform: `scale(${previewScale})`, transformOrigin: "top left" }}>
+              <div ref={previewRef} style={{ width: EXPORT_WIDTH, height: EXPORT_HEIGHT }}>
+                {children}
+              </div>
             </div>
           </div>
         </div>
@@ -559,6 +592,65 @@ function JobsPreview({ data }) {
   );
 }
 
+function SingleJobPreview({ data }) {
+  return (
+    <div className="relative h-full overflow-hidden rounded-[40px] bg-[#08131a] text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_18%,rgba(34,211,238,0.24),transparent_28%),radial-gradient(circle_at_84%_12%,rgba(251,191,36,0.18),transparent_26%),linear-gradient(165deg,#08131a_0%,#0f172a_52%,#081014_100%)]" />
+      <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(135deg,rgba(255,255,255,0.08)_25%,transparent_25%),linear-gradient(225deg,rgba(255,255,255,0.08)_25%,transparent_25%),linear-gradient(315deg,rgba(255,255,255,0.08)_25%,transparent_25%),linear-gradient(45deg,rgba(255,255,255,0.08)_25%,transparent_25%)] [background-position:22px_0,22px_0,0_0,0_0] [background-size:44px_44px]" />
+      <div className="relative flex h-full flex-col px-20 py-20">
+        <div className="flex items-start justify-between gap-10">
+          <div className="max-w-[720px]">
+            <div className="text-[22px] uppercase tracking-[0.42em] text-teal-100/85">Single job spotlight</div>
+            <h2 className="mt-6 text-[78px] font-semibold leading-[0.94] tracking-[-0.06em]">{data.title}</h2>
+            <p className="mt-5 text-[30px] leading-[1.25] text-slate-200">{data.company}</p>
+          </div>
+          <div className="w-[280px] rounded-[28px] border border-white/10 bg-white/10 px-6 py-6 backdrop-blur-sm">
+            <div className="text-[12px] uppercase tracking-[0.24em] text-slate-400">Role snapshot</div>
+            <div className="mt-4 text-[28px] font-semibold leading-tight text-teal-100">{data.service}</div>
+            <div className="mt-3 text-[18px] text-slate-300">{data.location || "Location flexible"}</div>
+            <div className="mt-5 space-y-2 text-[14px] text-slate-400">
+              <div>Posted {data.postedLabel || "recently"}</div>
+              <div>{data.closeLabel || "Applications open"}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-10 grid grid-cols-[1.25fr_0.75fr] gap-8">
+          <div className="rounded-[34px] border border-white/10 bg-black/18 p-8 backdrop-blur-sm">
+            <div className="text-[14px] uppercase tracking-[0.32em] text-slate-400">Role summary</div>
+            <p className="mt-6 text-[28px] leading-[1.45] text-slate-200">{data.description}</p>
+          </div>
+
+          <div className="rounded-[34px] border border-white/10 bg-white/7 p-8 backdrop-blur-sm">
+            <div className="text-[14px] uppercase tracking-[0.32em] text-slate-400">Details</div>
+            <div className="mt-6 space-y-5">
+              <div>
+                <div className="text-[12px] uppercase tracking-[0.22em] text-slate-500">Listing type</div>
+                <div className="mt-2 text-[24px] font-semibold text-white">{data.listingType || "General"}</div>
+              </div>
+              <div>
+                <div className="text-[12px] uppercase tracking-[0.22em] text-slate-500">Urgency</div>
+                <div className="mt-2 text-[24px] font-semibold text-white">{data.urgency || "Standard"}</div>
+              </div>
+              <div>
+                <div className="text-[12px] uppercase tracking-[0.22em] text-slate-500">Link</div>
+                <div className="mt-2 break-all text-[18px] text-amber-100">youmine.io{data.profileUrl}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-auto rounded-[34px] border border-teal-300/20 bg-teal-400/10 px-8 py-7 backdrop-blur-sm">
+          <div className="text-[15px] uppercase tracking-[0.3em] text-teal-100/80">Call to action</div>
+          <div className="mt-3 text-[34px] font-semibold tracking-[-0.04em] text-white">
+            View the full job and apply through YouMine.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AnalyticsPreview({ data }) {
   return (
     <div className="relative h-full overflow-hidden rounded-[40px] bg-[#120d1d] text-white">
@@ -606,11 +698,15 @@ export default function AdminSocialStudio({ data }) {
   const [selectedConsultantId, setSelectedConsultantId] = useState(data.consultantFeature.selectedId || "");
   const [consultantSearch, setConsultantSearch] = useState("");
   const [isConsultantMenuOpen, setIsConsultantMenuOpen] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState(data.singleJob?.selectedId || "");
+  const [jobSearch, setJobSearch] = useState("");
+  const [isJobMenuOpen, setIsJobMenuOpen] = useState(false);
   const [status, setStatus] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const previewRefs = useRef({});
   const consultantPickerRef = useRef(null);
+  const jobPickerRef = useRef(null);
 
   const brandingGroups = useMemo(() => {
     return BRANDING_ASSETS.reduce((groups, asset) => {
@@ -649,6 +745,15 @@ export default function AdminSocialStudio({ data }) {
     return (data.consultantFeature?.options || []).find((option) => option.id === selectedConsultantId) || null;
   }, [data.consultantFeature, selectedConsultantId]);
 
+  const activeSingleJob = useMemo(() => {
+    if (!data.singleJob?.byId) return data.singleJob?.active;
+    return data.singleJob.byId[selectedJobId] || data.singleJob.active;
+  }, [data.singleJob, selectedJobId]);
+
+  const selectedJobOption = useMemo(() => {
+    return (data.singleJob?.options || []).find((option) => option.id === selectedJobId) || null;
+  }, [data.singleJob, selectedJobId]);
+
   const filteredConsultantOptions = useMemo(() => {
     const options = data.consultantFeature?.options || [];
     const query = consultantSearch.trim().toLowerCase();
@@ -662,6 +767,18 @@ export default function AdminSocialStudio({ data }) {
 
     return filtered;
   }, [consultantSearch, data.consultantFeature]);
+
+  const filteredJobOptions = useMemo(() => {
+    const options = data.singleJob?.options || [];
+    const query = jobSearch.trim().toLowerCase();
+
+    if (!query) return options;
+
+    return options.filter((option) => {
+      const haystack = `${option.title || ""} ${option.company || ""} ${option.location || ""}`.toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [data.singleJob, jobSearch]);
 
   useEffect(() => {
     if (!isConsultantMenuOpen) return undefined;
@@ -688,6 +805,32 @@ export default function AdminSocialStudio({ data }) {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isConsultantMenuOpen]);
+
+  useEffect(() => {
+    if (!isJobMenuOpen) return undefined;
+
+    function handlePointerDown(event) {
+      if (jobPickerRef.current && !jobPickerRef.current.contains(event.target)) {
+        setIsJobMenuOpen(false);
+        setJobSearch("");
+      }
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setIsJobMenuOpen(false);
+        setJobSearch("");
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isJobMenuOpen]);
 
   const tabs = useMemo(
     () => [
@@ -728,6 +871,18 @@ export default function AdminSocialStudio({ data }) {
         content: <JobsPreview data={data.jobs} />,
       },
       {
+        id: "singleJob",
+        label: "Single Job",
+        description: "Feature one live role as a standalone social post.",
+        caption: activeSingleJob?.caption || "",
+        insights: [
+          activeSingleJob?.title || "No live role selected",
+          activeSingleJob?.company || "Confidential client",
+          [activeSingleJob?.service, activeSingleJob?.location].filter(Boolean).join(" • ") || "Role details unavailable",
+        ],
+        content: <SingleJobPreview data={activeSingleJob} />,
+      },
+      {
         id: "analytics",
         label: "Site Analytics",
         description: "Platform totals for consultants, users, views, and enquiries.",
@@ -748,7 +903,7 @@ export default function AdminSocialStudio({ data }) {
         content: <BrandingGallery assets={BRANDING_ASSETS} onDownload={handleBrandDownload} />,
       },
     ],
-    [activeConsultantFeature, brandingGroups, data]
+    [activeConsultantFeature, activeSingleJob, brandingGroups, data]
   );
 
   const active = tabs.find((tab) => tab.id === activeTab) || tabs[0];
@@ -805,7 +960,7 @@ export default function AdminSocialStudio({ data }) {
 
   return (
     <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-      <aside className="space-y-4">
+      <aside className="min-w-0 space-y-4">
         <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/50 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <div className="text-[11px] uppercase tracking-[0.28em] text-slate-400">Post types</div>
           <div className="mt-4 grid gap-3">
@@ -889,6 +1044,72 @@ export default function AdminSocialStudio({ data }) {
               </div>
             </div>
           ) : null}
+          {active.id === "singleJob" && data.singleJob?.options?.length ? (
+            <div className="mt-4">
+              <label className="block text-[11px] uppercase tracking-[0.24em] text-slate-500">Choose job</label>
+              <div className="relative mt-2" ref={jobPickerRef}>
+                <input
+                  type="search"
+                  value={isJobMenuOpen ? jobSearch : formatJobOptionLabel(selectedJobOption)}
+                  onFocus={() => setIsJobMenuOpen(true)}
+                  onChange={(event) => {
+                    setJobSearch(event.target.value);
+                    setIsJobMenuOpen(true);
+                  }}
+                  placeholder="Search by title, company or location"
+                  className="w-full rounded-2xl border border-white/12 bg-black/25 px-4 py-3 pr-10 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300/40"
+                  aria-expanded={isJobMenuOpen}
+                  aria-haspopup="listbox"
+                />
+                <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">
+                  <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4 fill-current">
+                    <path d="M5.5 7.5 10 12l4.5-4.5" />
+                  </svg>
+                </div>
+                {isJobMenuOpen ? (
+                  <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-white/12 bg-slate-950/98 shadow-2xl ring-1 ring-white/10 backdrop-blur">
+                    <div className="border-b border-white/8 px-4 py-2 text-xs text-slate-400">
+                      {filteredJobOptions.length} job{filteredJobOptions.length === 1 ? "" : "s"} shown
+                    </div>
+                    <div role="listbox" className="max-h-72 overflow-auto p-2">
+                      {filteredJobOptions.length ? (
+                        filteredJobOptions.map((option) => {
+                          const isSelected = option.id === selectedJobId;
+                          return (
+                            <button
+                              key={option.id}
+                              type="button"
+                              role="option"
+                              aria-selected={isSelected}
+                              onMouseDown={(event) => event.preventDefault()}
+                              onClick={() => {
+                                setSelectedJobId(option.id);
+                                setJobSearch("");
+                                setIsJobMenuOpen(false);
+                              }}
+                              className={[
+                                "w-full rounded-xl px-3 py-3 text-left transition",
+                                isSelected
+                                  ? "bg-cyan-400/15 text-cyan-50 ring-1 ring-cyan-300/30"
+                                  : "text-slate-100 hover:bg-white/5",
+                              ].join(" ")}
+                            >
+                              <div className="text-sm font-medium">{option.title}</div>
+                              <div className="mt-1 text-xs text-slate-400">
+                                {[option.company, option.location].filter(Boolean).join(" • ")}
+                              </div>
+                            </button>
+                          );
+                        })
+                      ) : (
+                        <div className="rounded-xl px-3 py-3 text-sm text-slate-400">No jobs match this search</div>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
           <div className="mt-4 flex flex-col gap-3">
             {active.id === "branding" ? (
               <div className="rounded-2xl border border-white/8 bg-white/5 px-4 py-4 text-sm leading-6 text-slate-300">
@@ -957,7 +1178,7 @@ export default function AdminSocialStudio({ data }) {
         ) : null}
       </aside>
 
-      <section className="space-y-4">
+      <section className="min-w-0 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-[1.75rem] border border-white/10 bg-slate-950/50 px-5 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <div>
             <div className="text-[11px] uppercase tracking-[0.28em] text-slate-400">Current post</div>
