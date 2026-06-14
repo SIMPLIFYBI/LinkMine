@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -53,6 +54,7 @@ export default function ConsultantTrainingSection({
   const [availabilityBySessionId, setAvailabilityBySessionId] = useState({});
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
+  const [isSignedIn, setIsSignedIn] = useState(false);
   const [loadingPermissions, setLoadingPermissions] = useState(true);
   const [error, setError] = useState("");
 
@@ -98,6 +100,7 @@ export default function ConsultantTrainingSection({
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData?.session?.access_token;
+      setIsSignedIn(Boolean(token));
 
       const res = await fetch(`/api/consultants/${encodeURIComponent(consultantId)}/permissions`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -112,6 +115,7 @@ export default function ConsultantTrainingSection({
 
       setCanEdit(Boolean(json?.canEdit));
     } catch {
+      setIsSignedIn(false);
       setCanEdit(false);
     } finally {
       setLoadingPermissions(false);
@@ -185,7 +189,7 @@ export default function ConsultantTrainingSection({
     setManagerOpen(true);
   }, [canEdit, courses, loadingPermissions, searchParams]);
 
-  if (!hasCourses && !canEdit && !loadingPermissions) return null;
+  if (!hasCourses && !canEdit && !loadingPermissions && isSignedIn) return null;
 
   return (
     <article className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.82),rgba(2,6,23,0.9))] p-6 text-slate-100 shadow-[0_28px_80px_-42px_rgba(14,165,233,0.45)] ring-1 ring-white/5">
@@ -217,9 +221,51 @@ export default function ConsultantTrainingSection({
               <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-950/15 text-sm">≡</span>
               Manage training
             </button>
+          ) : !isSignedIn ? (
+            <>
+              <Link
+                href="/consultants/new"
+                className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/10"
+              >
+                Create a consultancy
+              </Link>
+              <Link
+                href="/login"
+                className="inline-flex items-center rounded-full border border-sky-300/40 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-100 hover:bg-sky-500/20"
+              >
+                Log in to manage training
+              </Link>
+            </>
           ) : null}
         </div>
       </div>
+
+      {!loadingPermissions && !canEdit && !isSignedIn ? (
+        <div className="relative mt-4 rounded-[24px] border border-sky-300/20 bg-[linear-gradient(135deg,rgba(14,165,233,0.14),rgba(15,23,42,0.82))] px-4 py-4 ring-1 ring-sky-300/10">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="max-w-2xl">
+              <div className="text-sm font-semibold text-white">Manage your own training offers</div>
+              <p className="mt-1 text-sm leading-6 text-slate-300">
+                Create your consultancy profile or log in to add courses, schedule sessions, and manage bookings from your consultant page.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/consultants/new"
+                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/10"
+              >
+                Create a consultancy
+              </Link>
+              <Link
+                href="/login"
+                className="rounded-full border border-sky-300/40 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-100 hover:bg-sky-500/20"
+              >
+                Log in to manage training
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {notice ? (
         <div className="relative mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">

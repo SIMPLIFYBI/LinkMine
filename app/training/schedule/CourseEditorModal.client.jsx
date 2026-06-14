@@ -59,6 +59,47 @@ function bookingBadgeClass(status) {
   return "border-cyan-300/20 bg-cyan-400/10 text-cyan-100";
 }
 
+function formatDateLabel(value) {
+  if (!value) return "Select date";
+  try {
+    return new Intl.DateTimeFormat("en-AU", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(new Date(`${value}T00:00:00`));
+  } catch {
+    return value;
+  }
+}
+
+function DatePickerField({ label, value, onChange, tone = "dark" }) {
+  const surfaceClass = tone === "dark"
+    ? "border-white/10 bg-slate-950/60"
+    : "border-white/10 bg-white/5";
+
+  return (
+    <label className="block">
+      <span className="block text-sm text-slate-200">{label}</span>
+      <span className={classNames("relative mt-1 flex min-h-[52px] items-center justify-between overflow-hidden rounded-xl border px-3 py-3", surfaceClass)}>
+        <span>
+          <span className="block text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Calendar date</span>
+          <span className={classNames("mt-1 block text-sm font-semibold", value ? "text-white" : "text-slate-400")}>
+            {formatDateLabel(value)}
+          </span>
+        </span>
+        <span className="pointer-events-none text-lg text-sky-200">▦</span>
+        <input
+          type="date"
+          value={value}
+          onChange={onChange}
+          className="absolute inset-0 cursor-pointer opacity-0"
+        />
+      </span>
+    </label>
+  );
+}
+
 function CourseListCard({ course, active, onSelect }) {
   const nextSession = Array.isArray(course?.sessions) ? course.sessions[0] : null;
 
@@ -944,10 +985,7 @@ export default function CourseEditorModal({
                             </div>
 
                             <div className="grid gap-4 sm:grid-cols-3">
-                              <div>
-                                <label className="block text-sm text-slate-200">Date</label>
-                                <input type="date" className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 p-3 text-white" value={nDate} onChange={(e) => setNDate(e.target.value)} />
-                              </div>
+                              <DatePickerField label="Date" value={nDate} onChange={(e) => setNDate(e.target.value)} />
                               <div>
                                 <label className="block text-sm text-slate-200">Start</label>
                                 <input type="time" className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 p-3 text-white" value={nStart} onChange={(e) => setNStart(e.target.value)} />
@@ -1083,10 +1121,7 @@ export default function CourseEditorModal({
                                     <div className="mb-4 text-sm font-semibold text-white">Edit selected session</div>
 
                                     <div className="grid gap-4 sm:grid-cols-3">
-                                      <div>
-                                        <label className="block text-sm text-slate-200">Date</label>
-                                        <input type="date" className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" value={sDate} onChange={(e) => setSDate(e.target.value)} />
-                                      </div>
+                                      <DatePickerField label="Date" value={sDate} onChange={(e) => setSDate(e.target.value)} tone="light" />
                                       <div>
                                         <label className="block text-sm text-slate-200">Start</label>
                                         <input type="time" className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" value={sStart} onChange={(e) => setSStart(e.target.value)} />
