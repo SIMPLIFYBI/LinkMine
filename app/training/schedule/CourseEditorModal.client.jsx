@@ -92,6 +92,7 @@ export default function CourseEditorModal({
   onDeleted,
   onCreated,
 }) {
+  const defaultTab = "courses";
   const router = useRouter();
   const overlayRef = useRef(null);
   const consultantId = seedMeta?.consultantId || null;
@@ -102,7 +103,7 @@ export default function CourseEditorModal({
   const [bookingActionId, setBookingActionId] = useState(null);
   const [loadingSessionBookings, setLoadingSessionBookings] = useState(false);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("course");
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const [showCreateCourseForm, setShowCreateCourseForm] = useState(false);
 
   const [courses, setCourses] = useState([]);
@@ -293,7 +294,7 @@ export default function CourseEditorModal({
 
   useEffect(() => {
     if (!open) return;
-    setActiveTab("course");
+    setActiveTab(defaultTab);
     setSelectedCourseId(courseId || null);
     setShowNewSessionForm(false);
     setShowCreateCourseForm(Boolean(!courseId));
@@ -559,7 +560,7 @@ export default function CourseEditorModal({
   }
 
   const tabs = [
-    { key: "course", label: "Course", eyebrow: `${stats.courseCount} total`, blurb: "Select a course and update its core details." },
+    { key: "courses", label: "Courses", eyebrow: `${stats.courseCount} total`, blurb: "Manage your course library and the selected course details." },
     { key: "sessions", label: "Sessions", eyebrow: `${stats.sessionCount} for selected`, blurb: "Manage schedule, pricing and booking settings." },
     { key: "bookings", label: "Bookings", eyebrow: `${stats.pendingCount} pending`, blurb: "Review requests for the selected course." },
   ];
@@ -617,242 +618,307 @@ export default function CourseEditorModal({
               </div>
             ) : (
               <>
-                <div className="mb-5 overflow-hidden rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.18),rgba(15,23,42,0.92)_48%,rgba(2,6,23,0.98)_100%)] p-5 shadow-[0_24px_80px_rgba(2,6,23,0.45)]">
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                    <div className="max-w-2xl">
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-300/80">All courses in one place</div>
-                      <h2 className="mt-2 text-2xl font-semibold text-white">
-                        {selectedCourse?.title || "Select a course to start managing"}
+                <div className="mb-4 rounded-[24px] border border-white/10 bg-slate-950/80 p-2 shadow-[0_18px_50px_rgba(2,6,23,0.28)] ring-1 ring-white/10 backdrop-blur">
+                  <div className="grid grid-cols-3 gap-2">
+                    {tabs.map((tab) => (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        onClick={() => setActiveTab(tab.key)}
+                        className={classNames(
+                          "rounded-[18px] px-3 py-3 text-left transition sm:px-4",
+                          activeTab === tab.key
+                            ? "bg-[linear-gradient(135deg,rgba(56,189,248,0.28),rgba(14,165,233,0.16))] shadow-[inset_0_0_0_1px_rgba(125,211,252,0.35),0_12px_30px_rgba(14,165,233,0.14)]"
+                            : "bg-transparent hover:bg-white/[0.05]"
+                        )}
+                      >
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">{tab.eyebrow}</div>
+                        <div className="mt-1 text-sm font-semibold text-white sm:text-base">{tab.label}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mb-5 overflow-hidden rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.18),rgba(15,23,42,0.92)_48%,rgba(2,6,23,0.98)_100%)] p-5 shadow-[0_24px_80px_rgba(2,6,23,0.45)] sm:p-6">
+                  <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="max-w-3xl">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-300/80">Training workspace</div>
+                      <h2 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
+                        {selectedCourse?.title || "Manage courses, sessions and bookings"}
                       </h2>
-                      <p className="mt-2 text-sm leading-6 text-slate-300">
-                        Switch between courses without closing the modal. Sessions and bookings always follow the course you have selected.
+                      <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-[15px]">
+                        Start with the course library, refine the selected course, then switch into session scheduling or booking review for the active offer.
                       </p>
                     </div>
 
-                    <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[460px]">
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 backdrop-blur">
-                        <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Courses</div>
-                        <div className="mt-2 text-2xl font-semibold text-white">{stats.courseCount}</div>
-                        <div className="text-xs text-slate-400">Published training offers</div>
+                    <div className="flex flex-wrap gap-2">
+                      <div className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-sm text-slate-200">
+                        <span className="text-slate-400">Courses </span>{stats.courseCount}
                       </div>
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 backdrop-blur">
-                        <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Sessions</div>
-                        <div className="mt-2 text-2xl font-semibold text-white">{stats.sessionCount}</div>
-                        <div className="text-xs text-slate-400">For the selected course</div>
+                      <div className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-sm text-slate-200">
+                        <span className="text-slate-400">Sessions </span>{stats.sessionCount}
                       </div>
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 backdrop-blur">
-                        <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Next session</div>
-                        <div className="mt-2 text-sm font-semibold text-white">
-                          {stats.nextSession ? formatMoment(stats.nextSession.starts_at, stats.nextSession.timezone) : "Not scheduled"}
-                        </div>
-                        <div className="text-xs text-slate-400">{stats.nextSession?.delivery_method || "Choose a course"}</div>
+                      <div className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-sm text-slate-200">
+                        <span className="text-slate-400">Next </span>{stats.nextSession ? formatMoment(stats.nextSession.starts_at, stats.nextSession.timezone) : "Not scheduled"}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="mb-4 grid gap-3 md:grid-cols-3">
-                  {tabs.map((tab) => (
-                    <button
-                      key={tab.key}
-                      type="button"
-                      onClick={() => setActiveTab(tab.key)}
-                      className={classNames(
-                        "rounded-[24px] border px-4 py-4 text-left transition",
-                        activeTab === tab.key
-                          ? "border-sky-300/40 bg-sky-500/12 shadow-[0_16px_40px_rgba(14,165,233,0.12)]"
-                          : "border-white/10 bg-white/[0.04] hover:border-white/20 hover:bg-white/[0.06]"
-                      )}
-                    >
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">{tab.eyebrow}</div>
-                      <div className="mt-2 text-lg font-semibold text-white">{tab.label}</div>
-                      <p className="mt-1 text-sm leading-6 text-slate-300">{tab.blurb}</p>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
-                  <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-4 ring-1 ring-white/10">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <div className="text-lg font-semibold text-white">Courses</div>
-                        <div className="text-sm text-slate-400">Pick a course to drive the tabs on the right.</div>
-                      </div>
-                      {canManage ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveTab("course");
-                            setShowCreateCourseForm((current) => !current);
-                          }}
-                          className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/10"
-                        >
-                          {showCreateCourseForm ? "Hide add course" : "+ Add course"}
-                        </button>
-                      ) : null}
-                    </div>
-
-                    <div className="mt-4 space-y-2">
-                      {courses.length ? (
-                        courses.map((course) => (
-                          <CourseListCard
-                            key={course.id}
-                            course={course}
-                            active={selectedCourseId === course.id}
-                            onSelect={() => {
-                              setSelectedCourseId(course.id);
-                              setShowNewSessionForm(false);
-                              setActiveTab((current) => current || "course");
-                            }}
-                          />
-                        ))
-                      ) : (
-                        <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 px-4 py-8 text-center">
-                          <div className="text-lg font-semibold text-white">No courses yet</div>
-                          <p className="mt-2 text-sm text-slate-400">Use the add course panel to create your first training offer here.</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    {showCreateCourseForm ? (
-                      <div className="rounded-[28px] border border-sky-400/20 bg-[linear-gradient(180deg,rgba(14,165,233,0.10),rgba(15,23,42,0.65))] p-5 ring-1 ring-sky-300/10">
-                        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                {activeTab === "courses" ? (
+                  <div className="grid gap-4 xl:grid-cols-[340px_minmax(0,1fr)]">
+                    <div className="space-y-4 xl:sticky xl:top-0 xl:self-start">
+                      <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.88),rgba(2,6,23,0.86))] p-4 ring-1 ring-white/10 sm:p-5">
+                        <div className="flex items-start justify-between gap-3">
                           <div>
-                            <div className="text-lg font-semibold text-white">Add training</div>
-                            <div className="text-sm text-slate-300">Create a course and optional opening sessions without leaving the manager.</div>
+                            <div className="text-lg font-semibold text-white">Course library</div>
+                            <div className="text-sm text-slate-400">Choose the course you want to manage.</div>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => setShowCreateCourseForm(false)}
-                            className="rounded-xl border border-white/10 px-3 py-2 text-sm text-slate-200 hover:bg-white/10"
-                          >
-                            Close
-                          </button>
+                          {canManage ? (
+                            <button
+                              type="button"
+                              onClick={() => setShowCreateCourseForm((current) => !current)}
+                              className="rounded-full border border-sky-300/20 bg-sky-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-sky-100 hover:bg-sky-500/20"
+                            >
+                              {showCreateCourseForm ? "Hide form" : "+ Add course"}
+                            </button>
+                          ) : null}
                         </div>
 
-                        <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_18px_60px_-36px_rgba(56,189,248,0.45)] ring-1 ring-white/10">
-                          <AddCourseForm
-                            consultantId={consultantId}
-                            reloadOnSuccess={false}
-                            onDone={async (payload) => {
-                              await loadCourses(payload?.id || null);
-                              setSelectedCourseId(payload?.id || null);
-                              setActiveTab("course");
-                              setShowCreateCourseForm(false);
-                              onCreated?.(payload);
-                              onChanged?.();
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {!selectedCourse ? (
-                      <div className="rounded-[28px] border border-dashed border-white/10 bg-white/[0.04] px-6 py-14 text-center ring-1 ring-white/10">
-                        <div className="text-lg font-semibold text-white">{courses.length ? "Select a course" : "Create your first course"}</div>
-                        <p className="mt-2 text-sm text-slate-400">
-                          {courses.length
-                            ? "The course, sessions and bookings tabs will populate once a course is selected."
-                            : "Use the add course panel above to start managing training in one place."}
-                        </p>
-                      </div>
-                    ) : null}
-
-                    {selectedCourse && activeTab === "course" ? (
-                      <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 ring-1 ring-white/10">
-                        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                          <div>
-                            <div className="text-lg font-semibold text-white">Course details</div>
-                            <p className="text-sm text-slate-400">Update the selected course without leaving the manager.</p>
-                          </div>
-                        </div>
-
-                        <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-                          <div className="space-y-4">
-                            <div className="grid gap-4 sm:grid-cols-2">
+                        {showCreateCourseForm ? (
+                          <div className="mt-4 rounded-[24px] border border-sky-400/20 bg-[linear-gradient(180deg,rgba(14,165,233,0.10),rgba(15,23,42,0.65))] p-4 ring-1 ring-sky-300/10">
+                            <div className="mb-3 flex items-center justify-between gap-3">
                               <div>
-                                <label className="block text-sm text-slate-200">Title</label>
-                                <input className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 p-3 text-white" value={title} onChange={(e) => setTitle(e.target.value)} />
+                                <div className="text-base font-semibold text-white">Add training</div>
+                                <div className="text-sm text-slate-300">Create a new course without leaving the manager.</div>
                               </div>
-                              <div>
-                                <label className="block text-sm text-slate-200">Category</label>
-                                <input className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 p-3 text-white" value={category} onChange={(e) => setCategory(e.target.value)} />
-                              </div>
-                            </div>
-
-                            <div>
-                              <label className="block text-sm text-slate-200">Summary</label>
-                              <input className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 p-3 text-white" value={summary} onChange={(e) => setSummary(e.target.value)} />
-                            </div>
-
-                            <div>
-                              <label className="block text-sm text-slate-200">Description</label>
-                              <textarea rows={7} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 p-3 text-white" value={description} onChange={(e) => setDescription(e.target.value)} />
-                            </div>
-                          </div>
-
-                          <div className="space-y-4">
-                            <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
-                              <div className="text-sm font-semibold text-white">Positioning</div>
-                              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-                                <div>
-                                  <label className="block text-sm text-slate-200">Level</label>
-                                  <input className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" value={level} onChange={(e) => setLevel(e.target.value)} />
-                                </div>
-                                <div>
-                                  <label className="block text-sm text-slate-200">Duration (hours)</label>
-                                  <input type="number" step="0.5" className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" value={durationHours} onChange={(e) => setDurationHours(e.target.value)} />
-                                </div>
-                                <div>
-                                  <label className="block text-sm text-slate-200">Default delivery</label>
-                                  <select className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" value={deliveryDefault} onChange={(e) => setDeliveryDefault(e.target.value)}>
-                                    <option value="in_person">In person</option>
-                                    <option value="online">Online</option>
-                                    <option value="hybrid">Hybrid</option>
-                                  </select>
-                                </div>
-                                <div>
-                                  <label className="block text-sm text-slate-200">Tags (comma separated)</label>
-                                  <input className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" value={tags} onChange={(e) => setTags(e.target.value)} />
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                              <div className="text-sm font-semibold text-white">Course snapshot</div>
-                              <div className="mt-3 space-y-2 text-sm text-slate-300">
-                                <div>{sessions.length} session{sessions.length === 1 ? "" : "s"} attached</div>
-                                <div>{stats.nextSession ? `Next: ${formatMoment(stats.nextSession.starts_at, stats.nextSession.timezone)}` : "No future sessions yet"}</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-5 flex items-center justify-between gap-3">
-                          <div>
-                            {canManage ? (
                               <button
                                 type="button"
-                                onClick={deleteCourse}
-                                disabled={deletingCourse || savingCourse}
-                                className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-200 hover:bg-red-500/15 disabled:opacity-50"
+                                onClick={() => setShowCreateCourseForm(false)}
+                                className="rounded-xl border border-white/10 px-3 py-2 text-sm text-slate-200 hover:bg-white/10"
                               >
-                                {deletingCourse ? "Deleting course..." : "Delete course"}
+                                Close
                               </button>
-                            ) : null}
+                            </div>
+
+                            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_18px_60px_-36px_rgba(56,189,248,0.45)] ring-1 ring-white/10">
+                              <AddCourseForm
+                                consultantId={consultantId}
+                                reloadOnSuccess={false}
+                                onDone={async (payload) => {
+                                  await loadCourses(payload?.id || null);
+                                  setSelectedCourseId(payload?.id || null);
+                                  setActiveTab("courses");
+                                  setShowCreateCourseForm(false);
+                                  onCreated?.(payload);
+                                  onChanged?.();
+                                }}
+                              />
+                            </div>
+                          </div>
+                        ) : null}
+
+                        <div className="mt-4 space-y-2">
+                          {courses.length ? (
+                            courses.map((course) => (
+                              <CourseListCard
+                                key={course.id}
+                                course={course}
+                                active={selectedCourseId === course.id}
+                                onSelect={() => {
+                                  setSelectedCourseId(course.id);
+                                  setShowNewSessionForm(false);
+                                }}
+                              />
+                            ))
+                          ) : (
+                            <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 px-4 py-8 text-center">
+                              <div className="text-lg font-semibold text-white">No courses yet</div>
+                              <p className="mt-2 text-sm text-slate-400">Use the add course form to publish your first training offer.</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      {!selectedCourse ? (
+                        <div className="rounded-[28px] border border-dashed border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.55),rgba(15,23,42,0.25))] px-6 py-14 text-center ring-1 ring-white/10">
+                          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-sky-400/20 bg-sky-500/10 text-xl text-sky-200">◎</div>
+                          <div className="mt-4 text-xl font-semibold text-white">{courses.length ? "Select a course to continue" : "Create your first course"}</div>
+                          <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-400">
+                            {courses.length
+                              ? "Choose a course from the library to edit its details, then switch to sessions or bookings when you are ready."
+                              : "Start by adding a course, then build out sessions and attendee workflows from here."}
+                          </p>
+                        </div>
+                      ) : null}
+
+                      {selectedCourse ? (
+                        <div className="overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.92),rgba(2,6,23,0.82))] ring-1 ring-white/10">
+                          <div className="border-b border-white/10 px-5 py-5 sm:px-6">
+                            <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+                              <div className="min-w-0">
+                                <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-sky-300/80">Selected course</div>
+                                <div className="mt-2 text-2xl font-semibold text-white">{selectedCourse.title || "Untitled course"}</div>
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                  <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-200">
+                                    {selectedCourse.category || "Training course"}
+                                  </span>
+                                  {selectedCourse.level ? (
+                                    <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-200">
+                                      {selectedCourse.level}
+                                    </span>
+                                  ) : null}
+                                  <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-200">
+                                    {sessions.length} session{sessions.length === 1 ? "" : "s"}
+                                  </span>
+                                  <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-200">
+                                    {stats.nextSession ? `Next ${formatMoment(stats.nextSession.starts_at, stats.nextSession.timezone)}` : "No future sessions"}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-wrap gap-2 xl:justify-end">
+                                {canManage ? (
+                                  <button
+                                    type="button"
+                                    onClick={deleteCourse}
+                                    disabled={deletingCourse || savingCourse}
+                                    className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-200 hover:bg-red-500/15 disabled:opacity-50"
+                                  >
+                                    {deletingCourse ? "Deleting course..." : "Delete course"}
+                                  </button>
+                                ) : null}
+
+                                <button
+                                  type="button"
+                                  onClick={saveCourse}
+                                  disabled={savingCourse || !title.trim()}
+                                  className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_18px_40px_-18px_rgba(14,165,233,0.65)] hover:bg-sky-500 disabled:opacity-50"
+                                >
+                                  {savingCourse ? "Saving..." : "Save course"}
+                                </button>
+                              </div>
+                            </div>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={saveCourse}
-                            disabled={savingCourse || !title.trim()}
-                            className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-500 disabled:opacity-50"
-                          >
-                            {savingCourse ? "Saving..." : "Save course"}
-                          </button>
+                          <div className="px-5 py-5 sm:px-6">
+                            <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+                              <div className="rounded-[24px] border border-white/10 bg-slate-950/45 p-4 sm:p-5">
+                                <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">Core details</div>
+                                <div className="mt-4 space-y-4">
+                                  <div className="grid gap-4 sm:grid-cols-2">
+                                    <div>
+                                      <label className="block text-sm text-slate-200">Title</label>
+                                      <input className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 p-3 text-white" value={title} onChange={(e) => setTitle(e.target.value)} />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm text-slate-200">Category</label>
+                                      <input className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 p-3 text-white" value={category} onChange={(e) => setCategory(e.target.value)} />
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-sm text-slate-200">Summary</label>
+                                    <input className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 p-3 text-white" value={summary} onChange={(e) => setSummary(e.target.value)} />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-sm text-slate-200">Description</label>
+                                    <textarea rows={7} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 p-3 text-white" value={description} onChange={(e) => setDescription(e.target.value)} />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="space-y-4">
+                                <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 sm:p-5">
+                                  <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">Positioning</div>
+                                  <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                                    <div>
+                                      <label className="block text-sm text-slate-200">Level</label>
+                                      <input className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" value={level} onChange={(e) => setLevel(e.target.value)} />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm text-slate-200">Duration (hours)</label>
+                                      <input type="number" step="0.5" className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" value={durationHours} onChange={(e) => setDurationHours(e.target.value)} />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm text-slate-200">Default delivery</label>
+                                      <select className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" value={deliveryDefault} onChange={(e) => setDeliveryDefault(e.target.value)}>
+                                        <option value="in_person">In person</option>
+                                        <option value="online">Online</option>
+                                        <option value="hybrid">Hybrid</option>
+                                      </select>
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm text-slate-200">Tags (comma separated)</label>
+                                      <input className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" value={tags} onChange={(e) => setTags(e.target.value)} />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 sm:p-5">
+                                  <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">Next step</div>
+                                  <div className="mt-3 space-y-3 text-sm text-slate-300">
+                                    <div>Save the course here, then use the tabs above to move into sessions or bookings.</div>
+                                    <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-slate-200">
+                                      {stats.nextSession ? `Next session: ${formatMoment(stats.nextSession.starts_at, stats.nextSession.timezone)}` : "No sessions scheduled yet for this course."}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.88),rgba(2,6,23,0.82))] p-4 ring-1 ring-white/10 sm:p-5">
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                        <div>
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-sky-300/80">
+                            {activeTab === "sessions" ? "Session workspace" : "Booking workspace"}
+                          </div>
+                          <div className="mt-2 text-xl font-semibold text-white">
+                            {activeTab === "sessions" ? "Choose a course, then manage session dates" : "Choose a course, then review attendees"}
+                          </div>
+                          <p className="mt-2 text-sm text-slate-300">
+                            {activeTab === "sessions"
+                              ? "The course selector stays at the top so you can jump between offers without scrolling back through course details."
+                              : "Switch the course here to review booking activity across your training offers faster."}
+                          </p>
+                        </div>
+
+                        <div className="min-w-0 w-full max-w-xl lg:w-[360px]">
+                          <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Selected course</label>
+                          <select
+                            className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 p-3 text-white"
+                            value={selectedCourseId || ""}
+                            onChange={(e) => {
+                              setSelectedCourseId(e.target.value || null);
+                              setShowNewSessionForm(false);
+                            }}
+                          >
+                            <option value="">{courses.length ? "Choose a course" : "No courses available"}</option>
+                            {courses.map((course) => (
+                              <option key={course.id} value={course.id}>{course.title || "Untitled course"}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {!selectedCourse ? (
+                      <div className="rounded-[28px] border border-dashed border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.55),rgba(15,23,42,0.25))] px-6 py-14 text-center ring-1 ring-white/10">
+                        <div className="text-xl font-semibold text-white">{courses.length ? "Select a course to continue" : "No courses to manage yet"}</div>
+                        <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-400">
+                          {courses.length
+                            ? `Pick a course from the selector above to open the ${activeTab} workspace.`
+                            : "Create a course in the Courses tab first, then come back here to manage sessions and bookings."}
+                        </p>
                       </div>
                     ) : null}
 
@@ -1248,7 +1314,7 @@ export default function CourseEditorModal({
                       </>
                     ) : null}
                   </div>
-                </div>
+                )}
               </>
             )}
           </div>
