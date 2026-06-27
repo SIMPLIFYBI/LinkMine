@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { COUNTRY_OPTIONS, GLOBAL_REGION_OPTIONS } from "@/lib/geoOptions";
 
 const MAX_HEADLINE = 120;
 const MAX_SERVICES = 15; // safety cap
@@ -17,6 +18,8 @@ export default function ProfileSetupBasic({ services = [] }) {
   const [displayName, setDisplayName] = useState("");
   const [headline, setHeadline] = useState("");
   const [location, setLocation] = useState("");
+  const [countryCode, setCountryCode] = useState("");
+  const [globalRegion, setGlobalRegion] = useState("");
   const [contactEmail, setContactEmail] = useState("");
 
   // Services state
@@ -81,6 +84,8 @@ export default function ProfileSetupBasic({ services = [] }) {
     if (!head) return setMsg({ ok: false, text: "Headline is required." });
     if (head.length > MAX_HEADLINE) return setMsg({ ok: false, text: `Headline must be ${MAX_HEADLINE} characters or fewer.` });
     if (!loc) return setMsg({ ok: false, text: "Location is required." });
+    if (!countryCode) return setMsg({ ok: false, text: "Country is required." });
+    if (!globalRegion) return setMsg({ ok: false, text: "Global region is required." });
     if (!email) return setMsg({ ok: false, text: "Contact email is required." });
     if (!emailOk) return setMsg({ ok: false, text: "Enter a valid email address." });
     if (selected.size < 1) return setMsg({ ok: false, text: "Select at least one service you offer." });
@@ -103,6 +108,8 @@ export default function ProfileSetupBasic({ services = [] }) {
           display_name: name,
           headline: head,
           location: loc,
+          country_code: countryCode,
+          global_region: globalRegion,
           contact_email: email,
           services: Array.from(selected),
         }),
@@ -146,6 +153,22 @@ export default function ProfileSetupBasic({ services = [] }) {
             onChange={setLocation}
             required
             placeholder="City, Country"
+          />
+          <SelectField
+            label="Country"
+            value={countryCode}
+            onChange={setCountryCode}
+            required
+            options={COUNTRY_OPTIONS}
+            placeholder="Select a country"
+          />
+          <SelectField
+            label="Global region"
+            value={globalRegion}
+            onChange={setGlobalRegion}
+            required
+            options={GLOBAL_REGION_OPTIONS}
+            placeholder="Select a region"
           />
           <Field
             label="Contact email"
@@ -240,6 +263,27 @@ function Field({ label, value, onChange, type = "text", required = false, placeh
         className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.07] px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:border-sky-400/60 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
       />
       {hint ? <p className="mt-1 text-xs text-slate-400">{hint}</p> : null}
+    </label>
+  );
+}
+
+function SelectField({ label, value, onChange, required = false, options, placeholder }) {
+  return (
+    <label className="block text-sm text-slate-300">
+      {label} {required ? "*" : ""}
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.07] px-3 py-2 text-sm text-slate-100 focus:border-sky-400/60 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
+import { COUNTRY_OPTIONS, GLOBAL_REGION_OPTIONS } from "@/lib/geoOptions";
 
 const initial = {
   display_name: "",
@@ -9,6 +10,8 @@ const initial = {
   bio: "",
   company: "",
   location: "",
+  country_code: "",
+  global_region: "",
   contact_email: "",
   phone: "",
   linkedin_url: "",
@@ -60,7 +63,7 @@ export default function InProgressClient() {
         .from("consultants")
         .select(
           // include claimed_by for claimed flag
-          "id, company, location, contact_email, visibility, status, created_at, reviewed_at, view_count, invite_email, claimed_by"
+          "id, display_name, headline, bio, company, location, country_code, global_region, contact_email, phone, linkedin_url, facebook_url, twitter_url, instagram_url, abn, acn, is_trainer, provider_kind, visibility, status, created_at, reviewed_at, view_count, invite_email, claimed_by"
         )
         .order("created_at", { ascending: false })
         .limit(200);
@@ -352,6 +355,8 @@ export default function InProgressClient() {
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Text label="Company" value={form.company} onChange={(v) => setField("company", v)} />
                 <Text label="Location" value={form.location} onChange={(v) => setField("location", v)} />
+                <Select label="Country" value={form.country_code} onChange={(v) => setField("country_code", v)} options={[{ value: "", label: "Select a country" }, ...COUNTRY_OPTIONS]} />
+                <Select label="Global region" value={form.global_region} onChange={(v) => setField("global_region", v)} options={[{ value: "", label: "Select a region" }, ...GLOBAL_REGION_OPTIONS]} />
                 <Text label="Contact email" type="email" value={form.contact_email} onChange={(v) => setField("contact_email", v)} />
                 <Text label="Phone" value={form.phone} onChange={(v) => setField("phone", v)} />
                 <Text label="Display name" value={form.display_name} onChange={(v) => setField("display_name", v)} />

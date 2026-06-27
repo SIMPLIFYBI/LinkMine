@@ -14,6 +14,9 @@ import NameSearch from "./NameSearch.client.jsx";
 import ServiceSlugFilter from "./ServiceSlugFilter.client.jsx";
 import MobileHeroAndFilters from "./MobileHeroAndFilters.client.jsx"; // NEW
 import ProviderKindFilter from "./ProviderKindFilter.client.jsx"; // NEW
+import CountryFilter from "./CountryFilter.client.jsx";
+import GlobalRegionFilter from "./GlobalRegionFilter.client.jsx";
+import { COUNTRY_OPTIONS, GLOBAL_REGION_OPTIONS } from "@/lib/geoOptions";
 
 export const runtime = "nodejs";
 export const revalidate = 300;
@@ -30,7 +33,7 @@ function formatSlugLabel(value) {
     .join(" ");
 }
 
-function buildConsultantsListingHref({ market, serviceSlug, categorySlug, q, kindParam, page }) {
+function buildConsultantsListingHref({ market, serviceSlug, categorySlug, q, kindParam, countryCode, globalRegion, page }) {
   const params = new URLSearchParams();
   const marketValue = marketParamToUrlValue(normaliseMarketParam(market));
   if (marketValue !== "mining") params.set("market", marketValue);
@@ -38,6 +41,8 @@ function buildConsultantsListingHref({ market, serviceSlug, categorySlug, q, kin
   else if (categorySlug) params.set("category", categorySlug);
   if (q) params.set("q", q);
   if (kindParam) params.set("kind", kindParam);
+  if (countryCode) params.set("country", countryCode);
+  if (globalRegion) params.set("region", globalRegion);
   if (page > 1) params.set("page", String(page));
   const query = params.toString();
   return `/consultants${query ? `?${query}` : ""}`;
@@ -91,7 +96,7 @@ const getConsultantsDirectoryReferenceData = unstable_cache(
 
 async function getConsultantsDirectoryPageViaRpc(
   sb,
-  { market, serviceSlug, categorySlug, q, providerKind, page, seed }
+  { market, serviceSlug, categorySlug, q, providerKind, countryCode, globalRegion, page, seed }
 ) {
   if (normaliseMarketParam(market) === "both") {
     const combinedPageSize = (page * PAGE_SIZE) + PAGE_SIZE;
@@ -103,6 +108,8 @@ async function getConsultantsDirectoryPageViaRpc(
       p_page: 1,
       p_page_size: combinedPageSize,
       p_seed_bucket: String(seed),
+      p_country_code: countryCode || null,
+      p_global_region: globalRegion || null,
     };
 
     const [miningResult, oilGasResult] = await Promise.all([
@@ -161,6 +168,8 @@ async function getConsultantsDirectoryPageViaRpc(
     p_page_size: PAGE_SIZE,
     p_seed_bucket: String(seed),
     p_market: normaliseMarketParam(market),
+    p_country_code: countryCode || null,
+    p_global_region: globalRegion || null,
   });
 
   if (error) {
@@ -225,6 +234,8 @@ export async function generateMetadata({ searchParams }) {
   const categorySlug = typeof sp.category === "string" ? sp.category : "";
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
   const kindParam = typeof sp.kind === "string" ? sp.kind : "";
+  const countryCode = typeof sp.country === "string" ? sp.country.toUpperCase() : "";
+  const globalRegion = typeof sp.region === "string" ? sp.region.toLowerCase() : "";
   const requestedPage = Number.parseInt(sp.page ?? "1", 10);
   const page = Number.isNaN(requestedPage) ? 1 : Math.max(1, requestedPage);
 
@@ -244,7 +255,7 @@ export async function generateMetadata({ searchParams }) {
     : `Discover verified ${marketLabel(market).toLowerCase()} consultants and contractors${
         focusLabel === `${marketLabel(market)} Consultants & Contractors Directory` ? "" : ` for ${focusLabel}`
       } on YouMine${page > 1 ? `, page ${page}` : ""}.`;
-  const canonical = buildConsultantsListingHref({ market, serviceSlug, categorySlug, q, kindParam, page });
+  const canonical = buildConsultantsListingHref({ market, serviceSlug, categorySlug, q, kindParam, countryCode, globalRegion, page });
 
   return {
     title,
@@ -283,6 +294,8 @@ export default async function ConsultantsPage({ searchParams }) {
   const categorySlug = typeof sp.category === "string" ? sp.category : "";
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
   const kindParam = typeof sp.kind === "string" ? sp.kind : ""; // "", "operational", "professional", "both"
+  const countryCode = typeof sp.country === "string" ? sp.country.toUpperCase() : "";
+  const globalRegion = typeof sp.region === "string" ? sp.region.toLowerCase() : "";
   const requestedPage = Number.parseInt(sp.page ?? "1", 10);
   const page = Number.isNaN(requestedPage) ? 1 : Math.max(1, requestedPage);
 
@@ -303,6 +316,8 @@ export default async function ConsultantsPage({ searchParams }) {
       seed,
       q,
       providerKind: kindDb,
+      countryCode,
+      globalRegion,
     }),
     getConsultantsDirectoryReferenceData(market),
   ]);
@@ -331,8 +346,13 @@ export default async function ConsultantsPage({ searchParams }) {
       market,
       q,
       kindParam,
+      countryCode,
+      globalRegion,
       page: targetPage,
     });
+
+  const activeCountry = COUNTRY_OPTIONS.find((option) => option.value === countryCode) || null;
+  const activeGlobalRegion = GLOBAL_REGION_OPTIONS.find((option) => option.value === globalRegion) || null;
 
   const locationPhrase = deriveLocationPhrase(serviceSlug, categorySlug);
   const jsonLd = buildJsonLd(consultants, market);
@@ -403,7 +423,9 @@ export default async function ConsultantsPage({ searchParams }) {
         q={q}
         activeService={activeService}
         activeCategory={effectiveCategory}
-        hasActive={Boolean(activeService || activeCategory || q)}
+        activeCountry={activeCountry}
+        activeGlobalRegion={activeGlobalRegion}
+        hasActive={Boolean(activeService || activeCategory || q || kindParam || countryCode || globalRegion)}
         consultantsCount={consultants.length}
       />
 
@@ -414,9 +436,11 @@ export default async function ConsultantsPage({ searchParams }) {
             <ServiceFilter categories={allCategories} activeSlug={effectiveCategory?.slug || ""} />
             <ServiceSlugFilter services={visibleServices} activeSlug={activeService?.slug || ""} />
             <ProviderKindFilter />
+            <CountryFilter />
+            <GlobalRegionFilter />
             <NameSearch initialValue={q} />
           </div>
-          {(activeService || activeCategory || q) && (
+          {(activeService || activeCategory || q || kindParam || countryCode || globalRegion) && (
             <Link
               href={buildConsultantsListingHref({ market, page: 1 })}
               prefetch
@@ -427,7 +451,7 @@ export default async function ConsultantsPage({ searchParams }) {
           )}
         </div>
 
-        {(activeService || activeCategory || q) ? (
+        {(activeService || activeCategory || q || kindParam || countryCode || globalRegion) ? (
           <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300">
             {q && (
               <span className="rounded-full border border-sky-400/30 bg-sky-500/10 px-3 py-1 font-medium text-sky-200">
@@ -447,6 +471,16 @@ export default async function ConsultantsPage({ searchParams }) {
             {kindParam && (
               <span className="rounded-full border border-fuchsia-400/30 bg-fuchsia-500/10 px-3 py-1 font-medium text-fuchsia-200">
                 Type: {kindDb || "Both"}
+              </span>
+            )}
+            {activeCountry && (
+              <span className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 font-medium text-cyan-200">
+                Country: {activeCountry.label}
+              </span>
+            )}
+            {activeGlobalRegion && (
+              <span className="rounded-full border border-orange-400/30 bg-orange-500/10 px-3 py-1 font-medium text-orange-200">
+                Region: {activeGlobalRegion.label}
               </span>
             )}
             <span className="consultants-market-chip rounded-full px-3 py-1 font-medium">

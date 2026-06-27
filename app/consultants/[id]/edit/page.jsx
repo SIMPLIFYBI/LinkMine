@@ -26,6 +26,8 @@ export default async function EditConsultantPage({ params }) {
       bio,
       company,
       location,
+      country_code,
+      global_region,
       contact_email,
       website_url,
       metadata,

@@ -8,6 +8,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation"; // NEW
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
+import { COUNTRY_OPTIONS, GLOBAL_REGION_OPTIONS } from "@/lib/geoOptions";
 
 const listingSummaries = {
   Private:
@@ -46,6 +47,8 @@ export default function MyJobsClient() {
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [location, setLocation] = useState("");
+  const [countryCode, setCountryCode] = useState("");
+  const [globalRegion, setGlobalRegion] = useState("");
   const [company, setCompany] = useState("");
   const [preferredPaymentType, setPreferredPaymentType] = useState("");
   const [urgency, setUrgency] = useState("");
@@ -85,7 +88,7 @@ export default function MyJobsClient() {
     const { data, error } = await sb
       .from("jobs")
       .select(
-        "id, title, location, preferred_payment_type, urgency, listing_type, created_at, service_id, recipient_ids, contact_name, contact_email"
+        "id, title, location, country_code, global_region, preferred_payment_type, urgency, listing_type, created_at, service_id, recipient_ids, contact_name, contact_email"
       )
       .eq("created_by", userId)
       .order("created_at", { ascending: false });
@@ -212,6 +215,14 @@ export default function MyJobsClient() {
       setError("Select a posting duration");
       return;
     }
+    if (!countryCode) {
+      setError("Select a country");
+      return;
+    }
+    if (!globalRegion) {
+      setError("Select a global region");
+      return;
+    }
     if (!selectedServiceId && listingType !== "Public") {
       setError("Select a service first");
       return;
@@ -240,6 +251,8 @@ export default function MyJobsClient() {
       title,
       description: desc,
       location,
+      country_code: countryCode,
+      global_region: globalRegion,
       company: company || null,
       preferred_payment_type: preferredPaymentType || null,
       urgency: urgency || null,
@@ -268,6 +281,8 @@ export default function MyJobsClient() {
     setTitle("");
     setDesc("");
     setLocation("");
+    setCountryCode("");
+    setGlobalRegion("");
     setCompany("");
     setPreferredPaymentType("");
     setUrgency("");
@@ -680,6 +695,38 @@ export default function MyJobsClient() {
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. Kalgoorlie, WA"
               />
+            </label>
+            <label className="grid gap-1">
+              <span className="text-sm">Country</span>
+              <select
+                className="rounded border border-white/10 bg-white/10 px-3 py-2"
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value)}
+                required
+              >
+                <option value="">Select a country</option>
+                {COUNTRY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1">
+              <span className="text-sm">Global region</span>
+              <select
+                className="rounded border border-white/10 bg-white/10 px-3 py-2"
+                value={globalRegion}
+                onChange={(e) => setGlobalRegion(e.target.value)}
+                required
+              >
+                <option value="">Select a region</option>
+                {GLOBAL_REGION_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="grid gap-1">
               <span className="text-sm">Company <span className="opacity-60">(optional)</span></span>

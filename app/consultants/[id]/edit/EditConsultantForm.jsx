@@ -3,6 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
+import {
+  COUNTRY_OPTIONS,
+  GLOBAL_REGION_OPTIONS,
+  isValidCountryCode,
+  isValidGlobalRegion,
+} from "@/lib/geoOptions";
 
 // Display options and mapping helpers
 const PROVIDER_KIND_OPTIONS = [
@@ -63,6 +69,8 @@ export default function EditConsultantForm({ consultant }) {
       ? consultant.company
       : (consultant.display_name ?? ""),
     location: consultant.location ?? "",
+    country_code: consultant.country_code ?? "",
+    global_region: consultant.global_region ?? "",
     contact_email: consultant.contact_email ?? "",
     website_url: consultant.website_url ?? "",
     bio: consultant.bio ?? "",
@@ -178,11 +186,25 @@ export default function EditConsultantForm({ consultant }) {
     }
 
     const placeId = String(form.place_id || "").trim();
+    const countryCode = String(form.country_code || "").trim().toUpperCase();
+    const globalRegion = String(form.global_region || "").trim();
     if (form.website_url && !isValidWebsiteUrl(form.website_url)) {
       setMessage({
         type: "error",
         text: "Website URL must be a full https URL.",
       });
+      setSaving(false);
+      return;
+    }
+
+    if (!isValidCountryCode(countryCode)) {
+      setMessage({ type: "error", text: "Select a valid country." });
+      setSaving(false);
+      return;
+    }
+
+    if (!isValidGlobalRegion(globalRegion)) {
+      setMessage({ type: "error", text: "Select a valid global region." });
       setSaving(false);
       return;
     }
@@ -208,6 +230,8 @@ export default function EditConsultantForm({ consultant }) {
       headline: form.headline.trim(),
       company: companyFinal,
       location: form.location.trim(),
+      country_code: countryCode || null,
+      global_region: globalRegion || null,
       contact_email: form.contact_email.trim(),
       website_url: form.website_url.trim() || null,
       bio: form.bio.trim(),
@@ -264,6 +288,20 @@ export default function EditConsultantForm({ consultant }) {
             </label>
           </div>
           <Field label="Location" value={form.location} onChange={handleChange("location")} />
+          <SelectField
+            label="Country"
+            value={form.country_code}
+            onChange={handleChange("country_code")}
+            options={COUNTRY_OPTIONS}
+            placeholder="Select a country"
+          />
+          <SelectField
+            label="Global region"
+            value={form.global_region}
+            onChange={handleChange("global_region")}
+            options={GLOBAL_REGION_OPTIONS}
+            placeholder="Select a region"
+          />
           <Field label="Contact email" type="email" value={form.contact_email} onChange={handleChange("contact_email")} />
           <Field
             label="Website"
@@ -488,6 +526,26 @@ function Field({ label, as = "input", hint, ...props }) {
     <label className="block text-sm text-slate-300">
       {label}
       <Component className={shared} {...props} />
+      {hint ? <p className="mt-1 text-xs text-slate-400">{hint}</p> : null}
+    </label>
+  );
+}
+
+function SelectField({ label, hint, options, placeholder, ...props }) {
+  return (
+    <label className="block text-sm text-slate-300">
+      {label}
+      <select
+        {...props}
+        className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.07] px-3 py-2 text-sm text-slate-100 focus:border-sky-400/60 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
       {hint ? <p className="mt-1 text-xs text-slate-400">{hint}</p> : null}
     </label>
   );

@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import { sendNewConsultancyNotification } from "@/lib/emails/sendNewConsultancy";
+import { isValidCountryCode, isValidGlobalRegion } from "@/lib/geoOptions";
 
 const MAX_HEADLINE = 120;
 const MAX_SERVICES = 15;
@@ -36,6 +37,8 @@ export async function POST(req) {
   const display_name = String(body?.display_name || "").trim();
   const headline = String(body?.headline || "").trim();
   const location = String(body?.location || "").trim();
+  const country_code = String(body?.country_code || "").trim().toUpperCase();
+  const global_region = String(body?.global_region || "").trim();
   const contact_email = String(body?.contact_email || "").trim();
   const services = Array.isArray(body?.services) ? body.services.slice(0, MAX_SERVICES) : [];
 
@@ -43,6 +46,12 @@ export async function POST(req) {
   if (!headline) return NextResponse.json({ stage: "validate", error: "Headline is required" }, { status: 400 });
   if (headline.length > MAX_HEADLINE) return NextResponse.json({ stage: "validate", error: `Headline must be ${MAX_HEADLINE} characters or fewer` }, { status: 400 });
   if (!location) return NextResponse.json({ stage: "validate", error: "Location is required" }, { status: 400 });
+  if (!country_code || !isValidCountryCode(country_code)) {
+    return NextResponse.json({ stage: "validate", error: "Valid country is required" }, { status: 400 });
+  }
+  if (!global_region || !isValidGlobalRegion(global_region)) {
+    return NextResponse.json({ stage: "validate", error: "Valid global region is required" }, { status: 400 });
+  }
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact_email);
   if (!contact_email || !emailOk) return NextResponse.json({ stage: "validate", error: "Valid contact email is required" }, { status: 400 });
   if (!services.length) return NextResponse.json({ stage: "validate", error: "Select at least one service" }, { status: 400 });
@@ -79,6 +88,8 @@ export async function POST(req) {
     display_name,
     headline,
     location,
+    country_code,
+    global_region,
     contact_email,
     slug,
     claimed_by: userId,

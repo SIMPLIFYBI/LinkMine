@@ -105,6 +105,8 @@ export default async function JobsRootPage({ searchParams }) {
         title,
         description,
         location,
+        country_code,
+        global_region,
         preferred_payment_type,
         urgency,
         listing_type,

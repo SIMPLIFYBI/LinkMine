@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { isValidCountryCode, isValidGlobalRegion } from "@/lib/geoOptions";
 
 export const runtime = "nodejs";
 
@@ -30,6 +31,8 @@ export async function POST(req) {
     "title",
     "description",
     "location",
+    "country_code",
+    "global_region",
     "preferred_payment_type",
     "urgency",
     "listing_type",
@@ -48,6 +51,14 @@ export async function POST(req) {
   // Validate required fields
   if (!payload.close_date) {
     return NextResponse.json({ ok: false, error: "close_date required" }, { status: 400 });
+  }
+
+  if (!payload.country_code || !isValidCountryCode(payload.country_code)) {
+    return NextResponse.json({ ok: false, error: "Valid country required" }, { status: 400 });
+  }
+
+  if (!payload.global_region || !isValidGlobalRegion(payload.global_region)) {
+    return NextResponse.json({ ok: false, error: "Valid global region required" }, { status: 400 });
   }
 
   // Sanitize status (server decides)
@@ -79,7 +90,7 @@ export async function POST(req) {
     .from("jobs")
     .insert(insert)
     .select(
-      "id, title, description, location, preferred_payment_type, urgency, listing_type, service_id, recipient_ids, company, budget, close_date, contact_name, contact_email, created_by, created_at"
+      "id, title, description, location, country_code, global_region, preferred_payment_type, urgency, listing_type, service_id, recipient_ids, company, budget, close_date, contact_name, contact_email, created_by, created_at"
     )
     .single();
 

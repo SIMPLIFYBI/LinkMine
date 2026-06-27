@@ -5,6 +5,8 @@ import NameSearch from "./NameSearch.client.jsx";
 import ServiceFilter from "./ServiceFilter.client.jsx";
 import ServiceSlugFilter from "./ServiceSlugFilter.client.jsx";
 import ProviderKindFilter from "@/app/consultants/ProviderKindFilter.client";
+import CountryFilter from "@/app/consultants/CountryFilter.client";
+import GlobalRegionFilter from "@/app/consultants/GlobalRegionFilter.client";
 import AddConsultantButton from "@/app/components/consultants/AddConsultantButton";
 import {
   siteMarketLabel as marketLabel,
@@ -18,6 +20,8 @@ export default function MobileHeroAndFilters({
   q,
   activeService,
   activeCategory,
+  activeCountry,
+  activeGlobalRegion,
   hasActive,
   consultantsCount
 }) {
@@ -30,7 +34,7 @@ export default function MobileHeroAndFilters({
     kind === "operational" ? "Operational Services" :
     kind === "professional" ? "Professional Services" :
     kind === "both" ? "Both" : "";
-  const anyActive = hasActive || !!kind;
+  const anyActive = hasActive || !!kind || !!activeCountry || !!activeGlobalRegion;
   const sheetRef = useRef(null);
   const marketName = marketLabel(market);
 
@@ -168,6 +172,8 @@ export default function MobileHeroAndFilters({
             {activeService && <span>Service {activeService.name} • </span>}
             {!activeService && activeCategory && <span>Category {activeCategory.name} • </span>}
             {kind && <span>Type {kindLabel} • </span>}
+            {activeCountry && <span>Country {activeCountry.label} • </span>}
+            {activeGlobalRegion && <span>Region {activeGlobalRegion.label} • </span>}
             <span>Market {marketName} • </span>
             <span>
               {consultantsCount} result{consultantsCount === 1 ? "" : "s"}
@@ -282,6 +288,14 @@ export default function MobileHeroAndFilters({
               <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Provider type</h2>
               <ProviderKindFilter />
             </div>
+            <div className="space-y-3">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Country</h2>
+              <CountryFilter />
+            </div>
+            <div className="space-y-3">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Global region</h2>
+              <GlobalRegionFilter />
+            </div>
 
             <div className="mt-4 flex flex-wrap gap-2 text-[11px] text-slate-300">
               {q && (
@@ -302,6 +316,16 @@ export default function MobileHeroAndFilters({
               {kind && (
                 <span className="rounded-full border border-fuchsia-400/30 bg-fuchsia-500/10 px-3 py-1 font-medium text-fuchsia-200">
                   Type: {kindLabel}
+                </span>
+              )}
+              {activeCountry && (
+                <span className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 font-medium text-cyan-200">
+                  Country: {activeCountry.label}
+                </span>
+              )}
+              {activeGlobalRegion && (
+                <span className="rounded-full border border-orange-400/30 bg-orange-500/10 px-3 py-1 font-medium text-orange-200">
+                  Region: {activeGlobalRegion.label}
                 </span>
               )}
               {anyActive && (
