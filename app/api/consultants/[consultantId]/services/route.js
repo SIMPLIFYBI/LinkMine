@@ -12,7 +12,7 @@ function getBearer(req) {
 export async function GET(req, { params }) {
   try {
     const sb = supabaseFromRequest(req);
-    const consultantId = params.consultantId;
+    const { consultantId } = await params;
     const { data: rows, error: e1 } = await sb
       .from("consultant_services")
       .select("service_id")
@@ -41,7 +41,7 @@ export async function POST(req, { params }) {
     const { data: auth } = await sb.auth.getUser(token);
     if (!auth?.user) return NextResponse.json({ ok: false, error: "Not signed in" }, { status: 401 });
 
-    const consultantId = params.consultantId;
+    const { consultantId } = await params;
     const body = await req.json().catch(() => ({}));
     let add = Array.isArray(body.add)
       ? body.add
@@ -72,7 +72,7 @@ export async function DELETE(req, { params }) {
     const { data: auth } = await sb.auth.getUser(token);
     if (!auth?.user) return NextResponse.json({ ok: false, error: "Not signed in" }, { status: 401 });
 
-    const consultantId = params.consultantId;
+    const { consultantId } = await params;
     const body = await req.json().catch(() => ({}));
     let remove = Array.isArray(body.remove)
       ? body.remove

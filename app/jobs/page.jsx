@@ -19,9 +19,9 @@ export async function generateMetadata({ searchParams }) {
   const { market } = await getResolvedSiteMarket();
   const requestedPage = Number.parseInt(sp?.page ?? "1", 10);
   const page = Number.isNaN(requestedPage) ? 1 : Math.max(1, requestedPage);
-  const boardLabel = market === "oil_gas" ? "Oil & Gas Jobs Board" : "Mining Jobs Board";
+  const boardLabel = market === "oil_gas" ? "Oil & Gas Jobs Board" : market === "both" ? "Mining & Oil & Gas Jobs Board" : "Mining Jobs Board";
   const title = page > 1 ? `${boardLabel} · Page ${page}` : boardLabel;
-  const description = `Browse open ${market === "oil_gas" ? "oil and gas" : "mining"} jobs and connect directly with consultants and contractors${
+  const description = `Browse open ${market === "oil_gas" ? "oil and gas" : market === "both" ? "mining and oil and gas" : "mining"} jobs and connect directly with consultants and contractors${
     page > 1 ? ` on page ${page}` : ""
   }.`;
   const canonical = buildJobsListingHref(page);
@@ -60,6 +60,18 @@ function getJobsContent(market) {
       pill: "Operator + contractor reach",
       alt: "Industrial operations hiring board",
       usePhoto: false,
+    };
+  }
+
+  if (market === "both") {
+    return {
+      theme: "signal",
+      title: "Mining & oil & gas jobs board",
+      subtitle: "Find and post roles across mining, subsurface, drilling, operations, facilities, and project delivery.",
+      label: "Cross-market demand",
+      pill: "Broader consultant reach",
+      alt: "Industrial project hiring board",
+      usePhoto: true,
     };
   }
 

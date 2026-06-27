@@ -23,8 +23,8 @@ export default function Header({ currentMarket = "mining", isAdmin = false }) {
         <div className="mx-auto flex h-14 max-w-screen-xl items-center gap-3 px-4">
           {/* Left */}
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <Logo className="select-none" />
-            {isAdmin ? <MarketToggle market={currentMarket} /> : null}
+            <Logo className="select-none" variant={currentMarket === "both" ? "split-both" : "default"} />
+            <MarketToggle market={currentMarket} />
           </div>
 
           {/* Center (desktop) */}

@@ -9,7 +9,7 @@ export default function Footer({ currentMarket = "mining" }) {
   const { theme } = useTheme();
   const isLight = theme === "light";
   const marketName = siteMarketLabel(currentMarket);
-  const industryLabel = currentMarket === "oil_gas" ? "oil & gas" : "mining";
+  const industryLabel = currentMarket === "oil_gas" ? "oil & gas" : currentMarket === "both" ? "mining and oil & gas" : "mining";
 
   return (
     <footer

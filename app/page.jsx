@@ -32,6 +32,23 @@ function getHomeCopy(market) {
     };
   }
 
+  if (market === "both") {
+    return {
+      title: "YouMine — Find mining and oil & gas consultants fast",
+      description:
+        "YouMine connects mining and oil & gas teams with trusted consultants and contractors. Browse services, view portfolios, and contact experts directly.",
+      heroAlt: "YouMine — consultants and contractors across mining and oil and gas",
+      heroTitle: "Match with the right industry expert today.",
+      heroDescription:
+        "Discover trusted consultants and contractors across mining, oil & gas, operations, project delivery, and specialist technical services.",
+      overviewTitle: "Connect industry teams with trusted contractors & consultants",
+      overviewDescription:
+        "YouMine helps mining and oil & gas teams find qualified contractors and consultants fast — with portfolios, verified business details, service categories, and Google-linked profiles.",
+      featuredTitle: "Featured consultants across both markets",
+      industryLabel: "mining and oil & gas",
+    };
+  }
+
   return {
     title: "YouMine — Find mining consultants and contractors fast",
     description:
@@ -73,9 +90,79 @@ export async function generateMetadata() {
   };
 }
 
+function interleaveLists(lists) {
+  const merged = [];
+  const seen = new Set();
+  let index = 0;
+
+  while (true) {
+    let foundRow = false;
+    for (const list of lists) {
+      const row = list[index];
+      if (!row) continue;
+      foundRow = true;
+      if (seen.has(row.id)) continue;
+      seen.add(row.id);
+      merged.push(row);
+    }
+    if (!foundRow) break;
+    index += 1;
+  }
+
+  return merged;
+}
+
 async function getStatsAndFeatured(market) {
   try {
     const sb = supabasePublicServer();
+
+    if (market === "both") {
+      const [{ data: miningFeatured = [] }, { data: oilGasFeatured = [] }, { data: allCategories = [] }, { data: services = [] }] = await Promise.all([
+        sb.rpc("get_consultants_directory_page", {
+          p_page: 1,
+          p_page_size: 24,
+          p_seed_bucket: "home-featured",
+          p_market: "mining",
+        }),
+        sb.rpc("get_consultants_directory_page", {
+          p_page: 1,
+          p_page_size: 24,
+          p_seed_bucket: "home-featured",
+          p_market: "oil_gas",
+        }),
+        sb
+          .from("service_categories")
+          .select("id, name, slug, market")
+          .in("market", ["mining", "oil_gas"])
+          .order("position", { ascending: true })
+          .order("name", { ascending: true }),
+        sb
+          .from("services")
+          .select("id, name, slug, category_id, market")
+          .in("market", ["mining", "oil_gas"])
+          .order("name", { ascending: true }),
+      ]);
+
+      const featured = interleaveLists([
+        (miningFeatured || []).map(({ has_next, ...consultant }) => consultant),
+        (oilGasFeatured || []).map(({ has_next, ...consultant }) => consultant),
+      ]);
+
+      const searchCategories = allCategories.map((category) => ({
+        id: category.id,
+        name: category.name,
+        slug: category.slug,
+        services: services
+          .filter((service) => service.category_id === category.id)
+          .map((service) => ({
+            id: service.id,
+            name: service.name,
+            slug: service.slug,
+          })),
+      }));
+
+      return { featured, categories: allCategories.slice(0, 9), searchCategories };
+    }
 
     const { data: featuredRows = [] } = await sb.rpc("get_consultants_directory_page", {
       p_page: 1,

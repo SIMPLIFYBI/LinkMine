@@ -27,6 +27,7 @@ export default async function EditConsultantPage({ params }) {
       company,
       location,
       contact_email,
+      website_url,
       metadata,
       claimed_by,
       linkedin_url,

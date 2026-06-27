@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 
 export async function POST(req) {
@@ -16,7 +16,7 @@ export async function POST(req) {
 
     stage.push({ step: "source_ignored_no_column", receivedSource });
 
-    const jar = cookies();
+    const jar = await cookies();
     let anonId = bodyAnon || jar.get("ml_anon_id")?.value || null;
     if (!anonId) {
       anonId = crypto?.randomUUID?.() || Math.random().toString(36).slice(2);

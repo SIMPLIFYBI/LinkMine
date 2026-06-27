@@ -73,6 +73,36 @@ function formatDateLabel(value) {
   }
 }
 
+function formatTimeLabel(value) {
+  if (!value) return "Select time";
+  const [hoursText, minutesText] = String(value).split(":");
+  const hours = Number(hoursText);
+  const minutes = Number(minutesText);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return value;
+
+  try {
+    const date = new Date(2000, 0, 1, hours, minutes);
+    return new Intl.DateTimeFormat("en-AU", {
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date);
+  } catch {
+    return value;
+  }
+}
+
+function offsetTimeValue(value, minuteDelta) {
+  if (!value) return "";
+  const [hoursText, minutesText] = String(value).split(":");
+  const hours = Number(hoursText);
+  const minutes = Number(minutesText);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return value;
+
+  const totalMinutes = (hours * 60) + minutes + minuteDelta;
+  const wrappedMinutes = ((totalMinutes % 1440) + 1440) % 1440;
+  return `${pad2(Math.floor(wrappedMinutes / 60))}:${pad2(wrappedMinutes % 60)}`;
+}
+
 function DatePickerField({ label, value, onChange, tone = "dark" }) {
   const surfaceClass = tone === "dark"
     ? "border-white/10 bg-slate-950/60"
@@ -97,6 +127,74 @@ function DatePickerField({ label, value, onChange, tone = "dark" }) {
         />
       </span>
     </label>
+  );
+}
+
+function TimePickerField({ label, value, onChange, tone = "dark" }) {
+  const inputRef = useRef(null);
+  const surfaceClass = tone === "dark"
+    ? "border-white/10 bg-slate-950/60"
+    : "border-white/10 bg-white/5";
+
+  function emitValue(nextValue) {
+    onChange({ target: { value: nextValue } });
+  }
+
+  function openPicker() {
+    if (!inputRef.current) return;
+    if (typeof inputRef.current.showPicker === "function") {
+      inputRef.current.showPicker();
+      return;
+    }
+    inputRef.current.focus();
+    inputRef.current.click();
+  }
+
+  return (
+    <div>
+      <span className="block text-sm text-slate-200">{label}</span>
+      <div className={classNames("relative mt-1 flex min-h-[52px] items-center justify-between overflow-hidden rounded-xl border px-3 py-3", surfaceClass)}>
+        <div>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Session time</div>
+          <div className={classNames("mt-1 text-sm font-semibold", value ? "text-white" : "text-slate-400")}>
+            {formatTimeLabel(value)}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={openPicker}
+          className="relative z-10 inline-flex items-center rounded-full border border-sky-300/20 bg-sky-400/10 px-3 py-1 text-xs font-semibold text-sky-100 hover:bg-sky-400/20"
+        >
+          Pick
+        </button>
+        <input
+          ref={inputRef}
+          type="time"
+          step="900"
+          value={value}
+          onChange={onChange}
+          className="absolute inset-0 cursor-pointer opacity-0"
+        />
+      </div>
+      <div className="mt-2 flex gap-2">
+        <button
+          type="button"
+          onClick={() => emitValue(offsetTimeValue(value, -15))}
+          disabled={!value}
+          className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-200 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          -15m
+        </button>
+        <button
+          type="button"
+          onClick={() => emitValue(offsetTimeValue(value, 15))}
+          disabled={!value}
+          className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-200 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          +15m
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -986,14 +1084,8 @@ export default function CourseEditorModal({
 
                             <div className="grid gap-4 sm:grid-cols-3">
                               <DatePickerField label="Date" value={nDate} onChange={(e) => setNDate(e.target.value)} />
-                              <div>
-                                <label className="block text-sm text-slate-200">Start</label>
-                                <input type="time" className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 p-3 text-white" value={nStart} onChange={(e) => setNStart(e.target.value)} />
-                              </div>
-                              <div>
-                                <label className="block text-sm text-slate-200">End</label>
-                                <input type="time" className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 p-3 text-white" value={nEnd} onChange={(e) => setNEnd(e.target.value)} />
-                              </div>
+                              <TimePickerField label="Start" value={nStart} onChange={(e) => setNStart(e.target.value)} />
+                              <TimePickerField label="End" value={nEnd} onChange={(e) => setNEnd(e.target.value)} />
                             </div>
 
                             <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -1122,14 +1214,8 @@ export default function CourseEditorModal({
 
                                     <div className="grid gap-4 sm:grid-cols-3">
                                       <DatePickerField label="Date" value={sDate} onChange={(e) => setSDate(e.target.value)} tone="light" />
-                                      <div>
-                                        <label className="block text-sm text-slate-200">Start</label>
-                                        <input type="time" className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" value={sStart} onChange={(e) => setSStart(e.target.value)} />
-                                      </div>
-                                      <div>
-                                        <label className="block text-sm text-slate-200">End</label>
-                                        <input type="time" className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" value={sEnd} onChange={(e) => setSEnd(e.target.value)} />
-                                      </div>
+                                      <TimePickerField label="Start" value={sStart} onChange={(e) => setSStart(e.target.value)} tone="light" />
+                                      <TimePickerField label="End" value={sEnd} onChange={(e) => setSEnd(e.target.value)} tone="light" />
                                     </div>
 
                                     <div className="mt-4 grid gap-4 sm:grid-cols-2">

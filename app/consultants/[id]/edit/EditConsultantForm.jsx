@@ -64,6 +64,7 @@ export default function EditConsultantForm({ consultant }) {
       : (consultant.display_name ?? ""),
     location: consultant.location ?? "",
     contact_email: consultant.contact_email ?? "",
+    website_url: consultant.website_url ?? "",
     bio: consultant.bio ?? "",
     linkedin_url: consultant.linkedin_url ?? "",
     facebook_url: consultant.facebook_url ?? "",
@@ -103,6 +104,12 @@ export default function EditConsultantForm({ consultant }) {
       instagram: /^https:\/\/([a-z0-9-]+\.)*instagram\.com\/.+/i,
     };
     return patterns[network].test(v);
+  }
+
+  function isValidWebsiteUrl(value) {
+    const v = String(value || "").trim();
+    if (!v) return true;
+    return /^https:\/\//i.test(v);
   }
 
   async function handleLogoFile(file) {
@@ -171,6 +178,15 @@ export default function EditConsultantForm({ consultant }) {
     }
 
     const placeId = String(form.place_id || "").trim();
+    if (form.website_url && !isValidWebsiteUrl(form.website_url)) {
+      setMessage({
+        type: "error",
+        text: "Website URL must be a full https URL.",
+      });
+      setSaving(false);
+      return;
+    }
+
     if (placeId && placeId.length < 10) {
       setMessage({
         type: "error",
@@ -193,6 +209,7 @@ export default function EditConsultantForm({ consultant }) {
       company: companyFinal,
       location: form.location.trim(),
       contact_email: form.contact_email.trim(),
+      website_url: form.website_url.trim() || null,
       bio: form.bio.trim(),
       linkedin_url: form.linkedin_url.trim() || null,
       facebook_url: form.facebook_url.trim() || null,
@@ -248,6 +265,12 @@ export default function EditConsultantForm({ consultant }) {
           </div>
           <Field label="Location" value={form.location} onChange={handleChange("location")} />
           <Field label="Contact email" type="email" value={form.contact_email} onChange={handleChange("contact_email")} />
+          <Field
+            label="Website"
+            placeholder="https://your-site.example.com"
+            value={form.website_url}
+            onChange={handleChange("website_url")}
+          />
           <div className="md:col-span-2">
             <Field
               label="Bio"

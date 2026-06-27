@@ -52,18 +52,35 @@ const getConsultantsDirectoryReferenceData = unstable_cache(
     const sb = supabasePublicServer();
     const marketDb = normaliseMarketParam(market);
 
+    const marketFilter = marketDb === "both"
+      ? ["mining", "oil_gas"]
+      : marketDb;
+
     const [{ data: categories = [] }, { data: services = [] }] = await Promise.all([
-      sb
-        .from("service_categories")
-        .select("id, name, slug, market")
-        .eq("market", marketDb)
-        .order("position", { ascending: true })
-        .order("name", { ascending: true }),
-      sb
-        .from("services")
-        .select("id, name, slug, category_id, market")
-        .eq("market", marketDb)
-        .order("name", { ascending: true }),
+      typeof marketFilter === "string"
+        ? sb
+            .from("service_categories")
+            .select("id, name, slug, market")
+            .eq("market", marketFilter)
+            .order("position", { ascending: true })
+            .order("name", { ascending: true })
+        : sb
+            .from("service_categories")
+            .select("id, name, slug, market")
+            .in("market", marketFilter)
+            .order("position", { ascending: true })
+            .order("name", { ascending: true }),
+      typeof marketFilter === "string"
+        ? sb
+            .from("services")
+            .select("id, name, slug, category_id, market")
+            .eq("market", marketFilter)
+            .order("name", { ascending: true })
+        : sb
+            .from("services")
+            .select("id, name, slug, category_id, market")
+            .in("market", marketFilter)
+            .order("name", { ascending: true }),
     ]);
 
     return { categories, services };
@@ -76,6 +93,65 @@ async function getConsultantsDirectoryPageViaRpc(
   sb,
   { market, serviceSlug, categorySlug, q, providerKind, page, seed }
 ) {
+  if (normaliseMarketParam(market) === "both") {
+    const combinedPageSize = (page * PAGE_SIZE) + PAGE_SIZE;
+    const params = {
+      p_service_slug: serviceSlug || null,
+      p_category_slug: categorySlug || null,
+      p_q: q || null,
+      p_provider_kind: providerKind || null,
+      p_page: 1,
+      p_page_size: combinedPageSize,
+      p_seed_bucket: String(seed),
+    };
+
+    const [miningResult, oilGasResult] = await Promise.all([
+      sb.rpc("get_consultants_directory_page", {
+        ...params,
+        p_market: "mining",
+      }),
+      sb.rpc("get_consultants_directory_page", {
+        ...params,
+        p_market: "oil_gas",
+      }),
+    ]);
+
+    if (miningResult.error || oilGasResult.error) {
+      const error = miningResult.error || oilGasResult.error;
+      console.error("consultants directory rpc error:", error);
+      throw new Error(error.message || "Could not load consultants directory.");
+    }
+
+    const rowsByMarket = [miningResult.data, oilGasResult.data].map((resultRows) =>
+      asArray(resultRows).map(({ has_next, ...consultant }) => consultant)
+    );
+
+    const merged = [];
+    const seen = new Set();
+    let index = 0;
+
+    while (true) {
+      let foundRow = false;
+      for (const rows of rowsByMarket) {
+        const consultant = rows[index];
+        if (!consultant) continue;
+        foundRow = true;
+        if (seen.has(consultant.id)) continue;
+        seen.add(consultant.id);
+        merged.push(consultant);
+      }
+      if (!foundRow) break;
+      index += 1;
+    }
+
+    const startIndex = (page - 1) * PAGE_SIZE;
+    const endIndex = startIndex + PAGE_SIZE;
+    return {
+      consultants: merged.slice(startIndex, endIndex),
+      hasNext: merged.length > endIndex || rowsByMarket.some((rows) => rows.length >= combinedPageSize),
+    };
+  }
+
   const { data, error } = await sb.rpc("get_consultants_directory_page", {
     p_service_slug: serviceSlug || null,
     p_category_slug: categorySlug || null,

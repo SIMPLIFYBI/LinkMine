@@ -205,13 +205,18 @@ export default function ConsultantServicesManager({ consultantId, canEdit = fals
                               <button
                                 disabled={selected || saving}
                                 onClick={() => addService(s.id)}
-                                className={`w-full text-left rounded-md px-2 py-1.5 text-sm ${
+                                className={`flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm ${
                                   selected
                                     ? "text-slate-400 bg-white/5 cursor-not-allowed"
                                     : "text-slate-200 hover:bg-white/5 hover:text-white"
                                 }`}
                               >
-                                {s.name}
+                                <span className="min-w-0 truncate">{s.name}</span>
+                                {selected && (
+                                  <span className="inline-flex items-center gap-1 text-emerald-300" aria-label="Already added">
+                                    <span aria-hidden="true">✓</span>
+                                  </span>
+                                )}
                               </button>
                             </li>
                           );

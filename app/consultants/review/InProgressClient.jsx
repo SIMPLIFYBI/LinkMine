@@ -320,30 +320,30 @@ export default function InProgressClient() {
       {/* Modal overlay for the form */}
       {formOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-3 pt-4 sm:items-center sm:p-6"
           aria-modal="true"
           role="dialog"
         >
           <div
             className="
-              w-full max-w-full sm:max-w-3xl
-              mx-4 sm:mx-6
-              rounded-lg border border-white/10 bg-slate-900 shadow-xl
+              w-full max-w-3xl
+              rounded-2xl border border-white/10 bg-slate-900 shadow-xl
               p-4 sm:p-5
-              max-h-[90vh] overflow-y-auto
+              max-h-[calc(100dvh-1rem)] overflow-y-auto
+              sm:max-h-[90vh]
             "
           >
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <h2 className="text-base sm:text-sm font-semibold text-slate-200">
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-base font-semibold text-slate-200">
                 {editing?.id ? "Edit consultant" : "Create draft"}
               </h2>
               <button
                 type="button"
                 onClick={closeForm}
-                className="self-start sm:self-auto rounded bg-slate-700/50 px-3 py-1 text-xs text-slate-200 hover:bg-slate-700"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-800/80 text-lg leading-none text-slate-200 hover:bg-slate-700"
                 aria-label="Close"
               >
-                Close
+                <span aria-hidden="true">×</span>
               </button>
             </div>
 
