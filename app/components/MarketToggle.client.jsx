@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useTransition } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useTheme } from "@/app/components/ThemeProvider";
 import {
@@ -11,9 +11,10 @@ import {
 } from "@/lib/siteMarket";
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
-const TOGGLE_OPTIONS = [
-  { value: "mining", shortLabel: "Mine" },
-  { value: "oil_gas", shortLabel: "O&G" },
+const NAVIGATION_ANIMATION_MS = 180;
+const MARKET_OPTIONS = [
+  { value: "mining", label: "Mining", mobileLabel: "Mine" },
+  { value: "oil_gas", label: "Oil & Gas", mobileLabel: "O&G" },
 ];
 
 function writeMarketCookie(value) {
@@ -27,24 +28,41 @@ export default function MarketToggle({ market = "mining" }) {
   const searchParams = useSearchParams();
   const { theme } = useTheme();
   const [isPending, startTransition] = useTransition();
+  const [visualMarket, setVisualMarket] = useState(currentMarket);
+  const navigationTimerRef = useRef(null);
   const isLight = theme === "light";
+  const bothSelected = visualMarket === "both";
+  const miningActive = visualMarket === "mining" || bothSelected;
+  const oilGasActive = visualMarket === "oil_gas" || bothSelected;
+
+  useEffect(() => {
+    setVisualMarket(currentMarket);
+  }, [currentMarket]);
+
+  useEffect(() => {
+    return () => {
+      if (navigationTimerRef.current) {
+        window.clearTimeout(navigationTimerRef.current);
+      }
+    };
+  }, []);
+
+  const navigateWithAnimationDelay = useCallback((nextUrl) => {
+    if (navigationTimerRef.current) {
+      window.clearTimeout(navigationTimerRef.current);
+    }
+
+    navigationTimerRef.current = window.setTimeout(() => {
+      window.location.assign(nextUrl);
+    }, NAVIGATION_ANIMATION_MS);
+  }, []);
 
   const handleSwitch = useCallback((marketValue) => {
-    const resolvedMarket = (() => {
-      if (currentMarket === "both") {
-        return marketValue === "mining" ? "oil_gas" : "mining";
-      }
+    if (marketValue === visualMarket) return;
 
-      if (currentMarket === marketValue) {
-        return currentMarket;
-      }
+    setVisualMarket(marketValue);
 
-      return "both";
-    })();
-
-    if (resolvedMarket === currentMarket) return;
-
-    writeMarketCookie(resolvedMarket);
+    writeMarketCookie(marketValue);
 
     const currentPath = pathname || "/";
 
@@ -54,58 +72,114 @@ export default function MarketToggle({ market = "mining" }) {
       params.delete("category");
       params.delete("page");
 
-      const marketValue = siteMarketToUrlValue(resolvedMarket);
-      if (marketValue === "mining") params.delete("market");
-      else params.set("market", marketValue);
+      const nextMarketValue = siteMarketToUrlValue(marketValue);
+      if (nextMarketValue === "mining") params.delete("market");
+      else params.set("market", nextMarketValue);
 
       const query = params.toString();
       const nextUrl = query ? `${currentPath}?${query}` : currentPath;
-      window.location.assign(nextUrl);
+      navigateWithAnimationDelay(nextUrl);
       return;
     }
 
     const currentQuery = searchParams?.toString();
     const nextUrl = currentQuery ? `${currentPath}?${currentQuery}` : currentPath;
     startTransition(() => {
-      window.location.assign(nextUrl);
+      navigateWithAnimationDelay(nextUrl);
     });
-  }, [currentMarket, pathname, searchParams, startTransition]);
+  }, [navigateWithAnimationDelay, pathname, searchParams, startTransition, visualMarket]);
 
   return (
     <div
       className={[
-        "inline-grid grid-cols-2 items-center gap-1 rounded-full border p-1 shadow-inner",
+        "relative inline-grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-0.5 rounded-full border p-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_18px_40px_-28px_rgba(15,23,42,0.85)] backdrop-blur-xl",
         isLight
-          ? "border-slate-200/80 bg-white/85"
+          ? "border-slate-200/80 bg-white/80"
           : "border-white/12 bg-slate-950/55",
       ].join(" ")}
-      aria-label="Active market"
-      role="group"
+      aria-label="Select market"
+      role="radiogroup"
     >
-      {TOGGLE_OPTIONS.map(({ value, shortLabel }) => {
-        const active = currentMarket === "both" || currentMarket === value;
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-0.5"
+      >
+        <span
+          className={[
+            "rounded-full bg-[linear-gradient(135deg,rgba(56,189,248,0.98)_0%,rgba(99,102,241,0.95)_100%)] shadow-[0_16px_30px_-18px_rgba(56,189,248,0.92)] transition-all duration-300 ease-out",
+            miningActive ? "scale-100 opacity-100" : "scale-x-0 scale-y-90 opacity-0",
+            "origin-right",
+          ].join(" ")}
+        />
+        <span className="w-4 sm:w-5" />
+        <span
+          className={[
+            "rounded-full bg-[linear-gradient(135deg,rgba(251,191,36,0.98)_0%,rgba(249,115,22,0.98)_55%,rgba(244,63,94,0.95)_100%)] shadow-[0_16px_30px_-18px_rgba(249,115,22,0.92)] transition-all duration-300 ease-out",
+            oilGasActive ? "scale-100 opacity-100" : "scale-x-0 scale-y-90 opacity-0",
+            "origin-left",
+          ].join(" ")}
+        />
+      </div>
+      {MARKET_OPTIONS.map(({ value, label, mobileLabel }, index) => {
+        const active = visualMarket === value;
+        const blendedActive = active || bothSelected;
         return (
-          <button
-            key={value}
-            type="button"
-            onClick={() => handleSwitch(value)}
-            disabled={isPending}
-            className={[
-              "rounded-full px-2 py-1.5 text-[10px] font-semibold transition disabled:cursor-wait disabled:opacity-70 sm:px-2.5 sm:text-[11px]",
-              active
-                ? value === "oil_gas"
-                  ? "bg-[linear-gradient(90deg,#fbbf24_0%,#f97316_56%,#f43f5e_100%)] text-slate-950 shadow-[0_8px_18px_-10px_rgba(249,115,22,0.95)]"
-                  : "bg-[linear-gradient(90deg,#38bdf8_0%,#6366f1_100%)] text-slate-950 shadow-[0_8px_18px_-10px_rgba(56,189,248,0.95)]"
-                : isLight
-                ? "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
-                : "text-slate-300 hover:bg-white/10 hover:text-white",
-            ].join(" ")}
-            aria-pressed={active}
-            aria-label={`${siteMarketLabel(value)}${currentMarket === "both" ? " selected" : active ? " selected" : " not selected"}`}
-          >
-            <span className="hidden sm:inline">{siteMarketLabel(value)}</span>
-            <span className="sm:hidden">{shortLabel}</span>
-          </button>
+          <Fragment key={value}>
+            <button
+              type="button"
+              onClick={() => handleSwitch(value)}
+              disabled={isPending}
+              role="radio"
+              aria-checked={active}
+              className={[
+                "group relative z-10 flex h-6 min-w-[4rem] items-center justify-center overflow-hidden rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-[0.02em] transition-all duration-200 disabled:cursor-wait disabled:opacity-70 sm:h-6 sm:px-2.5 sm:text-[11px]",
+                blendedActive
+                  ? "text-slate-950"
+                  : isLight
+                  ? "text-slate-600 hover:bg-slate-100/90 hover:text-slate-950"
+                  : "text-slate-300 hover:bg-white/10 hover:text-white",
+                bothSelected && index === 0 ? "pr-4" : "",
+                bothSelected && index === 1 ? "pl-4" : "",
+              ].join(" ")}
+              aria-label={`${label}${active ? " selected" : bothSelected ? " included in both markets" : " not selected"}`}
+            >
+              <span
+                aria-hidden="true"
+                className={[
+                  "pointer-events-none absolute inset-[1px] rounded-full transition-opacity duration-200",
+                  blendedActive ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+                  isLight ? "bg-white/14" : "bg-white/8",
+                ].join(" ")}
+              />
+              <span className="relative hidden sm:inline">{siteMarketLabel(value)}</span>
+              <span className="relative sm:hidden">{mobileLabel}</span>
+            </button>
+            {index === 0 ? (
+              <button
+                type="button"
+                onClick={() => handleSwitch("both")}
+                disabled={isPending}
+                role="radio"
+                aria-checked={bothSelected}
+                aria-label={`Both markets${bothSelected ? " selected" : " not selected"}`}
+                className={[
+                  "group relative -mx-0.5 z-10 flex h-6 w-4 items-center justify-center rounded-full transition-all duration-200 disabled:cursor-wait disabled:opacity-70 sm:h-6 sm:w-5",
+                  bothSelected ? "scale-105" : "hover:scale-105",
+                ].join(" ")}
+              >
+                <span
+                  className={[
+                    "block size-2 rounded-full border transition-all duration-200 sm:size-2.5",
+                    bothSelected
+                      ? "border-white/70 bg-white shadow-[0_0_0_4px_rgba(255,255,255,0.18),0_0_18px_rgba(255,255,255,0.55)]"
+                      : isLight
+                      ? "border-slate-400/70 bg-slate-500/80 group-hover:border-slate-500 group-hover:bg-slate-700"
+                      : "border-white/35 bg-white/45 group-hover:border-white/55 group-hover:bg-white/65",
+                  ].join(" ")}
+                />
+              </button>
+            ) : null}
+          </Fragment>
         );
       })}
     </div>

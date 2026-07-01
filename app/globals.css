@@ -58,6 +58,16 @@ body[data-market="oil_gas"] {
   --site-market-accent: linear-gradient(90deg, transparent 0%, rgba(251, 191, 36, 0.52) 34%, rgba(249, 115, 22, 0.58) 66%, transparent 100%);
 }
 
+body[data-market="both"] {
+  --app-bg-overlay:
+    radial-gradient(circle at 16% 16%, rgba(56, 189, 248, 0.17), transparent 24%),
+    radial-gradient(circle at 50% 10%, rgba(99, 102, 241, 0.14), transparent 22%),
+    radial-gradient(circle at 82% 14%, rgba(249, 115, 22, 0.16), transparent 24%),
+    radial-gradient(circle at 60% 80%, rgba(244, 63, 94, 0.11), transparent 30%),
+    linear-gradient(160deg, #08131e 0%, #172131 38%, #2b1d1e 68%, #140d12 100%);
+  --site-market-accent: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.46) 18%, rgba(99, 102, 241, 0.52) 42%, rgba(249, 115, 22, 0.54) 68%, rgba(244, 63, 94, 0.42) 86%, transparent 100%);
+}
+
 body {
   background-color: var(--app-bg-solid);
   background-image: var(--app-bg-vignette), var(--app-bg-overlay);
@@ -99,6 +109,15 @@ html[data-theme="light"] body[data-market="oil_gas"] {
     radial-gradient(circle at 84% 12%, rgba(249, 115, 22, 0.14), transparent 24%),
     radial-gradient(circle at 54% 82%, rgba(244, 63, 94, 0.12), transparent 30%),
     linear-gradient(180deg, #fff9f1 0%, #fff3e5 42%, #f8eadf 100%);
+}
+
+html[data-theme="light"] body[data-market="both"] {
+  --app-bg-overlay:
+    radial-gradient(circle at 14% 18%, rgba(56, 189, 248, 0.14), transparent 28%),
+    radial-gradient(circle at 50% 8%, rgba(99, 102, 241, 0.12), transparent 22%),
+    radial-gradient(circle at 84% 12%, rgba(249, 115, 22, 0.14), transparent 24%),
+    radial-gradient(circle at 54% 82%, rgba(244, 63, 94, 0.1), transparent 30%),
+    linear-gradient(180deg, #fbfcff 0%, #f7f0f8 44%, #f8ede7 100%);
 }
 
 .site-market-logo {
@@ -194,6 +213,13 @@ html[data-theme="light"] :is(input, textarea)::placeholder {
   .site-market-shell[data-market="oil_gas"],
   .consultants-market-shell[data-market="oil_gas"] {
     --consultants-accent-rgb: 251 191 36;
+    --consultants-accent-soft-rgb: 249 115 22;
+    --consultants-warm-rgb: 244 63 94;
+  }
+
+  .site-market-shell[data-market="both"],
+  .consultants-market-shell[data-market="both"] {
+    --consultants-accent-rgb: 56 189 248;
     --consultants-accent-soft-rgb: 249 115 22;
     --consultants-warm-rgb: 244 63 94;
   }
