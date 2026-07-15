@@ -4,12 +4,15 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { supabase } from "@/lib/supabaseClient";
 import { isBlockedEmail } from "@/lib/blockedUsers";
 
-const AuthCtx = createContext({ session: null, user: null, token: null, loading: true });
+const AUTH_CONNECTIVITY_ERROR = "Unable to reach Supabase authentication. Check the configured Supabase URL and your network connection.";
+
+const AuthCtx = createContext({ session: null, user: null, token: null, loading: true, authError: "" });
 export function useAuth() { return useContext(AuthCtx); }
 
 export default function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState("");
   const fetchPatched = useRef(false);
   const blockedHandled = useRef(false);
 
@@ -22,6 +25,11 @@ export default function AuthProvider({ children }) {
         const { data } = await supabase.auth.getSession();
         if (!mounted) return;
         setSession(data?.session ?? null);
+        setAuthError("");
+      } catch {
+        if (!mounted) return;
+        setSession(null);
+        setAuthError(AUTH_CONNECTIVITY_ERROR);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -63,12 +71,19 @@ export default function AuthProvider({ children }) {
     let currentToken = null;
 
     const syncToken = async () => {
-      const { data } = await supabase.auth.getSession();
-      currentToken = data?.session?.access_token || null;
+      try {
+        const { data } = await supabase.auth.getSession();
+        currentToken = data?.session?.access_token || null;
+        setAuthError("");
+      } catch {
+        currentToken = null;
+        setAuthError((prev) => prev || AUTH_CONNECTIVITY_ERROR);
+      }
     };
     syncToken();
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
       currentToken = sess?.access_token || null;
+      setAuthError("");
     });
 
     const origFetch = window.fetch.bind(window);
@@ -97,8 +112,8 @@ export default function AuthProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ session, user: session?.user ?? null, token: session?.access_token ?? null, loading }),
-    [session, loading]
+    () => ({ session, user: session?.user ?? null, token: session?.access_token ?? null, loading, authError }),
+    [session, loading, authError]
   );
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;

@@ -24,7 +24,7 @@ export default function Tabs() {
 
   return (
     <div className="border-b border-white/10">
-      <nav className="flex gap-4">
+      <nav className="flex flex-wrap gap-4">
         {tabs.map((t) => {
           const isActive = active === t.key;
           return (
@@ -43,6 +43,13 @@ export default function Tabs() {
             </Link>
           );
         })}
+
+        <Link
+          href="/marketplace"
+          className="px-3 py-2 text-sm text-sky-300 transition-colors hover:text-sky-200"
+        >
+          Marketplace
+        </Link>
       </nav>
     </div>
   );
