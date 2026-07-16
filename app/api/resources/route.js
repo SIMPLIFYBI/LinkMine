@@ -25,12 +25,8 @@ function asNullablePositiveInteger(value) {
 
 export async function GET(req) {
   const sb = await supabaseServerClient();
-  const { user, userId } = await getResourceAuthContext(sb);
-  if (!user) {
-    return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
-  }
-
-  const { canCreateResources } = await getApprovedConsultantOwnership(sb, userId);
+  const { user, userId, isAdmin } = await getResourceAuthContext(sb);
+  const { canCreateResources } = user ? await getApprovedConsultantOwnership(sb, userId) : { canCreateResources: false };
 
   const url = new URL(req.url);
   const mineOnly = url.searchParams.get("mine") === "1";
@@ -38,14 +34,23 @@ export async function GET(req) {
   const status = cleanText(url.searchParams.get("status"));
   const categoryId = cleanText(url.searchParams.get("categoryId"));
 
+  if (mineOnly && !user) {
+    return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
+  }
+
   let query = sb
     .from("resources")
     .select(DEFAULT_RESOURCE_SELECT)
     .order("created_at", { ascending: false });
 
-  if (mineOnly) query = query.eq("owner_user_id", userId);
+  if (mineOnly) {
+    query = query.eq("owner_user_id", userId);
+    if (isValidResourceStatus(status)) query = query.eq("status", status);
+  } else {
+    query = query.eq("status", isAdmin && isValidResourceStatus(status) ? status : "approved");
+  }
+
   if (isValidResourceType(resourceType)) query = query.eq("resource_type", resourceType);
-  if (isValidResourceStatus(status)) query = query.eq("status", status);
   if (categoryId) query = query.eq("category_id", categoryId);
 
   const { data, error } = await query;

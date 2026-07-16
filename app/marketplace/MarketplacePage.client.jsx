@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useAuth } from "@/app/components/AuthProvider";
 import { formatResourceBytes } from "@/lib/resourceHub";
 
@@ -110,7 +110,7 @@ function MarketplaceNavIcon({ name, active }) {
 
   if (name === "discover") {
     return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-7 w-7" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 11.5 12 4l9 7.5" />
         <path d="M6.5 10.5V20h11V10.5" />
       </svg>
@@ -119,7 +119,7 @@ function MarketplaceNavIcon({ name, active }) {
 
   if (name === "submit") {
     return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-7 w-7" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
         <rect x="4" y="5" width="16" height="14" rx="2.5" />
         <path d="M8 9h8" />
         <path d="M8 13h5" />
@@ -131,7 +131,7 @@ function MarketplaceNavIcon({ name, active }) {
 
   if (name === "requests") {
     return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-7 w-7" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
         <path d="M7 8h10" />
         <path d="M7 12h7" />
         <path d="M7 16h6" />
@@ -142,7 +142,7 @@ function MarketplaceNavIcon({ name, active }) {
 
   if (name === "review") {
     return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-7 w-7" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
         <path d="m9 12 2 2 4-5" />
         <path d="M12 3l7 3v5c0 5-3.4 8.4-7 10-3.6-1.6-7-5-7-10V6l7-3Z" />
       </svg>
@@ -151,7 +151,7 @@ function MarketplaceNavIcon({ name, active }) {
 
   if (name === "library") {
     return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-7 w-7" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
         <path d="M5.5 5.5h3v13h-3z" />
         <path d="M10.5 4.5h3v14h-3z" />
         <path d="m16.5 6 2.5-.5 1.5 12.5-2.5.5z" />
@@ -161,7 +161,7 @@ function MarketplaceNavIcon({ name, active }) {
 
   if (name === "orders") {
     return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-7 w-7" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
         <path d="M4 7.5h16" />
         <rect x="3" y="5" width="18" height="14" rx="3" />
         <path d="M7 15h4" />
@@ -172,7 +172,7 @@ function MarketplaceNavIcon({ name, active }) {
 
   if (name === "payouts") {
     return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-7 w-7" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 3v18" />
         <path d="M16 7.5c0-1.7-1.8-3-4-3s-4 1.3-4 3 1.8 3 4 3 4 1.3 4 3-1.8 3-4 3-4-1.3-4-3" />
       </svg>
@@ -188,7 +188,7 @@ function SidebarTabButton({ active, label, icon, onClick }) {
       type="button"
       onClick={onClick}
       className={[
-        "group relative flex w-full flex-col items-center justify-center gap-2 rounded-[18px] border px-2 py-3 text-center transition",
+        "group relative flex w-full flex-col items-center justify-center gap-1.5 rounded-[16px] border px-1.5 py-2.5 text-center transition",
         active
           ? "border-slate-200/80 bg-white text-sky-600 shadow-[0_18px_45px_-34px_rgba(255,255,255,0.95)]"
           : "border-transparent bg-transparent text-slate-300 hover:border-white/10 hover:bg-white/[0.05] hover:text-white",
@@ -196,14 +196,14 @@ function SidebarTabButton({ active, label, icon, onClick }) {
     >
       <span
         className={[
-          "absolute left-0 top-1/2 h-10 w-1 -translate-y-1/2 rounded-full transition",
+          "absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-full transition",
           active ? "bg-sky-500 opacity-100" : "bg-transparent opacity-0 group-hover:opacity-40",
         ].join(" ")}
       />
-      <span className={["flex h-12 w-12 items-center justify-center rounded-2xl border transition", active ? "border-sky-100 bg-sky-50" : "border-white/10 bg-white/[0.04] group-hover:border-white/20 group-hover:bg-white/[0.08]"].join(" ")}>
+      <span className={["flex h-10 w-10 items-center justify-center rounded-[14px] border transition", active ? "border-sky-100 bg-sky-50" : "border-white/10 bg-white/[0.04] group-hover:border-white/20 group-hover:bg-white/[0.08]"].join(" ")}>
         <MarketplaceNavIcon name={icon} active={active} />
       </span>
-      <span className={`text-[11px] font-medium leading-4 ${active ? "text-slate-700" : "text-slate-400 group-hover:text-slate-200"}`}>{label}</span>
+      <span className={`text-[10px] font-medium leading-[1.1] ${active ? "text-slate-700" : "text-slate-400 group-hover:text-slate-200"}`}>{label}</span>
     </button>
   );
 }
@@ -344,6 +344,7 @@ function ResourceCard({ resource, onSubmitForReview, onArchive, actionLabel = "V
 
 export default function MarketplacePageClient() {
   const { session, loading: authLoading, authError } = useAuth();
+  const signedIn = Boolean(session);
   const [isAdmin, setIsAdmin] = useState(false);
   const [canCreateResources, setCanCreateResources] = useState(false);
   const [createResourceRequirementMessage, setCreateResourceRequirementMessage] = useState("");
@@ -369,61 +370,114 @@ export default function MarketplacePageClient() {
   const [payoutForm, setPayoutForm] = useState(DEFAULT_PAYOUT_FORM);
   const [resourceFile, setResourceFile] = useState(null);
   const [discoverFilter, setDiscoverFilter] = useState({ type: "", categoryId: "" });
+  const [loadedTabs, setLoadedTabs] = useState({
+    discover: false,
+    submit: false,
+    requests: false,
+    library: false,
+    orders: false,
+    payouts: false,
+    review: false,
+  });
 
-  async function loadAll(currentSession) {
-    if (!currentSession) return;
+  const loadPublicData = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const [
-        categoriesRes,
-        tagsRes,
-        resourcesRes,
-        mineRes,
-        libraryRes,
-        requestsRes,
-        ordersRes,
-        payoutAccountRes,
-        payoutLedgerRes,
-        reviewRes,
-      ] = await Promise.all([
+      const [categoriesRes, resourcesRes] = await Promise.all([
         apiGet("/api/resources/categories"),
-        apiGet("/api/resources/tags"),
         apiGet("/api/resources"),
-        apiGet("/api/resources?mine=1"),
-        apiGet("/api/resources/library"),
-        apiGet("/api/resources/requests"),
-        apiGet("/api/resources/orders"),
-        apiGet("/api/resources/payout-account"),
-        apiGet("/api/resources/payouts/ledger"),
-        apiGet("/api/resources/review?status=pending").catch(() => ({ resources: [] })),
       ]);
 
       setCategories(categoriesRes.categories || []);
-      setTags(tagsRes.tags || []);
       setResources(resourcesRes.resources || []);
-      setMyResources(mineRes.resources || []);
-      setLibrary(libraryRes.resources || []);
-      setRequests(requestsRes.requests || []);
-      setOrders(ordersRes.orders || []);
-      setPayoutAccount(payoutAccountRes.payoutAccount || null);
-      setPayoutLedger(payoutLedgerRes.ledger || []);
-      setReviewQueue(reviewRes.resources || []);
+      setCanCreateResources(Boolean(resourcesRes.canCreateResources));
+      setCreateResourceRequirementMessage(resourcesRes.createResourceRequirementMessage || "");
+      setLoadedTabs((prev) => ({ ...prev, discover: true }));
     } catch (nextError) {
       setError(nextError.message || "Unable to load marketplace data.");
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  const loadAdminStatus = useCallback(async (currentSession) => {
+    if (!currentSession) {
+      setIsAdmin(false);
+      return;
+    }
+
+    try {
+      const adminCheck = await fetch("/api/resources/review?status=pending", { cache: "no-store" });
+      setIsAdmin(adminCheck.ok);
+    } catch {
+      setIsAdmin(false);
+    }
+  }, []);
+
+  const loadTabData = useCallback(async (tabKey, currentSession, { force = false } = {}) => {
+    if (!currentSession || tabKey === "discover") return;
+    if (!force && loadedTabs[tabKey]) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      if (tabKey === "submit") {
+        const [tagsRes, mineRes] = await Promise.all([
+          apiGet("/api/resources/tags"),
+          apiGet("/api/resources?mine=1"),
+        ]);
+
+        setTags(tagsRes.tags || []);
+        setMyResources(mineRes.resources || []);
+      }
+
+      if (tabKey === "requests") {
+        const requestsRes = await apiGet("/api/resources/requests");
+        setRequests(requestsRes.requests || []);
+      }
+
+      if (tabKey === "library") {
+        const libraryRes = await apiGet("/api/resources/library");
+        setLibrary(libraryRes.resources || []);
+      }
+
+      if (tabKey === "orders") {
+        const ordersRes = await apiGet("/api/resources/orders");
+        setOrders(ordersRes.orders || []);
+      }
+
+      if (tabKey === "payouts") {
+        const [payoutAccountRes, payoutLedgerRes] = await Promise.all([
+          apiGet("/api/resources/payout-account"),
+          apiGet("/api/resources/payouts/ledger"),
+        ]);
+
+        setPayoutAccount(payoutAccountRes.payoutAccount || null);
+        setPayoutLedger(payoutLedgerRes.ledger || []);
+      }
+
+      if (tabKey === "review" && isAdmin) {
+        const reviewRes = await apiGet("/api/resources/review?status=pending").catch(() => ({ resources: [] }));
+        setReviewQueue(reviewRes.resources || []);
+      }
+
+      setLoadedTabs((prev) => ({ ...prev, [tabKey]: true }));
+    } catch (nextError) {
+      setError(nextError.message || "Unable to load marketplace data.");
+    } finally {
+      setLoading(false);
+    }
+  }, [isAdmin, loadedTabs]);
 
   useEffect(() => {
     let mounted = true;
 
-    function clearMarketplaceState() {
+    function clearPrivateMarketplaceState() {
       setIsAdmin(false);
       setCanCreateResources(false);
       setCreateResourceRequirementMessage("");
-      setResources([]);
       setMyResources([]);
       setLibrary([]);
       setRequests([]);
@@ -431,26 +485,31 @@ export default function MarketplacePageClient() {
       setPayoutAccount(null);
       setPayoutLedger([]);
       setReviewQueue([]);
+      setLoadedTabs({
+        discover: false,
+        submit: false,
+        requests: false,
+        library: false,
+        orders: false,
+        payouts: false,
+        review: false,
+      });
     }
 
     async function syncMarketplace() {
-      setCanCreateResources(Boolean(resourcesRes.canCreateResources));
-      setCreateResourceRequirementMessage(resourcesRes.createResourceRequirementMessage || "");
       if (authLoading) return;
 
       if (!session) {
         if (!mounted) return;
-        clearMarketplaceState();
-        setLoading(false);
+        clearPrivateMarketplaceState();
+        await loadPublicData();
         return;
       }
 
-      setLoading(true);
       try {
-        const adminCheck = await fetch("/api/resources/review?status=pending", { cache: "no-store" });
         if (!mounted) return;
-        setIsAdmin(adminCheck.ok);
-        await loadAll(session);
+        await loadPublicData();
+        void loadAdminStatus(session);
       } catch (nextError) {
         if (!mounted) return;
         setError(nextError.message || "Unable to load marketplace data.");
@@ -463,7 +522,20 @@ export default function MarketplacePageClient() {
     return () => {
       mounted = false;
     };
-  }, [authLoading, session]);
+  }, [authLoading, loadAdminStatus, loadPublicData, session]);
+
+  useEffect(() => {
+    if (authLoading || !session || activeTab === "discover") return;
+    if (activeTab === "review" && !isAdmin) return;
+
+    void loadTabData(activeTab, session);
+  }, [activeTab, authLoading, isAdmin, loadTabData, session]);
+
+  useEffect(() => {
+    if (!signedIn && activeTab !== "discover") {
+      setActiveTab("discover");
+    }
+  }, [activeTab, signedIn]);
 
   useEffect(() => {
     if (payoutAccount) {
@@ -493,6 +565,12 @@ export default function MarketplacePageClient() {
   }, [discoverResources]);
 
   const tabs = useMemo(() => {
+    if (!signedIn) {
+      return [
+        { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary" },
+      ];
+    }
+
     const baseTabs = [
       { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary" },
       { key: "submit", label: "Submit", hint: "Create hosted or external listings and send them for review.", icon: "submit", group: "primary" },
@@ -505,7 +583,7 @@ export default function MarketplacePageClient() {
       baseTabs.splice(3, 0, { key: "review", label: "Review", hint: "Approve or reject pending marketplace submissions.", icon: "review", group: "primary" });
     }
     return baseTabs;
-  }, [isAdmin]);
+  }, [isAdmin, signedIn]);
 
   const primaryTabs = useMemo(() => tabs.filter((tab) => tab.group === "primary"), [tabs]);
   const secondaryTabs = useMemo(() => tabs.filter((tab) => tab.group === "secondary"), [tabs]);
@@ -521,9 +599,23 @@ export default function MarketplacePageClient() {
       .slice(0, 6);
   }, [categories, resources]);
 
-  async function refreshAll() {
-    if (session) {
-      await loadAll(session);
+  function invalidateTabs(tabKeys) {
+    setLoadedTabs((prev) => {
+      const next = { ...prev };
+      tabKeys.forEach((key) => {
+        next[key] = false;
+      });
+      return next;
+    });
+  }
+
+  async function refreshMarketplace(tabKey = activeTab, { refreshDiscover = true } = {}) {
+    if (refreshDiscover) {
+      await loadPublicData();
+    }
+
+    if (session && tabKey !== "discover") {
+      await loadTabData(tabKey, session, { force: true });
     }
   }
 
@@ -540,7 +632,8 @@ export default function MarketplacePageClient() {
       if (!targetUrl) throw new Error("No access URL returned.");
       window.open(targetUrl, "_blank", "noopener,noreferrer");
       if (activeTab === "discover" || activeTab === "library") {
-        await refreshAll();
+        invalidateTabs(["library"]);
+        await refreshMarketplace(activeTab);
       }
     } catch (nextError) {
       setError(nextError.message || "Unable to open resource.");
@@ -607,7 +700,8 @@ export default function MarketplacePageClient() {
         setResourceForm(DEFAULT_RESOURCE_FORM);
         setResourceFile(null);
         setSuccess("Marketplace resource created.");
-        await refreshAll();
+        invalidateTabs(["submit", "library"]);
+        await refreshMarketplace("library");
         setActiveTab("library");
       } catch (nextError) {
         setError(nextError.message || "Unable to create resource.");
@@ -621,7 +715,8 @@ export default function MarketplacePageClient() {
       try {
         await apiSend(`/api/resources/${resource.id}`, "PATCH", { resource: { status: "pending" } });
         setSuccess("Resource submitted for review.");
-        await refreshAll();
+        invalidateTabs(["submit", "review"]);
+        await refreshMarketplace("submit");
       } catch (nextError) {
         setError(nextError.message || "Unable to submit resource for review.");
       }
@@ -634,7 +729,8 @@ export default function MarketplacePageClient() {
       try {
         await apiSend(`/api/resources/${resource.id}`, "DELETE");
         setSuccess("Resource archived.");
-        await refreshAll();
+        invalidateTabs(["submit", "library", "review"]);
+        await refreshMarketplace("submit");
       } catch (nextError) {
         setError(nextError.message || "Unable to archive resource.");
       }
@@ -648,7 +744,8 @@ export default function MarketplacePageClient() {
       try {
         await apiSend(`/api/resources/${resource.id}/status`, "PATCH", { status, rejectionNotes });
         setSuccess(`Resource ${status}.`);
-        await refreshAll();
+        invalidateTabs(["review"]);
+        await refreshMarketplace("review");
       } catch (nextError) {
         setError(nextError.message || `Unable to mark resource as ${status}.`);
       }
@@ -672,7 +769,8 @@ export default function MarketplacePageClient() {
         });
         setRequestForm(DEFAULT_REQUEST_FORM);
         setSuccess("Resource request created.");
-        await refreshAll();
+        invalidateTabs(["requests"]);
+        await refreshMarketplace("requests", { refreshDiscover: false });
       } catch (nextError) {
         setError(nextError.message || "Unable to create request.");
       }
@@ -685,7 +783,8 @@ export default function MarketplacePageClient() {
       try {
         await apiSend(`/api/resources/requests/${requestId}`, "PATCH", { status });
         setSuccess(`Request updated to ${status}.`);
-        await refreshAll();
+        invalidateTabs(["requests"]);
+        await refreshMarketplace("requests", { refreshDiscover: false });
       } catch (nextError) {
         setError(nextError.message || "Unable to update request.");
       }
@@ -698,7 +797,8 @@ export default function MarketplacePageClient() {
       try {
         const result = await apiSend("/api/resources/orders", "POST", { resourceIds: [resource.id] });
         setSuccess(result.order.totalCents > 0 ? "Order draft created." : "Free order completed and access granted.");
-        await refreshAll();
+        invalidateTabs(["orders", "library"]);
+        await refreshMarketplace("orders", { refreshDiscover: false });
         setActiveTab("orders");
       } catch (nextError) {
         setError(nextError.message || "Unable to create order.");
@@ -712,7 +812,8 @@ export default function MarketplacePageClient() {
       try {
         await apiSend(`/api/resources/orders/${orderId}`, "PATCH", { status, paymentProvider: "manual" });
         setSuccess(`Order marked ${status}.`);
-        await refreshAll();
+        invalidateTabs(["orders", "library"]);
+        await refreshMarketplace("orders", { refreshDiscover: false });
       } catch (nextError) {
         setError(nextError.message || `Unable to mark order ${status}.`);
       }
@@ -727,59 +828,26 @@ export default function MarketplacePageClient() {
       try {
         await apiSend("/api/resources/payout-account", "PUT", payoutForm);
         setSuccess("Payout account saved.");
-        await refreshAll();
+        invalidateTabs(["payouts"]);
+        await refreshMarketplace("payouts", { refreshDiscover: false });
       } catch (nextError) {
         setError(nextError.message || "Unable to save payout account.");
       }
     });
   }
 
-  if (!session && !loading) {
-    return (
-      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <section className="overflow-hidden rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.035))] shadow-[0_32px_90px_-48px_rgba(0,0,0,0.85)] ring-1 ring-white/10 sm:p-0">
-          <div className="grid gap-6 px-6 py-8 sm:px-8 lg:grid-cols-[1.4fr,0.9fr] lg:px-10 lg:py-10">
-            <div>
-              <div className="text-sm font-medium uppercase tracking-[0.2em] text-slate-400">Marketplace</div>
-              <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-                Browse industry tools, templates, packs, and external references in a cleaner store-style library.
-              </h1>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
-                Sign in to access approved resources, submit files for review, and manage the resources connected to your account.
-              </p>
-              {authError ? <div className="mt-5 rounded-2xl border border-amber-300/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">{authError}</div> : null}
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Link href="/login?redirect=%2Fmarketplace" className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
-                  Sign in
-                </Link>
-                <Link href="/signup?redirect=%2Fmarketplace" className="rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]">
-                  Create account
-                </Link>
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
-              <StoreStat label="Discovery" value="Browse" accent="bg-sky-400" />
-              <StoreStat label="Access" value="Secure" accent="bg-emerald-400" />
-              <StoreStat label="Workflow" value="Submit" accent="bg-cyan-300" />
-            </div>
-          </div>
-        </section>
-      </main>
-    );
-  }
-
   return (
     <main className="w-full px-0 py-0 lg:min-h-[calc(100vh-8rem)]">
       <div className="lg:flex lg:items-start">
-        <aside className="hidden lg:block lg:w-24 lg:flex-none xl:w-28">
-          <div className="sticky top-[88px] flex h-[calc(100vh-104px)] flex-col border-r border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(15,23,42,0.9))] px-3 py-5 shadow-[20px_0_60px_-45px_rgba(0,0,0,0.9)]">
-            <div className="flex justify-center pb-5">
-              <div className="flex h-12 w-12 items-center justify-center rounded-[16px] border border-white/10 bg-white/[0.06] text-xs font-semibold uppercase tracking-[0.2em] text-white">
+        <aside className="hidden lg:block lg:w-20 lg:flex-none lg:self-stretch lg:border-r lg:border-white/10 lg:bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(15,23,42,0.9))] xl:w-24">
+          <div className="sticky top-[88px] flex h-[calc(100vh-104px)] flex-col px-2 py-4 shadow-[20px_0_60px_-45px_rgba(0,0,0,0.9)]">
+            <div className="flex justify-center pb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-white/10 bg-white/[0.06] text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
                 LM
               </div>
             </div>
 
-            <div className="space-y-2 border-t border-white/10 pt-5">
+            <div className="space-y-1.5 border-t border-white/10 pt-4">
               {primaryTabs.map((tab) => (
                 <SidebarTabButton
                   key={tab.key}
@@ -791,7 +859,7 @@ export default function MarketplacePageClient() {
               ))}
             </div>
 
-            <div className="mt-auto space-y-2 border-t border-white/10 pt-5">
+            <div className="mt-auto space-y-1.5 border-t border-white/10 pt-4">
               {secondaryTabs.map((tab) => (
                 <SidebarTabButton
                   key={tab.key}
@@ -821,6 +889,27 @@ export default function MarketplacePageClient() {
           </div>
 
           <div className="mt-5 min-w-0 lg:mt-0">
+          {!signedIn ? (
+            <section className="mb-6 overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] px-5 py-5 ring-1 ring-white/10">
+              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <div className="text-sm font-medium uppercase tracking-[0.2em] text-slate-400">Marketplace</div>
+                  <div className="mt-2 text-2xl font-semibold text-white">Browse approved industry resources without signing in.</div>
+                  <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">
+                    Sign in to download resources, manage your library, submit resource packs, and access seller workflows.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <Link href="/login?redirect=%2Fmarketplace" className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
+                    Sign in
+                  </Link>
+                  <Link href="/signup?redirect=%2Fmarketplace" className="rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]">
+                    Create account
+                  </Link>
+                </div>
+              </div>
+            </section>
+          ) : null}
           {error ? <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-5 py-4 text-sm text-red-100">{error}</div> : null}
           {authError && session ? <div className="rounded-2xl border border-amber-300/30 bg-amber-500/10 px-5 py-4 text-sm text-amber-100">{authError}</div> : null}
           {success ? <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-5 py-4 text-sm text-emerald-100">{success}</div> : null}

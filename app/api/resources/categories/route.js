@@ -2,14 +2,9 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
-import { getResourceAuthContext } from "@/lib/resourceHubServer";
 
 export async function GET() {
   const sb = await supabaseServerClient();
-  const { user } = await getResourceAuthContext(sb);
-  if (!user) {
-    return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
-  }
 
   const { data, error } = await sb
     .from("resource_categories")

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 
 async function readJson(response) {
@@ -19,10 +20,23 @@ async function apiSend(path, method, payload) {
   return readJson(response);
 }
 
-export default function ResourceDetailActions({ resource }) {
+export default function ResourceDetailActions({ resource, requiresAuth = false }) {
   const [busy, startBusy] = useTransition();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  if (requiresAuth) {
+    return (
+      <div className="space-y-3">
+        <div className="text-sm leading-7 text-slate-300">Sign in to download this resource, create an order, or add it to your marketplace library.</div>
+        <div className="flex flex-wrap gap-3">
+          <Link href={`/login?redirect=${encodeURIComponent(`/marketplace/${resource.id}`)}`} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
+            Sign in to access
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   function handlePrimary() {
     setError("");

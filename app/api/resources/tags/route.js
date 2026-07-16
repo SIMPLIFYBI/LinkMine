@@ -6,11 +6,6 @@ import { cleanText, getResourceAuthContext, sanitizeSlug } from "@/lib/resourceH
 
 export async function GET(req) {
   const sb = await supabaseServerClient();
-  const { user } = await getResourceAuthContext(sb);
-  if (!user) {
-    return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
-  }
-
   const url = new URL(req.url);
   const queryText = cleanText(url.searchParams.get("q")).toLowerCase();
 

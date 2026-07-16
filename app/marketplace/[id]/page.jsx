@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { formatResourceBytes } from "@/lib/resourceHub";
 import { buildResourceRoutePayload, DEFAULT_RESOURCE_SELECT, getResourceAuthContext } from "@/lib/resourceHubServer";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
@@ -56,10 +56,6 @@ export default async function MarketplaceResourcePage({ params }) {
   const { id } = await params;
   const sb = await supabaseServerClient();
   const { user } = await getResourceAuthContext(sb);
-
-  if (!user) {
-    redirect(`/login?redirect=${encodeURIComponent(`/marketplace/${id}`)}`);
-  }
 
   const { data, error } = await sb
     .from("resources")
@@ -124,7 +120,7 @@ export default async function MarketplaceResourcePage({ params }) {
               </div>
 
               <div className="rounded-[28px] border border-white/10 bg-slate-950/35 p-5 ring-1 ring-white/10">
-                <ResourceDetailActions resource={resource} />
+                <ResourceDetailActions resource={resource} requiresAuth={!user} />
               </div>
             </div>
           </div>
