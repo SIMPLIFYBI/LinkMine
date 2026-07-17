@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useAuth } from "@/app/components/AuthProvider";
 import { formatResourceBytes } from "@/lib/resourceHub";
 
@@ -23,13 +23,6 @@ const DEFAULT_REQUEST_FORM = {
   title: "",
   specifications: "",
   bountyCents: "",
-};
-
-const DEFAULT_PAYOUT_FORM = {
-  provider: "stripe_connect",
-  providerAccountId: "",
-  countryCode: "AU",
-  currencyCode: "AUD",
 };
 
 async function readJson(response) {
@@ -127,14 +120,13 @@ function TabButton({ active, label, hint, onClick }) {
       type="button"
       onClick={onClick}
       className={[
-        "group rounded-full border px-4 py-3 text-left transition",
+        "group whitespace-nowrap border-b-2 border-transparent px-2 py-2 text-center transition sm:rounded-full sm:border sm:px-3.5",
         active
-          ? "border-sky-300/40 bg-white text-slate-950 shadow-[0_20px_45px_-32px_rgba(255,255,255,0.95)]"
-          : "border-white/10 bg-white/[0.05] text-slate-300 hover:border-white/20 hover:bg-white/[0.1] hover:text-white",
+          ? "border-sky-400 bg-transparent text-white shadow-none sm:border-sky-300/40 sm:bg-white sm:text-slate-950 sm:shadow-[0_14px_30px_-24px_rgba(255,255,255,0.95)]"
+          : "bg-transparent text-slate-400 hover:text-white sm:border-white/10 sm:bg-white/[0.05] sm:text-slate-300 sm:hover:border-white/20 sm:hover:bg-white/[0.1]",
       ].join(" ")}
     >
-      <div className="text-sm font-semibold">{label}</div>
-      <div className={`mt-1 text-xs ${active ? "text-slate-600" : "text-slate-400 group-hover:text-slate-300"}`}>{hint}</div>
+      <div className="text-[13px] font-semibold leading-none">{label}</div>
     </button>
   );
 }
@@ -376,6 +368,445 @@ function ResourceCard({ resource, onSubmitForReview, onArchive, actionLabel = "V
   );
 }
 
+function LibraryGalleryCard({ resource, featured = false }) {
+  const detailHref = `/marketplace/${resource.id}`;
+  const artwork = getResourceArtwork(resource);
+  const priceLabel = resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free";
+  const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Hosted pack";
+  const updatedLabel = formatDate(resource.updatedAt || resource.createdAt);
+
+  return (
+    <article
+      className={[
+        "group relative flex flex-none snap-start overflow-hidden rounded-[30px] border border-white/10 shadow-[0_26px_70px_-42px_rgba(0,0,0,0.95)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20",
+        featured ? "min-h-[400px] w-[320px] lg:w-[420px]" : "min-h-[360px] w-[300px] lg:w-[340px]",
+      ].join(" ")}
+      style={{ backgroundImage: artwork.heroBackground }}
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.16),transparent_38%),linear-gradient(180deg,rgba(15,23,42,0.02),rgba(15,23,42,0.86)_72%)]" />
+      <div className="absolute left-5 top-5 flex items-center gap-2">
+        <Badge tone="border-white/20 bg-white/10 text-white">{resource.resourceType}</Badge>
+        {resource.category?.name ? <span className="rounded-full border border-white/12 bg-slate-950/25 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-slate-100/90">{resource.category.name}</span> : null}
+      </div>
+
+      <div className="absolute right-5 top-5 flex h-14 w-14 items-center justify-center rounded-[18px] border border-white/15 text-base font-semibold text-slate-950 shadow-[0_18px_38px_-24px_rgba(0,0,0,0.85)]" style={{ backgroundImage: artwork.chipBackground }}>
+        {getResourceMonogram(resource)}
+      </div>
+
+      <div className="relative flex flex-1 flex-col justify-end p-5 lg:p-6">
+        <div className="mb-5 flex items-end justify-between gap-4">
+          <div>
+            <div className="text-[11px] uppercase tracking-[0.24em] text-white/70">In your library</div>
+            <div className={featured ? "mt-2 text-[2rem] font-semibold leading-tight text-white lg:text-[2.35rem]" : "mt-2 text-2xl font-semibold leading-tight text-white lg:text-[1.75rem]"}>{resource.title}</div>
+          </div>
+          <div className="rounded-[20px] border border-white/12 bg-slate-950/30 px-3 py-2 text-right backdrop-blur-sm">
+            <div className="text-sm font-semibold text-white">{priceLabel}</div>
+            <div className="mt-1 text-[11px] text-slate-200/80">{resource.downloadCount || 0} downloads</div>
+          </div>
+        </div>
+
+        <p className={featured ? "max-w-[30ch] text-[15px] leading-7 text-slate-100/88" : "max-w-[28ch] text-sm leading-6 text-slate-100/88"}>{resource.summary || accessLabel}</p>
+
+        <div className="mt-5 flex flex-wrap items-center gap-2 text-[11px] text-slate-100/80">
+          {(resource.tags || []).slice(0, 3).map((tag) => (
+            <span key={tag.id} className="rounded-full border border-white/12 bg-slate-950/30 px-3 py-1 backdrop-blur-sm">
+              {tag.name}
+            </span>
+          ))}
+          {updatedLabel ? <span className="rounded-full border border-white/12 bg-slate-950/30 px-3 py-1 backdrop-blur-sm">Updated {updatedLabel}</span> : null}
+        </div>
+
+        <div className="mt-6 flex items-center justify-between gap-3">
+          <div className="text-sm text-slate-100/78">{accessLabel}</div>
+          <Link href={detailHref} className="rounded-full border border-white/15 bg-white px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-slate-100">
+            Open resource
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function ScrollShelf({ title, subtitle, metaLabel, children }) {
+  const railRef = useRef(null);
+
+  function scrollRail(direction) {
+    const rail = railRef.current;
+    if (!rail) return;
+    rail.scrollBy({ left: Math.max(rail.clientWidth * 0.82, 320) * direction, behavior: "smooth" });
+  }
+
+  return (
+    <section className="overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.035))] shadow-[0_30px_80px_-44px_rgba(0,0,0,0.75)] ring-1 ring-white/10">
+      <div className="flex flex-col gap-3 border-b border-white/10 px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6">
+        <div>
+          <div className="text-2xl font-semibold text-white">{title}</div>
+          {subtitle ? <div className="mt-1 text-sm text-slate-300">{subtitle}</div> : null}
+        </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          {metaLabel ? <div className="text-sm font-medium text-sky-300">{metaLabel}</div> : null}
+          <div className="hidden items-center gap-2 md:flex">
+            <button
+              type="button"
+              onClick={() => scrollRail(-1)}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-slate-200 transition hover:border-white/20 hover:bg-white/[0.09] hover:text-white"
+              aria-label={`Scroll ${title} left`}
+            >
+              <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m12.5 4.5-5 5 5 5" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollRail(1)}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-slate-200 transition hover:border-white/20 hover:bg-white/[0.09] hover:text-white"
+              aria-label={`Scroll ${title} right`}
+            >
+              <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m7.5 4.5 5 5-5 5" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div className="relative">
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-10 bg-gradient-to-r from-slate-950/50 to-transparent sm:block" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-10 bg-gradient-to-l from-slate-950/50 to-transparent sm:block" />
+        <div ref={railRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 py-5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-6">
+          {children}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MarketplaceShelfCard({ resource, variant = "standard" }) {
+  const detailHref = `/marketplace/${resource.id}`;
+  const artwork = getResourceArtwork(resource);
+  const priceLabel = resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free";
+  const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Hosted pack";
+  const shellClassName =
+    variant === "large"
+      ? "min-h-[318px] w-[424px] lg:w-[486px]"
+      : variant === "compact"
+        ? "min-h-[236px] w-[244px] lg:w-[264px]"
+        : "min-h-[272px] w-[292px] lg:w-[318px]";
+  const titleClassName =
+    variant === "large"
+      ? "mt-4 block max-w-[17rem] text-[1.8rem] font-semibold leading-tight text-white transition hover:text-sky-100"
+      : variant === "compact"
+        ? "mt-3 block max-w-[11rem] text-[1.1rem] font-semibold leading-tight text-white transition hover:text-sky-100"
+        : "mt-4 block max-w-[15rem] text-[1.35rem] font-semibold leading-tight text-white transition hover:text-sky-100";
+  const summaryClassName =
+    variant === "large"
+      ? "mt-2 max-w-[32ch] text-[15px] leading-7 text-slate-100/82"
+      : variant === "compact"
+        ? "mt-2 max-w-[24ch] text-[13px] leading-5 text-slate-100/80"
+        : "mt-2 max-w-[28ch] text-sm leading-6 text-slate-100/82";
+
+  return (
+    <article className={["group relative flex flex-none snap-start overflow-hidden rounded-[26px] border border-white/10 shadow-[0_24px_62px_-38px_rgba(0,0,0,0.9)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20", shellClassName].join(" ")} style={{ backgroundImage: artwork.cardBackground }}>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_34%),linear-gradient(180deg,rgba(15,23,42,0.06),rgba(15,23,42,0.84)_76%)]" />
+      <div className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-[14px] border border-white/18 text-sm font-semibold text-slate-950 shadow-[0_14px_30px_-18px_rgba(255,255,255,0.8)]" style={{ backgroundImage: artwork.chipBackground }}>
+        {getResourceMonogram(resource)}
+      </div>
+      <div className="relative flex flex-1 flex-col justify-between p-4.5">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
+            <span className="rounded-full border border-white/12 bg-slate-950/25 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-100/90">{resource.category?.name || resource.resourceType}</span>
+          </div>
+          {variant === "large" ? <div className="mt-4 text-[11px] uppercase tracking-[0.26em] text-slate-200/78">Marketplace pick</div> : null}
+          <Link href={detailHref} className={titleClassName}>
+            {resource.title}
+          </Link>
+          <p className={summaryClassName}>{resource.summary || accessLabel}</p>
+        </div>
+
+        <div>
+          <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-100/76">
+            {(resource.tags || []).slice(0, 2).map((tag) => (
+              <span key={tag.id} className="rounded-full border border-white/12 bg-slate-950/25 px-3 py-1 backdrop-blur-sm">
+                {tag.name}
+              </span>
+            ))}
+            <span className="rounded-full border border-white/12 bg-slate-950/25 px-3 py-1 backdrop-blur-sm">{resource.downloadCount || 0} downloads</span>
+          </div>
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-lg font-semibold text-white">{priceLabel}</div>
+              <div className="mt-1 text-xs text-slate-100/72">{accessLabel}</div>
+            </div>
+            <Link href={detailHref} className="rounded-full border border-white/15 bg-white px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-slate-100">
+              View resource
+            </Link>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function CategoryShelfCard({ category, onSelect }) {
+  const hue = hashString(category.name || "category");
+  const accentHue = (hue + 36) % 360;
+  const background = `radial-gradient(circle at 22% 20%, hsla(${accentHue}, 92%, 74%, 0.3), transparent 28%), linear-gradient(145deg, hsla(${hue}, 52%, 24%, 0.94), rgba(15,23,42,0.92))`;
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="group relative flex min-h-[188px] w-[248px] flex-none snap-start overflow-hidden rounded-[24px] border border-white/10 text-left shadow-[0_24px_60px_-40px_rgba(0,0,0,0.85)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20 lg:w-[270px]"
+      style={{ backgroundImage: background }}
+    >
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))]" />
+      <div className="relative flex flex-1 flex-col justify-between p-4.5">
+        <div>
+          <div className="text-[11px] uppercase tracking-[0.24em] text-slate-200/80">Category</div>
+          <div className="mt-3 max-w-[12rem] text-[1.35rem] font-semibold leading-tight text-white">{category.name}</div>
+        </div>
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <div className="text-2xl font-semibold text-white">{category.count}</div>
+            <div className="mt-1 text-xs text-slate-200/76">approved resources</div>
+          </div>
+          <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white transition group-hover:bg-white/14">
+            Open
+          </span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function PromoRailCard({ resource, variant = "compact" }) {
+  const detailHref = `/marketplace/${resource.id}`;
+  const artwork = getResourceArtwork(resource);
+  const shellClassName =
+    variant === "spotlight"
+      ? "min-h-[228px] w-[286px]"
+      : "min-h-[186px] w-[214px]";
+
+  return (
+    <article className={["group relative flex flex-none snap-start overflow-hidden rounded-[24px] border border-white/10 shadow-[0_20px_56px_-34px_rgba(0,0,0,0.82)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20", shellClassName].join(" ")} style={{ backgroundImage: variant === "spotlight" ? artwork.spotlightBackground : artwork.cardBackground }}>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_34%),linear-gradient(180deg,rgba(15,23,42,0.08),rgba(15,23,42,0.82)_76%)]" />
+      <div className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-[13px] border border-white/18 text-sm font-semibold text-slate-950 shadow-[0_14px_30px_-18px_rgba(255,255,255,0.75)]" style={{ backgroundImage: artwork.chipBackground }}>
+        {getResourceMonogram(resource)}
+      </div>
+      <div className="relative flex flex-1 flex-col justify-between p-4">
+        <div>
+          <div className="text-[11px] uppercase tracking-[0.24em] text-slate-100/78">{variant === "spotlight" ? "Spotlight" : (resource.category?.name || resource.resourceType)}</div>
+          <Link href={detailHref} className={variant === "spotlight" ? "mt-3 block max-w-[12rem] text-[1.35rem] font-semibold leading-tight text-white transition hover:text-sky-100" : "mt-3 block max-w-[10rem] text-[1.05rem] font-semibold leading-tight text-white transition hover:text-sky-100"}>
+            {resource.title}
+          </Link>
+          <p className={variant === "spotlight" ? "mt-2 max-w-[24ch] text-sm leading-6 text-slate-100/84" : "mt-2 max-w-[22ch] text-[13px] leading-5 text-slate-100/80"}>
+            {resource.summary || "Open the resource to review the pack or linked source details."}
+          </p>
+        </div>
+        <div className="flex items-end justify-between gap-3">
+          <div className="rounded-full border border-white/12 bg-slate-950/28 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-100/88">
+            {resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free"}
+          </div>
+          <Link href={detailHref} className="rounded-full border border-white/15 bg-white px-3.5 py-2 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100">
+            Open
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function PromoRail({ spotlightResource, supportingResources }) {
+  const railRef = useRef(null);
+  const items = [spotlightResource, ...supportingResources].filter(Boolean);
+
+  function scrollRail(direction) {
+    const rail = railRef.current;
+    if (!rail) return;
+    rail.scrollBy({ left: Math.max(rail.clientWidth * 0.9, 240) * direction, behavior: "smooth" });
+  }
+
+  if (!items.length) {
+    return <div className="rounded-[30px] border border-dashed border-white/10 bg-white/[0.03] px-5 py-8 text-sm text-slate-300">Add more approved resources to populate the spotlight rail.</div>;
+  }
+
+  return (
+    <section className="overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] ring-1 ring-white/10">
+      <div className="flex items-center justify-between border-b border-white/10 px-4 py-4">
+        <div>
+          <div className="text-base font-semibold text-white">Featured lane</div>
+          <div className="mt-1 text-xs text-slate-400">Mixed promo picks beside the main hero.</div>
+        </div>
+        <div className="hidden items-center gap-2 md:flex">
+          <button
+            type="button"
+            onClick={() => scrollRail(-1)}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-slate-200 transition hover:border-white/20 hover:bg-white/[0.09] hover:text-white"
+            aria-label="Scroll featured lane left"
+          >
+            <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m12.5 4.5-5 5 5 5" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollRail(1)}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-slate-200 transition hover:border-white/20 hover:bg-white/[0.09] hover:text-white"
+            aria-label="Scroll featured lane right"
+          >
+            <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m7.5 4.5 5 5-5 5" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div className="relative">
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-8 bg-gradient-to-r from-slate-950/55 to-transparent sm:block" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-8 bg-gradient-to-l from-slate-950/55 to-transparent sm:block" />
+        <div ref={railRef} className="flex snap-x snap-mandatory gap-3.5 overflow-x-auto px-4 py-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {items.map((resource, index) => (
+            <PromoRailCard key={resource.id} resource={resource} variant={index === 0 ? "spotlight" : "compact"} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MobileHeroCard({ resource }) {
+  const artwork = getResourceArtwork(resource);
+  const detailHref = `/marketplace/${resource.id}`;
+
+  return (
+    <article className="relative overflow-hidden rounded-[24px] border border-white/10 shadow-[0_22px_56px_-36px_rgba(0,0,0,0.9)] ring-1 ring-white/10" style={{ backgroundImage: artwork.heroBackground }}>
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.08),rgba(15,23,42,0.74)_68%)]" />
+      <div className="relative min-h-[252px] p-4.5">
+        <div className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-[14px] border border-white/18 text-sm font-semibold text-slate-950 shadow-[0_14px_30px_-18px_rgba(255,255,255,0.8)]" style={{ backgroundImage: artwork.chipBackground }}>
+          {getResourceMonogram(resource)}
+        </div>
+        <div className="flex h-full flex-col justify-end">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
+            <span className="rounded-full border border-white/12 bg-slate-950/28 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-100/90">{resource.category?.name || resource.resourceType}</span>
+          </div>
+          <div className="mt-4 max-w-[14rem] text-[2rem] font-semibold leading-[1.05] text-white">{resource.title}</div>
+          <p className="mt-3 max-w-[16rem] text-sm leading-6 text-slate-100/84">{resource.summary || resource.description || "Open the resource to review the full pack details."}</p>
+          <div className="mt-5 flex items-end justify-between gap-3">
+            <div>
+              <div className="text-lg font-semibold text-white">{resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free"}</div>
+              <div className="mt-1 text-xs text-slate-100/70">{resource.downloadCount || 0} downloads</div>
+            </div>
+            <Link href={detailHref} className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-slate-100">
+              Open
+            </Link>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function MobilePromoBillboard({ resource, eyebrow = "Featured" }) {
+  const artwork = getResourceArtwork(resource);
+  const detailHref = `/marketplace/${resource.id}`;
+
+  return (
+    <article className="relative overflow-hidden rounded-[22px] border border-white/10 shadow-[0_20px_50px_-34px_rgba(0,0,0,0.86)] ring-1 ring-white/10" style={{ backgroundImage: artwork.panelBackground }}>
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.1),rgba(15,23,42,0.82)_74%)]" />
+      <div className="relative min-h-[206px] p-4.5">
+        <div className="absolute inset-y-0 right-0 w-[48%] opacity-85" style={{ backgroundImage: artwork.cardBackground }} />
+        <div className="absolute inset-y-0 right-0 w-[48%] bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))]" />
+        <div className="relative flex h-full max-w-[52%] flex-col justify-end">
+          <div className="text-[11px] uppercase tracking-[0.24em] text-slate-100/76">{eyebrow}</div>
+          <div className="mt-3 text-[1.85rem] font-semibold leading-[1.06] text-white">{resource.title}</div>
+          <div className="mt-2 line-clamp-3 text-sm leading-6 text-slate-100/80">{resource.summary || "Explore the resource details."}</div>
+          <Link href={detailHref} className="mt-4 inline-flex w-fit rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-slate-100">
+            View resource
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function MobileMiniPromoCard({ resource }) {
+  const artwork = getResourceArtwork(resource);
+  const detailHref = `/marketplace/${resource.id}`;
+
+  return (
+    <article className="relative overflow-hidden rounded-[20px] border border-white/10 shadow-[0_18px_44px_-30px_rgba(0,0,0,0.82)] ring-1 ring-white/10" style={{ backgroundImage: artwork.cardBackground }}>
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.1),rgba(15,23,42,0.82)_78%)]" />
+      <div className="relative min-h-[132px] p-3.5">
+        <div className="text-[10px] uppercase tracking-[0.2em] text-slate-100/76">{resource.category?.name || resource.resourceType}</div>
+        <div className="mt-8 max-w-[10rem] text-[1.05rem] font-semibold leading-tight text-white">{resource.title}</div>
+        <Link href={detailHref} className="mt-3 inline-flex rounded-full border border-white/15 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100">
+          Open
+        </Link>
+      </div>
+    </article>
+  );
+}
+
+function GalleryShelf({ title, subtitle, items, emptyTitle, emptyBody, featuredFirst = false }) {
+  const railRef = useRef(null);
+
+  function scrollRail(direction) {
+    const rail = railRef.current;
+    if (!rail) return;
+    const amount = Math.max(rail.clientWidth * 0.82, 280) * direction;
+    rail.scrollBy({ left: amount, behavior: "smooth" });
+  }
+
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-base font-semibold text-white">{title}</div>
+          {subtitle ? <div className="mt-1 text-sm text-slate-400">{subtitle}</div> : null}
+        </div>
+        {items.length ? (
+          <div className="hidden items-center gap-2 md:flex">
+            <button
+              type="button"
+              onClick={() => scrollRail(-1)}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-slate-200 transition hover:border-white/20 hover:bg-white/[0.09] hover:text-white"
+              aria-label={`Scroll ${title} left`}
+            >
+              <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m12.5 4.5-5 5 5 5" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollRail(1)}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-slate-200 transition hover:border-white/20 hover:bg-white/[0.09] hover:text-white"
+              aria-label={`Scroll ${title} right`}
+            >
+              <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m7.5 4.5 5 5-5 5" />
+              </svg>
+            </button>
+          </div>
+        ) : null}
+      </div>
+
+      {items.length ? (
+        <div className="relative -mx-1">
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-10 bg-gradient-to-r from-slate-950/50 to-transparent sm:block" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-10 bg-gradient-to-l from-slate-950/50 to-transparent sm:block" />
+          <div ref={railRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-3 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {items.map((resource, index) => (
+              <LibraryGalleryCard key={resource.id} resource={resource} featured={featuredFirst && index === 0} />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <EmptyState title={emptyTitle} body={emptyBody} />
+      )}
+    </section>
+  );
+}
+
 function DiscoverListRow({ resource }) {
   const detailHref = `/marketplace/${resource.id}`;
   const artwork = getResourceArtwork(resource);
@@ -432,6 +863,12 @@ function DiscoverListRow({ resource }) {
   );
 }
 
+function getHomeShelfVariant(index) {
+  if (index === 0) return "large";
+  if (index % 3 === 2) return "compact";
+  return "standard";
+}
+
 export default function MarketplacePageClient() {
   const { session, loading: authLoading, authError } = useAuth();
   const signedIn = Boolean(session);
@@ -452,21 +889,18 @@ export default function MarketplacePageClient() {
   const [requests, setRequests] = useState([]);
   const [reviewQueue, setReviewQueue] = useState([]);
   const [orders, setOrders] = useState([]);
-  const [payoutAccount, setPayoutAccount] = useState(null);
-  const [payoutLedger, setPayoutLedger] = useState([]);
 
   const [resourceForm, setResourceForm] = useState(DEFAULT_RESOURCE_FORM);
   const [requestForm, setRequestForm] = useState(DEFAULT_REQUEST_FORM);
-  const [payoutForm, setPayoutForm] = useState(DEFAULT_PAYOUT_FORM);
   const [resourceFile, setResourceFile] = useState(null);
   const [discoverFilter, setDiscoverFilter] = useState({ search: "", type: "", categoryId: "" });
+  const [mobileFilterPanel, setMobileFilterPanel] = useState(null);
+  const [mobileHeroIndex, setMobileHeroIndex] = useState(0);
   const [loadedTabs, setLoadedTabs] = useState({
     discover: false,
     submit: false,
     requests: false,
-    library: false,
-    orders: false,
-    payouts: false,
+    account: false,
     review: false,
   });
 
@@ -528,24 +962,14 @@ export default function MarketplacePageClient() {
         setRequests(requestsRes.requests || []);
       }
 
-      if (tabKey === "library") {
-        const libraryRes = await apiGet("/api/resources/library");
-        setLibrary(libraryRes.resources || []);
-      }
-
-      if (tabKey === "orders") {
-        const ordersRes = await apiGet("/api/resources/orders");
-        setOrders(ordersRes.orders || []);
-      }
-
-      if (tabKey === "payouts") {
-        const [payoutAccountRes, payoutLedgerRes] = await Promise.all([
-          apiGet("/api/resources/payout-account"),
-          apiGet("/api/resources/payouts/ledger"),
+      if (tabKey === "account") {
+        const [libraryRes, ordersRes] = await Promise.all([
+          apiGet("/api/resources/library"),
+          apiGet("/api/resources/orders"),
         ]);
 
-        setPayoutAccount(payoutAccountRes.payoutAccount || null);
-        setPayoutLedger(payoutLedgerRes.ledger || []);
+        setLibrary(libraryRes.resources || []);
+        setOrders(ordersRes.orders || []);
       }
 
       if (tabKey === "review" && isAdmin) {
@@ -572,16 +996,12 @@ export default function MarketplacePageClient() {
       setLibrary([]);
       setRequests([]);
       setOrders([]);
-      setPayoutAccount(null);
-      setPayoutLedger([]);
       setReviewQueue([]);
       setLoadedTabs({
         discover: false,
         submit: false,
         requests: false,
-        library: false,
-        orders: false,
-        payouts: false,
+        account: false,
         review: false,
       });
     }
@@ -628,15 +1048,10 @@ export default function MarketplacePageClient() {
   }, [activeTab, signedIn]);
 
   useEffect(() => {
-    if (payoutAccount) {
-      setPayoutForm({
-        provider: payoutAccount.provider || "stripe_connect",
-        providerAccountId: payoutAccount.providerAccountId || "",
-        countryCode: payoutAccount.countryCode || "AU",
-        currencyCode: payoutAccount.currencyCode || "AUD",
-      });
+    if (activeTab !== "discover") {
+      setMobileFilterPanel(null);
     }
-  }, [payoutAccount]);
+  }, [activeTab]);
 
   const discoverResources = useMemo(() => {
     const searchTerm = discoverFilter.search.trim().toLowerCase();
@@ -663,6 +1078,7 @@ export default function MarketplacePageClient() {
   }, [discoverFilter, resources]);
 
   const featuredResources = useMemo(() => discoverResources.slice(0, 3), [discoverResources]);
+  const mobileHeroResources = useMemo(() => discoverResources.slice(0, 5), [discoverResources]);
 
   const trendingResources = useMemo(() => {
     return [...discoverResources]
@@ -681,9 +1097,57 @@ export default function MarketplacePageClient() {
     const blockedIds = new Set([heroResource?.id, spotlightResource?.id].filter(Boolean));
     return discoverResources.filter((resource) => !blockedIds.has(resource.id)).slice(0, 2);
   }, [discoverResources, heroResource?.id, spotlightResource?.id]);
+  const homeShelfResources = useMemo(() => {
+    const blockedIds = new Set([heroResource?.id, spotlightResource?.id].filter(Boolean));
+    return discoverResources.filter((resource) => !blockedIds.has(resource.id)).slice(0, 8);
+  }, [discoverResources, heroResource?.id, spotlightResource?.id]);
+  const mobileHeroResource = useMemo(() => {
+    if (!mobileHeroResources.length) return heroResource;
+    return mobileHeroResources[mobileHeroIndex] || mobileHeroResources[0];
+  }, [heroResource, mobileHeroIndex, mobileHeroResources]);
+  const mobilePromoResources = useMemo(() => {
+    const candidates = [spotlightResource, ...supportingResources, ...trendingResources].filter(Boolean);
+    const seen = new Set();
+    return candidates.filter((resource) => {
+      if (seen.has(resource.id) || resource.id === mobileHeroResource?.id) return false;
+      seen.add(resource.id);
+      return true;
+    });
+  }, [mobileHeroResource?.id, spotlightResource, supportingResources, trendingResources]);
 
   const heroArtwork = useMemo(() => (heroResource ? getResourceArtwork(heroResource) : null), [heroResource]);
   const spotlightArtwork = useMemo(() => (spotlightResource ? getResourceArtwork(spotlightResource) : null), [spotlightResource]);
+  const libraryShelves = useMemo(() => {
+    const sorted = [...library].sort(
+      (left, right) =>
+        new Date(right.updatedAt || right.createdAt || 0).getTime() - new Date(left.updatedAt || left.createdAt || 0).getTime()
+    );
+
+    return {
+      recentlyAdded: sorted,
+      purchased: sorted.filter((resource) => !resource.ownedByUser && Number(resource.priceCents || 0) > 0),
+      freeAccess: sorted.filter((resource) => !resource.ownedByUser && Number(resource.priceCents || 0) === 0),
+    };
+  }, [library]);
+
+  useEffect(() => {
+    if (!mobileHeroResources.length) {
+      setMobileHeroIndex(0);
+      return;
+    }
+
+    setMobileHeroIndex((currentIndex) => (currentIndex >= mobileHeroResources.length ? 0 : currentIndex));
+  }, [mobileHeroResources]);
+
+  useEffect(() => {
+    if (activeTab !== "discover" || mobileHeroResources.length < 2) return undefined;
+
+    const timer = window.setInterval(() => {
+      setMobileHeroIndex((currentIndex) => (currentIndex + 1) % mobileHeroResources.length);
+    }, 4500);
+
+    return () => window.clearInterval(timer);
+  }, [activeTab, mobileHeroResources]);
 
   const tabs = useMemo(() => {
     if (!signedIn) {
@@ -696,9 +1160,7 @@ export default function MarketplacePageClient() {
       { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary" },
       { key: "submit", label: "Submit", hint: "Create hosted or external listings and send them for review.", icon: "submit", group: "primary" },
       { key: "requests", label: "Requests", hint: "Track industry requests and bounty opportunities.", icon: "requests", group: "primary" },
-      { key: "library", label: "Library", hint: "See resources you own or have access to.", icon: "library", group: "secondary" },
-      { key: "orders", label: "Orders", hint: "Review draft and settled marketplace orders.", icon: "orders", group: "secondary" },
-      { key: "payouts", label: "Payouts", hint: "Manage payout account details and seller ledger entries.", icon: "payouts", group: "secondary" },
+      { key: "account", label: "My Account", hint: "Manage your library, orders, and user-specific marketplace activity.", icon: "library", group: "secondary" },
     ];
     if (isAdmin) {
       baseTabs.splice(3, 0, { key: "review", label: "Review", hint: "Approve or reject pending marketplace submissions.", icon: "review", group: "primary" });
@@ -752,8 +1214,8 @@ export default function MarketplacePageClient() {
       const targetUrl = body.signedUrl || body.sourceUrl;
       if (!targetUrl) throw new Error("No access URL returned.");
       window.open(targetUrl, "_blank", "noopener,noreferrer");
-      if (activeTab === "discover" || activeTab === "library") {
-        invalidateTabs(["library"]);
+      if (activeTab === "discover" || activeTab === "account") {
+        invalidateTabs(["account"]);
         await refreshMarketplace(activeTab);
       }
     } catch (nextError) {
@@ -821,9 +1283,9 @@ export default function MarketplacePageClient() {
         setResourceForm(DEFAULT_RESOURCE_FORM);
         setResourceFile(null);
         setSuccess("Marketplace resource created.");
-        invalidateTabs(["submit", "library"]);
-        await refreshMarketplace("library");
-        setActiveTab("library");
+        invalidateTabs(["submit", "account"]);
+        await refreshMarketplace("account");
+        setActiveTab("account");
       } catch (nextError) {
         setError(nextError.message || "Unable to create resource.");
       }
@@ -850,7 +1312,7 @@ export default function MarketplacePageClient() {
       try {
         await apiSend(`/api/resources/${resource.id}`, "DELETE");
         setSuccess("Resource archived.");
-        invalidateTabs(["submit", "library", "review"]);
+        invalidateTabs(["submit", "account", "review"]);
         await refreshMarketplace("submit");
       } catch (nextError) {
         setError(nextError.message || "Unable to archive resource.");
@@ -918,9 +1380,9 @@ export default function MarketplacePageClient() {
       try {
         const result = await apiSend("/api/resources/orders", "POST", { resourceIds: [resource.id] });
         setSuccess(result.order.totalCents > 0 ? "Order draft created." : "Free order completed and access granted.");
-        invalidateTabs(["orders", "library"]);
-        await refreshMarketplace("orders", { refreshDiscover: false });
-        setActiveTab("orders");
+        invalidateTabs(["account"]);
+        await refreshMarketplace("account", { refreshDiscover: false });
+        setActiveTab("account");
       } catch (nextError) {
         setError(nextError.message || "Unable to create order.");
       }
@@ -933,26 +1395,10 @@ export default function MarketplacePageClient() {
       try {
         await apiSend(`/api/resources/orders/${orderId}`, "PATCH", { status, paymentProvider: "manual" });
         setSuccess(`Order marked ${status}.`);
-        invalidateTabs(["orders", "library"]);
-        await refreshMarketplace("orders", { refreshDiscover: false });
+        invalidateTabs(["account"]);
+        await refreshMarketplace("account", { refreshDiscover: false });
       } catch (nextError) {
         setError(nextError.message || `Unable to mark order ${status}.`);
-      }
-    });
-  }
-
-  async function handleSavePayoutAccount(event) {
-    event.preventDefault();
-    resetMessages();
-
-    startBusyAction(async () => {
-      try {
-        await apiSend("/api/resources/payout-account", "PUT", payoutForm);
-        setSuccess("Payout account saved.");
-        invalidateTabs(["payouts"]);
-        await refreshMarketplace("payouts", { refreshDiscover: false });
-      } catch (nextError) {
-        setError(nextError.message || "Unable to save payout account.");
       }
     });
   }
@@ -995,8 +1441,8 @@ export default function MarketplacePageClient() {
         </aside>
 
         <div className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-6 lg:py-7 xl:px-8">
-          <div className="overflow-x-auto pb-1 lg:hidden">
-            <div className="flex min-w-max gap-3">
+          <div className="overflow-x-auto pb-1 lg:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex min-w-max gap-4 border-b border-white/10 px-1 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
               {tabs.map((tab) => (
                 <TabButton
                   key={tab.key}
@@ -1039,8 +1485,121 @@ export default function MarketplacePageClient() {
           <div className="space-y-6">
         {activeTab === "discover" ? (
           <>
-            <section className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-3.5 shadow-[0_28px_80px_-48px_rgba(0,0,0,0.82)] ring-1 ring-white/10 sm:p-4">
-              <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center">
+            <section className="overflow-hidden rounded-[30px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.035))] p-3.5 shadow-[0_28px_80px_-48px_rgba(0,0,0,0.82)] ring-1 ring-white/10 sm:p-4">
+              <div className="space-y-3 lg:hidden">
+                <div className="flex items-center gap-2.5">
+                  <div className="relative min-w-0 flex-1">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="m20 20-3.5-3.5" />
+                    </svg>
+                    <TextInput
+                      value={discoverFilter.search}
+                      onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, search: event.target.value }))}
+                      placeholder="Search marketplace"
+                      className="h-11 rounded-full border-white/10 bg-slate-950/72 pl-11 pr-4 text-[14px]"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMobileFilterPanel((current) => (current === "filters" ? null : "filters"))}
+                    className={["flex h-11 w-11 flex-none items-center justify-center rounded-full border transition", mobileFilterPanel === "filters" ? "border-sky-300/40 bg-white text-slate-950" : "border-white/10 bg-white/[0.05] text-slate-200 hover:bg-white/[0.09]"] .join(" ")}
+                    aria-label="Toggle access filters"
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 7h16" />
+                      <path d="M7 12h10" />
+                      <path d="M10 17h4" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMobileFilterPanel((current) => (current === "categories" ? null : "categories"))}
+                    className={["flex h-11 w-11 flex-none items-center justify-center rounded-full border transition", mobileFilterPanel === "categories" ? "border-sky-300/40 bg-white text-slate-950" : "border-white/10 bg-white/[0.05] text-slate-200 hover:bg-white/[0.09]"] .join(" ")}
+                    aria-label="Toggle category filters"
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="4" y="5" width="6" height="6" rx="1.5" />
+                      <rect x="14" y="5" width="6" height="6" rx="1.5" />
+                      <rect x="4" y="13" width="6" height="6" rx="1.5" />
+                      <rect x="14" y="13" width="6" height="6" rx="1.5" />
+                    </svg>
+                  </button>
+                </div>
+
+                {mobileFilterPanel ? (
+                  <div className="space-y-3 rounded-[22px] border border-white/10 bg-slate-950/42 p-3.5 backdrop-blur-sm">
+                    {mobileFilterPanel === "filters" ? (
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { label: "All", value: "" },
+                          { label: "Hosted", value: "hosted" },
+                          { label: "External", value: "external" },
+                        ].map((option) => {
+                          const active = discoverFilter.type === option.value;
+                          return (
+                            <button
+                              key={option.label}
+                              type="button"
+                              onClick={() => setDiscoverFilter((prev) => ({ ...prev, type: option.value }))}
+                              className={[
+                                "rounded-full border px-3.5 py-2 text-sm font-semibold transition",
+                                active ? "border-sky-300/40 bg-white text-slate-950" : "border-white/10 bg-white/[0.04] text-slate-200",
+                              ].join(" ")}
+                            >
+                              {option.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setDiscoverFilter((prev) => ({ ...prev, categoryId: "" }))}
+                          className={[
+                            "rounded-full border px-3.5 py-2 text-sm font-semibold transition",
+                            !discoverFilter.categoryId ? "border-sky-300/40 bg-white text-slate-950" : "border-white/10 bg-white/[0.04] text-slate-200",
+                          ].join(" ")}
+                        >
+                          All categories
+                        </button>
+                        {categoryHighlights.map((category) => {
+                          const active = discoverFilter.categoryId === category.id;
+                          return (
+                            <button
+                              key={category.id}
+                              type="button"
+                              onClick={() => setDiscoverFilter((prev) => ({ ...prev, categoryId: category.id }))}
+                              className={[
+                                "rounded-full border px-3.5 py-2 text-sm font-semibold transition",
+                                active ? "border-sky-300/40 bg-white text-slate-950" : "border-white/10 bg-white/[0.04] text-slate-200",
+                              ].join(" ")}
+                            >
+                              {category.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {(discoverFilter.search || discoverFilter.type || discoverFilter.categoryId) ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDiscoverFilter({ search: "", type: "", categoryId: "" });
+                          setMobileFilterPanel(null);
+                        }}
+                        className="text-sm font-semibold text-sky-200"
+                      >
+                        Clear filters
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="hidden flex-col gap-2.5 lg:flex xl:flex-row xl:items-center">
                 <div className="relative flex-1">
                   <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="11" cy="11" r="7" />
@@ -1076,48 +1635,71 @@ export default function MarketplacePageClient() {
                   ) : null}
                 </div>
               </div>
+
             </section>
 
-            <section className="grid gap-3.5 xl:grid-cols-[minmax(0,1.72fr),332px]">
+            <section className="space-y-4 lg:hidden">
+              {mobileHeroResource ? <MobileHeroCard resource={mobileHeroResource} /> : null}
+
+              {mobileHeroResources.length > 1 ? (
+                <div className="flex items-center justify-center gap-2">
+                  {mobileHeroResources.map((resource, index) => (
+                    <button
+                      key={resource.id}
+                      type="button"
+                      onClick={() => setMobileHeroIndex(index)}
+                      className={index === mobileHeroIndex ? "h-2.5 w-2.5 rounded-full bg-slate-200" : "h-2 w-2 rounded-full bg-slate-500/60 transition hover:bg-slate-300/80"}
+                      aria-label={`Show featured resource ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              ) : null}
+
+              {mobilePromoResources[0] ? <MobilePromoBillboard resource={mobilePromoResources[0]} eyebrow="Spotlight" /> : null}
+
+              <div className="grid grid-cols-2 gap-3.5">
+                {mobilePromoResources.slice(1, 3).map((resource) => (
+                  <MobileMiniPromoCard key={resource.id} resource={resource} />
+                ))}
+              </div>
+            </section>
+
+            <section className="hidden gap-3.5 lg:grid lg:grid-cols-[minmax(0,1.62fr),320px] xl:grid-cols-[minmax(0,1.72fr),332px]">
               {heroResource ? (
                 <article className="relative overflow-hidden rounded-[24px] border border-white/10 shadow-[0_18px_52px_-36px_rgba(0,0,0,0.52)] ring-1 ring-white/10" style={{ backgroundImage: heroArtwork?.heroBackground }}>
-                  <div className="grid min-h-[336px] gap-5 p-5 sm:p-6 xl:grid-cols-[minmax(0,1.2fr),300px]">
-                    <div className="flex h-full flex-col justify-between gap-6">
+                  <div className="relative min-h-[336px] overflow-hidden p-5 sm:p-6">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.18),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))]" />
+                    <div className="absolute -right-10 top-5 h-32 w-32 rounded-full border border-white/15 bg-white/10 backdrop-blur-md" />
+                    <div className="absolute bottom-[-8%] right-[18%] h-28 w-28 rounded-[30px] border border-white/15 bg-slate-950/18 rotate-12" />
+                    <div className="absolute left-7 top-7 flex h-14 w-14 items-center justify-center rounded-[18px] border border-white/20 text-base font-semibold text-slate-950 shadow-[0_10px_26px_-12px_rgba(255,255,255,0.7)]" style={{ backgroundImage: heroArtwork?.chipBackground }}>
+                      {getResourceMonogram(heroResource)}
+                    </div>
+                    <div className="relative z-10 flex h-full flex-col justify-between gap-8 pt-16">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <Badge tone={statusTone(heroResource.status)}>{heroResource.status}</Badge>
                           <Badge tone="border-white/10 bg-white/[0.08] text-slate-100">{heroResource.resourceType}</Badge>
                           {heroResource.category?.name ? <Badge tone="border-sky-300/20 bg-sky-500/10 text-sky-100">{heroResource.category.name}</Badge> : null}
                         </div>
-                        <div className="mt-5 max-w-[40rem]">
+                        <div className="mt-6 max-w-[34rem]">
                           <div className="text-[11px] uppercase tracking-[0.28em] text-slate-200">Featured pack</div>
-                          <div className="mt-2.5 max-w-[32rem] text-[2rem] font-semibold tracking-tight text-white sm:text-[2.2rem]">{heroResource.title}</div>
-                          <p className="mt-2.5 line-clamp-2 max-w-[28rem] text-sm leading-5 text-slate-100/85 sm:text-[14px]">{heroResource.summary || heroResource.description || "Open the resource to review the full pack details."}</p>
+                          <div className="mt-3 max-w-[28rem] text-[2rem] font-semibold tracking-tight text-white sm:text-[2.35rem]">{heroResource.title}</div>
+                          <p className="mt-3 line-clamp-2 max-w-[23rem] text-sm leading-5 text-slate-100/85 sm:text-[14px]">{heroResource.summary || heroResource.description || "Open the resource to review the full pack details."}</p>
                         </div>
                       </div>
                       <div className="flex flex-wrap items-end justify-between gap-3.5">
-                        <div className="rounded-[18px] border border-white/10 bg-slate-950/24 px-3.5 py-2.5 text-sm text-slate-100 backdrop-blur-sm">
-                          <div className="font-semibold text-white">{heroResource.priceCents > 0 ? formatMoney(heroResource.priceCents, heroResource.currencyCode) : "Free"}</div>
-                          <div className="mt-1 text-xs text-slate-300/80">{heroResource.downloadCount || 0} downloads</div>
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          <div className="rounded-[18px] border border-white/10 bg-slate-950/24 px-3.5 py-2.5 text-sm text-slate-100 backdrop-blur-sm">
+                            <div className="font-semibold text-white">{heroResource.priceCents > 0 ? formatMoney(heroResource.priceCents, heroResource.currencyCode) : "Free"}</div>
+                            <div className="mt-1 text-xs text-slate-300/80">{heroResource.downloadCount || 0} downloads</div>
+                          </div>
+                          <div className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-1.5 text-xs font-medium text-slate-100">
+                            {heroResource.resourceType === "external" ? (heroResource.sourceName || "External reference") : "Hosted pack"}
+                          </div>
                         </div>
-                        <Link href={`/marketplace/${heroResource.id}`} className="rounded-full bg-white px-4.5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
+                        <Link href={`/marketplace/${heroResource.id}`} className="rounded-full bg-white px-4.5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 hover:shadow-[0_12px_24px_-14px_rgba(255,255,255,0.65)]">
                           View resource
                         </Link>
-                      </div>
-                    </div>
-
-                    <div className="hidden xl:flex xl:items-stretch">
-                      <div className="relative w-full overflow-hidden rounded-[22px] border border-white/15" style={{ backgroundImage: heroArtwork?.panelBackground }}>
-                        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))]" />
-                        <div className="absolute -right-12 top-6 h-36 w-36 rounded-full border border-white/20 bg-white/10 backdrop-blur-md" />
-                        <div className="absolute bottom-[-10%] left-[-6%] h-40 w-40 rotate-12 rounded-[30px] border border-white/15 bg-slate-950/20" />
-                        <div className="absolute right-6 top-6 flex h-14 w-14 items-center justify-center rounded-[18px] border border-white/20 text-base font-semibold text-slate-950 shadow-[0_10px_26px_-12px_rgba(255,255,255,0.7)]" style={{ backgroundImage: heroArtwork?.chipBackground }}>
-                          {getResourceMonogram(heroResource)}
-                        </div>
-                        <div className="absolute bottom-6 left-6 right-6 rounded-[18px] border border-white/15 bg-slate-950/18 p-3.5 backdrop-blur-md">
-                          <div className="text-[11px] uppercase tracking-[0.24em] text-white/70">{heroResource.category?.name || heroResource.resourceType}</div>
-                          <div className="mt-2 text-lg font-semibold text-white">{heroResource.title}</div>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -1126,108 +1708,54 @@ export default function MarketplacePageClient() {
                 <EmptyState title="No featured resources available." body="Approved resources that match your current filters will appear here." />
               )}
 
-              <div className="grid gap-4">
-                {spotlightResource ? (
-                  <article className="overflow-hidden rounded-[24px] border border-white/10 shadow-[0_18px_52px_-36px_rgba(0,0,0,0.5)] ring-1 ring-white/10" style={{ backgroundImage: spotlightArtwork?.spotlightBackground }}>
-                    <div className="relative flex min-h-[184px] flex-col justify-between gap-3.5 p-4.5">
-                      <div className="absolute right-[-18px] top-[-18px] h-24 w-24 rounded-full border border-white/15 bg-white/10 backdrop-blur-sm" />
-                      <div className="absolute bottom-4.5 right-4.5 flex h-12 w-12 items-center justify-center rounded-[16px] border text-sm font-semibold text-slate-950 shadow-[0_10px_24px_-12px_rgba(255,255,255,0.7)]" style={{ backgroundImage: spotlightArtwork?.chipBackground, borderColor: spotlightArtwork?.outline }}>
-                        {getResourceMonogram(spotlightResource)}
-                      </div>
-                      <div className="relative z-10">
-                        <div className="text-[11px] uppercase tracking-[0.24em] text-emerald-50/80">Spotlight</div>
-                        <div className="mt-2.5 max-w-[14rem] text-[1.55rem] font-semibold tracking-tight text-white">{spotlightResource.title}</div>
-                        <div className="mt-2 line-clamp-2 max-w-[14rem] text-sm leading-5 text-emerald-50/88">{spotlightResource.summary || "Explore the resource details."}</div>
-                      </div>
-                      <Link href={`/marketplace/${spotlightResource.id}`} className="relative z-10 inline-flex w-fit rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-emerald-50">
-                        Open
-                      </Link>
-                    </div>
-                  </article>
-                ) : (
-                  <div className="rounded-[30px] border border-dashed border-white/10 bg-white/[0.03] px-5 py-8 text-sm text-slate-300">Add more approved resources to populate the spotlight tile.</div>
-                )}
-
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
-                  {supportingResources.length ? supportingResources.map((resource) => {
-                    const cardArtwork = getResourceArtwork(resource);
-
-                    return (
-                      <article key={resource.id} className="overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] ring-1 ring-white/10">
-                        <div className="h-28 border-b border-white/10" style={{ backgroundImage: cardArtwork.cardBackground }}>
-                          <div className="flex h-full items-start justify-between p-4">
-                            <div className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/85">
-                              {resource.category?.name || resource.resourceType}
-                            </div>
-                            <div className="flex h-11 w-11 items-center justify-center rounded-[14px] border border-white/20 text-sm font-semibold text-slate-950 shadow-[0_12px_28px_-14px_rgba(255,255,255,0.75)]" style={{ backgroundImage: cardArtwork.chipBackground }}>
-                              {getResourceMonogram(resource)}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex min-h-[160px] flex-col justify-between gap-3 p-4">
-                          <div>
-                            <div className="text-lg font-semibold text-white">{resource.title}</div>
-                            <div className="mt-2 line-clamp-3 text-sm leading-6 text-slate-300">{resource.summary || "Open the resource to review the pack or linked source details."}</div>
-                          </div>
-                          <Link href={`/marketplace/${resource.id}`} className="inline-flex w-fit rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.1]">
-                            View details
-                          </Link>
-                        </div>
-                      </article>
-                    );
-                  }) : (
-                    <div className="sm:col-span-2 rounded-[24px] border border-dashed border-white/10 bg-white/[0.03] px-5 py-8 text-sm text-slate-300">Additional resource tiles will appear here as more approved items are added.</div>
-                  )}
-                </div>
-              </div>
+              <PromoRail spotlightResource={spotlightResource} supportingResources={supportingResources} />
             </section>
 
-            <section className="grid gap-4 xl:grid-cols-2">
-              <section className="overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.035))] shadow-[0_30px_80px_-44px_rgba(0,0,0,0.75)] ring-1 ring-white/10">
-                <div className="flex items-center justify-between border-b border-white/10 px-5 py-5 sm:px-6">
-                  <div className="text-2xl font-semibold text-white">Trending resources</div>
-                  <div className="text-sm font-medium text-sky-300">Top activity</div>
-                </div>
-                <div className="space-y-4 px-5 py-5 sm:px-6">
-                  {trendingResources.length ? trendingResources.map((resource, index) => (
-                    <div key={resource.id} className="flex items-center justify-between gap-4 rounded-[22px] border border-white/10 bg-white/[0.04] px-4 py-4">
-                      <div className="flex min-w-0 items-center gap-4">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-[18px] border border-white/10 bg-slate-950/35 text-sm font-semibold text-sky-200">#{index + 1}</div>
-                        <div className="min-w-0">
-                          <Link href={`/marketplace/${resource.id}`} className="block truncate text-base font-semibold text-white transition hover:text-sky-100">{resource.title}</Link>
-                          <div className="mt-1 text-sm text-slate-400">{resource.category?.name || resource.resourceType}</div>
-                        </div>
-                      </div>
-                      <div className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-semibold text-slate-200">{resource.downloadCount || 0} downloads</div>
-                    </div>
-                  )) : <div className="text-sm text-slate-400">Trending resources will appear once usage data builds up.</div>}
-                </div>
-              </section>
+            <div className="lg:hidden">
+              <ScrollShelf
+                title="More to explore"
+                subtitle="Swipe through new marketplace picks."
+                metaLabel="Storefront lane"
+              >
+                {homeShelfResources.length ? homeShelfResources.map((resource, index) => (
+                  <MarketplaceShelfCard key={resource.id} resource={resource} variant={index === 0 ? "standard" : "compact"} />
+                )) : <div className="py-2 text-sm text-slate-400">New resources will appear here as the approved catalogue grows.</div>}
+              </ScrollShelf>
+            </div>
 
-              <section className="overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.035))] shadow-[0_30px_80px_-44px_rgba(0,0,0,0.75)] ring-1 ring-white/10">
-                <div className="flex items-center justify-between border-b border-white/10 px-5 py-5 sm:px-6">
-                  <div className="text-2xl font-semibold text-white">Browse categories</div>
-                  <div className="text-sm font-medium text-sky-300">Quick filters</div>
-                </div>
-                <div className="grid gap-4 px-5 py-5 sm:grid-cols-2 sm:px-6">
-                  {categoryHighlights.length ? categoryHighlights.map((category) => (
-                    <button
-                      key={category.id}
-                      type="button"
-                      onClick={() => setDiscoverFilter((prev) => ({ ...prev, categoryId: category.id }))}
-                      className="rounded-[22px] border border-white/10 bg-white/[0.04] px-4 py-4 text-left transition hover:border-white/20 hover:bg-white/[0.08]"
-                    >
-                      <div className="text-base font-semibold text-white">{category.name}</div>
-                      <div className="mt-2 text-sm text-slate-400">{category.count} resources</div>
-                    </button>
-                  )) : <div className="sm:col-span-2 text-sm text-slate-400">Categories will populate here once resources are approved.</div>}
-                </div>
-              </section>
+            <div className="hidden lg:block">
+            <ScrollShelf
+              title="Fresh in marketplace"
+              subtitle="A billboard-style shelf with mixed card sizes so the lane feels more curated than a plain carousel."
+              metaLabel="Storefront lane"
+            >
+              {homeShelfResources.length ? homeShelfResources.map((resource) => (
+                <MarketplaceShelfCard key={resource.id} resource={resource} variant={getHomeShelfVariant(homeShelfResources.indexOf(resource))} />
+              )) : <div className="py-2 text-sm text-slate-400">New resources will appear here as the approved catalogue grows.</div>}
+            </ScrollShelf>
+            </div>
+
+            <section className="grid gap-4 xl:grid-cols-[minmax(0,1.32fr),minmax(0,1fr)]">
+              <ScrollShelf title="Trending resources" subtitle="High-activity items presented as a card rail for quick scanning." metaLabel="Top activity">
+                {trendingResources.length ? trendingResources.map((resource) => (
+                  <MarketplaceShelfCard key={resource.id} resource={resource} />
+                )) : <div className="py-2 text-sm text-slate-400">Trending resources will appear once usage data builds up.</div>}
+              </ScrollShelf>
+
+              <ScrollShelf title="Browse categories" subtitle="Jump into the strongest parts of the catalogue with one tap." metaLabel="Quick filters">
+                {categoryHighlights.length ? categoryHighlights.map((category) => (
+                  <CategoryShelfCard
+                    key={category.id}
+                    category={category}
+                    onSelect={() => setDiscoverFilter((prev) => ({ ...prev, categoryId: category.id }))}
+                  />
+                )) : <div className="py-2 text-sm text-slate-400">Categories will populate here once resources are approved.</div>}
+              </ScrollShelf>
             </section>
 
             <SectionCard
               title="Discover resources"
-              subtitle="Approved hosted packs and curated external industry sources."
+              subtitle="Approved hosted packs and curated external industry sources, kept as a denser browse-all list below the hero shelves."
             >
               {discoverResources.length ? (
                 <div className="space-y-3">
@@ -1381,18 +1909,96 @@ export default function MarketplacePageClient() {
           </SectionCard>
         ) : null}
 
-        {activeTab === "library" ? (
-          <SectionCard title="My library" subtitle="Resources you own, bought, or received through free and request-based access.">
-            {library.length ? (
-              <div className="grid gap-4 xl:grid-cols-2">
-                {library.map((resource) => (
-                  <ResourceCard key={resource.id} resource={resource} />
-                ))}
-              </div>
-            ) : (
-              <EmptyState title="Your library is empty." body="Free resources and future paid resources will appear here once you gain access." />
-            )}
-          </SectionCard>
+        {activeTab === "account" ? (
+          <div className="space-y-6">
+            <SectionCard title="My library" subtitle="Resources you own, bought, or received through free and request-based access.">
+              {library.length ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-3 rounded-[24px] border border-white/10 bg-[linear-gradient(135deg,rgba(14,165,233,0.14),rgba(15,23,42,0.22))] px-4 py-3 text-sm text-slate-200 sm:px-5">
+                    <div>
+                      <div className="font-semibold text-white">Gallery view</div>
+                      <div className="mt-1 text-slate-300">Your library now uses curated one-row shelves with a featured lead card and quick-scroll controls.</div>
+                    </div>
+                    <div className="hidden rounded-full border border-white/12 bg-white/[0.06] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-200 sm:block">
+                      {library.length} items
+                    </div>
+                  </div>
+
+                  <GalleryShelf
+                    title="Recently added"
+                    subtitle="Your newest or most recently updated resources, led by a larger feature card."
+                    items={libraryShelves.recentlyAdded}
+                    emptyTitle="No library items yet."
+                    emptyBody="Resources will appear here once you gain access or publish them yourself."
+                    featuredFirst
+                  />
+
+                  <GalleryShelf
+                    title="Purchased"
+                    subtitle="Resources you unlocked through paid marketplace orders."
+                    items={libraryShelves.purchased}
+                    emptyTitle="No purchased resources yet."
+                    emptyBody="Paid resources you acquire will collect here for quick return visits."
+                  />
+
+                  <GalleryShelf
+                    title="Free access"
+                    subtitle="Free entitlements and resources available without a paid order."
+                    items={libraryShelves.freeAccess}
+                    emptyTitle="No free-access resources yet."
+                    emptyBody="Free packs and no-cost access will appear here when available."
+                  />
+                </div>
+              ) : (
+                <EmptyState title="Your library is empty." body="Free resources and future paid resources will appear here once you gain access." />
+              )}
+            </SectionCard>
+
+            <SectionCard title="Orders" subtitle="Track free completions now and manual payment state changes before live checkout exists.">
+              {orders.length ? (
+                <div className="space-y-4">
+                  {orders.map((order) => (
+                    <article key={order.id} className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10">
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-base font-semibold text-white">Order {order.id.slice(0, 8)}</h3>
+                            <Badge tone={statusTone(order.status)}>{order.status}</Badge>
+                          </div>
+                          <div className="mt-3 space-y-2 text-sm text-slate-300">
+                            {order.items.map((item) => (
+                              <div key={item.id} className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
+                                <div className="font-medium text-white">{item.resource?.title || "Resource"}</div>
+                                <div className="mt-1 text-slate-400">{formatMoney(item.lineTotalCents, item.currencyCode)} · seller net {formatMoney(item.sellerNetCents, item.currencyCode)}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="min-w-[220px] rounded-[24px] border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">
+                          <div className="flex items-center justify-between"><span>Total</span><span className="font-semibold text-white">{formatMoney(order.totalCents, order.currencyCode)}</span></div>
+                          <div className="mt-2 flex items-center justify-between"><span>Platform fee</span><span>{formatMoney(order.platformFeeCents, order.currencyCode)}</span></div>
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            {isAdmin && order.status !== "paid" ? (
+                              <button type="button" onClick={() => handleOrderStatus(order.id, "paid")} className="rounded-full border border-emerald-300/25 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/15">
+                                Mark paid
+                              </button>
+                            ) : null}
+                            {order.status === "draft" || order.status === "pending" ? (
+                              <button type="button" onClick={() => handleOrderStatus(order.id, "cancelled")} className="rounded-full border border-red-300/25 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-100 transition hover:bg-red-500/15">
+                                Cancel
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState title="No orders yet." body="Paid flows are scaffolded, and free resources can already issue zero-dollar orders where needed." />
+              )}
+            </SectionCard>
+          </div>
         ) : null}
 
         {activeTab === "requests" ? (
@@ -1486,105 +2092,6 @@ export default function MarketplacePageClient() {
           </SectionCard>
         ) : null}
 
-        {activeTab === "orders" ? (
-          <SectionCard title="Orders" subtitle="Track free completions now and manual payment state changes before live checkout exists.">
-            {orders.length ? (
-              <div className="space-y-4">
-                {orders.map((order) => (
-                  <article key={order.id} className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10">
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-base font-semibold text-white">Order {order.id.slice(0, 8)}</h3>
-                          <Badge tone={statusTone(order.status)}>{order.status}</Badge>
-                        </div>
-                        <div className="mt-3 space-y-2 text-sm text-slate-300">
-                          {order.items.map((item) => (
-                            <div key={item.id} className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
-                              <div className="font-medium text-white">{item.resource?.title || "Resource"}</div>
-                              <div className="mt-1 text-slate-400">{formatMoney(item.lineTotalCents, item.currencyCode)} · seller net {formatMoney(item.sellerNetCents, item.currencyCode)}</div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="min-w-[220px] rounded-[24px] border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">
-                        <div className="flex items-center justify-between"><span>Total</span><span className="font-semibold text-white">{formatMoney(order.totalCents, order.currencyCode)}</span></div>
-                        <div className="mt-2 flex items-center justify-between"><span>Platform fee</span><span>{formatMoney(order.platformFeeCents, order.currencyCode)}</span></div>
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          {isAdmin && order.status !== "paid" ? (
-                            <button type="button" onClick={() => handleOrderStatus(order.id, "paid")} className="rounded-full border border-emerald-300/25 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/15">
-                              Mark paid
-                            </button>
-                          ) : null}
-                          {order.status === "draft" || order.status === "pending" ? (
-                            <button type="button" onClick={() => handleOrderStatus(order.id, "cancelled")} className="rounded-full border border-red-300/25 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-100 transition hover:bg-red-500/15">
-                              Cancel
-                            </button>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <EmptyState title="No orders yet." body="Paid flows are scaffolded, and free resources can already issue zero-dollar orders where needed." />
-            )}
-          </SectionCard>
-        ) : null}
-
-        {activeTab === "payouts" ? (
-          <SectionCard title="Payout readiness" subtitle="Store seller payout account details and inspect the ledger created by manual paid order settlement.">
-            <div className="grid gap-6 lg:grid-cols-[0.85fr,1.15fr]">
-              <form className="space-y-4 rounded-[26px] border border-white/10 bg-white/[0.03] p-5" onSubmit={handleSavePayoutAccount}>
-                <Field label="Provider">
-                  <TextInput value={payoutForm.provider} onChange={(event) => setPayoutForm((prev) => ({ ...prev, provider: event.target.value }))} />
-                </Field>
-                <Field label="Provider account id">
-                  <TextInput value={payoutForm.providerAccountId} onChange={(event) => setPayoutForm((prev) => ({ ...prev, providerAccountId: event.target.value }))} placeholder="acct_..." />
-                </Field>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="Country code">
-                    <TextInput value={payoutForm.countryCode} onChange={(event) => setPayoutForm((prev) => ({ ...prev, countryCode: event.target.value.toUpperCase() }))} maxLength={2} />
-                  </Field>
-                  <Field label="Currency">
-                    <TextInput value={payoutForm.currencyCode} onChange={(event) => setPayoutForm((prev) => ({ ...prev, currencyCode: event.target.value.toUpperCase() }))} maxLength={3} />
-                  </Field>
-                </div>
-                <button type="submit" disabled={busyAction} className="w-full rounded-full border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50">
-                  Save payout account
-                </button>
-                {payoutAccount ? <div className="rounded-[22px] border border-emerald-300/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">Current status: {payoutAccount.status}</div> : null}
-              </form>
-              <div>
-                {payoutLedger.length ? (
-                  <div className="space-y-4">
-                    {payoutLedger.map((entry) => (
-                      <article key={entry.id} className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10">
-                        <div className="flex flex-wrap items-start justify-between gap-4">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <div className="text-base font-semibold text-white">{entry.entryType}</div>
-                              <Badge tone={statusTone(entry.status)}>{entry.status}</Badge>
-                            </div>
-                            <div className="mt-3 text-sm text-slate-400">Available {formatDate(entry.availableAt) || "when settled"}</div>
-                          </div>
-                          <div className="text-right text-sm text-slate-300">
-                            <div className="font-semibold text-white">{formatMoney(entry.netCents, entry.currencyCode)}</div>
-                            <div className="mt-1">Gross {formatMoney(entry.grossCents, entry.currencyCode)}</div>
-                            <div className="mt-1">Fee {formatMoney(entry.platformFeeCents, entry.currencyCode)}</div>
-                          </div>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <EmptyState title="No payout ledger entries yet." body="When paid orders are manually marked settled, seller earnings will appear here and can later feed a live payout system." />
-                )}
-              </div>
-            </div>
-          </SectionCard>
-        ) : null}
       </div>
         </div>
       </div>
