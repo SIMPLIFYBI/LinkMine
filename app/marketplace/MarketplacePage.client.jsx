@@ -84,7 +84,41 @@ function statusTone(status) {
   if (status === "rejected" || status === "failed" || status === "cancelled" || status === "disabled") {
     return "border-red-400/30 bg-red-500/10 text-red-100";
   }
-  return "border-cyan-400/30 bg-cyan-500/10 text-cyan-100";
+  return "border-cyan-400/30 bg-cyan-500/10 text-cyan-100"; 
+}
+
+function hashString(value) {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) % 360;
+  }
+  return hash;
+}
+
+function getResourceMonogram(resource) {
+  return String(resource?.title || "RM")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase() || "RM";
+}
+
+function getResourceArtwork(resource) {
+  const seed = `${resource?.category?.name || "general"}-${resource?.resourceType || "hosted"}-${resource?.title || "resource"}`;
+  const hue = hashString(seed);
+  const accentHue = (hue + 42) % 360;
+  const glowHue = (hue + 110) % 360;
+
+  return {
+    heroBackground: `radial-gradient(circle at 18% 18%, hsla(${glowHue}, 78%, 66%, 0.32), transparent 34%), linear-gradient(135deg, hsla(${hue}, 72%, 54%, 0.92), hsla(${accentHue}, 72%, 32%, 0.78) 58%, rgba(15,23,42,0.96) 100%)`,
+    spotlightBackground: `radial-gradient(circle at 78% 22%, hsla(${glowHue}, 88%, 72%, 0.34), transparent 30%), linear-gradient(135deg, hsla(${hue}, 70%, 46%, 0.96), hsla(${accentHue}, 70%, 42%, 0.84))`,
+    panelBackground: `radial-gradient(circle at 28% 32%, hsla(${glowHue}, 92%, 74%, 0.36), transparent 24%), radial-gradient(circle at 72% 68%, hsla(${hue}, 94%, 68%, 0.24), transparent 22%), linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.04))`,
+    cardBackground: `radial-gradient(circle at 20% 16%, hsla(${glowHue}, 90%, 72%, 0.28), transparent 28%), linear-gradient(145deg, hsla(${hue}, 58%, 44%, 0.94), hsla(${accentHue}, 64%, 26%, 0.84))`,
+    chipBackground: `linear-gradient(135deg, hsla(${glowHue}, 90%, 86%, 0.95), hsla(${hue}, 86%, 70%, 0.88))`,
+    outline: `hsla(${glowHue}, 86%, 78%, 0.42)`,
+  };
 }
 
 function TabButton({ active, label, hint, onClick }) {
@@ -188,7 +222,7 @@ function SidebarTabButton({ active, label, icon, onClick }) {
       type="button"
       onClick={onClick}
       className={[
-        "group relative flex w-full flex-col items-center justify-center gap-1.5 rounded-[16px] border px-1.5 py-2.5 text-center transition",
+        "group relative flex w-full flex-col items-center justify-center gap-1 rounded-[15px] border px-1 py-2 text-center transition",
         active
           ? "border-slate-200/80 bg-white text-sky-600 shadow-[0_18px_45px_-34px_rgba(255,255,255,0.95)]"
           : "border-transparent bg-transparent text-slate-300 hover:border-white/10 hover:bg-white/[0.05] hover:text-white",
@@ -196,14 +230,14 @@ function SidebarTabButton({ active, label, icon, onClick }) {
     >
       <span
         className={[
-          "absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-full transition",
+          "absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-full transition",
           active ? "bg-sky-500 opacity-100" : "bg-transparent opacity-0 group-hover:opacity-40",
         ].join(" ")}
       />
-      <span className={["flex h-10 w-10 items-center justify-center rounded-[14px] border transition", active ? "border-sky-100 bg-sky-50" : "border-white/10 bg-white/[0.04] group-hover:border-white/20 group-hover:bg-white/[0.08]"].join(" ")}>
+      <span className={["flex h-9 w-9 items-center justify-center rounded-[13px] border transition", active ? "border-sky-100 bg-sky-50" : "border-white/10 bg-white/[0.04] group-hover:border-white/20 group-hover:bg-white/[0.08]"].join(" ")}>
         <MarketplaceNavIcon name={icon} active={active} />
       </span>
-      <span className={`text-[10px] font-medium leading-[1.1] ${active ? "text-slate-700" : "text-slate-400 group-hover:text-slate-200"}`}>{label}</span>
+      <span className={`text-[9px] font-medium leading-[1.05] ${active ? "text-slate-700" : "text-slate-400 group-hover:text-slate-200"}`}>{label}</span>
     </button>
   );
 }
@@ -342,6 +376,62 @@ function ResourceCard({ resource, onSubmitForReview, onArchive, actionLabel = "V
   );
 }
 
+function DiscoverListRow({ resource }) {
+  const detailHref = `/marketplace/${resource.id}`;
+  const artwork = getResourceArtwork(resource);
+  const priceLabel = resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free";
+  const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Hosted pack";
+  const metaLabel = resource.category?.name || accessLabel;
+  const updatedLabel = formatDate(resource.updatedAt || resource.createdAt);
+
+  return (
+    <article className="overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_18px_48px_-38px_rgba(0,0,0,0.85)] ring-1 ring-white/10 transition hover:border-white/20 hover:bg-white/[0.06]">
+      <div className="flex gap-3.5 p-3.5 sm:items-center sm:gap-4 sm:p-4">
+        <div className="flex min-w-0 flex-1 gap-3.5 sm:items-center sm:gap-4">
+          <div className="relative h-[72px] w-[72px] flex-none overflow-hidden rounded-[20px] border border-white/10 shadow-[0_16px_36px_-24px_rgba(0,0,0,0.8)] sm:h-16 sm:w-16" style={{ backgroundImage: artwork.cardBackground }}>
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.03))]" />
+            <div className="absolute left-2.5 top-2.5 rounded-full border border-white/15 bg-white/10 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-white/90">
+              {resource.resourceType}
+            </div>
+            <div className="absolute bottom-2.5 right-2.5 flex h-8 w-8 items-center justify-center rounded-[12px] border border-white/20 text-[11px] font-semibold text-slate-950" style={{ backgroundImage: artwork.chipBackground }}>
+              {getResourceMonogram(resource)}
+            </div>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
+              <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">{metaLabel}</div>
+            </div>
+            <Link href={detailHref} className="mt-2 block truncate text-base font-semibold text-white transition hover:text-sky-100 sm:text-lg">
+              {resource.title}
+            </Link>
+            <p className="mt-1.5 line-clamp-1 max-w-2xl text-sm leading-5 text-slate-400 sm:line-clamp-2 sm:leading-6">{resource.summary || accessLabel}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-400">
+              {(resource.tags || []).slice(0, 3).map((tag) => (
+                <span key={tag.id} className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
+                  {tag.name}
+                </span>
+              ))}
+              {updatedLabel ? <span className="rounded-full border border-transparent bg-slate-950/35 px-3 py-1">Updated {updatedLabel}</span> : null}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex min-w-[88px] flex-col items-end justify-between gap-2 sm:min-w-[148px] sm:justify-center">
+          <div className="text-right">
+            <div className="text-base font-semibold text-white sm:text-lg">{priceLabel}</div>
+            <div className="mt-1 text-xs text-slate-400">{resource.downloadCount || 0} downloads</div>
+          </div>
+          <Link href={detailHref} className="rounded-full bg-white px-3.5 py-2 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100 sm:px-4 sm:text-xs">
+            View details
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 export default function MarketplacePageClient() {
   const { session, loading: authLoading, authError } = useAuth();
   const signedIn = Boolean(session);
@@ -369,7 +459,7 @@ export default function MarketplacePageClient() {
   const [requestForm, setRequestForm] = useState(DEFAULT_REQUEST_FORM);
   const [payoutForm, setPayoutForm] = useState(DEFAULT_PAYOUT_FORM);
   const [resourceFile, setResourceFile] = useState(null);
-  const [discoverFilter, setDiscoverFilter] = useState({ type: "", categoryId: "" });
+  const [discoverFilter, setDiscoverFilter] = useState({ search: "", type: "", categoryId: "" });
   const [loadedTabs, setLoadedTabs] = useState({
     discover: false,
     submit: false,
@@ -549,7 +639,23 @@ export default function MarketplacePageClient() {
   }, [payoutAccount]);
 
   const discoverResources = useMemo(() => {
+    const searchTerm = discoverFilter.search.trim().toLowerCase();
+
     return resources.filter((resource) => {
+      if (searchTerm) {
+        const searchSource = [
+          resource.title,
+          resource.summary,
+          resource.description,
+          resource.category?.name,
+          ...(resource.tags || []).map((tag) => tag.name),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        if (!searchSource.includes(searchTerm)) return false;
+      }
       if (discoverFilter.type && resource.resourceType !== discoverFilter.type) return false;
       if (discoverFilter.categoryId && resource.categoryId !== discoverFilter.categoryId) return false;
       return true;
@@ -563,6 +669,21 @@ export default function MarketplacePageClient() {
       .sort((left, right) => (Number(right.downloadCount || 0) - Number(left.downloadCount || 0)) || right.updatedAt?.localeCompare?.(left.updatedAt || "") || 0)
       .slice(0, 4);
   }, [discoverResources]);
+
+  const heroResource = useMemo(() => featuredResources[0] || discoverResources[0] || null, [discoverResources, featuredResources]);
+
+  const spotlightResource = useMemo(() => {
+    const spotlightPool = [...featuredResources.slice(1), ...trendingResources, ...discoverResources];
+    return spotlightPool.find((resource) => resource.id !== heroResource?.id) || null;
+  }, [discoverResources, featuredResources, heroResource?.id, trendingResources]);
+
+  const supportingResources = useMemo(() => {
+    const blockedIds = new Set([heroResource?.id, spotlightResource?.id].filter(Boolean));
+    return discoverResources.filter((resource) => !blockedIds.has(resource.id)).slice(0, 2);
+  }, [discoverResources, heroResource?.id, spotlightResource?.id]);
+
+  const heroArtwork = useMemo(() => (heroResource ? getResourceArtwork(heroResource) : null), [heroResource]);
+  const spotlightArtwork = useMemo(() => (spotlightResource ? getResourceArtwork(spotlightResource) : null), [spotlightResource]);
 
   const tabs = useMemo(() => {
     if (!signedIn) {
@@ -839,15 +960,15 @@ export default function MarketplacePageClient() {
   return (
     <main className="w-full px-0 py-0 lg:min-h-[calc(100vh-8rem)]">
       <div className="lg:flex lg:items-start">
-        <aside className="hidden lg:block lg:w-20 lg:flex-none lg:self-stretch lg:border-r lg:border-white/10 lg:bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(15,23,42,0.9))] xl:w-24">
-          <div className="sticky top-[88px] flex h-[calc(100vh-104px)] flex-col px-2 py-4 shadow-[20px_0_60px_-45px_rgba(0,0,0,0.9)]">
-            <div className="flex justify-center pb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-white/10 bg-white/[0.06] text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
+        <aside className="hidden lg:block lg:w-[72px] lg:flex-none lg:self-stretch lg:border-r lg:border-white/10 lg:bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(15,23,42,0.9))] xl:w-20">
+          <div className="sticky top-[88px] flex h-[calc(100vh-104px)] flex-col px-1.5 py-3.5 shadow-[20px_0_60px_-45px_rgba(0,0,0,0.9)]">
+            <div className="flex justify-center pb-3.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-[13px] border border-white/10 bg-white/[0.06] text-[9px] font-semibold uppercase tracking-[0.16em] text-white">
                 LM
               </div>
             </div>
 
-            <div className="space-y-1.5 border-t border-white/10 pt-4">
+            <div className="space-y-1 border-t border-white/10 pt-3.5">
               {primaryTabs.map((tab) => (
                 <SidebarTabButton
                   key={tab.key}
@@ -859,7 +980,7 @@ export default function MarketplacePageClient() {
               ))}
             </div>
 
-            <div className="mt-auto space-y-1.5 border-t border-white/10 pt-4">
+            <div className="mt-auto space-y-1 border-t border-white/10 pt-3.5">
               {secondaryTabs.map((tab) => (
                 <SidebarTabButton
                   key={tab.key}
@@ -873,7 +994,7 @@ export default function MarketplacePageClient() {
           </div>
         </aside>
 
-        <div className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8 xl:px-10">
+        <div className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-6 lg:py-7 xl:px-8">
           <div className="overflow-x-auto pb-1 lg:hidden">
             <div className="flex min-w-max gap-3">
               {tabs.map((tab) => (
@@ -918,96 +1039,200 @@ export default function MarketplacePageClient() {
           <div className="space-y-6">
         {activeTab === "discover" ? (
           <>
-            <section className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr),340px]">
-              <div className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.3),rgba(15,23,42,0.94)_38%,rgba(255,255,255,0.03)_100%)] px-6 py-6 shadow-[0_24px_70px_-46px_rgba(56,189,248,0.55)] ring-1 ring-white/10">
-                <div className="text-sm font-medium uppercase tracking-[0.18em] text-slate-300">Featured</div>
-                <div className="mt-4 text-2xl font-semibold text-white">Marketplace picks for mining teams, planners, and field workflows.</div>
-                <div className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
-                  Browse promoted packs, trusted external references, and practical templates from the right-hand storefront while the left rail keeps the workspace navigation fixed.
+            <section className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-3.5 shadow-[0_28px_80px_-48px_rgba(0,0,0,0.82)] ring-1 ring-white/10 sm:p-4">
+              <div className="flex flex-col gap-2.5 xl:flex-row xl:items-center">
+                <div className="relative flex-1">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="m20 20-3.5-3.5" />
+                  </svg>
+                  <TextInput
+                    value={discoverFilter.search}
+                    onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, search: event.target.value }))}
+                    placeholder="Search packs, templates, workflows, references, and field resources"
+                    className="h-12 rounded-full border-white/10 bg-slate-950/80 pl-11 pr-4 text-[15px]"
+                  />
                 </div>
-
-                <div className="mt-6 grid gap-4 md:grid-cols-3">
-                  {featuredResources.length ? featuredResources.map((resource) => (
-                    <div key={resource.id} className="rounded-[24px] border border-white/10 bg-white/[0.06] p-4 ring-1 ring-white/10">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-white">{resource.title}</div>
-                          <div className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-400">{resource.category?.name || resource.resourceType}</div>
-                        </div>
-                        <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
-                      </div>
-                      <div className="mt-3 text-sm leading-6 text-slate-300">{resource.summary || "Open the resource to view the full pack or source details."}</div>
-                    </div>
-                  )) : (
-                    <div className="md:col-span-3 rounded-[24px] border border-dashed border-white/10 bg-white/[0.03] px-5 py-6 text-sm text-slate-300">
-                      Featured resources will appear here once approved items are available.
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <section className="rounded-[28px] border border-white/10 bg-white/[0.05] px-5 py-5 ring-1 ring-white/10">
-                  <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Trending</div>
-                  <div className="mt-4 space-y-3">
-                    {trendingResources.length ? trendingResources.map((resource, index) => (
-                      <div key={resource.id} className="rounded-[20px] border border-white/10 bg-slate-950/35 px-4 py-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="text-xs uppercase tracking-[0.18em] text-sky-300">#{index + 1}</div>
-                            <div className="mt-1 text-sm font-semibold text-white">{resource.title}</div>
-                          </div>
-                          <div className="text-right text-xs text-slate-400">{resource.downloadCount || 0} downloads</div>
-                        </div>
-                      </div>
-                    )) : <div className="text-sm text-slate-400">Trending resources will appear once usage data builds up.</div>}
-                  </div>
-                </section>
-
-                <section className="rounded-[28px] border border-white/10 bg-white/[0.05] px-5 py-5 ring-1 ring-white/10">
-                  <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Categories</div>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-                    {categoryHighlights.length ? categoryHighlights.map((category) => (
-                      <button
-                        key={category.id}
-                        type="button"
-                        onClick={() => setDiscoverFilter((prev) => ({ ...prev, categoryId: category.id }))}
-                        className="rounded-[20px] border border-white/10 bg-slate-950/35 px-4 py-3 text-left transition hover:border-white/20 hover:bg-white/[0.08]"
-                      >
-                        <div className="text-sm font-semibold text-white">{category.name}</div>
-                        <div className="mt-1 text-xs text-slate-400">{category.count} resources</div>
-                      </button>
-                    )) : <div className="text-sm text-slate-400">Categories will populate here once resources are approved.</div>}
-                  </div>
-                </section>
-              </div>
-            </section>
-
-            <SectionCard
-              title="Discover resources"
-              subtitle="Approved hosted packs and curated external industry sources."
-              actions={
-                <>
-                  <Select value={discoverFilter.type} onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, type: event.target.value }))} className="min-w-[160px]">
+                <div className="flex flex-col gap-2.5 sm:flex-row xl:flex-none">
+                  <Select value={discoverFilter.type} onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, type: event.target.value }))} className="h-12 min-w-[158px] rounded-full border-white/10 bg-slate-950/80 text-[13px]">
                     <option value="">All access types</option>
                     <option value="hosted">Hosted</option>
                     <option value="external">External</option>
                   </Select>
-                  <Select value={discoverFilter.categoryId} onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, categoryId: event.target.value }))} className="min-w-[180px]">
+                  <Select value={discoverFilter.categoryId} onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, categoryId: event.target.value }))} className="h-12 min-w-[176px] rounded-full border-white/10 bg-slate-950/80 text-[13px]">
                     <option value="">All categories</option>
                     {categories.map((category) => (
                       <option key={category.id} value={category.id}>{category.name}</option>
                     ))}
                   </Select>
-                </>
-              }
+                  {(discoverFilter.search || discoverFilter.type || discoverFilter.categoryId) ? (
+                    <button
+                      type="button"
+                      onClick={() => setDiscoverFilter({ search: "", type: "", categoryId: "" })}
+                      className="h-12 rounded-full border border-white/10 bg-white/[0.04] px-4.5 text-[13px] font-semibold text-white transition hover:bg-white/[0.08]"
+                    >
+                      Clear
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            </section>
+
+            <section className="grid gap-3.5 xl:grid-cols-[minmax(0,1.72fr),332px]">
+              {heroResource ? (
+                <article className="relative overflow-hidden rounded-[24px] border border-white/10 shadow-[0_18px_52px_-36px_rgba(0,0,0,0.52)] ring-1 ring-white/10" style={{ backgroundImage: heroArtwork?.heroBackground }}>
+                  <div className="grid min-h-[336px] gap-5 p-5 sm:p-6 xl:grid-cols-[minmax(0,1.2fr),300px]">
+                    <div className="flex h-full flex-col justify-between gap-6">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge tone={statusTone(heroResource.status)}>{heroResource.status}</Badge>
+                          <Badge tone="border-white/10 bg-white/[0.08] text-slate-100">{heroResource.resourceType}</Badge>
+                          {heroResource.category?.name ? <Badge tone="border-sky-300/20 bg-sky-500/10 text-sky-100">{heroResource.category.name}</Badge> : null}
+                        </div>
+                        <div className="mt-5 max-w-[40rem]">
+                          <div className="text-[11px] uppercase tracking-[0.28em] text-slate-200">Featured pack</div>
+                          <div className="mt-2.5 max-w-[32rem] text-[2rem] font-semibold tracking-tight text-white sm:text-[2.2rem]">{heroResource.title}</div>
+                          <p className="mt-2.5 line-clamp-2 max-w-[28rem] text-sm leading-5 text-slate-100/85 sm:text-[14px]">{heroResource.summary || heroResource.description || "Open the resource to review the full pack details."}</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-end justify-between gap-3.5">
+                        <div className="rounded-[18px] border border-white/10 bg-slate-950/24 px-3.5 py-2.5 text-sm text-slate-100 backdrop-blur-sm">
+                          <div className="font-semibold text-white">{heroResource.priceCents > 0 ? formatMoney(heroResource.priceCents, heroResource.currencyCode) : "Free"}</div>
+                          <div className="mt-1 text-xs text-slate-300/80">{heroResource.downloadCount || 0} downloads</div>
+                        </div>
+                        <Link href={`/marketplace/${heroResource.id}`} className="rounded-full bg-white px-4.5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
+                          View resource
+                        </Link>
+                      </div>
+                    </div>
+
+                    <div className="hidden xl:flex xl:items-stretch">
+                      <div className="relative w-full overflow-hidden rounded-[22px] border border-white/15" style={{ backgroundImage: heroArtwork?.panelBackground }}>
+                        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))]" />
+                        <div className="absolute -right-12 top-6 h-36 w-36 rounded-full border border-white/20 bg-white/10 backdrop-blur-md" />
+                        <div className="absolute bottom-[-10%] left-[-6%] h-40 w-40 rotate-12 rounded-[30px] border border-white/15 bg-slate-950/20" />
+                        <div className="absolute right-6 top-6 flex h-14 w-14 items-center justify-center rounded-[18px] border border-white/20 text-base font-semibold text-slate-950 shadow-[0_10px_26px_-12px_rgba(255,255,255,0.7)]" style={{ backgroundImage: heroArtwork?.chipBackground }}>
+                          {getResourceMonogram(heroResource)}
+                        </div>
+                        <div className="absolute bottom-6 left-6 right-6 rounded-[18px] border border-white/15 bg-slate-950/18 p-3.5 backdrop-blur-md">
+                          <div className="text-[11px] uppercase tracking-[0.24em] text-white/70">{heroResource.category?.name || heroResource.resourceType}</div>
+                          <div className="mt-2 text-lg font-semibold text-white">{heroResource.title}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              ) : (
+                <EmptyState title="No featured resources available." body="Approved resources that match your current filters will appear here." />
+              )}
+
+              <div className="grid gap-4">
+                {spotlightResource ? (
+                  <article className="overflow-hidden rounded-[24px] border border-white/10 shadow-[0_18px_52px_-36px_rgba(0,0,0,0.5)] ring-1 ring-white/10" style={{ backgroundImage: spotlightArtwork?.spotlightBackground }}>
+                    <div className="relative flex min-h-[184px] flex-col justify-between gap-3.5 p-4.5">
+                      <div className="absolute right-[-18px] top-[-18px] h-24 w-24 rounded-full border border-white/15 bg-white/10 backdrop-blur-sm" />
+                      <div className="absolute bottom-4.5 right-4.5 flex h-12 w-12 items-center justify-center rounded-[16px] border text-sm font-semibold text-slate-950 shadow-[0_10px_24px_-12px_rgba(255,255,255,0.7)]" style={{ backgroundImage: spotlightArtwork?.chipBackground, borderColor: spotlightArtwork?.outline }}>
+                        {getResourceMonogram(spotlightResource)}
+                      </div>
+                      <div className="relative z-10">
+                        <div className="text-[11px] uppercase tracking-[0.24em] text-emerald-50/80">Spotlight</div>
+                        <div className="mt-2.5 max-w-[14rem] text-[1.55rem] font-semibold tracking-tight text-white">{spotlightResource.title}</div>
+                        <div className="mt-2 line-clamp-2 max-w-[14rem] text-sm leading-5 text-emerald-50/88">{spotlightResource.summary || "Explore the resource details."}</div>
+                      </div>
+                      <Link href={`/marketplace/${spotlightResource.id}`} className="relative z-10 inline-flex w-fit rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-emerald-50">
+                        Open
+                      </Link>
+                    </div>
+                  </article>
+                ) : (
+                  <div className="rounded-[30px] border border-dashed border-white/10 bg-white/[0.03] px-5 py-8 text-sm text-slate-300">Add more approved resources to populate the spotlight tile.</div>
+                )}
+
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
+                  {supportingResources.length ? supportingResources.map((resource) => {
+                    const cardArtwork = getResourceArtwork(resource);
+
+                    return (
+                      <article key={resource.id} className="overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] ring-1 ring-white/10">
+                        <div className="h-28 border-b border-white/10" style={{ backgroundImage: cardArtwork.cardBackground }}>
+                          <div className="flex h-full items-start justify-between p-4">
+                            <div className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/85">
+                              {resource.category?.name || resource.resourceType}
+                            </div>
+                            <div className="flex h-11 w-11 items-center justify-center rounded-[14px] border border-white/20 text-sm font-semibold text-slate-950 shadow-[0_12px_28px_-14px_rgba(255,255,255,0.75)]" style={{ backgroundImage: cardArtwork.chipBackground }}>
+                              {getResourceMonogram(resource)}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex min-h-[160px] flex-col justify-between gap-3 p-4">
+                          <div>
+                            <div className="text-lg font-semibold text-white">{resource.title}</div>
+                            <div className="mt-2 line-clamp-3 text-sm leading-6 text-slate-300">{resource.summary || "Open the resource to review the pack or linked source details."}</div>
+                          </div>
+                          <Link href={`/marketplace/${resource.id}`} className="inline-flex w-fit rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.1]">
+                            View details
+                          </Link>
+                        </div>
+                      </article>
+                    );
+                  }) : (
+                    <div className="sm:col-span-2 rounded-[24px] border border-dashed border-white/10 bg-white/[0.03] px-5 py-8 text-sm text-slate-300">Additional resource tiles will appear here as more approved items are added.</div>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            <section className="grid gap-4 xl:grid-cols-2">
+              <section className="overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.035))] shadow-[0_30px_80px_-44px_rgba(0,0,0,0.75)] ring-1 ring-white/10">
+                <div className="flex items-center justify-between border-b border-white/10 px-5 py-5 sm:px-6">
+                  <div className="text-2xl font-semibold text-white">Trending resources</div>
+                  <div className="text-sm font-medium text-sky-300">Top activity</div>
+                </div>
+                <div className="space-y-4 px-5 py-5 sm:px-6">
+                  {trendingResources.length ? trendingResources.map((resource, index) => (
+                    <div key={resource.id} className="flex items-center justify-between gap-4 rounded-[22px] border border-white/10 bg-white/[0.04] px-4 py-4">
+                      <div className="flex min-w-0 items-center gap-4">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-[18px] border border-white/10 bg-slate-950/35 text-sm font-semibold text-sky-200">#{index + 1}</div>
+                        <div className="min-w-0">
+                          <Link href={`/marketplace/${resource.id}`} className="block truncate text-base font-semibold text-white transition hover:text-sky-100">{resource.title}</Link>
+                          <div className="mt-1 text-sm text-slate-400">{resource.category?.name || resource.resourceType}</div>
+                        </div>
+                      </div>
+                      <div className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-semibold text-slate-200">{resource.downloadCount || 0} downloads</div>
+                    </div>
+                  )) : <div className="text-sm text-slate-400">Trending resources will appear once usage data builds up.</div>}
+                </div>
+              </section>
+
+              <section className="overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.035))] shadow-[0_30px_80px_-44px_rgba(0,0,0,0.75)] ring-1 ring-white/10">
+                <div className="flex items-center justify-between border-b border-white/10 px-5 py-5 sm:px-6">
+                  <div className="text-2xl font-semibold text-white">Browse categories</div>
+                  <div className="text-sm font-medium text-sky-300">Quick filters</div>
+                </div>
+                <div className="grid gap-4 px-5 py-5 sm:grid-cols-2 sm:px-6">
+                  {categoryHighlights.length ? categoryHighlights.map((category) => (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => setDiscoverFilter((prev) => ({ ...prev, categoryId: category.id }))}
+                      className="rounded-[22px] border border-white/10 bg-white/[0.04] px-4 py-4 text-left transition hover:border-white/20 hover:bg-white/[0.08]"
+                    >
+                      <div className="text-base font-semibold text-white">{category.name}</div>
+                      <div className="mt-2 text-sm text-slate-400">{category.count} resources</div>
+                    </button>
+                  )) : <div className="sm:col-span-2 text-sm text-slate-400">Categories will populate here once resources are approved.</div>}
+                </div>
+              </section>
+            </section>
+
+            <SectionCard
+              title="Discover resources"
+              subtitle="Approved hosted packs and curated external industry sources."
             >
               {discoverResources.length ? (
-                <div className="grid gap-4 xl:grid-cols-2">
+                <div className="space-y-3">
                   {discoverResources.map((resource) => (
-                    <div key={resource.id}>
-                      <ResourceCard resource={resource} />
-                    </div>
+                    <DiscoverListRow key={resource.id} resource={resource} />
                   ))}
                 </div>
               ) : (
@@ -1129,7 +1354,7 @@ export default function MarketplacePageClient() {
                 </p>
                 <div className="mt-5">
                   <Link href="/account?tab=consultants" className="inline-flex rounded-full border border-white/10 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
-                    Set up my service provider profile
+                    Open consultant settings
                   </Link>
                 </div>
               </div>
