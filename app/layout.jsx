@@ -39,12 +39,12 @@ const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 const enableAnalytics = GA_ID && process.env.NODE_ENV === "production";
 
 async function getHeaderContext() {
-  const { market, isAdmin } = await getResolvedSiteMarket();
-  return { currentMarket: market, isAdmin };
+  const { market } = await getResolvedSiteMarket();
+  return { currentMarket: market };
 }
 
 export default async function RootLayout({ children }) {
-  const { currentMarket, isAdmin } = await getHeaderContext();
+  const { currentMarket } = await getHeaderContext();
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -101,7 +101,7 @@ export default async function RootLayout({ children }) {
         <ThemeProvider>
           <AuthProvider>
             <NativeAppUrlListener />
-            <Header currentMarket={currentMarket} isAdmin={isAdmin} />
+            <Header currentMarket={currentMarket} />
             <ConditionalTicker />
             <main className="flex-1">{children}</main>
             <Footer currentMarket={currentMarket} />

@@ -11,6 +11,8 @@ import {
   RESOURCE_CARD_SELECT,
   getApprovedConsultantOwnership,
   getResourceAuthContext,
+  listSelectableConsultantsForUser,
+  resolveResourceConsultantIcons,
   isValidResourceFormat,
   isSafeHttpUrl,
   isValidResourceStatus,
@@ -72,6 +74,7 @@ export async function GET(req) {
     const rows = data || [];
     const hasMore = rows.length > limit;
     const slicedRows = hasMore ? rows.slice(0, limit) : rows;
+    const consultantIconByResourceId = await resolveResourceConsultantIcons(sb, slicedRows);
 
     return NextResponse.json({
       ok: true,
@@ -79,7 +82,10 @@ export async function GET(req) {
       createResourceRequirementMessage: canCreateResources
         ? ""
         : "You need an approved consultant or service provider profile before you can publish marketplace resources.",
-      resources: slicedRows.map((row) => buildResourceRoutePayload(row, row.resource_tag_links || [])),
+      resources: slicedRows.map((row) => buildResourceRoutePayload({
+          ...row,
+          consultant_icon_url: consultantIconByResourceId.get(row.id) || null,
+        }, row.resource_tag_links || [])),
       paging: {
         page,
         limit,
@@ -122,6 +128,7 @@ export async function POST(req) {
   const licenseName = cleanNullableText(resource.licenseName);
   const licenseUrl = cleanNullableText(resource.licenseUrl);
   const estimatedSizeBytes = asNullablePositiveInteger(resource.estimatedSizeBytes);
+  const consultantId = cleanNullableText(resource.consultantId);
   const tagIds = normaliseTagIds(resource.tagIds);
 
   if (!title) {
@@ -152,8 +159,19 @@ export async function POST(req) {
     return NextResponse.json({ ok: false, error: "License URL must be http or https." }, { status: 400 });
   }
 
+  let selectedConsultantId = null;
+  if (consultantId) {
+    const availableConsultants = await listSelectableConsultantsForUser(sb, userId);
+    const allowedIds = new Set(availableConsultants.map((item) => item.id));
+    if (!allowedIds.has(consultantId)) {
+      return NextResponse.json({ ok: false, error: "Selected consultancy is not available on your account." }, { status: 400 });
+    }
+    selectedConsultantId = consultantId;
+  }
+
   const payload = {
     owner_user_id: userId,
+    consultant_id: selectedConsultantId,
     category_id: categoryId,
     title,
     slug,

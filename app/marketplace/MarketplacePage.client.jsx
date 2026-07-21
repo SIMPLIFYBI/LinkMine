@@ -130,6 +130,11 @@ function statusTone(status) {
   return "border-cyan-400/30 bg-cyan-500/10 text-cyan-100"; 
 }
 
+const RESOURCE_TYPE_COLORWAY = {
+  hosted: { base: 206, accent: 248, glow: 180 },
+  external: { base: 24, accent: 346, glow: 52 },
+};
+
 function hashString(value) {
   let hash = 0;
   for (let index = 0; index < value.length; index += 1) {
@@ -148,11 +153,43 @@ function getResourceMonogram(resource) {
     .toUpperCase() || "RM";
 }
 
+function getConsultantIconUrl(resource) {
+  const iconUrl = String(resource?.consultantIconUrl || "").trim();
+  return iconUrl || null;
+}
+
+function ResourceOwnerBadge({ resource, className, style, imageClassName = "h-full w-full object-cover" }) {
+  const [imageLoadError, setImageLoadError] = useState(false);
+  const iconUrl = getConsultantIconUrl(resource);
+  const canShowImage = Boolean(iconUrl && !imageLoadError);
+
+  return (
+    <div className={[
+      "bg-white/12 backdrop-blur-md ring-1 ring-white/35",
+      className,
+    ].filter(Boolean).join(" ")} style={style}>
+      {canShowImage ? (
+        <img
+          src={iconUrl}
+          alt="Consultant icon"
+          loading="lazy"
+          className={imageClassName}
+          onError={() => setImageLoadError(true)}
+        />
+      ) : (
+        getResourceMonogram(resource)
+      )}
+    </div>
+  );
+}
+
 function getResourceArtwork(resource) {
-  const seed = `${resource?.category?.name || "general"}-${resource?.resourceType || "hosted"}-${resource?.title || "resource"}`;
-  const hue = hashString(seed);
-  const accentHue = (hue + 42) % 360;
-  const glowHue = (hue + 110) % 360;
+  const palette = RESOURCE_TYPE_COLORWAY[resource?.resourceType] || RESOURCE_TYPE_COLORWAY.hosted;
+  const driftSeed = `${resource?.category?.name || "general"}-${resource?.title || "resource"}`;
+  const drift = (hashString(driftSeed) % 28) - 14;
+  const hue = (palette.base + drift + 360) % 360;
+  const accentHue = (palette.accent + Math.round(drift * 0.7) + 360) % 360;
+  const glowHue = (palette.glow + Math.round(drift * 0.5) + 360) % 360;
 
   return {
     heroBackground: `radial-gradient(circle at 18% 18%, hsla(${glowHue}, 78%, 66%, 0.32), transparent 34%), linear-gradient(135deg, hsla(${hue}, 72%, 54%, 0.92), hsla(${accentHue}, 72%, 32%, 0.78) 58%, rgba(15,23,42,0.96) 100%)`,
@@ -177,6 +214,7 @@ function TabButton({ active, label, hint, onClick }) {
       ].join(" ")}
     >
       <div className="text-[13px] font-semibold leading-none">{label}</div>
+      {hint ? <div className="mt-1 text-[11px] text-slate-400">{hint}</div> : null}
     </button>
   );
 }
@@ -361,6 +399,54 @@ const RESOURCE_FORMAT_ICONS = {
   generic: Document24Regular,
 };
 
+const RESOURCE_FORMAT_THEME = {
+  website: {
+    chip: "border-cyan-300/30 bg-gradient-to-r from-cyan-500/25 to-sky-500/20 text-cyan-50",
+    iconWrap: "border-cyan-200/40 bg-cyan-300/20",
+    iconColor: "text-cyan-100",
+  },
+  repository: {
+    chip: "border-emerald-300/30 bg-gradient-to-r from-emerald-500/25 to-teal-500/20 text-emerald-50",
+    iconWrap: "border-emerald-200/40 bg-emerald-300/20",
+    iconColor: "text-emerald-100",
+  },
+  excel: {
+    chip: "border-green-300/30 bg-gradient-to-r from-green-500/25 to-lime-500/20 text-green-50",
+    iconWrap: "border-green-200/40 bg-green-300/20",
+    iconColor: "text-green-100",
+  },
+  word: {
+    chip: "border-blue-300/30 bg-gradient-to-r from-blue-500/25 to-indigo-500/20 text-blue-50",
+    iconWrap: "border-blue-200/40 bg-blue-300/20",
+    iconColor: "text-blue-100",
+  },
+  powerpoint: {
+    chip: "border-orange-300/30 bg-gradient-to-r from-orange-500/25 to-amber-500/20 text-orange-50",
+    iconWrap: "border-orange-200/40 bg-orange-300/20",
+    iconColor: "text-orange-100",
+  },
+  script: {
+    chip: "border-violet-300/30 bg-gradient-to-r from-violet-500/25 to-fuchsia-500/20 text-violet-50",
+    iconWrap: "border-violet-200/40 bg-violet-300/20",
+    iconColor: "text-violet-100",
+  },
+  app: {
+    chip: "border-pink-300/30 bg-gradient-to-r from-pink-500/25 to-rose-500/20 text-pink-50",
+    iconWrap: "border-pink-200/40 bg-pink-300/20",
+    iconColor: "text-pink-100",
+  },
+  pdf: {
+    chip: "border-red-300/30 bg-gradient-to-r from-red-500/25 to-rose-500/20 text-red-50",
+    iconWrap: "border-red-200/40 bg-red-300/20",
+    iconColor: "text-red-100",
+  },
+  generic: {
+    chip: "border-slate-300/30 bg-gradient-to-r from-slate-600/35 to-slate-500/20 text-slate-100",
+    iconWrap: "border-slate-200/35 bg-slate-300/20",
+    iconColor: "text-slate-100",
+  },
+};
+
 function ResourceFormatGlyph({ format, className = "h-3.5 w-3.5" }) {
   const Icon = RESOURCE_FORMAT_ICONS[format] || RESOURCE_FORMAT_ICONS.generic;
   return <Icon aria-hidden="true" className={className} />;
@@ -368,9 +454,12 @@ function ResourceFormatGlyph({ format, className = "h-3.5 w-3.5" }) {
 
 function ResourceFormatChip({ format, className = "" }) {
   const safeFormat = format || "generic";
+  const theme = RESOURCE_FORMAT_THEME[safeFormat] || RESOURCE_FORMAT_THEME.generic;
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-slate-950/30 px-2.5 py-1 text-[11px] font-semibold text-slate-100 ${className}`}>
-      <ResourceFormatGlyph format={safeFormat} />
+    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${className} ${theme.chip}`}>
+      <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full border ${theme.iconWrap}`}>
+        <ResourceFormatGlyph format={safeFormat} className={`h-3.5 w-3.5 ${theme.iconColor}`} />
+      </span>
       <span>{RESOURCE_FORMAT_LABELS[safeFormat] || RESOURCE_FORMAT_LABELS.generic}</span>
     </span>
   );
@@ -413,7 +502,7 @@ function ResourceCard({ resource, onSubmitForReview, onArchive, actionLabel = "V
   const detailHref = `/marketplace/${resource.id}`;
 
   return (
-    <article className="min-h-[188px] overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_18px_48px_-38px_rgba(0,0,0,0.85)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20 hover:shadow-[0_26px_70px_-42px_rgba(0,0,0,0.95)]">
+    <article className="h-[228px] overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_18px_48px_-38px_rgba(0,0,0,0.85)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20 hover:shadow-[0_26px_70px_-42px_rgba(0,0,0,0.95)]">
       <div className="relative flex h-full flex-col justify-between p-4 sm:p-5">
         <div>
           <div className="flex items-start justify-between gap-3">
@@ -422,8 +511,8 @@ function ResourceCard({ resource, onSubmitForReview, onArchive, actionLabel = "V
                 <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
                 <ResourceFormatChip format={resource.resourceFormat} />
               </div>
-              {resource.category?.name ? <div className="mt-3 text-[11px] uppercase tracking-[0.22em] text-slate-400">{resource.category.name}</div> : null}
-              <Link href={detailHref} className="mt-3 block truncate text-base font-semibold text-white transition hover:text-sky-100 sm:text-lg">
+              {resource.category?.name ? <div className="mt-3 line-clamp-1 max-w-[14rem] text-[11px] uppercase tracking-[0.22em] text-slate-400">{resource.category.name}</div> : null}
+              <Link href={detailHref} className="mt-3 block line-clamp-1 text-base font-semibold text-white transition hover:text-sky-100 sm:text-lg">
                 {resource.title}
               </Link>
               <p className="mt-2 line-clamp-2 text-sm text-slate-400">{resource.summary || accessLabel}</p>
@@ -436,9 +525,9 @@ function ResourceCard({ resource, onSubmitForReview, onArchive, actionLabel = "V
         </div>
 
         <div className="mt-5 flex items-end justify-between gap-3">
-          <div className="flex flex-wrap gap-2 text-[11px] text-slate-400">
+          <div className="flex min-h-[24px] flex-wrap gap-2 text-[11px] text-slate-400">
             {(resource.tags || []).slice(0, 2).map((tag) => (
-              <span key={tag.id} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">
+              <span key={tag.id} className="max-w-[132px] truncate rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">
                 {tag.name}
               </span>
             ))}
@@ -475,7 +564,7 @@ function ResourceCard({ resource, onSubmitForReview, onArchive, actionLabel = "V
   );
 }
 
-function LibraryGalleryCard({ resource, featured = false }) {
+function LibraryGalleryCard({ resource }) {
   const detailHref = `/marketplace/${resource.id}`;
   const artwork = getResourceArtwork(resource);
   const priceLabel = resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free";
@@ -486,7 +575,7 @@ function LibraryGalleryCard({ resource, featured = false }) {
     <article
       className={[
         "group relative flex flex-none snap-start overflow-hidden rounded-[30px] border border-white/10 shadow-[0_26px_70px_-42px_rgba(0,0,0,0.95)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20",
-        featured ? "min-h-[400px] w-[320px] lg:w-[420px]" : "min-h-[360px] w-[300px] lg:w-[340px]",
+        "h-[392px] w-[320px] lg:w-[320px]",
       ].join(" ")}
       style={{ backgroundImage: artwork.heroBackground }}
     >
@@ -496,15 +585,17 @@ function LibraryGalleryCard({ resource, featured = false }) {
         {resource.category?.name ? <span className="rounded-full border border-white/12 bg-slate-950/25 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-slate-100/90">{resource.category.name}</span> : null}
       </div>
 
-      <div className="absolute right-5 top-5 flex h-14 w-14 items-center justify-center rounded-[18px] border border-white/15 text-base font-semibold text-slate-950 shadow-[0_18px_38px_-24px_rgba(0,0,0,0.85)]" style={{ backgroundImage: artwork.chipBackground }}>
-        {getResourceMonogram(resource)}
-      </div>
+      <ResourceOwnerBadge
+        resource={resource}
+        className="absolute right-5 top-5 flex h-14 w-14 items-center justify-center overflow-hidden rounded-[18px] border border-white/15 text-base font-semibold text-slate-950 shadow-[0_18px_38px_-24px_rgba(0,0,0,0.85)]"
+        style={{ backgroundImage: artwork.chipBackground }}
+      />
 
       <div className="relative flex flex-1 flex-col justify-end p-5 lg:p-6">
         <div className="mb-5 flex items-end justify-between gap-4">
           <div>
             <div className="text-[11px] uppercase tracking-[0.24em] text-white/70">In your library</div>
-            <div className={featured ? "mt-2 text-[2rem] font-semibold leading-tight text-white lg:text-[2.35rem]" : "mt-2 text-2xl font-semibold leading-tight text-white lg:text-[1.75rem]"}>{resource.title}</div>
+            <div className="mt-2 line-clamp-2 text-[1.8rem] font-semibold leading-tight text-white lg:text-[1.95rem]">{resource.title}</div>
           </div>
           <div className="rounded-[20px] border border-white/12 bg-slate-950/30 px-3 py-2 text-right backdrop-blur-sm">
             <div className="text-sm font-semibold text-white">{priceLabel}</div>
@@ -512,11 +603,11 @@ function LibraryGalleryCard({ resource, featured = false }) {
           </div>
         </div>
 
-        <p className={featured ? "max-w-[30ch] text-[15px] leading-7 text-slate-100/88" : "max-w-[28ch] text-sm leading-6 text-slate-100/88"}>{resource.summary || accessLabel}</p>
+        <p className="line-clamp-3 max-w-[30ch] text-[15px] leading-7 text-slate-100/88">{resource.summary || accessLabel}</p>
 
         <div className="mt-5 flex flex-wrap items-center gap-2 text-[11px] text-slate-100/80">
           {(resource.tags || []).slice(0, 3).map((tag) => (
-            <span key={tag.id} className="rounded-full border border-white/12 bg-slate-950/30 px-3 py-1 backdrop-blur-sm">
+            <span key={tag.id} className="max-w-[120px] truncate rounded-full border border-white/12 bg-slate-950/30 px-3 py-1 backdrop-blur-sm">
               {tag.name}
             </span>
           ))}
@@ -587,44 +678,31 @@ function ScrollShelf({ title, subtitle, metaLabel, children }) {
   );
 }
 
-function MarketplaceShelfCard({ resource, variant = "standard" }) {
+function MarketplaceShelfCard({ resource }) {
   const detailHref = `/marketplace/${resource.id}`;
   const artwork = getResourceArtwork(resource);
   const priceLabel = resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free";
   const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file";
-  const shellClassName =
-    variant === "large"
-      ? "min-h-[318px] w-[424px] lg:w-[486px]"
-      : variant === "compact"
-        ? "min-h-[236px] w-[244px] lg:w-[264px]"
-        : "min-h-[272px] w-[292px] lg:w-[318px]";
-  const titleClassName =
-    variant === "large"
-      ? "mt-4 block max-w-[17rem] text-[1.8rem] font-semibold leading-tight text-white transition hover:text-sky-100"
-      : variant === "compact"
-        ? "mt-3 block max-w-[11rem] text-[1.1rem] font-semibold leading-tight text-white transition hover:text-sky-100"
-        : "mt-4 block max-w-[15rem] text-[1.35rem] font-semibold leading-tight text-white transition hover:text-sky-100";
-  const summaryClassName =
-    variant === "large"
-      ? "mt-2 max-w-[32ch] text-[15px] leading-7 text-slate-100/82"
-      : variant === "compact"
-        ? "mt-2 max-w-[24ch] text-[13px] leading-5 text-slate-100/80"
-        : "mt-2 max-w-[28ch] text-sm leading-6 text-slate-100/82";
+  const shellClassName = "h-[320px] w-[320px] lg:w-[320px]";
+  const titleClassName = "mt-4 block line-clamp-2 max-w-[15rem] text-[1.35rem] font-semibold leading-tight text-white transition hover:text-sky-100";
+  const summaryClassName = "mt-2 line-clamp-2 max-w-[28ch] text-sm leading-6 text-slate-100/82";
 
   return (
     <article className={["group relative flex flex-none snap-start overflow-hidden rounded-[26px] border border-white/10 shadow-[0_24px_62px_-38px_rgba(0,0,0,0.9)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20", shellClassName].join(" ")} style={{ backgroundImage: artwork.cardBackground }}>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_34%),linear-gradient(180deg,rgba(15,23,42,0.06),rgba(15,23,42,0.84)_76%)]" />
-      <div className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-[14px] border border-white/18 text-sm font-semibold text-slate-950 shadow-[0_14px_30px_-18px_rgba(255,255,255,0.8)]" style={{ backgroundImage: artwork.chipBackground }}>
-        {getResourceMonogram(resource)}
-      </div>
-      <div className="relative flex flex-1 flex-col justify-between p-4.5">
+      <ResourceOwnerBadge
+        resource={resource}
+        className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center overflow-hidden rounded-[14px] border border-white/18 text-sm font-semibold text-slate-950 shadow-[0_14px_30px_-18px_rgba(255,255,255,0.8)]"
+        style={{ backgroundImage: artwork.chipBackground }}
+      />
+      <div className="relative flex h-full flex-col justify-between p-4.5">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
+            {resource.status !== "approved" ? <Badge tone={statusTone(resource.status)}>{resource.status}</Badge> : null}
             <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/25" />
-            <span className="rounded-full border border-white/12 bg-slate-950/25 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-100/90">{resource.category?.name || "Resource"}</span>
+            <span className="line-clamp-1 max-w-[120px] rounded-full border border-white/12 bg-slate-950/25 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-100/90">{resource.category?.name || "Resource"}</span>
           </div>
-          {variant === "large" ? <div className="mt-4 text-[11px] uppercase tracking-[0.26em] text-slate-200/78">Marketplace pick</div> : null}
+          <div className="mt-4 text-[11px] uppercase tracking-[0.26em] text-slate-200/78">Marketplace pick</div>
           <Link href={detailHref} className={titleClassName}>
             {resource.title}
           </Link>
@@ -632,18 +710,18 @@ function MarketplaceShelfCard({ resource, variant = "standard" }) {
         </div>
 
         <div>
-          <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-100/76">
-            {(resource.tags || []).slice(0, 2).map((tag) => (
-              <span key={tag.id} className="rounded-full border border-white/12 bg-slate-950/25 px-3 py-1 backdrop-blur-sm">
+          <div className="flex min-h-[28px] flex-nowrap items-center gap-2 overflow-hidden text-[11px] text-slate-100/76">
+            {(resource.tags || []).slice(0, 1).map((tag) => (
+              <span key={tag.id} className="max-w-[132px] truncate rounded-full border border-white/12 bg-slate-950/25 px-3 py-1 backdrop-blur-sm">
                 {tag.name}
               </span>
             ))}
-            <span className="rounded-full border border-white/12 bg-slate-950/25 px-3 py-1 backdrop-blur-sm">{resource.downloadCount || 0} downloads</span>
+            <span className="shrink-0 rounded-full border border-white/12 bg-slate-950/25 px-3 py-1 backdrop-blur-sm">{resource.downloadCount || 0} downloads</span>
           </div>
           <div className="mt-4 flex items-center justify-between gap-3">
             <div>
               <div className="text-lg font-semibold text-white">{priceLabel}</div>
-              <div className="mt-1 text-xs text-slate-100/72">{accessLabel}</div>
+              <div className="mt-1 line-clamp-1 max-w-[160px] text-xs text-slate-100/72">{accessLabel}</div>
             </div>
             <Link href={detailHref} className="rounded-full border border-white/15 bg-white px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-slate-100">
               View resource
@@ -664,14 +742,14 @@ function CategoryShelfCard({ category, onSelect }) {
     <button
       type="button"
       onClick={onSelect}
-      className="group relative flex min-h-[188px] w-[248px] flex-none snap-start overflow-hidden rounded-[24px] border border-white/10 text-left shadow-[0_24px_60px_-40px_rgba(0,0,0,0.85)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20 lg:w-[270px]"
+      className="group relative flex h-[188px] w-[320px] flex-none snap-start overflow-hidden rounded-[24px] border border-white/10 text-left shadow-[0_24px_60px_-40px_rgba(0,0,0,0.85)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20 lg:w-[320px]"
       style={{ backgroundImage: background }}
     >
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))]" />
       <div className="relative flex flex-1 flex-col justify-between p-4.5">
         <div>
           <div className="text-[11px] uppercase tracking-[0.24em] text-slate-200/80">Category</div>
-          <div className="mt-3 max-w-[12rem] text-[1.35rem] font-semibold leading-tight text-white">{category.name}</div>
+          <div className="mt-3 line-clamp-2 max-w-[12rem] text-[1.35rem] font-semibold leading-tight text-white">{category.name}</div>
         </div>
         <div className="flex items-end justify-between gap-3">
           <div>
@@ -690,24 +768,23 @@ function CategoryShelfCard({ category, onSelect }) {
 function PromoRailCard({ resource, variant = "compact" }) {
   const detailHref = `/marketplace/${resource.id}`;
   const artwork = getResourceArtwork(resource);
-  const shellClassName =
-    variant === "spotlight"
-      ? "min-h-[228px] w-[286px]"
-      : "min-h-[186px] w-[214px]";
+  const shellClassName = "h-[228px] w-[320px]";
 
   return (
     <article className={["group relative flex flex-none snap-start overflow-hidden rounded-[24px] border border-white/10 shadow-[0_20px_56px_-34px_rgba(0,0,0,0.82)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20", shellClassName].join(" ")} style={{ backgroundImage: variant === "spotlight" ? artwork.spotlightBackground : artwork.cardBackground }}>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_34%),linear-gradient(180deg,rgba(15,23,42,0.08),rgba(15,23,42,0.82)_76%)]" />
-      <div className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-[13px] border border-white/18 text-sm font-semibold text-slate-950 shadow-[0_14px_30px_-18px_rgba(255,255,255,0.75)]" style={{ backgroundImage: artwork.chipBackground }}>
-        {getResourceMonogram(resource)}
-      </div>
+      <ResourceOwnerBadge
+        resource={resource}
+        className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center overflow-hidden rounded-[13px] border border-white/18 text-sm font-semibold text-slate-950 shadow-[0_14px_30px_-18px_rgba(255,255,255,0.75)]"
+        style={{ backgroundImage: artwork.chipBackground }}
+      />
       <div className="relative flex flex-1 flex-col justify-between p-4">
         <div>
           <div className="text-[11px] uppercase tracking-[0.24em] text-slate-100/78">{variant === "spotlight" ? "Spotlight" : (resource.category?.name || "Resource")}</div>
-          <Link href={detailHref} className={variant === "spotlight" ? "mt-3 block max-w-[12rem] text-[1.35rem] font-semibold leading-tight text-white transition hover:text-sky-100" : "mt-3 block max-w-[10rem] text-[1.05rem] font-semibold leading-tight text-white transition hover:text-sky-100"}>
+          <Link href={detailHref} className="mt-3 block line-clamp-2 max-w-[12rem] text-[1.2rem] font-semibold leading-tight text-white transition hover:text-sky-100">
             {resource.title}
           </Link>
-          <p className={variant === "spotlight" ? "mt-2 max-w-[24ch] text-sm leading-6 text-slate-100/84" : "mt-2 max-w-[22ch] text-[13px] leading-5 text-slate-100/80"}>
+          <p className="mt-2 line-clamp-3 max-w-[24ch] text-sm leading-6 text-slate-100/84">
             {resource.summary || "Open the resource to review the pack or linked source details."}
           </p>
         </div>
@@ -785,7 +862,7 @@ function CreatedResourceCard({ resource, onEdit, onSubmitForReview, onArchive })
   const artwork = getResourceArtwork(resource);
 
   return (
-    <article className="overflow-hidden rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_24px_60px_-40px_rgba(0,0,0,0.88)] ring-1 ring-white/10">
+    <article className="flex h-[430px] flex-col overflow-hidden rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_24px_60px_-40px_rgba(0,0,0,0.88)] ring-1 ring-white/10">
       <div className="relative h-32 border-b border-white/10" style={{ backgroundImage: artwork.heroBackground }}>
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.02))]" />
         <div className="relative flex h-full items-start justify-between p-4">
@@ -793,15 +870,17 @@ function CreatedResourceCard({ resource, onEdit, onSubmitForReview, onArchive })
             <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
             <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/25" />
           </div>
-          <div className="flex h-11 w-11 items-center justify-center rounded-[14px] border border-white/20 text-sm font-semibold text-slate-950 shadow-[0_14px_28px_-16px_rgba(255,255,255,0.75)]" style={{ backgroundImage: artwork.chipBackground }}>
-            {getResourceMonogram(resource)}
-          </div>
+          <ResourceOwnerBadge
+            resource={resource}
+            className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-[14px] border border-white/20 text-sm font-semibold text-slate-950 shadow-[0_14px_28px_-16px_rgba(255,255,255,0.75)]"
+            style={{ backgroundImage: artwork.chipBackground }}
+          />
         </div>
       </div>
-      <div className="space-y-4 p-4.5">
+      <div className="flex flex-1 flex-col p-4.5">
         <div>
-          <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">{resource.category?.name || "Uncategorised"}</div>
-          <div className="mt-2 text-lg font-semibold text-white">{resource.title}</div>
+          <div className="line-clamp-1 max-w-[16rem] text-[11px] uppercase tracking-[0.22em] text-slate-400">{resource.category?.name || "Uncategorised"}</div>
+          <div className="mt-2 line-clamp-2 text-lg font-semibold text-white">{resource.title}</div>
           <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-300">{resource.summary || resource.description || "Add a summary to improve how this resource appears in the storefront."}</p>
           <button
             type="button"
@@ -815,11 +894,11 @@ function CreatedResourceCard({ resource, onEdit, onSubmitForReview, onArchive })
             Open full editor
           </button>
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
           <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">Updated {formatDate(resource.updatedAt) || "Recently"}</span>
           <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">{resource.downloadCount || 0} downloads</span>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="mt-auto flex flex-wrap gap-2 pt-4">
           <button
             type="button"
             onClick={(event) => {
@@ -850,19 +929,21 @@ function MobileHeroCard({ resource }) {
   const detailHref = `/marketplace/${resource.id}`;
 
   return (
-    <article className="relative overflow-hidden rounded-[24px] border border-white/10 shadow-[0_22px_56px_-36px_rgba(0,0,0,0.9)] ring-1 ring-white/10" style={{ backgroundImage: artwork.heroBackground }}>
+    <article className="relative h-[252px] overflow-hidden rounded-[24px] border border-white/10 shadow-[0_22px_56px_-36px_rgba(0,0,0,0.9)] ring-1 ring-white/10" style={{ backgroundImage: artwork.heroBackground }}>
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.08),rgba(15,23,42,0.74)_68%)]" />
-      <div className="relative min-h-[252px] p-4.5">
-        <div className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-[14px] border border-white/18 text-sm font-semibold text-slate-950 shadow-[0_14px_30px_-18px_rgba(255,255,255,0.8)]" style={{ backgroundImage: artwork.chipBackground }}>
-          {getResourceMonogram(resource)}
-        </div>
+      <div className="relative h-full p-4.5">
+        <ResourceOwnerBadge
+          resource={resource}
+          className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center overflow-hidden rounded-[14px] border border-white/18 text-sm font-semibold text-slate-950 shadow-[0_14px_30px_-18px_rgba(255,255,255,0.8)]"
+          style={{ backgroundImage: artwork.chipBackground }}
+        />
         <div className="flex h-full flex-col justify-end">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
+            {resource.status !== "approved" ? <Badge tone={statusTone(resource.status)}>{resource.status}</Badge> : null}
             <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/28" />
             <span className="rounded-full border border-white/12 bg-slate-950/28 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-100/90">{resource.category?.name || "Resource"}</span>
           </div>
-          <div className="mt-4 max-w-[14rem] text-[2rem] font-semibold leading-[1.05] text-white">{resource.title}</div>
+          <div className="mt-4 line-clamp-2 max-w-[14rem] text-[2rem] font-semibold leading-[1.05] text-white">{resource.title}</div>
           <p className="mt-3 max-w-[16rem] text-sm leading-6 text-slate-100/84">{resource.summary || resource.description || "Open the resource to review the full pack details."}</p>
           <div className="mt-5 flex items-end justify-between gap-3">
             <div>
@@ -884,14 +965,14 @@ function MobilePromoBillboard({ resource, eyebrow = "Featured" }) {
   const detailHref = `/marketplace/${resource.id}`;
 
   return (
-    <article className="relative overflow-hidden rounded-[22px] border border-white/10 shadow-[0_20px_50px_-34px_rgba(0,0,0,0.86)] ring-1 ring-white/10" style={{ backgroundImage: artwork.panelBackground }}>
+    <article className="relative h-[206px] overflow-hidden rounded-[22px] border border-white/10 shadow-[0_20px_50px_-34px_rgba(0,0,0,0.86)] ring-1 ring-white/10" style={{ backgroundImage: artwork.panelBackground }}>
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.1),rgba(15,23,42,0.82)_74%)]" />
-      <div className="relative min-h-[206px] p-4.5">
+      <div className="relative h-full p-4.5">
         <div className="absolute inset-y-0 right-0 w-[48%] opacity-85" style={{ backgroundImage: artwork.cardBackground }} />
         <div className="absolute inset-y-0 right-0 w-[48%] bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))]" />
         <div className="relative flex h-full max-w-[52%] flex-col justify-end">
           <div className="text-[11px] uppercase tracking-[0.24em] text-slate-100/76">{eyebrow}</div>
-          <div className="mt-3 text-[1.85rem] font-semibold leading-[1.06] text-white">{resource.title}</div>
+          <div className="mt-3 line-clamp-2 text-[1.85rem] font-semibold leading-[1.06] text-white">{resource.title}</div>
           <div className="mt-2 line-clamp-3 text-sm leading-6 text-slate-100/80">{resource.summary || "Explore the resource details."}</div>
           <Link href={detailHref} className="mt-4 inline-flex w-fit rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-slate-100">
             View resource
@@ -907,11 +988,11 @@ function MobileMiniPromoCard({ resource }) {
   const detailHref = `/marketplace/${resource.id}`;
 
   return (
-    <article className="relative overflow-hidden rounded-[20px] border border-white/10 shadow-[0_18px_44px_-30px_rgba(0,0,0,0.82)] ring-1 ring-white/10" style={{ backgroundImage: artwork.cardBackground }}>
+    <article className="relative h-[132px] overflow-hidden rounded-[20px] border border-white/10 shadow-[0_18px_44px_-30px_rgba(0,0,0,0.82)] ring-1 ring-white/10" style={{ backgroundImage: artwork.cardBackground }}>
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.1),rgba(15,23,42,0.82)_78%)]" />
-      <div className="relative min-h-[132px] p-3.5">
+      <div className="relative h-full p-3.5">
         <div className="text-[10px] uppercase tracking-[0.2em] text-slate-100/76">{resource.category?.name || "Resource"}</div>
-        <div className="mt-8 max-w-[10rem] text-[1.05rem] font-semibold leading-tight text-white">{resource.title}</div>
+        <div className="mt-8 line-clamp-2 max-w-[10rem] text-[1.05rem] font-semibold leading-tight text-white">{resource.title}</div>
         <Link href={detailHref} className="mt-3 inline-flex rounded-full border border-white/15 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100">
           Open
         </Link>
@@ -920,7 +1001,7 @@ function MobileMiniPromoCard({ resource }) {
   );
 }
 
-function GalleryShelf({ title, subtitle, items, emptyTitle, emptyBody, featuredFirst = false }) {
+function GalleryShelf({ title, subtitle, items, emptyTitle, emptyBody }) {
   const railRef = useRef(null);
 
   function scrollRail(direction) {
@@ -969,7 +1050,7 @@ function GalleryShelf({ title, subtitle, items, emptyTitle, emptyBody, featuredF
           <div className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-10 bg-gradient-to-l from-slate-950/50 to-transparent sm:block" />
           <div ref={railRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-3 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {items.map((resource, index) => (
-              <LibraryGalleryCard key={resource.id} resource={resource} featured={featuredFirst && index === 0} />
+              <LibraryGalleryCard key={resource.id} resource={resource} />
             ))}
           </div>
         </div>
@@ -989,29 +1070,34 @@ function DiscoverListRow({ resource }) {
   const updatedLabel = formatDate(resource.updatedAt || resource.createdAt);
 
   return (
-    <article className="overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_18px_48px_-38px_rgba(0,0,0,0.85)] ring-1 ring-white/10 transition hover:border-white/20 hover:bg-white/[0.06]">
+    <article
+      className="h-[188px] overflow-hidden rounded-[24px] border border-white/10 shadow-[0_18px_48px_-38px_rgba(0,0,0,0.85)] ring-1 ring-white/10 transition hover:border-white/20 hover:bg-white/[0.06]"
+      style={{ backgroundImage: artwork.panelBackground }}
+    >
       <div className="flex gap-3.5 p-3.5 sm:items-center sm:gap-4 sm:p-4">
         <div className="flex min-w-0 flex-1 gap-3.5 sm:items-center sm:gap-4">
           <div className="relative h-[72px] w-[72px] flex-none overflow-hidden rounded-[20px] border border-white/10 shadow-[0_16px_36px_-24px_rgba(0,0,0,0.8)] sm:h-16 sm:w-16" style={{ backgroundImage: artwork.cardBackground }}>
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.03))]" />
-            <div className="absolute bottom-2.5 right-2.5 flex h-8 w-8 items-center justify-center rounded-[12px] border border-white/20 text-[11px] font-semibold text-slate-950" style={{ backgroundImage: artwork.chipBackground }}>
-              {getResourceMonogram(resource)}
-            </div>
+            <ResourceOwnerBadge
+              resource={resource}
+              className="absolute bottom-2.5 right-2.5 flex h-8 w-8 items-center justify-center overflow-hidden rounded-[12px] border border-white/20 text-[11px] font-semibold text-slate-950"
+              style={{ backgroundImage: artwork.chipBackground }}
+            />
           </div>
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
-              <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
+              {resource.status !== "approved" ? <Badge tone={statusTone(resource.status)}>{resource.status}</Badge> : null}
               <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/40" />
               <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">{metaLabel}</div>
             </div>
-            <Link href={detailHref} className="mt-2 block truncate text-base font-semibold text-white transition hover:text-sky-100 sm:text-lg">
+            <Link href={detailHref} className="mt-2 block line-clamp-1 text-base font-semibold text-white transition hover:text-sky-100 sm:text-lg">
               {resource.title}
             </Link>
             <p className="mt-1.5 line-clamp-1 max-w-2xl text-sm leading-5 text-slate-400 sm:line-clamp-2 sm:leading-6">{resource.summary || accessLabel}</p>
             <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-400">
               {(resource.tags || []).slice(0, 3).map((tag) => (
-                <span key={tag.id} className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
+                <span key={tag.id} className="max-w-[112px] truncate rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
                   {tag.name}
                 </span>
               ))}
@@ -1034,12 +1120,6 @@ function DiscoverListRow({ resource }) {
   );
 }
 
-function getHomeShelfVariant(index) {
-  if (index === 0) return "large";
-  if (index % 3 === 2) return "compact";
-  return "standard";
-}
-
 export default function MarketplacePageClient() {
   const { session, loading: authLoading, authError } = useAuth();
   const signedIn = Boolean(session);
@@ -1059,7 +1139,6 @@ export default function MarketplacePageClient() {
   const [myResources, setMyResources] = useState([]);
   const [library, setLibrary] = useState([]);
   const [requests, setRequests] = useState([]);
-  const [reviewQueue, setReviewQueue] = useState([]);
   const [orders, setOrders] = useState([]);
   const [payoutAccount, setPayoutAccount] = useState(null);
   const [payoutLedger, setPayoutLedger] = useState([]);
@@ -1084,7 +1163,6 @@ export default function MarketplacePageClient() {
     submit: false,
     requests: false,
     account: false,
-    review: false,
   });
 
   const loadPublicData = useCallback(async () => {
@@ -1162,18 +1240,13 @@ export default function MarketplacePageClient() {
         });
       }
 
-      if (tabKey === "review" && isAdmin) {
-        const reviewRes = await apiGet("/api/resources/review?status=pending").catch(() => ({ resources: [] }));
-        setReviewQueue(reviewRes.resources || []);
-      }
-
       setLoadedTabs((prev) => ({ ...prev, [tabKey]: true }));
     } catch (nextError) {
       setError(nextError.message || "Unable to load marketplace data.");
     } finally {
       setLoading(false);
     }
-  }, [isAdmin, loadedTabs]);
+  }, [loadedTabs]);
 
   useEffect(() => {
     let mounted = true;
@@ -1195,13 +1268,11 @@ export default function MarketplacePageClient() {
         payoutLedger: { limit: 0, hasMore: false },
         tags: { limit: 0, hasMore: false },
       });
-      setReviewQueue([]);
       setLoadedTabs({
         discover: false,
         submit: false,
         requests: false,
         account: false,
-        review: false,
       });
     }
 
@@ -1235,10 +1306,9 @@ export default function MarketplacePageClient() {
 
   useEffect(() => {
     if (authLoading || !session || activeTab === "discover") return;
-    if (activeTab === "review" && !isAdmin) return;
 
     void loadTabData(activeTab, session);
-  }, [activeTab, authLoading, isAdmin, loadTabData, session]);
+  }, [activeTab, authLoading, loadTabData, session]);
 
   useEffect(() => {
     if (!signedIn && activeTab !== "discover") {
@@ -1373,7 +1443,7 @@ export default function MarketplacePageClient() {
       { key: "account", label: "My Account", hint: "Manage your library, orders, and user-specific marketplace activity.", icon: "library", group: "secondary" },
     ];
     if (isAdmin) {
-      baseTabs.splice(3, 0, { key: "review", label: "Review", hint: "Approve or reject pending marketplace submissions.", icon: "review", group: "primary" });
+      baseTabs.push({ key: "admin", label: "Admin", hint: "Review submissions and manage marketplace administration.", icon: "review", group: "secondary", href: "/marketplace/admin" });
     }
     return baseTabs;
   }, [isAdmin, signedIn]);
@@ -1421,6 +1491,15 @@ export default function MarketplacePageClient() {
   function resetMessages() {
     setError("");
     setSuccess("");
+  }
+
+  function handleTabSelect(tab) {
+    if (tab?.href) {
+      router.push(tab.href);
+      return;
+    }
+
+    setActiveTab(tab.key);
   }
 
   function beginEditResource(resource) {
@@ -1525,7 +1604,7 @@ export default function MarketplacePageClient() {
       try {
         await apiSend(`/api/resources/${resource.id}`, "PATCH", { resource: { status: "pending" } });
         setSuccess("Resource submitted for review.");
-        invalidateTabs(["submit", "review"]);
+        invalidateTabs(["submit"]);
         await refreshMarketplace("submit");
       } catch (nextError) {
         setError(nextError.message || "Unable to submit resource for review.");
@@ -1539,7 +1618,7 @@ export default function MarketplacePageClient() {
       try {
         await apiSend(`/api/resources/${resource.id}`, "DELETE");
         setSuccess("Resource archived.");
-        invalidateTabs(["submit", "account", "review"]);
+        invalidateTabs(["submit", "account"]);
         await refreshMarketplace("submit");
       } catch (nextError) {
         setError(nextError.message || "Unable to archive resource.");
@@ -1560,21 +1639,6 @@ export default function MarketplacePageClient() {
         setSuccess("Payout details saved.");
       } catch (nextError) {
         setError(nextError.message || "Unable to save payout details.");
-      }
-    });
-  }
-
-  async function handleReview(resource, status) {
-    resetMessages();
-    const rejectionNotes = status === "rejected" ? window.prompt("Add rejection notes for the submitter:", "") || "" : "";
-    startBusyAction(async () => {
-      try {
-        await apiSend(`/api/resources/${resource.id}/status`, "PATCH", { status, rejectionNotes });
-        setSuccess(`Resource ${status}.`);
-        invalidateTabs(["review"]);
-        await refreshMarketplace("review");
-      } catch (nextError) {
-        setError(nextError.message || `Unable to mark resource as ${status}.`);
       }
     });
   }
@@ -1665,7 +1729,7 @@ export default function MarketplacePageClient() {
                   active={tab.key === activeTab}
                   label={tab.label}
                   icon={tab.icon}
-                  onClick={() => setActiveTab(tab.key)}
+                  onClick={() => handleTabSelect(tab)}
                 />
               ))}
             </div>
@@ -1677,7 +1741,7 @@ export default function MarketplacePageClient() {
                   active={tab.key === activeTab}
                   label={tab.label}
                   icon={tab.icon}
-                  onClick={() => setActiveTab(tab.key)}
+                  onClick={() => handleTabSelect(tab)}
                 />
               ))}
             </div>
@@ -1693,7 +1757,7 @@ export default function MarketplacePageClient() {
                   active={tab.key === activeTab}
                   label={tab.label}
                   hint={tab.hint}
-                  onClick={() => setActiveTab(tab.key)}
+                  onClick={() => handleTabSelect(tab)}
                 />
               ))}
             </div>
@@ -1913,9 +1977,11 @@ export default function MarketplacePageClient() {
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.18),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))]" />
                     <div className="absolute -right-10 top-5 h-32 w-32 rounded-full border border-white/15 bg-white/10 backdrop-blur-md" />
                     <div className="absolute bottom-[-8%] right-[18%] h-28 w-28 rounded-[30px] border border-white/15 bg-slate-950/18 rotate-12" />
-                    <div className="absolute left-7 top-7 flex h-14 w-14 items-center justify-center rounded-[18px] border border-white/20 text-base font-semibold text-slate-950 shadow-[0_10px_26px_-12px_rgba(255,255,255,0.7)]" style={{ backgroundImage: heroArtwork?.chipBackground }}>
-                      {getResourceMonogram(heroResource)}
-                    </div>
+                    <ResourceOwnerBadge
+                      resource={heroResource}
+                      className="absolute left-7 top-7 flex h-14 w-14 items-center justify-center overflow-hidden rounded-[18px] border border-white/20 text-base font-semibold text-slate-950 shadow-[0_10px_26px_-12px_rgba(255,255,255,0.7)]"
+                      style={{ backgroundImage: heroArtwork?.chipBackground }}
+                    />
                     <div className="relative z-10 flex h-full flex-col justify-between gap-8 pt-16">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
@@ -1959,8 +2025,8 @@ export default function MarketplacePageClient() {
                 subtitle="Swipe through new marketplace picks."
                 metaLabel="Storefront lane"
               >
-                {homeShelfResources.length ? homeShelfResources.map((resource, index) => (
-                  <MarketplaceShelfCard key={resource.id} resource={resource} variant={index === 0 ? "standard" : "compact"} />
+                {homeShelfResources.length ? homeShelfResources.map((resource) => (
+                    <MarketplaceShelfCard key={resource.id} resource={resource} />
                 )) : <div className="py-2 text-sm text-slate-400">New resources will appear here as the approved catalogue grows.</div>}
               </ScrollShelf>
             </div>
@@ -1968,11 +2034,11 @@ export default function MarketplacePageClient() {
             <div className="hidden lg:block">
             <ScrollShelf
               title="Fresh in marketplace"
-              subtitle="A billboard-style shelf with mixed card sizes so the lane feels more curated than a plain carousel."
+              subtitle="A billboard-style shelf with consistent card sizes for cleaner scanning."
               metaLabel="Storefront lane"
             >
               {homeShelfResources.length ? homeShelfResources.map((resource) => (
-                <MarketplaceShelfCard key={resource.id} resource={resource} variant={getHomeShelfVariant(homeShelfResources.indexOf(resource))} />
+                <MarketplaceShelfCard key={resource.id} resource={resource} />
               )) : <div className="py-2 text-sm text-slate-400">New resources will appear here as the approved catalogue grows.</div>}
             </ScrollShelf>
             </div>
@@ -2196,11 +2262,10 @@ export default function MarketplacePageClient() {
 
                       <GalleryShelf
                         title="Recently added"
-                        subtitle="Your newest or most recently updated resources, led by a larger feature card."
+                        subtitle="Your newest or most recently updated resources in a consistent visual layout."
                         items={libraryShelves.recentlyAdded}
                         emptyTitle="No library items yet."
                         emptyBody="Resources will appear here once you gain access or publish them yourself."
-                        featuredFirst
                       />
 
                       <GalleryShelf
@@ -2409,40 +2474,6 @@ export default function MarketplacePageClient() {
                 )) : <EmptyState title="No requests yet." body="Use requests to seed the marketplace with practical file demand before creators publish the finished asset." />}
               </div>
             </div>
-          </SectionCard>
-        ) : null}
-
-        {activeTab === "review" && isAdmin ? (
-          <SectionCard title="Admin review queue" subtitle="Approve or reject pending resource submissions.">
-            {reviewQueue.length ? (
-              <div className="space-y-4">
-                {reviewQueue.map((resource) => (
-                  <article key={resource.id} className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10">
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div className="max-w-3xl">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-base font-semibold text-white">{resource.title}</h3>
-                          <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
-                          <ResourceFormatChip format={resource.resourceFormat} />
-                        </div>
-                        {resource.summary ? <p className="mt-3 text-sm leading-6 text-slate-300">{resource.summary}</p> : null}
-                        <div className="mt-3 text-sm text-slate-400">Submitted {formatDate(resource.submittedAt) || formatDate(resource.createdAt) || "recently"}</div>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <button type="button" onClick={() => handleReview(resource, "approved")} className="rounded-full border border-emerald-300/25 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/15">
-                          Approve
-                        </button>
-                        <button type="button" onClick={() => handleReview(resource, "rejected")} className="rounded-full border border-red-300/25 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-100 transition hover:bg-red-500/15">
-                          Reject
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <EmptyState title="No resources are waiting for review." body="Once contributors submit hosted or external resources for approval, they will appear here." />
-            )}
           </SectionCard>
         ) : null}
 

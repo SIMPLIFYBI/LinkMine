@@ -8,6 +8,8 @@ import {
   cleanText,
   DEFAULT_RESOURCE_SELECT,
   getResourceAuthContext,
+  listSelectableConsultantsForUser,
+  resolveResourceConsultantIcons,
   isValidResourceFormat,
   isSafeHttpUrl,
   isValidResourceType,
@@ -48,9 +50,17 @@ export async function GET(_req, { params }) {
     return NextResponse.json({ ok: false, error: "Resource not found." }, { status: 404 });
   }
 
+  const consultantIconByResourceId = await resolveResourceConsultantIcons(sb, [data]);
+
   return NextResponse.json({
     ok: true,
-    resource: buildResourceRoutePayload(data, data.resource_tag_links || []),
+    resource: buildResourceRoutePayload(
+      {
+        ...data,
+        consultant_icon_url: consultantIconByResourceId.get(data.id) || null,
+      },
+      data.resource_tag_links || []
+    ),
   });
 }
 
@@ -68,7 +78,7 @@ export async function PATCH(req, { params }) {
 
   const { data: existing, error: existingError } = await sb
     .from("resources")
-    .select("id, owner_user_id, resource_type, status")
+    .select("id, owner_user_id, resource_type, status, consultant_id")
     .eq("id", id)
     .maybeSingle();
 
@@ -100,6 +110,7 @@ export async function PATCH(req, { params }) {
     : undefined;
   const requestedType = resource.resourceType !== undefined ? cleanText(resource.resourceType) : undefined;
   const requestedFormat = resource.resourceFormat !== undefined ? cleanText(resource.resourceFormat) : undefined;
+  const requestedConsultantId = resource.consultantId !== undefined ? cleanNullableText(resource.consultantId) : undefined;
   const requestedStatus = resource.status !== undefined ? cleanText(resource.status) : undefined;
   const tagIds = resource.tagIds !== undefined ? normaliseTagIds(resource.tagIds) : null;
 
@@ -145,6 +156,19 @@ export async function PATCH(req, { params }) {
       return NextResponse.json({ ok: false, error: "Invalid resource format." }, { status: 400 });
     }
     update.resource_format = requestedFormat;
+  }
+
+  if (requestedConsultantId !== undefined) {
+    if (!requestedConsultantId) {
+      update.consultant_id = null;
+    } else {
+      const availableConsultants = await listSelectableConsultantsForUser(sb, existing.owner_user_id);
+      const allowedIds = new Set(availableConsultants.map((item) => item.id));
+      if (!allowedIds.has(requestedConsultantId)) {
+        return NextResponse.json({ ok: false, error: "Selected consultancy is not available for this resource owner." }, { status: 400 });
+      }
+      update.consultant_id = requestedConsultantId;
+    }
   }
 
   if (sourceName !== undefined) update.source_name = nextType === "external" ? sourceName : null;
@@ -223,17 +247,28 @@ export async function PATCH(req, { params }) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
   }
 
+  const consultantIconByResourceId = await resolveResourceConsultantIcons(sb, [data]);
+
   return NextResponse.json({
     ok: true,
-    resource: buildResourceRoutePayload(data, data.resource_tag_links || []),
+    resource: buildResourceRoutePayload(
+      {
+        ...data,
+        consultant_icon_url: consultantIconByResourceId.get(data.id) || null,
+      },
+      data.resource_tag_links || []
+    ),
   });
 }
 
-export async function DELETE(_req, { params }) {
+export async function DELETE(req, { params }) {
   const { id } = await params;
   if (!id) {
     return NextResponse.json({ ok: false, error: "Missing resource id." }, { status: 400 });
   }
+
+  const url = new URL(req.url);
+  const hardDelete = ["1", "true", "yes"].includes(String(url.searchParams.get("hard") || "").toLowerCase());
 
   const sb = await supabaseServerClient();
   const { userId, isAdmin } = await getResourceAuthContext(sb);
@@ -259,6 +294,29 @@ export async function DELETE(_req, { params }) {
     return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
   }
 
+  if (hardDelete) {
+    const { error } = await sb
+      .from("resources")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      if (error.code === "23503") {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: "This resource cannot be permanently deleted because it is referenced by existing records (for example orders).",
+          },
+          { status: 409 }
+        );
+      }
+
+      return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json({ ok: true, deleted: true });
+  }
+
   const { error } = await sb
     .from("resources")
     .update({ status: "archived" })
@@ -268,5 +326,5 @@ export async function DELETE(_req, { params }) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, archived: true });
 }

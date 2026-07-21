@@ -8,7 +8,7 @@ import Logo from "@/app/components/Logo";
 import { useTheme } from "@/app/components/ThemeProvider";
 import MarketToggle from "@/app/components/MarketToggle.client";
 
-export default function Header({ currentMarket = "mining", isAdmin = false }) {
+export default function Header({ currentMarket = "mining" }) {
   const pathname = usePathname();
   const { theme } = useTheme();
   const isLight = theme === "light";

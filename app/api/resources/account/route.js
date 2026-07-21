@@ -8,18 +8,21 @@ import {
   DEFAULT_RESOURCE_SELECT,
   getResourceAuthContext,
   parsePaginationParams,
+  resolveResourceConsultantIcons,
 } from "@/lib/resourceHubServer";
 import { timedRoute } from "@/lib/apiTiming";
 
 const LIBRARY_SELECT = `
   id,
   owner_user_id,
+  consultant_id,
   category_id,
   title,
   slug,
   summary,
   description,
   resource_type,
+  resource_format,
   status,
   source_name,
   source_url,
@@ -197,18 +200,36 @@ export async function GET(req) {
     const payoutLedgerHasMore = payoutLedgerRows.length > payoutLedgerLimit;
     const tagsHasMore = tagsRows.length > tagsLimit;
 
+    const effectiveMyResourcesRows = myResourcesHasMore ? myResourcesRows.slice(0, createdLimit) : myResourcesRows;
+    const consultantIconByResourceId = await resolveResourceConsultantIcons(
+      sb,
+      [...libraryRows, ...effectiveMyResourcesRows]
+    );
+
     return NextResponse.json({
       ok: true,
       library: libraryRows.map((row) => ({
-        ...buildResourceRoutePayload(row, row.resource_tag_links || []),
+        ...buildResourceRoutePayload(
+          {
+            ...row,
+            consultant_icon_url: consultantIconByResourceId.get(row.id) || null,
+          },
+          row.resource_tag_links || []
+        ),
         currentAsset: Array.isArray(row.resource_assets)
           ? row.resource_assets.find((asset) => asset.is_current) || null
           : null,
         ownedByUser: row.owner_user_id === userId,
         entitledByUser: entitledIdSet.has(row.id) || row.owner_user_id === userId,
       })),
-      myResources: (myResourcesHasMore ? myResourcesRows.slice(0, createdLimit) : myResourcesRows)
-        .map((row) => buildResourceRoutePayload(row, row.resource_tag_links || [])),
+      myResources: effectiveMyResourcesRows
+        .map((row) => buildResourceRoutePayload(
+          {
+            ...row,
+            consultant_icon_url: consultantIconByResourceId.get(row.id) || null,
+          },
+          row.resource_tag_links || []
+        )),
       orders: (ordersHasMore ? ordersRows.slice(0, ordersLimit) : ordersRows).map(mapOrderRow),
       payoutAccount: payoutAccountResult.data ? mapPayoutAccountRow(payoutAccountResult.data) : null,
       payoutLedger: (payoutLedgerHasMore ? payoutLedgerRows.slice(0, payoutLedgerLimit) : payoutLedgerRows)

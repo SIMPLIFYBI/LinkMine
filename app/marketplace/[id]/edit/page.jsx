@@ -3,6 +3,7 @@ import {
   buildResourceRoutePayload,
   DEFAULT_RESOURCE_SELECT,
   getResourceAuthContext,
+  listSelectableConsultantsForUser,
 } from "@/lib/resourceHubServer";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import EditResourcePageClient from "./EditResourcePage.client.jsx";
@@ -57,11 +58,14 @@ export default async function MarketplaceResourceEditPage({ params }) {
     notFound();
   }
 
+  const consultantOptions = await listSelectableConsultantsForUser(sb, resource.ownerUserId);
+
   return (
     <EditResourcePageClient
       initialResource={resource}
       categories={categoriesRows || []}
       tags={tagsRows || []}
+      consultantOptions={consultantOptions}
     />
   );
 }

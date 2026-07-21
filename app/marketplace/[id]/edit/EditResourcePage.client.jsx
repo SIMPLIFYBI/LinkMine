@@ -99,6 +99,7 @@ function buildForm(resource) {
     title: resource.title || "",
     slug: resource.slug || "",
     categoryId: resource.categoryId || "",
+    consultantId: resource.consultantId || "",
     resourceType: resource.resourceType || "hosted",
     resourceFormat: resource.resourceFormat || "generic",
     summary: resource.summary || "",
@@ -112,7 +113,7 @@ function buildForm(resource) {
   };
 }
 
-export default function EditResourcePageClient({ initialResource, categories, tags }) {
+export default function EditResourcePageClient({ initialResource, categories, tags, consultantOptions = [] }) {
   const router = useRouter();
   const [busy, startBusy] = useTransition();
   const [error, setError] = useState("");
@@ -164,6 +165,7 @@ export default function EditResourcePageClient({ initialResource, categories, ta
             title: form.title,
             slug: form.slug,
             categoryId: form.categoryId || null,
+            consultantId: form.consultantId || null,
             resourceType: form.resourceType,
             resourceFormat: form.resourceFormat,
             summary: form.summary,
@@ -193,6 +195,42 @@ export default function EditResourcePageClient({ initialResource, categories, ta
         router.refresh();
       } catch (nextError) {
         setError(nextError.message || "Unable to save resource changes.");
+      }
+    });
+  }
+
+  function deleteResource() {
+    resetMessages();
+
+    const confirmed = window.confirm("Delete this resource permanently? This cannot be undone.");
+    if (!confirmed) return;
+
+    startBusy(async () => {
+      try {
+        await apiSend(`/api/resources/${form.id}?hard=1`, "DELETE");
+        router.push("/marketplace");
+        router.refresh();
+      } catch (nextError) {
+        setError(nextError.message || "Unable to delete this resource.");
+      }
+    });
+  }
+
+  function archiveResource() {
+    resetMessages();
+
+    const confirmed = window.confirm("Archive this resource? You can keep historical data while removing it from active listings.");
+    if (!confirmed) return;
+
+    startBusy(async () => {
+      try {
+        await apiSend(`/api/resources/${form.id}`, "DELETE");
+        setResource((prev) => ({ ...prev, status: "archived" }));
+        setForm((prev) => ({ ...prev, status: "archived" }));
+        setSuccess("Resource archived.");
+        router.refresh();
+      } catch (nextError) {
+        setError(nextError.message || "Unable to archive this resource.");
       }
     });
   }
@@ -258,6 +296,17 @@ export default function EditResourcePageClient({ initialResource, categories, ta
                     </Select>
                   </Field>
                 </div>
+
+                <Field label="Consultancy badge" hint="Choose which consultancy logo appears on marketplace cards for this resource.">
+                  <Select value={form.consultantId} onChange={(event) => setForm((prev) => ({ ...prev, consultantId: event.target.value }))}>
+                    <option value="">Automatic (owner default)</option>
+                    {consultantOptions.map((consultant) => (
+                      <option key={consultant.id} value={consultant.id}>
+                        {consultant.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
 
                 <Field label="Resource format" hint="Used to display the marketplace icon for this resource.">
                   <Select value={form.resourceFormat} onChange={(event) => setForm((prev) => ({ ...prev, resourceFormat: event.target.value }))} required>
@@ -341,6 +390,22 @@ export default function EditResourcePageClient({ initialResource, categories, ta
                   <Link href="/marketplace" className="rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
                     Exit editor
                   </Link>
+                  <button
+                    type="button"
+                    disabled={busy || form.status === "archived"}
+                    onClick={archiveResource}
+                    className="rounded-full border border-amber-300/25 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-100 transition hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {form.status === "archived" ? "Already archived" : "Archive resource"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={deleteResource}
+                    className="rounded-full border border-red-300/25 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-100 transition hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Delete permanently
+                  </button>
                 </div>
               </form>
             </div>
