@@ -8,6 +8,7 @@ import {
   cleanText,
   DEFAULT_RESOURCE_SELECT,
   getResourceAuthContext,
+  isValidResourceFormat,
   isSafeHttpUrl,
   isValidResourceType,
   normaliseTagIds,
@@ -98,6 +99,7 @@ export async function PATCH(req, { params }) {
     ? asNullablePositiveInteger(resource.estimatedSizeBytes)
     : undefined;
   const requestedType = resource.resourceType !== undefined ? cleanText(resource.resourceType) : undefined;
+  const requestedFormat = resource.resourceFormat !== undefined ? cleanText(resource.resourceFormat) : undefined;
   const requestedStatus = resource.status !== undefined ? cleanText(resource.status) : undefined;
   const tagIds = resource.tagIds !== undefined ? normaliseTagIds(resource.tagIds) : null;
 
@@ -136,6 +138,13 @@ export async function PATCH(req, { params }) {
       return NextResponse.json({ ok: false, error: "Invalid resource type." }, { status: 400 });
     }
     update.resource_type = requestedType;
+  }
+
+  if (requestedFormat !== undefined) {
+    if (!isValidResourceFormat(requestedFormat)) {
+      return NextResponse.json({ ok: false, error: "Invalid resource format." }, { status: 400 });
+    }
+    update.resource_format = requestedFormat;
   }
 
   if (sourceName !== undefined) update.source_name = nextType === "external" ? sourceName : null;

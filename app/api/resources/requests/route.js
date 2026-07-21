@@ -7,7 +7,9 @@ import {
   cleanText,
   getResourceAuthContext,
   isValidResourceRequestStatus,
+  parsePaginationParams,
 } from "@/lib/resourceHubServer";
+import { timedRoute } from "@/lib/apiTiming";
 
 function mapRequestRow(row) {
   return {
@@ -28,35 +30,49 @@ function mapRequestRow(row) {
 }
 
 export async function GET(req) {
-  const sb = await supabaseServerClient();
-  const { user, userId } = await getResourceAuthContext(sb);
-  if (!user) {
-    return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
-  }
+  return timedRoute("resources.requests.list", async () => {
+    const sb = await supabaseServerClient();
+    const { user, userId } = await getResourceAuthContext(sb);
+    if (!user) {
+      return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
+    }
 
-  const url = new URL(req.url);
-  const mineOnly = url.searchParams.get("mine") === "1";
-  const status = cleanText(url.searchParams.get("status"));
+    const url = new URL(req.url);
+    const mineOnly = url.searchParams.get("mine") === "1";
+    const status = cleanText(url.searchParams.get("status"));
+    const { page, limit, rangeStart, rangeEnd } = parsePaginationParams(url, {
+      defaultLimit: 80,
+      maxLimit: 200,
+    });
 
-  let query = sb
-    .from("resource_requests")
-    .select("id, requester_user_id, fulfiller_user_id, fulfilled_resource_id, title, specifications, bounty_cents, currency_code, status, created_at, updated_at, claimed_at, completed_at")
-    .order("created_at", { ascending: false });
+    let query = sb
+      .from("resource_requests")
+      .select("id, requester_user_id, fulfiller_user_id, fulfilled_resource_id, title, specifications, bounty_cents, currency_code, status, created_at, updated_at, claimed_at, completed_at")
+      .order("created_at", { ascending: false })
+      .range(rangeStart, rangeEnd);
 
-  if (mineOnly) {
-    query = query.or(`requester_user_id.eq.${userId},fulfiller_user_id.eq.${userId}`);
-  }
+    if (mineOnly) {
+      query = query.or(`requester_user_id.eq.${userId},fulfiller_user_id.eq.${userId}`);
+    }
 
-  if (isValidResourceRequestStatus(status)) {
-    query = query.eq("status", status);
-  }
+    if (isValidResourceRequestStatus(status)) {
+      query = query.eq("status", status);
+    }
 
-  const { data, error } = await query;
-  if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
-  }
+    const { data, error } = await query;
+    if (error) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+    }
 
-  return NextResponse.json({ ok: true, requests: (data || []).map(mapRequestRow) });
+    const rows = data || [];
+    const hasMore = rows.length > limit;
+
+    return NextResponse.json({
+      ok: true,
+      requests: (hasMore ? rows.slice(0, limit) : rows).map(mapRequestRow),
+      paging: { page, limit, hasMore },
+    });
+  });
 }
 
 export async function POST(req) {

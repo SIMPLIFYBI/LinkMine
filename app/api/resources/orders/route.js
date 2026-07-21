@@ -10,30 +10,47 @@ import {
   normaliseCurrencyCode,
   RESOURCE_ORDER_SELECT,
 } from "@/lib/resourceCommerce";
-import { getResourceAuthContext } from "@/lib/resourceHubServer";
+import { getResourceAuthContext, parsePaginationParams } from "@/lib/resourceHubServer";
+import { timedRoute } from "@/lib/apiTiming";
 
-export async function GET() {
-  const sb = await supabaseServerClient();
-  const { userId, isAdmin } = await getResourceAuthContext(sb);
-  if (!userId) {
-    return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
-  }
+export async function GET(req) {
+  return timedRoute("resources.orders.list", async () => {
+    const sb = await supabaseServerClient();
+    const { userId, isAdmin } = await getResourceAuthContext(sb);
+    if (!userId) {
+      return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
+    }
 
-  let query = sb
-    .from("resource_orders")
-    .select(RESOURCE_ORDER_SELECT)
-    .order("created_at", { ascending: false });
+    const url = new URL(req.url);
+    const { page, limit, rangeStart, rangeEnd } = parsePaginationParams(url, {
+      defaultLimit: 80,
+      maxLimit: 200,
+    });
 
-  if (!isAdmin) {
-    query = query.eq("buyer_user_id", userId);
-  }
+    let query = sb
+      .from("resource_orders")
+      .select(RESOURCE_ORDER_SELECT)
+      .order("created_at", { ascending: false })
+      .range(rangeStart, rangeEnd);
 
-  const { data, error } = await query;
-  if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
-  }
+    if (!isAdmin) {
+      query = query.eq("buyer_user_id", userId);
+    }
 
-  return NextResponse.json({ ok: true, orders: (data || []).map(mapOrderRow) });
+    const { data, error } = await query;
+    if (error) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+    }
+
+    const rows = data || [];
+    const hasMore = rows.length > limit;
+
+    return NextResponse.json({
+      ok: true,
+      orders: (hasMore ? rows.slice(0, limit) : rows).map(mapOrderRow),
+      paging: { page, limit, hasMore },
+    });
+  });
 }
 
 export async function POST(req) {

@@ -1,7 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import {
+  Apps24Regular,
+  BranchFork24Regular,
+  Code24Regular,
+  Document24Regular,
+  DocumentPdf24Regular,
+  DocumentText24Regular,
+  Globe24Regular,
+  SlideText24Regular,
+  TableSimple24Regular,
+} from "@fluentui/react-icons";
 import { useAuth } from "@/app/components/AuthProvider";
 import { formatResourceBytes } from "@/lib/resourceHub";
 
@@ -9,6 +21,7 @@ const DEFAULT_RESOURCE_FORM = {
   title: "",
   categoryId: "",
   resourceType: "hosted",
+  resourceFormat: "generic",
   summary: "",
   description: "",
   sourceName: "",
@@ -25,6 +38,25 @@ const DEFAULT_REQUEST_FORM = {
   bountyCents: "",
 };
 
+const DEFAULT_PAYOUT_FORM = {
+  provider: "stripe_connect",
+  providerAccountId: "",
+  countryCode: "AU",
+  currencyCode: "AUD",
+};
+
+const RESOURCE_FORMAT_OPTIONS = [
+  { value: "website", label: "Website" },
+  { value: "repository", label: "Repository" },
+  { value: "excel", label: "Excel" },
+  { value: "word", label: "Word" },
+  { value: "powerpoint", label: "PowerPoint" },
+  { value: "script", label: "Script / Code" },
+  { value: "app", label: "Application" },
+  { value: "pdf", label: "PDF" },
+  { value: "generic", label: "Generic resource" },
+];
+
 async function readJson(response) {
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -33,13 +65,31 @@ async function readJson(response) {
   return body;
 }
 
+const API_TIMEOUT_MS = 15000;
+
+async function withTimeout(path, options) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+  try {
+    return await fetch(path, { ...options, signal: controller.signal });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error("Request timed out. Please try again.");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
 async function apiGet(path) {
-  const response = await fetch(path, { cache: "no-store" });
+  const response = await withTimeout(path, { cache: "no-store" });
   return readJson(response);
 }
 
 async function apiSend(path, method, payload, isFormData = false) {
-  const response = await fetch(path, {
+  const response = await withTimeout(path, {
     method,
     headers: isFormData ? undefined : { "Content-Type": "application/json" },
     body: payload == null ? undefined : isFormData ? payload : JSON.stringify(payload),
@@ -249,6 +299,24 @@ function SectionCard({ title, subtitle, actions, children }) {
   );
 }
 
+function AccountTopTab({ active, label, meta, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        "group min-w-[132px] rounded-[20px] border px-4 py-3 text-left transition",
+        active
+          ? "border-white/20 bg-white text-slate-950 shadow-[0_20px_50px_-34px_rgba(255,255,255,0.8)]"
+          : "border-white/10 bg-white/[0.04] text-slate-200 hover:border-white/20 hover:bg-white/[0.08]",
+      ].join(" ")}
+    >
+      <div className={active ? "text-[11px] uppercase tracking-[0.2em] text-slate-600" : "text-[11px] uppercase tracking-[0.2em] text-slate-400"}>{meta}</div>
+      <div className={active ? "mt-2 text-sm font-semibold text-slate-950" : "mt-2 text-sm font-semibold text-white"}>{label}</div>
+    </button>
+  );
+}
+
 function StoreStat({ label, value, accent }) {
   return (
     <div className="rounded-[24px] border border-white/10 bg-white/[0.08] p-5 backdrop-blur-sm">
@@ -265,6 +333,45 @@ function Badge({ children, tone }) {
   return (
     <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${tone}`}>
       {children}
+    </span>
+  );
+}
+
+const RESOURCE_FORMAT_LABELS = {
+  website: "Website",
+  repository: "Repository",
+  excel: "Excel",
+  word: "Word",
+  powerpoint: "PowerPoint",
+  script: "Script",
+  app: "App",
+  pdf: "PDF",
+  generic: "Resource",
+};
+
+const RESOURCE_FORMAT_ICONS = {
+  website: Globe24Regular,
+  repository: BranchFork24Regular,
+  excel: TableSimple24Regular,
+  word: DocumentText24Regular,
+  powerpoint: SlideText24Regular,
+  script: Code24Regular,
+  app: Apps24Regular,
+  pdf: DocumentPdf24Regular,
+  generic: Document24Regular,
+};
+
+function ResourceFormatGlyph({ format, className = "h-3.5 w-3.5" }) {
+  const Icon = RESOURCE_FORMAT_ICONS[format] || RESOURCE_FORMAT_ICONS.generic;
+  return <Icon aria-hidden="true" className={className} />;
+}
+
+function ResourceFormatChip({ format, className = "" }) {
+  const safeFormat = format || "generic";
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-slate-950/30 px-2.5 py-1 text-[11px] font-semibold text-slate-100 ${className}`}>
+      <ResourceFormatGlyph format={safeFormat} />
+      <span>{RESOURCE_FORMAT_LABELS[safeFormat] || RESOURCE_FORMAT_LABELS.generic}</span>
     </span>
   );
 }
@@ -301,7 +408,7 @@ function Select(props) {
 }
 
 function ResourceCard({ resource, onSubmitForReview, onArchive, actionLabel = "View details" }) {
-  const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Hosted pack";
+  const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file";
   const priceLabel = resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free";
   const detailHref = `/marketplace/${resource.id}`;
 
@@ -313,7 +420,7 @@ function ResourceCard({ resource, onSubmitForReview, onArchive, actionLabel = "V
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
-                <Badge tone="border-white/10 bg-white/[0.08] text-slate-100">{resource.resourceType}</Badge>
+                <ResourceFormatChip format={resource.resourceFormat} />
               </div>
               {resource.category?.name ? <div className="mt-3 text-[11px] uppercase tracking-[0.22em] text-slate-400">{resource.category.name}</div> : null}
               <Link href={detailHref} className="mt-3 block truncate text-base font-semibold text-white transition hover:text-sky-100 sm:text-lg">
@@ -372,7 +479,7 @@ function LibraryGalleryCard({ resource, featured = false }) {
   const detailHref = `/marketplace/${resource.id}`;
   const artwork = getResourceArtwork(resource);
   const priceLabel = resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free";
-  const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Hosted pack";
+  const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file";
   const updatedLabel = formatDate(resource.updatedAt || resource.createdAt);
 
   return (
@@ -385,7 +492,7 @@ function LibraryGalleryCard({ resource, featured = false }) {
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.16),transparent_38%),linear-gradient(180deg,rgba(15,23,42,0.02),rgba(15,23,42,0.86)_72%)]" />
       <div className="absolute left-5 top-5 flex items-center gap-2">
-        <Badge tone="border-white/20 bg-white/10 text-white">{resource.resourceType}</Badge>
+        <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/25" />
         {resource.category?.name ? <span className="rounded-full border border-white/12 bg-slate-950/25 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-slate-100/90">{resource.category.name}</span> : null}
       </div>
 
@@ -484,7 +591,7 @@ function MarketplaceShelfCard({ resource, variant = "standard" }) {
   const detailHref = `/marketplace/${resource.id}`;
   const artwork = getResourceArtwork(resource);
   const priceLabel = resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free";
-  const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Hosted pack";
+  const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file";
   const shellClassName =
     variant === "large"
       ? "min-h-[318px] w-[424px] lg:w-[486px]"
@@ -514,7 +621,8 @@ function MarketplaceShelfCard({ resource, variant = "standard" }) {
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
-            <span className="rounded-full border border-white/12 bg-slate-950/25 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-100/90">{resource.category?.name || resource.resourceType}</span>
+            <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/25" />
+            <span className="rounded-full border border-white/12 bg-slate-950/25 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-100/90">{resource.category?.name || "Resource"}</span>
           </div>
           {variant === "large" ? <div className="mt-4 text-[11px] uppercase tracking-[0.26em] text-slate-200/78">Marketplace pick</div> : null}
           <Link href={detailHref} className={titleClassName}>
@@ -595,7 +703,7 @@ function PromoRailCard({ resource, variant = "compact" }) {
       </div>
       <div className="relative flex flex-1 flex-col justify-between p-4">
         <div>
-          <div className="text-[11px] uppercase tracking-[0.24em] text-slate-100/78">{variant === "spotlight" ? "Spotlight" : (resource.category?.name || resource.resourceType)}</div>
+          <div className="text-[11px] uppercase tracking-[0.24em] text-slate-100/78">{variant === "spotlight" ? "Spotlight" : (resource.category?.name || "Resource")}</div>
           <Link href={detailHref} className={variant === "spotlight" ? "mt-3 block max-w-[12rem] text-[1.35rem] font-semibold leading-tight text-white transition hover:text-sky-100" : "mt-3 block max-w-[10rem] text-[1.05rem] font-semibold leading-tight text-white transition hover:text-sky-100"}>
             {resource.title}
           </Link>
@@ -673,6 +781,70 @@ function PromoRail({ spotlightResource, supportingResources }) {
   );
 }
 
+function CreatedResourceCard({ resource, onEdit, onSubmitForReview, onArchive }) {
+  const artwork = getResourceArtwork(resource);
+
+  return (
+    <article className="overflow-hidden rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_24px_60px_-40px_rgba(0,0,0,0.88)] ring-1 ring-white/10">
+      <div className="relative h-32 border-b border-white/10" style={{ backgroundImage: artwork.heroBackground }}>
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.02))]" />
+        <div className="relative flex h-full items-start justify-between p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
+            <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/25" />
+          </div>
+          <div className="flex h-11 w-11 items-center justify-center rounded-[14px] border border-white/20 text-sm font-semibold text-slate-950 shadow-[0_14px_28px_-16px_rgba(255,255,255,0.75)]" style={{ backgroundImage: artwork.chipBackground }}>
+            {getResourceMonogram(resource)}
+          </div>
+        </div>
+      </div>
+      <div className="space-y-4 p-4.5">
+        <div>
+          <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">{resource.category?.name || "Uncategorised"}</div>
+          <div className="mt-2 text-lg font-semibold text-white">{resource.title}</div>
+          <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-300">{resource.summary || resource.description || "Add a summary to improve how this resource appears in the storefront."}</p>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onEdit(resource);
+            }}
+            className="mt-3 inline-flex w-full items-center justify-center rounded-full border border-white/15 bg-white/[0.08] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.14] sm:hidden"
+          >
+            Open full editor
+          </button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">Updated {formatDate(resource.updatedAt) || "Recently"}</span>
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">{resource.downloadCount || 0} downloads</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onEdit(resource);
+            }}
+            className="hidden rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 sm:inline-flex"
+          >
+            Edit resource
+          </button>
+          {resource.status === "draft" ? (
+            <button type="button" onClick={() => onSubmitForReview(resource)} className="rounded-full border border-sky-300/25 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-100 transition hover:bg-sky-500/15">
+              Submit for review
+            </button>
+          ) : null}
+          <button type="button" onClick={() => onArchive(resource)} className="rounded-full border border-red-300/25 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-100 transition hover:bg-red-500/15">
+            Archive
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 function MobileHeroCard({ resource }) {
   const artwork = getResourceArtwork(resource);
   const detailHref = `/marketplace/${resource.id}`;
@@ -687,7 +859,8 @@ function MobileHeroCard({ resource }) {
         <div className="flex h-full flex-col justify-end">
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
-            <span className="rounded-full border border-white/12 bg-slate-950/28 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-100/90">{resource.category?.name || resource.resourceType}</span>
+            <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/28" />
+            <span className="rounded-full border border-white/12 bg-slate-950/28 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-100/90">{resource.category?.name || "Resource"}</span>
           </div>
           <div className="mt-4 max-w-[14rem] text-[2rem] font-semibold leading-[1.05] text-white">{resource.title}</div>
           <p className="mt-3 max-w-[16rem] text-sm leading-6 text-slate-100/84">{resource.summary || resource.description || "Open the resource to review the full pack details."}</p>
@@ -737,7 +910,7 @@ function MobileMiniPromoCard({ resource }) {
     <article className="relative overflow-hidden rounded-[20px] border border-white/10 shadow-[0_18px_44px_-30px_rgba(0,0,0,0.82)] ring-1 ring-white/10" style={{ backgroundImage: artwork.cardBackground }}>
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.1),rgba(15,23,42,0.82)_78%)]" />
       <div className="relative min-h-[132px] p-3.5">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-slate-100/76">{resource.category?.name || resource.resourceType}</div>
+        <div className="text-[10px] uppercase tracking-[0.2em] text-slate-100/76">{resource.category?.name || "Resource"}</div>
         <div className="mt-8 max-w-[10rem] text-[1.05rem] font-semibold leading-tight text-white">{resource.title}</div>
         <Link href={detailHref} className="mt-3 inline-flex rounded-full border border-white/15 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100">
           Open
@@ -811,7 +984,7 @@ function DiscoverListRow({ resource }) {
   const detailHref = `/marketplace/${resource.id}`;
   const artwork = getResourceArtwork(resource);
   const priceLabel = resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free";
-  const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Hosted pack";
+  const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file";
   const metaLabel = resource.category?.name || accessLabel;
   const updatedLabel = formatDate(resource.updatedAt || resource.createdAt);
 
@@ -821,9 +994,6 @@ function DiscoverListRow({ resource }) {
         <div className="flex min-w-0 flex-1 gap-3.5 sm:items-center sm:gap-4">
           <div className="relative h-[72px] w-[72px] flex-none overflow-hidden rounded-[20px] border border-white/10 shadow-[0_16px_36px_-24px_rgba(0,0,0,0.8)] sm:h-16 sm:w-16" style={{ backgroundImage: artwork.cardBackground }}>
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.03))]" />
-            <div className="absolute left-2.5 top-2.5 rounded-full border border-white/15 bg-white/10 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-white/90">
-              {resource.resourceType}
-            </div>
             <div className="absolute bottom-2.5 right-2.5 flex h-8 w-8 items-center justify-center rounded-[12px] border border-white/20 text-[11px] font-semibold text-slate-950" style={{ backgroundImage: artwork.chipBackground }}>
               {getResourceMonogram(resource)}
             </div>
@@ -832,6 +1002,7 @@ function DiscoverListRow({ resource }) {
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
               <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
+              <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/40" />
               <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">{metaLabel}</div>
             </div>
             <Link href={detailHref} className="mt-2 block truncate text-base font-semibold text-white transition hover:text-sky-100 sm:text-lg">
@@ -872,6 +1043,7 @@ function getHomeShelfVariant(index) {
 export default function MarketplacePageClient() {
   const { session, loading: authLoading, authError } = useAuth();
   const signedIn = Boolean(session);
+  const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const [canCreateResources, setCanCreateResources] = useState(false);
   const [createResourceRequirementMessage, setCreateResourceRequirementMessage] = useState("");
@@ -889,13 +1061,24 @@ export default function MarketplacePageClient() {
   const [requests, setRequests] = useState([]);
   const [reviewQueue, setReviewQueue] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [payoutAccount, setPayoutAccount] = useState(null);
+  const [payoutLedger, setPayoutLedger] = useState([]);
+  const [accountPaging, setAccountPaging] = useState({
+    library: { limit: 0, hasMore: false },
+    created: { limit: 0, hasMore: false },
+    orders: { limit: 0, hasMore: false },
+    payoutLedger: { limit: 0, hasMore: false },
+    tags: { limit: 0, hasMore: false },
+  });
 
   const [resourceForm, setResourceForm] = useState(DEFAULT_RESOURCE_FORM);
   const [requestForm, setRequestForm] = useState(DEFAULT_REQUEST_FORM);
+  const [payoutForm, setPayoutForm] = useState(DEFAULT_PAYOUT_FORM);
   const [resourceFile, setResourceFile] = useState(null);
   const [discoverFilter, setDiscoverFilter] = useState({ search: "", type: "", categoryId: "" });
   const [mobileFilterPanel, setMobileFilterPanel] = useState(null);
   const [mobileHeroIndex, setMobileHeroIndex] = useState(0);
+  const [accountArea, setAccountArea] = useState("library");
   const [loadedTabs, setLoadedTabs] = useState({
     discover: false,
     submit: false,
@@ -910,7 +1093,7 @@ export default function MarketplacePageClient() {
     try {
       const [categoriesRes, resourcesRes] = await Promise.all([
         apiGet("/api/resources/categories"),
-        apiGet("/api/resources"),
+        apiGet("/api/resources?view=card&limit=120"),
       ]);
 
       setCategories(categoriesRes.categories || []);
@@ -932,8 +1115,8 @@ export default function MarketplacePageClient() {
     }
 
     try {
-      const adminCheck = await fetch("/api/resources/review?status=pending", { cache: "no-store" });
-      setIsAdmin(adminCheck.ok);
+      await apiGet("/api/resources/review?status=pending");
+      setIsAdmin(true);
     } catch {
       setIsAdmin(false);
     }
@@ -963,13 +1146,20 @@ export default function MarketplacePageClient() {
       }
 
       if (tabKey === "account") {
-        const [libraryRes, ordersRes] = await Promise.all([
-          apiGet("/api/resources/library"),
-          apiGet("/api/resources/orders"),
-        ]);
-
-        setLibrary(libraryRes.resources || []);
-        setOrders(ordersRes.orders || []);
+        const accountRes = await apiGet("/api/resources/account?libraryLimit=120&createdLimit=120&ordersLimit=120&payoutLedgerLimit=160&tagsLimit=120");
+        setLibrary(accountRes.library || []);
+        setOrders(accountRes.orders || []);
+        setMyResources(accountRes.myResources || []);
+        setTags(accountRes.tags || []);
+        setPayoutAccount(accountRes.payoutAccount || null);
+        setPayoutLedger(accountRes.payoutLedger || []);
+        setAccountPaging(accountRes.paging || {
+          library: { limit: 0, hasMore: false },
+          created: { limit: 0, hasMore: false },
+          orders: { limit: 0, hasMore: false },
+          payoutLedger: { limit: 0, hasMore: false },
+          tags: { limit: 0, hasMore: false },
+        });
       }
 
       if (tabKey === "review" && isAdmin) {
@@ -996,6 +1186,15 @@ export default function MarketplacePageClient() {
       setLibrary([]);
       setRequests([]);
       setOrders([]);
+      setPayoutAccount(null);
+      setPayoutLedger([]);
+      setAccountPaging({
+        library: { limit: 0, hasMore: false },
+        created: { limit: 0, hasMore: false },
+        orders: { limit: 0, hasMore: false },
+        payoutLedger: { limit: 0, hasMore: false },
+        tags: { limit: 0, hasMore: false },
+      });
       setReviewQueue([]);
       setLoadedTabs({
         discover: false,
@@ -1046,6 +1245,17 @@ export default function MarketplacePageClient() {
       setActiveTab("discover");
     }
   }, [activeTab, signedIn]);
+
+  useEffect(() => {
+    if (!payoutAccount) return;
+
+    setPayoutForm({
+      provider: payoutAccount.provider || "stripe_connect",
+      providerAccountId: payoutAccount.providerAccountId || "",
+      countryCode: payoutAccount.countryCode || "AU",
+      currencyCode: payoutAccount.currencyCode || "AUD",
+    });
+  }, [payoutAccount]);
 
   useEffect(() => {
     if (activeTab !== "discover") {
@@ -1170,6 +1380,12 @@ export default function MarketplacePageClient() {
 
   const primaryTabs = useMemo(() => tabs.filter((tab) => tab.group === "primary"), [tabs]);
   const secondaryTabs = useMemo(() => tabs.filter((tab) => tab.group === "secondary"), [tabs]);
+  const accountAreas = useMemo(() => ([
+    { key: "library", label: "Library", meta: `${library.length} items` },
+    { key: "created", label: "Created", meta: `${myResources.length} resources` },
+    { key: "orders", label: "Orders", meta: `${orders.length} orders` },
+    { key: "payouts", label: "Payouts", meta: payoutLedger.length ? `${payoutLedger.length} entries` : "Seller details" },
+  ]), [library.length, myResources.length, orders.length, payoutLedger.length]);
 
   const categoryHighlights = useMemo(() => {
     return categories
@@ -1205,6 +1421,11 @@ export default function MarketplacePageClient() {
   function resetMessages() {
     setError("");
     setSuccess("");
+  }
+
+  function beginEditResource(resource) {
+    if (!resource?.id) return;
+    router.push(`/marketplace/${resource.id}/edit`);
   }
 
   async function handleAccess(resource) {
@@ -1246,6 +1467,11 @@ export default function MarketplacePageClient() {
       return;
     }
 
+    if (!resourceForm.resourceFormat) {
+      setError("Resource format is required.");
+      return;
+    }
+
     if (resourceForm.resourceType === "external" && !resourceForm.sourceUrl.trim()) {
       setError("External resources require a source URL.");
       return;
@@ -1263,6 +1489,7 @@ export default function MarketplacePageClient() {
             title: resourceForm.title,
             categoryId: resourceForm.categoryId || null,
             resourceType: resourceForm.resourceType,
+            resourceFormat: resourceForm.resourceFormat,
             summary: resourceForm.summary,
             description: resourceForm.description,
             sourceName: resourceForm.sourceName,
@@ -1316,6 +1543,23 @@ export default function MarketplacePageClient() {
         await refreshMarketplace("submit");
       } catch (nextError) {
         setError(nextError.message || "Unable to archive resource.");
+      }
+    });
+  }
+
+  async function handleSavePayoutAccount(event) {
+    event.preventDefault();
+    resetMessages();
+
+    startBusyAction(async () => {
+      try {
+        const result = await apiSend("/api/resources/payout-account", "PUT", payoutForm);
+        if (result?.payoutAccount) {
+          setPayoutAccount(result.payoutAccount);
+        }
+        setSuccess("Payout details saved.");
+      } catch (nextError) {
+        setError(nextError.message || "Unable to save payout details.");
       }
     });
   }
@@ -1533,7 +1777,6 @@ export default function MarketplacePageClient() {
                       <div className="flex flex-wrap gap-2">
                         {[
                           { label: "All", value: "" },
-                          { label: "Hosted", value: "hosted" },
                           { label: "External", value: "external" },
                         ].map((option) => {
                           const active = discoverFilter.type === option.value;
@@ -1615,7 +1858,6 @@ export default function MarketplacePageClient() {
                 <div className="flex flex-col gap-2.5 sm:flex-row xl:flex-none">
                   <Select value={discoverFilter.type} onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, type: event.target.value }))} className="h-12 min-w-[158px] rounded-full border-white/10 bg-slate-950/80 text-[13px]">
                     <option value="">All access types</option>
-                    <option value="hosted">Hosted</option>
                     <option value="external">External</option>
                   </Select>
                   <Select value={discoverFilter.categoryId} onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, categoryId: event.target.value }))} className="h-12 min-w-[176px] rounded-full border-white/10 bg-slate-950/80 text-[13px]">
@@ -1678,7 +1920,7 @@ export default function MarketplacePageClient() {
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <Badge tone={statusTone(heroResource.status)}>{heroResource.status}</Badge>
-                          <Badge tone="border-white/10 bg-white/[0.08] text-slate-100">{heroResource.resourceType}</Badge>
+                          <ResourceFormatChip format={heroResource.resourceFormat} />
                           {heroResource.category?.name ? <Badge tone="border-sky-300/20 bg-sky-500/10 text-sky-100">{heroResource.category.name}</Badge> : null}
                         </div>
                         <div className="mt-6 max-w-[34rem]">
@@ -1694,7 +1936,7 @@ export default function MarketplacePageClient() {
                             <div className="mt-1 text-xs text-slate-300/80">{heroResource.downloadCount || 0} downloads</div>
                           </div>
                           <div className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-1.5 text-xs font-medium text-slate-100">
-                            {heroResource.resourceType === "external" ? (heroResource.sourceName || "External reference") : "Hosted pack"}
+                            {heroResource.resourceType === "external" ? (heroResource.sourceName || "External reference") : "Resource file"}
                           </div>
                         </div>
                         <Link href={`/marketplace/${heroResource.id}`} className="rounded-full bg-white px-4.5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 hover:shadow-[0_12px_24px_-14px_rgba(255,255,255,0.65)]">
@@ -1794,6 +2036,13 @@ export default function MarketplacePageClient() {
                       </Select>
                     </Field>
                   </div>
+                  <Field label="Resource format" hint="Used to display the marketplace icon for this resource.">
+                    <Select value={resourceForm.resourceFormat} onChange={(event) => setResourceForm((prev) => ({ ...prev, resourceFormat: event.target.value }))} required>
+                      {RESOURCE_FORMAT_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </Select>
+                  </Field>
                   <Field label="Summary">
                     <TextArea rows={3} value={resourceForm.summary} onChange={(event) => setResourceForm((prev) => ({ ...prev, summary: event.target.value }))} placeholder="Explain the practical use of this file pack or source." />
                   </Field>
@@ -1911,92 +2160,197 @@ export default function MarketplacePageClient() {
 
         {activeTab === "account" ? (
           <div className="space-y-6">
-            <SectionCard title="My library" subtitle="Resources you own, bought, or received through free and request-based access.">
-              {library.length ? (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between gap-3 rounded-[24px] border border-white/10 bg-[linear-gradient(135deg,rgba(14,165,233,0.14),rgba(15,23,42,0.22))] px-4 py-3 text-sm text-slate-200 sm:px-5">
-                    <div>
-                      <div className="font-semibold text-white">Gallery view</div>
-                      <div className="mt-1 text-slate-300">Your library now uses curated one-row shelves with a featured lead card and quick-scroll controls.</div>
-                    </div>
-                    <div className="hidden rounded-full border border-white/12 bg-white/[0.06] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-200 sm:block">
-                      {library.length} items
-                    </div>
+            <SectionCard title="My Account" subtitle="Move between your library, created listings, orders, and payout setup with a single account workspace.">
+              <div className="space-y-6">
+                <div className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <div className="flex min-w-max gap-3">
+                    {accountAreas.map((area) => (
+                      <AccountTopTab
+                        key={area.key}
+                        active={accountArea === area.key}
+                        label={area.label}
+                        meta={area.meta}
+                        onClick={() => setAccountArea(area.key)}
+                      />
+                    ))}
                   </div>
-
-                  <GalleryShelf
-                    title="Recently added"
-                    subtitle="Your newest or most recently updated resources, led by a larger feature card."
-                    items={libraryShelves.recentlyAdded}
-                    emptyTitle="No library items yet."
-                    emptyBody="Resources will appear here once you gain access or publish them yourself."
-                    featuredFirst
-                  />
-
-                  <GalleryShelf
-                    title="Purchased"
-                    subtitle="Resources you unlocked through paid marketplace orders."
-                    items={libraryShelves.purchased}
-                    emptyTitle="No purchased resources yet."
-                    emptyBody="Paid resources you acquire will collect here for quick return visits."
-                  />
-
-                  <GalleryShelf
-                    title="Free access"
-                    subtitle="Free entitlements and resources available without a paid order."
-                    items={libraryShelves.freeAccess}
-                    emptyTitle="No free-access resources yet."
-                    emptyBody="Free packs and no-cost access will appear here when available."
-                  />
                 </div>
-              ) : (
-                <EmptyState title="Your library is empty." body="Free resources and future paid resources will appear here once you gain access." />
-              )}
-            </SectionCard>
 
-            <SectionCard title="Orders" subtitle="Track free completions now and manual payment state changes before live checkout exists.">
-              {orders.length ? (
-                <div className="space-y-4">
-                  {orders.map((order) => (
-                    <article key={order.id} className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10">
-                      <div className="flex flex-wrap items-start justify-between gap-4">
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-base font-semibold text-white">Order {order.id.slice(0, 8)}</h3>
-                            <Badge tone={statusTone(order.status)}>{order.status}</Badge>
-                          </div>
-                          <div className="mt-3 space-y-2 text-sm text-slate-300">
-                            {order.items.map((item) => (
-                              <div key={item.id} className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
-                                <div className="font-medium text-white">{item.resource?.title || "Resource"}</div>
-                                <div className="mt-1 text-slate-400">{formatMoney(item.lineTotalCents, item.currencyCode)} · seller net {formatMoney(item.sellerNetCents, item.currencyCode)}</div>
-                              </div>
-                            ))}
-                          </div>
+                {accountArea === "library" ? (
+                  library.length ? (
+                    <div className="space-y-4">
+                      {accountPaging.library?.hasMore ? (
+                        <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 px-4 py-3 text-xs text-cyan-100">
+                          Showing the most recent {accountPaging.library.limit} library items for faster loading.
                         </div>
-                        <div className="min-w-[220px] rounded-[24px] border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">
-                          <div className="flex items-center justify-between"><span>Total</span><span className="font-semibold text-white">{formatMoney(order.totalCents, order.currencyCode)}</span></div>
-                          <div className="mt-2 flex items-center justify-between"><span>Platform fee</span><span>{formatMoney(order.platformFeeCents, order.currencyCode)}</span></div>
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            {isAdmin && order.status !== "paid" ? (
-                              <button type="button" onClick={() => handleOrderStatus(order.id, "paid")} className="rounded-full border border-emerald-300/25 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/15">
-                                Mark paid
-                              </button>
-                            ) : null}
-                            {order.status === "draft" || order.status === "pending" ? (
-                              <button type="button" onClick={() => handleOrderStatus(order.id, "cancelled")} className="rounded-full border border-red-300/25 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-100 transition hover:bg-red-500/15">
-                                Cancel
-                              </button>
-                            ) : null}
-                          </div>
+                      ) : null}
+                      <div className="flex items-center justify-between gap-3 rounded-[24px] border border-white/10 bg-[linear-gradient(135deg,rgba(14,165,233,0.14),rgba(15,23,42,0.22))] px-4 py-3 text-sm text-slate-200 sm:px-5">
+                        <div>
+                          <div className="font-semibold text-white">Gallery view</div>
+                          <div className="mt-1 text-slate-300">Your library uses curated one-row shelves with a featured lead card and quick-scroll controls.</div>
+                        </div>
+                        <div className="hidden rounded-full border border-white/12 bg-white/[0.06] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-200 sm:block">
+                          {library.length} items
                         </div>
                       </div>
-                    </article>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState title="No orders yet." body="Paid flows are scaffolded, and free resources can already issue zero-dollar orders where needed." />
-              )}
+
+                      <GalleryShelf
+                        title="Recently added"
+                        subtitle="Your newest or most recently updated resources, led by a larger feature card."
+                        items={libraryShelves.recentlyAdded}
+                        emptyTitle="No library items yet."
+                        emptyBody="Resources will appear here once you gain access or publish them yourself."
+                        featuredFirst
+                      />
+
+                      <GalleryShelf
+                        title="Purchased"
+                        subtitle="Resources you unlocked through paid marketplace orders."
+                        items={libraryShelves.purchased}
+                        emptyTitle="No purchased resources yet."
+                        emptyBody="Paid resources you acquire will collect here for quick return visits."
+                      />
+
+                      <GalleryShelf
+                        title="Free access"
+                        subtitle="Free entitlements and resources available without a paid order."
+                        items={libraryShelves.freeAccess}
+                        emptyTitle="No free-access resources yet."
+                        emptyBody="Free packs and no-cost access will appear here when available."
+                      />
+                    </div>
+                  ) : (
+                    <EmptyState title="Your library is empty." body="Free resources and future paid resources will appear here once you gain access." />
+                  )
+                ) : null}
+
+                {accountArea === "created" ? (
+                  <div className="space-y-4">
+                    {accountPaging.created?.hasMore ? (
+                      <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 px-4 py-3 text-xs text-cyan-100">
+                        Showing the most recent {accountPaging.created.limit} created resources for faster loading.
+                      </div>
+                    ) : null}
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300 ring-1 ring-white/10">
+                      Select Edit resource on any card to open the full-page editor.
+                    </div>
+                    {myResources.length ? myResources.map((resource) => (
+                      <CreatedResourceCard
+                        key={resource.id}
+                        resource={resource}
+                        onEdit={beginEditResource}
+                        onSubmitForReview={handleSubmitForReview}
+                        onArchive={handleArchive}
+                      />
+                    )) : <EmptyState title="No created resources yet." body="Create a hosted pack or external listing in Submit, then manage its metadata here." />}
+                  </div>
+                ) : null}
+
+                {accountArea === "orders" ? (
+                  orders.length ? (
+                    <div className="space-y-4">
+                      {accountPaging.orders?.hasMore ? (
+                        <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 px-4 py-3 text-xs text-cyan-100">
+                          Showing the most recent {accountPaging.orders.limit} orders for faster loading.
+                        </div>
+                      ) : null}
+                      {orders.map((order) => (
+                        <article key={order.id} className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10">
+                          <div className="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h3 className="text-base font-semibold text-white">Order {order.id.slice(0, 8)}</h3>
+                                <Badge tone={statusTone(order.status)}>{order.status}</Badge>
+                              </div>
+                              <div className="mt-3 space-y-2 text-sm text-slate-300">
+                                {order.items.map((item) => (
+                                  <div key={item.id} className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
+                                    <div className="font-medium text-white">{item.resource?.title || "Resource"}</div>
+                                    <div className="mt-1 text-slate-400">{formatMoney(item.lineTotalCents, item.currencyCode)} · seller net {formatMoney(item.sellerNetCents, item.currencyCode)}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="min-w-[220px] rounded-[24px] border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">
+                              <div className="flex items-center justify-between"><span>Total</span><span className="font-semibold text-white">{formatMoney(order.totalCents, order.currencyCode)}</span></div>
+                              <div className="mt-2 flex items-center justify-between"><span>Platform fee</span><span>{formatMoney(order.platformFeeCents, order.currencyCode)}</span></div>
+                              <div className="mt-4 flex flex-wrap gap-2">
+                                {isAdmin && order.status !== "paid" ? (
+                                  <button type="button" onClick={() => handleOrderStatus(order.id, "paid")} className="rounded-full border border-emerald-300/25 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/15">
+                                    Mark paid
+                                  </button>
+                                ) : null}
+                                {order.status === "draft" || order.status === "pending" ? (
+                                  <button type="button" onClick={() => handleOrderStatus(order.id, "cancelled")} className="rounded-full border border-red-300/25 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-100 transition hover:bg-red-500/15">
+                                    Cancel
+                                  </button>
+                                ) : null}
+                              </div>
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyState title="No orders yet." body="Paid flows are scaffolded, and free resources can already issue zero-dollar orders where needed." />
+                  )
+                ) : null}
+
+                {accountArea === "payouts" ? (
+                  <div className="grid gap-6 xl:grid-cols-[0.82fr,1.18fr]">
+                    {accountPaging.payoutLedger?.hasMore ? (
+                      <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 px-4 py-3 text-xs text-cyan-100 xl:col-span-2">
+                        Showing the most recent {accountPaging.payoutLedger.limit} payout entries for faster loading.
+                      </div>
+                    ) : null}
+                    <form className="space-y-4 rounded-[28px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10" onSubmit={handleSavePayoutAccount}>
+                      <div>
+                        <div className="text-lg font-semibold text-white">Payout profile</div>
+                        <div className="mt-2 text-sm text-slate-400">Keep seller payout details in one clean place and let settlement history sit beside it.</div>
+                      </div>
+                      <Field label="Provider">
+                        <TextInput value={payoutForm.provider} onChange={(event) => setPayoutForm((prev) => ({ ...prev, provider: event.target.value }))} />
+                      </Field>
+                      <Field label="Provider account id">
+                        <TextInput value={payoutForm.providerAccountId} onChange={(event) => setPayoutForm((prev) => ({ ...prev, providerAccountId: event.target.value }))} placeholder="acct_..." />
+                      </Field>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <Field label="Country code">
+                          <TextInput value={payoutForm.countryCode} onChange={(event) => setPayoutForm((prev) => ({ ...prev, countryCode: event.target.value.toUpperCase() }))} maxLength={2} />
+                        </Field>
+                        <Field label="Currency">
+                          <TextInput value={payoutForm.currencyCode} onChange={(event) => setPayoutForm((prev) => ({ ...prev, currencyCode: event.target.value.toUpperCase() }))} maxLength={3} />
+                        </Field>
+                      </div>
+                      {payoutAccount ? <div className="rounded-[22px] border border-emerald-300/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">Current status: {payoutAccount.status}</div> : null}
+                      <button type="submit" disabled={busyAction} className="w-full rounded-full bg-white px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60">
+                        Save payout details
+                      </button>
+                    </form>
+
+                    <div className="space-y-4">
+                      {payoutLedger.length ? payoutLedger.map((entry) => (
+                        <article key={entry.id} className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10">
+                          <div className="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <div className="text-base font-semibold text-white">{entry.entryType}</div>
+                                <Badge tone={statusTone(entry.status)}>{entry.status}</Badge>
+                              </div>
+                              <div className="mt-2 text-sm text-slate-400">Available {formatDate(entry.availableAt) || "when settled"}</div>
+                            </div>
+                            <div className="text-right text-sm text-slate-300">
+                              <div className="font-semibold text-white">{formatMoney(entry.netCents, entry.currencyCode)}</div>
+                              <div className="mt-1">Gross {formatMoney(entry.grossCents, entry.currencyCode)}</div>
+                              <div className="mt-1">Fee {formatMoney(entry.platformFeeCents, entry.currencyCode)}</div>
+                            </div>
+                          </div>
+                        </article>
+                      )) : <EmptyState title="No payout entries yet." body="Once paid orders settle into the seller ledger, they will appear here alongside your payout profile." />}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             </SectionCard>
           </div>
         ) : null}
@@ -2069,7 +2423,7 @@ export default function MarketplacePageClient() {
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="text-base font-semibold text-white">{resource.title}</h3>
                           <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
-                          <Badge tone="border-white/10 bg-white/[0.06] text-slate-200">{resource.resourceType}</Badge>
+                          <ResourceFormatChip format={resource.resourceFormat} />
                         </div>
                         {resource.summary ? <p className="mt-3 text-sm leading-6 text-slate-300">{resource.summary}</p> : null}
                         <div className="mt-3 text-sm text-slate-400">Submitted {formatDate(resource.submittedAt) || formatDate(resource.createdAt) || "recently"}</div>

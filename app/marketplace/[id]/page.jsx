@@ -1,5 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  Apps24Regular,
+  BranchFork24Regular,
+  Code24Regular,
+  Document24Regular,
+  DocumentPdf24Regular,
+  DocumentText24Regular,
+  Globe24Regular,
+  SlideText24Regular,
+  TableSimple24Regular,
+} from "@fluentui/react-icons";
 import { formatResourceBytes } from "@/lib/resourceHub";
 import { buildResourceRoutePayload, DEFAULT_RESOURCE_SELECT, getResourceAuthContext } from "@/lib/resourceHubServer";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
@@ -45,6 +56,45 @@ function Badge({ children, tone }) {
   return <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${tone}`}>{children}</span>;
 }
 
+const RESOURCE_FORMAT_LABELS = {
+  website: "Website",
+  repository: "Repository",
+  excel: "Excel",
+  word: "Word",
+  powerpoint: "PowerPoint",
+  script: "Script",
+  app: "App",
+  pdf: "PDF",
+  generic: "Resource",
+};
+
+const RESOURCE_FORMAT_ICONS = {
+  website: Globe24Regular,
+  repository: BranchFork24Regular,
+  excel: TableSimple24Regular,
+  word: DocumentText24Regular,
+  powerpoint: SlideText24Regular,
+  script: Code24Regular,
+  app: Apps24Regular,
+  pdf: DocumentPdf24Regular,
+  generic: Document24Regular,
+};
+
+function ResourceFormatGlyph({ format, className = "h-3.5 w-3.5" }) {
+  const Icon = RESOURCE_FORMAT_ICONS[format] || RESOURCE_FORMAT_ICONS.generic;
+  return <Icon aria-hidden="true" className={className} />;
+}
+
+function ResourceFormatChip({ format }) {
+  const safeFormat = format || "generic";
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-slate-950/30 px-2.5 py-1 text-[11px] font-semibold text-slate-100">
+      <ResourceFormatGlyph format={safeFormat} />
+      <span>{RESOURCE_FORMAT_LABELS[safeFormat] || RESOURCE_FORMAT_LABELS.generic}</span>
+    </span>
+  );
+}
+
 export async function generateMetadata({ params }) {
   const { id } = await params;
   return {
@@ -55,7 +105,7 @@ export async function generateMetadata({ params }) {
 export default async function MarketplaceResourcePage({ params }) {
   const { id } = await params;
   const sb = await supabaseServerClient();
-  const { user } = await getResourceAuthContext(sb);
+  const { user, userId, isAdmin } = await getResourceAuthContext(sb);
 
   const { data, error } = await sb
     .from("resources")
@@ -68,6 +118,7 @@ export default async function MarketplaceResourcePage({ params }) {
   }
 
   const resource = buildResourceRoutePayload(data, data.resource_tag_links || []);
+  const canEditResource = Boolean(userId && (resource.ownerUserId === userId || isAdmin));
 
   const { data: relatedRows } = await sb
     .from("resources")
@@ -82,16 +133,23 @@ export default async function MarketplaceResourcePage({ params }) {
   return (
     <main className="w-full px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
       <div className="mx-auto max-w-6xl space-y-6">
-        <Link href="/marketplace" className="inline-flex items-center text-sm text-slate-400 transition hover:text-white">
-          Back to marketplace
-        </Link>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Link href="/marketplace" className="inline-flex items-center text-sm text-slate-400 transition hover:text-white">
+            Back to marketplace
+          </Link>
+          {canEditResource ? (
+            <Link href={`/marketplace/${resource.id}/edit`} className="rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
+              Edit resource
+            </Link>
+          ) : null}
+        </div>
 
         <section className="overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_35px_120px_-60px_rgba(0,0,0,0.9)] ring-1 ring-white/10">
           <div className="grid gap-8 px-6 py-7 sm:px-8 lg:grid-cols-[1.2fr,0.8fr] lg:px-10 lg:py-10">
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
-                <Badge tone="border-white/10 bg-white/[0.08] text-slate-100">{resource.resourceType}</Badge>
+                <ResourceFormatChip format={resource.resourceFormat} />
                 {resource.category?.name ? <Badge tone="border-white/10 bg-white/[0.04] text-slate-300">{resource.category.name}</Badge> : null}
               </div>
 
@@ -129,7 +187,8 @@ export default async function MarketplaceResourcePage({ params }) {
         <section className="grid gap-4 lg:grid-cols-3">
           <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5 ring-1 ring-white/10">
             <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Access</div>
-            <div className="mt-3 text-sm text-slate-200">{resource.resourceType === "external" ? (resource.sourceName || "External source") : "Hosted pack"}</div>
+            <div className="mt-3 text-sm text-slate-200">{resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file"}</div>
+            <div className="mt-3"><ResourceFormatChip format={resource.resourceFormat} /></div>
             {resource.sourceUrl ? <div className="mt-2 break-all text-xs text-slate-400">{resource.sourceUrl}</div> : null}
           </div>
           <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5 ring-1 ring-white/10">

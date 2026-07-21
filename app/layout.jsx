@@ -6,7 +6,7 @@ import { Toaster } from "react-hot-toast";
 import Header from "./components/Header";
 import MobileNav from "./components/MobileNav";
 import AuthProvider from "@/app/components/AuthProvider";
-import TradingViewTicker from "@/app/components/TradingViewTicker";
+import ConditionalTicker from "@/app/components/ConditionalTicker.client";
 import Footer from "./components/Footer";
 import Script from "next/script";
 import GA4 from "@/app/components/GA4.client";
@@ -102,13 +102,7 @@ export default async function RootLayout({ children }) {
           <AuthProvider>
             <NativeAppUrlListener />
             <Header currentMarket={currentMarket} isAdmin={isAdmin} />
-            <div className="relative">
-              <TradingViewTicker />
-              <div
-                aria-hidden="true"
-                className="site-market-header-accent absolute -bottom-px left-0 h-px w-full"
-              />
-            </div>
+            <ConditionalTicker />
             <main className="flex-1">{children}</main>
             <Footer currentMarket={currentMarket} />
             <MobileNav />

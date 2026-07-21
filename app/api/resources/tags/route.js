@@ -2,29 +2,43 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
-import { cleanText, getResourceAuthContext, sanitizeSlug } from "@/lib/resourceHubServer";
+import { cleanText, getResourceAuthContext, parsePaginationParams, sanitizeSlug } from "@/lib/resourceHubServer";
+import { timedRoute } from "@/lib/apiTiming";
 
 export async function GET(req) {
-  const sb = await supabaseServerClient();
-  const url = new URL(req.url);
-  const queryText = cleanText(url.searchParams.get("q")).toLowerCase();
+  return timedRoute("resources.tags.list", async () => {
+    const sb = await supabaseServerClient();
+    const url = new URL(req.url);
+    const queryText = cleanText(url.searchParams.get("q")).toLowerCase();
+    const { page, limit, rangeStart, rangeEnd } = parsePaginationParams(url, {
+      defaultLimit: 80,
+      maxLimit: 200,
+    });
 
-  let query = sb
-    .from("resource_tags")
-    .select("id, name, slug")
-    .order("name", { ascending: true })
-    .limit(50);
+    let query = sb
+      .from("resource_tags")
+      .select("id, name, slug")
+      .order("name", { ascending: true })
+      .range(rangeStart, rangeEnd);
 
-  if (queryText) {
-    query = query.or(`name.ilike.%${queryText}%,slug.ilike.%${queryText}%`);
-  }
+    if (queryText) {
+      query = query.or(`name.ilike.%${queryText}%,slug.ilike.%${queryText}%`);
+    }
 
-  const { data, error } = await query;
-  if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
-  }
+    const { data, error } = await query;
+    if (error) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+    }
 
-  return NextResponse.json({ ok: true, tags: data || [] });
+    const rows = data || [];
+    const hasMore = rows.length > limit;
+
+    return NextResponse.json({
+      ok: true,
+      tags: hasMore ? rows.slice(0, limit) : rows,
+      paging: { page, limit, hasMore },
+    });
+  });
 }
 
 export async function POST(req) {

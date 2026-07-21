@@ -7,14 +7,18 @@ import {
   cleanNullableText,
   cleanText,
   DEFAULT_RESOURCE_SELECT,
+  parsePaginationParams,
+  RESOURCE_CARD_SELECT,
   getApprovedConsultantOwnership,
   getResourceAuthContext,
+  isValidResourceFormat,
   isSafeHttpUrl,
   isValidResourceStatus,
   isValidResourceType,
   normaliseTagIds,
   sanitizeSlug,
 } from "@/lib/resourceHubServer";
+import { timedRoute } from "@/lib/apiTiming";
 
 function asNullablePositiveInteger(value) {
   if (value == null || value === "") return null;
@@ -24,47 +28,64 @@ function asNullablePositiveInteger(value) {
 }
 
 export async function GET(req) {
-  const sb = await supabaseServerClient();
-  const { user, userId, isAdmin } = await getResourceAuthContext(sb);
-  const { canCreateResources } = user ? await getApprovedConsultantOwnership(sb, userId) : { canCreateResources: false };
+  return timedRoute("resources.list", async () => {
+    const sb = await supabaseServerClient();
+    const { user, userId, isAdmin } = await getResourceAuthContext(sb);
+    const { canCreateResources } = user ? await getApprovedConsultantOwnership(sb, userId) : { canCreateResources: false };
 
-  const url = new URL(req.url);
-  const mineOnly = url.searchParams.get("mine") === "1";
-  const resourceType = cleanText(url.searchParams.get("type"));
-  const status = cleanText(url.searchParams.get("status"));
-  const categoryId = cleanText(url.searchParams.get("categoryId"));
+    const url = new URL(req.url);
+    const mineOnly = url.searchParams.get("mine") === "1";
+    const resourceType = cleanText(url.searchParams.get("type"));
+    const status = cleanText(url.searchParams.get("status"));
+    const categoryId = cleanText(url.searchParams.get("categoryId"));
+    const view = cleanText(url.searchParams.get("view"));
+    const { page, limit, rangeStart, rangeEnd } = parsePaginationParams(url, {
+      defaultLimit: mineOnly ? 60 : 80,
+      maxLimit: 200,
+    });
 
-  if (mineOnly && !user) {
-    return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
-  }
+    if (mineOnly && !user) {
+      return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
+    }
 
-  let query = sb
-    .from("resources")
-    .select(DEFAULT_RESOURCE_SELECT)
-    .order("created_at", { ascending: false });
+    let query = sb
+      .from("resources")
+      .select(view === "card" ? RESOURCE_CARD_SELECT : DEFAULT_RESOURCE_SELECT)
+      .order("created_at", { ascending: false })
+      .range(rangeStart, rangeEnd);
 
-  if (mineOnly) {
-    query = query.eq("owner_user_id", userId);
-    if (isValidResourceStatus(status)) query = query.eq("status", status);
-  } else {
-    query = query.eq("status", isAdmin && isValidResourceStatus(status) ? status : "approved");
-  }
+    if (mineOnly) {
+      query = query.eq("owner_user_id", userId);
+      if (isValidResourceStatus(status)) query = query.eq("status", status);
+    } else {
+      query = query.eq("status", isAdmin && isValidResourceStatus(status) ? status : "approved");
+    }
 
-  if (isValidResourceType(resourceType)) query = query.eq("resource_type", resourceType);
-  if (categoryId) query = query.eq("category_id", categoryId);
+    if (isValidResourceType(resourceType)) query = query.eq("resource_type", resourceType);
+    if (categoryId) query = query.eq("category_id", categoryId);
 
-  const { data, error } = await query;
-  if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
-  }
+    const { data, error } = await query;
+    if (error) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+    }
 
-  return NextResponse.json({
-    ok: true,
-    canCreateResources,
-    createResourceRequirementMessage: canCreateResources
-      ? ""
-      : "You need an approved consultant or service provider profile before you can publish marketplace resources.",
-    resources: (data || []).map((row) => buildResourceRoutePayload(row, row.resource_tag_links || [])),
+    const rows = data || [];
+    const hasMore = rows.length > limit;
+    const slicedRows = hasMore ? rows.slice(0, limit) : rows;
+
+    return NextResponse.json({
+      ok: true,
+      canCreateResources,
+      createResourceRequirementMessage: canCreateResources
+        ? ""
+        : "You need an approved consultant or service provider profile before you can publish marketplace resources.",
+      resources: slicedRows.map((row) => buildResourceRoutePayload(row, row.resource_tag_links || [])),
+      paging: {
+        page,
+        limit,
+        hasMore,
+      },
+    });
   });
 }
 
@@ -93,6 +114,7 @@ export async function POST(req) {
   const summary = cleanNullableText(resource.summary);
   const description = cleanNullableText(resource.description);
   const resourceType = cleanText(resource.resourceType) || "hosted";
+  const resourceFormat = cleanText(resource.resourceFormat);
   const requestedStatus = cleanText(resource.status) || "draft";
   const categoryId = cleanNullableText(resource.categoryId);
   const sourceName = cleanNullableText(resource.sourceName);
@@ -112,6 +134,10 @@ export async function POST(req) {
 
   if (!isValidResourceType(resourceType)) {
     return NextResponse.json({ ok: false, error: "Invalid resource type." }, { status: 400 });
+  }
+
+  if (!isValidResourceFormat(resourceFormat)) {
+    return NextResponse.json({ ok: false, error: "Resource format is required." }, { status: 400 });
   }
 
   if (!["draft", "pending"].includes(requestedStatus)) {
@@ -134,6 +160,7 @@ export async function POST(req) {
     summary,
     description,
     resource_type: resourceType,
+    resource_format: resourceFormat,
     status: requestedStatus,
     source_name: resourceType === "external" ? sourceName : null,
     source_url: resourceType === "external" ? sourceUrl : null,
