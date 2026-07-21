@@ -201,7 +201,7 @@ function getResourceArtwork(resource) {
   };
 }
 
-function TabButton({ active, label, hint, onClick }) {
+function TabButton({ active, label, onClick }) {
   return (
     <button
       type="button"
@@ -214,7 +214,6 @@ function TabButton({ active, label, hint, onClick }) {
       ].join(" ")}
     >
       <div className="text-[13px] font-semibold leading-none">{label}</div>
-      {hint ? <div className="mt-1 text-[11px] text-slate-400">{hint}</div> : null}
     </button>
   );
 }
@@ -943,7 +942,7 @@ function MobileHeroCard({ resource }) {
             <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/28" />
             <span className="rounded-full border border-white/12 bg-slate-950/28 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-100/90">{resource.category?.name || "Resource"}</span>
           </div>
-          <div className="mt-4 line-clamp-2 max-w-[14rem] text-[2rem] font-semibold leading-[1.05] text-white">{resource.title}</div>
+          <div className="mt-4 line-clamp-2 max-w-[14rem] text-[1.55rem] font-semibold leading-[1.1] text-white">{resource.title}</div>
           <p className="mt-3 max-w-[16rem] text-sm leading-6 text-slate-100/84">{resource.summary || resource.description || "Open the resource to review the full pack details."}</p>
           <div className="mt-5 flex items-end justify-between gap-3">
             <div>
@@ -972,7 +971,7 @@ function MobilePromoBillboard({ resource, eyebrow = "Featured" }) {
         <div className="absolute inset-y-0 right-0 w-[48%] bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))]" />
         <div className="relative flex h-full max-w-[52%] flex-col justify-end">
           <div className="text-[11px] uppercase tracking-[0.24em] text-slate-100/76">{eyebrow}</div>
-          <div className="mt-3 line-clamp-2 text-[1.85rem] font-semibold leading-[1.06] text-white">{resource.title}</div>
+          <div className="mt-3 line-clamp-2 text-[1.35rem] font-semibold leading-[1.12] text-white">{resource.title}</div>
           <div className="mt-2 line-clamp-3 text-sm leading-6 text-slate-100/80">{resource.summary || "Explore the resource details."}</div>
           <Link href={detailHref} className="mt-4 inline-flex w-fit rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-slate-100">
             View resource
@@ -1156,6 +1155,7 @@ export default function MarketplacePageClient() {
   const [resourceFile, setResourceFile] = useState(null);
   const [discoverFilter, setDiscoverFilter] = useState({ search: "", type: "", categoryId: "" });
   const [mobileFilterPanel, setMobileFilterPanel] = useState(null);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileHeroIndex, setMobileHeroIndex] = useState(0);
   const [accountArea, setAccountArea] = useState("library");
   const [loadedTabs, setLoadedTabs] = useState({
@@ -1330,6 +1330,7 @@ export default function MarketplacePageClient() {
   useEffect(() => {
     if (activeTab !== "discover") {
       setMobileFilterPanel(null);
+      setMobileSearchOpen(false);
     }
   }, [activeTab]);
 
@@ -1749,17 +1750,18 @@ export default function MarketplacePageClient() {
         </aside>
 
         <div className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-6 lg:py-7 xl:px-8">
-          <div className="overflow-x-auto pb-1 lg:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex min-w-max gap-4 border-b border-white/10 px-1 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
+          <div className="sticky top-[64px] z-30 -mx-4 bg-[linear-gradient(180deg,rgba(2,6,23,0.97),rgba(2,6,23,0.9))] px-4 pb-1 pt-1 backdrop-blur-md sm:-mx-6 sm:px-6 lg:hidden">
+            <div className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex min-w-max gap-4 border-b border-white/10 px-1 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
               {tabs.map((tab) => (
                 <TabButton
                   key={tab.key}
                   active={tab.key === activeTab}
                   label={tab.label}
-                  hint={tab.hint}
                   onClick={() => handleTabSelect(tab)}
                 />
               ))}
+              </div>
             </div>
           </div>
 
@@ -1796,18 +1798,17 @@ export default function MarketplacePageClient() {
             <section className="overflow-hidden rounded-[30px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.035))] p-3.5 shadow-[0_28px_80px_-48px_rgba(0,0,0,0.82)] ring-1 ring-white/10 sm:p-4">
               <div className="space-y-3 lg:hidden">
                 <div className="flex items-center gap-2.5">
-                  <div className="relative min-w-0 flex-1">
-                    <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                  <button
+                    type="button"
+                    onClick={() => setMobileSearchOpen((current) => !current)}
+                    className={["flex h-11 w-11 flex-none items-center justify-center rounded-full border transition", mobileSearchOpen ? "border-sky-300/40 bg-white text-slate-950" : "border-white/10 bg-white/[0.05] text-slate-200 hover:bg-white/[0.09]"] .join(" ")}
+                    aria-label="Toggle search"
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="11" cy="11" r="7" />
                       <path d="m20 20-3.5-3.5" />
                     </svg>
-                    <TextInput
-                      value={discoverFilter.search}
-                      onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, search: event.target.value }))}
-                      placeholder="Search marketplace"
-                      className="h-11 rounded-full border-white/10 bg-slate-950/72 pl-11 pr-4 text-[14px]"
-                    />
-                  </div>
+                  </button>
                   <button
                     type="button"
                     onClick={() => setMobileFilterPanel((current) => (current === "filters" ? null : "filters"))}
@@ -1834,6 +1835,34 @@ export default function MarketplacePageClient() {
                     </svg>
                   </button>
                 </div>
+
+                {mobileSearchOpen ? (
+                  <div className="relative">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="m20 20-3.5-3.5" />
+                    </svg>
+                    <TextInput
+                      value={discoverFilter.search}
+                      onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, search: event.target.value }))}
+                      placeholder="Search"
+                      className="h-10 rounded-full border-white/10 bg-slate-950/72 pl-11 pr-10 text-[13px]"
+                    />
+                    {discoverFilter.search ? (
+                      <button
+                        type="button"
+                        onClick={() => setDiscoverFilter((prev) => ({ ...prev, search: "" }))}
+                        className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-slate-200"
+                        aria-label="Clear search"
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M6 6l12 12" />
+                          <path d="M18 6 6 18" />
+                        </svg>
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
 
                 {mobileFilterPanel ? (
                   <div className="space-y-3 rounded-[22px] border border-white/10 bg-slate-950/42 p-3.5 backdrop-blur-sm">
