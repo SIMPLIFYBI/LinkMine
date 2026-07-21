@@ -1075,14 +1075,11 @@ function DiscoverListRow({ resource }) {
     >
       <div className="flex gap-3.5 p-3.5 sm:items-center sm:gap-4 sm:p-4">
         <div className="flex min-w-0 flex-1 gap-3.5 sm:items-center sm:gap-4">
-          <div className="relative h-[72px] w-[72px] flex-none overflow-hidden rounded-[20px] border border-white/10 shadow-[0_16px_36px_-24px_rgba(0,0,0,0.8)] sm:h-16 sm:w-16" style={{ backgroundImage: artwork.cardBackground }}>
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.03))]" />
-            <ResourceOwnerBadge
-              resource={resource}
-              className="absolute bottom-2.5 right-2.5 flex h-8 w-8 items-center justify-center overflow-hidden rounded-[12px] border border-white/20 text-[11px] font-semibold text-slate-950"
-              style={{ backgroundImage: artwork.chipBackground }}
-            />
-          </div>
+          <ResourceOwnerBadge
+            resource={resource}
+            className="flex h-[72px] w-[72px] flex-none items-center justify-center overflow-hidden rounded-[20px] border border-white/12 text-base font-semibold text-slate-950 shadow-[0_16px_36px_-24px_rgba(0,0,0,0.8)] sm:h-16 sm:w-16"
+            style={{ backgroundImage: artwork.chipBackground }}
+          />
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
@@ -1090,7 +1087,7 @@ function DiscoverListRow({ resource }) {
               <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/40" />
               <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">{metaLabel}</div>
             </div>
-            <Link href={detailHref} className="mt-2 block line-clamp-1 text-base font-semibold text-white transition hover:text-sky-100 sm:text-lg">
+            <Link href={detailHref} className="mt-2 block line-clamp-2 text-[15px] font-semibold leading-5 text-white transition hover:text-sky-100 sm:line-clamp-1 sm:text-lg sm:leading-6">
               {resource.title}
             </Link>
             <p className="mt-1.5 line-clamp-1 max-w-2xl text-sm leading-5 text-slate-400 sm:line-clamp-2 sm:leading-6">{resource.summary || accessLabel}</p>
@@ -1749,8 +1746,8 @@ export default function MarketplacePageClient() {
           </div>
         </aside>
 
-        <div className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-6 lg:py-7 xl:px-8">
-          <div className="sticky top-[64px] z-30 -mx-4 bg-[linear-gradient(180deg,rgba(2,6,23,0.97),rgba(2,6,23,0.9))] px-4 pb-1 pt-1 backdrop-blur-md sm:-mx-6 sm:px-6 lg:hidden">
+        <div className="min-w-0 flex-1 px-4 pb-6 pt-0 sm:px-6 sm:pb-6 sm:pt-0 lg:px-6 lg:py-7 xl:px-8">
+          <div className="sticky top-[64px] z-30 -mx-4 bg-[linear-gradient(180deg,rgba(2,6,23,0.97),rgba(2,6,23,0.9))] px-4 pb-1 pt-0 backdrop-blur-md sm:-mx-6 sm:px-6 lg:hidden">
             <div className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <div className="flex min-w-max gap-4 border-b border-white/10 px-1 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
               {tabs.map((tab) => (
