@@ -201,19 +201,24 @@ function getResourceArtwork(resource) {
   };
 }
 
-function TabButton({ active, label, onClick }) {
+function MobileSidebarTabButton({ active, label, icon, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={[
-        "group whitespace-nowrap border-b-2 border-transparent px-2 py-2 text-center transition sm:rounded-full sm:border sm:px-3.5",
+        "group flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition",
         active
-          ? "border-sky-400 bg-transparent text-white shadow-none sm:border-sky-300/40 sm:bg-white sm:text-slate-950 sm:shadow-[0_14px_30px_-24px_rgba(255,255,255,0.95)]"
-          : "bg-transparent text-slate-400 hover:text-white sm:border-white/10 sm:bg-white/[0.05] sm:text-slate-300 sm:hover:border-white/20 sm:hover:bg-white/[0.1]",
+          ? "border-sky-300/45 bg-white text-slate-950 shadow-[0_14px_34px_-22px_rgba(255,255,255,0.85)]"
+          : "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.08] hover:text-white",
       ].join(" ")}
     >
-      <div className="text-[13px] font-semibold leading-none">{label}</div>
+      {icon ? (
+        <span className="inline-flex h-4.5 w-4.5 items-center justify-center">
+          <MarketplaceNavIcon name={icon} active={active} />
+        </span>
+      ) : null}
+      <span className="text-[13px] font-semibold leading-none">{label}</span>
     </button>
   );
 }
@@ -574,7 +579,7 @@ function LibraryGalleryCard({ resource }) {
     <article
       className={[
         "group relative flex flex-none snap-start overflow-hidden rounded-[30px] border border-white/10 shadow-[0_26px_70px_-42px_rgba(0,0,0,0.95)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20",
-        "h-[392px] w-[320px] lg:w-[320px]",
+        "h-[372px] w-[286px] sm:h-[392px] sm:w-[320px] lg:w-[320px]",
       ].join(" ")}
       style={{ backgroundImage: artwork.heroBackground }}
     >
@@ -590,11 +595,11 @@ function LibraryGalleryCard({ resource }) {
         style={{ backgroundImage: artwork.chipBackground }}
       />
 
-      <div className="relative flex flex-1 flex-col justify-end p-5 lg:p-6">
+      <div className="relative flex flex-1 flex-col justify-end p-4.5 sm:p-5 lg:p-6">
         <div className="mb-5 flex items-end justify-between gap-4">
           <div>
             <div className="text-[11px] uppercase tracking-[0.24em] text-white/70">In your library</div>
-            <div className="mt-2 line-clamp-2 text-[1.8rem] font-semibold leading-tight text-white lg:text-[1.95rem]">{resource.title}</div>
+            <div className="mt-2 line-clamp-2 text-[1.35rem] font-semibold leading-tight text-white sm:text-[1.8rem] lg:text-[1.95rem]">{resource.title}</div>
           </div>
           <div className="rounded-[20px] border border-white/12 bg-slate-950/30 px-3 py-2 text-right backdrop-blur-sm">
             <div className="text-sm font-semibold text-white">{priceLabel}</div>
@@ -602,7 +607,7 @@ function LibraryGalleryCard({ resource }) {
           </div>
         </div>
 
-        <p className="line-clamp-3 max-w-[30ch] text-[15px] leading-7 text-slate-100/88">{resource.summary || accessLabel}</p>
+        <p className="line-clamp-2 sm:line-clamp-3 max-w-[30ch] text-[14px] leading-6 text-slate-100/88">{resource.summary || accessLabel}</p>
 
         <div className="mt-5 flex flex-wrap items-center gap-2 text-[11px] text-slate-100/80">
           {(resource.tags || []).slice(0, 3).map((tag) => (
@@ -682,9 +687,9 @@ function MarketplaceShelfCard({ resource }) {
   const artwork = getResourceArtwork(resource);
   const priceLabel = resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free";
   const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file";
-  const shellClassName = "h-[320px] w-[320px] lg:w-[320px]";
-  const titleClassName = "mt-4 block line-clamp-2 max-w-[15rem] text-[1.35rem] font-semibold leading-tight text-white transition hover:text-sky-100";
-  const summaryClassName = "mt-2 line-clamp-2 max-w-[28ch] text-sm leading-6 text-slate-100/82";
+  const shellClassName = "h-[304px] w-[286px] sm:h-[320px] sm:w-[320px] lg:w-[320px]";
+  const titleClassName = "mt-3.5 block line-clamp-2 max-w-[13.5rem] text-[1.12rem] font-semibold leading-tight text-white transition hover:text-sky-100 sm:mt-4 sm:max-w-[15rem] sm:text-[1.35rem]";
+  const summaryClassName = "mt-2 line-clamp-2 max-w-[25ch] text-[13px] leading-5 text-slate-100/82 sm:max-w-[28ch] sm:text-sm sm:leading-6";
 
   return (
     <article className={["group relative flex flex-none snap-start overflow-hidden rounded-[26px] border border-white/10 shadow-[0_24px_62px_-38px_rgba(0,0,0,0.9)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20", shellClassName].join(" ")} style={{ backgroundImage: artwork.cardBackground }}>
@@ -694,14 +699,14 @@ function MarketplaceShelfCard({ resource }) {
         className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center overflow-hidden rounded-[14px] border border-white/18 text-sm font-semibold text-slate-950 shadow-[0_14px_30px_-18px_rgba(255,255,255,0.8)]"
         style={{ backgroundImage: artwork.chipBackground }}
       />
-      <div className="relative flex h-full flex-col justify-between p-4.5">
+      <div className="relative flex h-full flex-col justify-between p-4">
         <div>
           <div className="flex flex-wrap items-center gap-2">
             {resource.status !== "approved" ? <Badge tone={statusTone(resource.status)}>{resource.status}</Badge> : null}
             <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/25" />
             <span className="line-clamp-1 max-w-[120px] rounded-full border border-white/12 bg-slate-950/25 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-100/90">{resource.category?.name || "Resource"}</span>
           </div>
-          <div className="mt-4 text-[11px] uppercase tracking-[0.26em] text-slate-200/78">Marketplace pick</div>
+          <div className="mt-3 text-[10px] uppercase tracking-[0.22em] text-slate-200/78 sm:mt-4 sm:text-[11px] sm:tracking-[0.26em]">Marketplace pick</div>
           <Link href={detailHref} className={titleClassName}>
             {resource.title}
           </Link>
@@ -717,12 +722,12 @@ function MarketplaceShelfCard({ resource }) {
             ))}
             <span className="shrink-0 rounded-full border border-white/12 bg-slate-950/25 px-3 py-1 backdrop-blur-sm">{resource.downloadCount || 0} downloads</span>
           </div>
-          <div className="mt-4 flex items-center justify-between gap-3">
+          <div className="mt-3.5 flex items-center justify-between gap-2.5 sm:mt-4 sm:gap-3">
             <div>
-              <div className="text-lg font-semibold text-white">{priceLabel}</div>
-              <div className="mt-1 line-clamp-1 max-w-[160px] text-xs text-slate-100/72">{accessLabel}</div>
+              <div className="text-base font-semibold text-white sm:text-lg">{priceLabel}</div>
+              <div className="mt-1 line-clamp-1 max-w-[130px] text-[11px] text-slate-100/72 sm:max-w-[160px] sm:text-xs">{accessLabel}</div>
             </div>
-            <Link href={detailHref} className="rounded-full border border-white/15 bg-white px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-slate-100">
+            <Link href={detailHref} className="rounded-full border border-white/15 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100 sm:px-4 sm:py-2 sm:text-xs">
               View resource
             </Link>
           </div>
@@ -741,21 +746,21 @@ function CategoryShelfCard({ category, onSelect }) {
     <button
       type="button"
       onClick={onSelect}
-      className="group relative flex h-[188px] w-[320px] flex-none snap-start overflow-hidden rounded-[24px] border border-white/10 text-left shadow-[0_24px_60px_-40px_rgba(0,0,0,0.85)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20 lg:w-[320px]"
+      className="group relative flex h-[176px] w-[286px] flex-none snap-start overflow-hidden rounded-[24px] border border-white/10 text-left shadow-[0_24px_60px_-40px_rgba(0,0,0,0.85)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20 sm:h-[188px] sm:w-[320px] lg:w-[320px]"
       style={{ backgroundImage: background }}
     >
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))]" />
-      <div className="relative flex flex-1 flex-col justify-between p-4.5">
+      <div className="relative flex flex-1 flex-col justify-between p-4">
         <div>
-          <div className="text-[11px] uppercase tracking-[0.24em] text-slate-200/80">Category</div>
-          <div className="mt-3 line-clamp-2 max-w-[12rem] text-[1.35rem] font-semibold leading-tight text-white">{category.name}</div>
+          <div className="text-[10px] uppercase tracking-[0.2em] text-slate-200/80 sm:text-[11px] sm:tracking-[0.24em]">Category</div>
+          <div className="mt-2.5 line-clamp-2 max-w-[11rem] text-[1.1rem] font-semibold leading-tight text-white sm:mt-3 sm:max-w-[12rem] sm:text-[1.35rem]">{category.name}</div>
         </div>
         <div className="flex items-end justify-between gap-3">
           <div>
-            <div className="text-2xl font-semibold text-white">{category.count}</div>
-            <div className="mt-1 text-xs text-slate-200/76">approved resources</div>
+            <div className="text-xl font-semibold text-white sm:text-2xl">{category.count}</div>
+            <div className="mt-1 text-[11px] text-slate-200/76 sm:text-xs">approved resources</div>
           </div>
-          <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white transition group-hover:bg-white/14">
+          <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white transition group-hover:bg-white/14 sm:px-3 sm:text-[11px] sm:tracking-[0.18em]">
             Open
           </span>
         </div>
@@ -942,14 +947,14 @@ function MobileHeroCard({ resource }) {
             <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/28" />
             <span className="rounded-full border border-white/12 bg-slate-950/28 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-100/90">{resource.category?.name || "Resource"}</span>
           </div>
-          <div className="mt-4 line-clamp-2 max-w-[14rem] text-[1.55rem] font-semibold leading-[1.1] text-white">{resource.title}</div>
-          <p className="mt-3 max-w-[16rem] text-sm leading-6 text-slate-100/84">{resource.summary || resource.description || "Open the resource to review the full pack details."}</p>
-          <div className="mt-5 flex items-end justify-between gap-3">
+          <div className="mt-3.5 line-clamp-2 max-w-[13.5rem] text-[1.35rem] font-semibold leading-[1.08] text-white">{resource.title}</div>
+          <p className="mt-2 max-w-[16rem] line-clamp-2 text-[13px] leading-5 text-slate-100/84">{resource.summary || resource.description || "Open the resource to review the full pack details."}</p>
+          <div className="mt-3.5 flex items-end justify-between gap-3">
             <div>
-              <div className="text-lg font-semibold text-white">{resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free"}</div>
+              <div className="text-base font-semibold text-white">{resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free"}</div>
               <div className="mt-1 text-xs text-slate-100/70">{resource.downloadCount || 0} downloads</div>
             </div>
-            <Link href={detailHref} className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-slate-100">
+            <Link href={detailHref} className="rounded-full bg-white px-3.5 py-1.5 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100">
               Open
             </Link>
           </div>
@@ -970,10 +975,10 @@ function MobilePromoBillboard({ resource, eyebrow = "Featured" }) {
         <div className="absolute inset-y-0 right-0 w-[48%] opacity-85" style={{ backgroundImage: artwork.cardBackground }} />
         <div className="absolute inset-y-0 right-0 w-[48%] bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))]" />
         <div className="relative flex h-full max-w-[52%] flex-col justify-end">
-          <div className="text-[11px] uppercase tracking-[0.24em] text-slate-100/76">{eyebrow}</div>
-          <div className="mt-3 line-clamp-2 text-[1.35rem] font-semibold leading-[1.12] text-white">{resource.title}</div>
-          <div className="mt-2 line-clamp-3 text-sm leading-6 text-slate-100/80">{resource.summary || "Explore the resource details."}</div>
-          <Link href={detailHref} className="mt-4 inline-flex w-fit rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-slate-100">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-slate-100/76">{eyebrow}</div>
+          <div className="mt-2.5 line-clamp-2 text-[1.18rem] font-semibold leading-[1.12] text-white">{resource.title}</div>
+          <div className="mt-1.5 line-clamp-2 text-[13px] leading-5 text-slate-100/80">{resource.summary || "Explore the resource details."}</div>
+          <Link href={detailHref} className="mt-3 inline-flex w-fit rounded-full bg-white px-3.5 py-1.5 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100">
             View resource
           </Link>
         </div>
@@ -987,12 +992,14 @@ function MobileMiniPromoCard({ resource }) {
   const detailHref = `/marketplace/${resource.id}`;
 
   return (
-    <article className="relative h-[132px] overflow-hidden rounded-[20px] border border-white/10 shadow-[0_18px_44px_-30px_rgba(0,0,0,0.82)] ring-1 ring-white/10" style={{ backgroundImage: artwork.cardBackground }}>
+    <article className="relative h-[142px] overflow-hidden rounded-[20px] border border-white/10 shadow-[0_18px_44px_-30px_rgba(0,0,0,0.82)] ring-1 ring-white/10" style={{ backgroundImage: artwork.cardBackground }}>
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.1),rgba(15,23,42,0.82)_78%)]" />
-      <div className="relative h-full p-3.5">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-slate-100/76">{resource.category?.name || "Resource"}</div>
-        <div className="mt-8 line-clamp-2 max-w-[10rem] text-[1.05rem] font-semibold leading-tight text-white">{resource.title}</div>
-        <Link href={detailHref} className="mt-3 inline-flex rounded-full border border-white/15 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100">
+      <div className="relative flex h-full flex-col justify-between p-3.5">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.2em] text-slate-100/76">{resource.category?.name || "Resource"}</div>
+          <div className="mt-2.5 line-clamp-2 max-w-[10rem] text-[1rem] font-semibold leading-tight text-white">{resource.title}</div>
+        </div>
+        <Link href={detailHref} className="inline-flex w-fit rounded-full border border-white/15 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100">
           Open
         </Link>
       </div>
@@ -1070,10 +1077,10 @@ function DiscoverListRow({ resource }) {
 
   return (
     <article
-      className="h-[188px] overflow-hidden rounded-[24px] border border-white/10 shadow-[0_18px_48px_-38px_rgba(0,0,0,0.85)] ring-1 ring-white/10 transition hover:border-white/20 hover:bg-white/[0.06]"
+      className="min-h-[206px] overflow-hidden rounded-[24px] border border-white/10 shadow-[0_18px_48px_-38px_rgba(0,0,0,0.85)] ring-1 ring-white/10 transition hover:border-white/20 hover:bg-white/[0.06] sm:h-[188px]"
       style={{ backgroundImage: artwork.panelBackground }}
     >
-      <div className="flex gap-3.5 p-3.5 sm:items-center sm:gap-4 sm:p-4">
+      <div className="flex gap-3 p-3 sm:items-center sm:gap-4 sm:p-4">
         <div className="flex min-w-0 flex-1 gap-3.5 sm:items-center sm:gap-4">
           <ResourceOwnerBadge
             resource={resource}
@@ -1102,13 +1109,13 @@ function DiscoverListRow({ resource }) {
           </div>
         </div>
 
-        <div className="flex min-w-[88px] flex-col items-end justify-between gap-2 sm:min-w-[148px] sm:justify-center">
+        <div className="flex min-w-[82px] flex-col items-end justify-between gap-2 sm:min-w-[148px] sm:justify-center">
           <div className="text-right">
-            <div className="text-base font-semibold text-white sm:text-lg">{priceLabel}</div>
-            <div className="mt-1 text-xs text-slate-400">{resource.downloadCount || 0} downloads</div>
+            <div className="text-[15px] font-semibold text-white sm:text-lg">{priceLabel}</div>
+            <div className="mt-1 text-[11px] text-slate-400">{resource.downloadCount || 0} downloads</div>
           </div>
-          <Link href={detailHref} className="rounded-full bg-white px-3.5 py-2 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100 sm:px-4 sm:text-xs">
-            View details
+          <Link href={detailHref} className="rounded-full bg-white px-3 py-1.5 text-[10px] font-semibold text-slate-950 transition hover:bg-slate-100 sm:px-4 sm:py-2 sm:text-xs">
+            Open
           </Link>
         </div>
       </div>
@@ -1151,8 +1158,8 @@ export default function MarketplacePageClient() {
   const [payoutForm, setPayoutForm] = useState(DEFAULT_PAYOUT_FORM);
   const [resourceFile, setResourceFile] = useState(null);
   const [discoverFilter, setDiscoverFilter] = useState({ search: "", type: "", categoryId: "" });
-  const [mobileFilterPanel, setMobileFilterPanel] = useState(null);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobileHeroIndex, setMobileHeroIndex] = useState(0);
   const [accountArea, setAccountArea] = useState("library");
   const [loadedTabs, setLoadedTabs] = useState({
@@ -1326,9 +1333,24 @@ export default function MarketplacePageClient() {
 
   useEffect(() => {
     if (activeTab !== "discover") {
-      setMobileFilterPanel(null);
       setMobileSearchOpen(false);
     }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (!signedIn && activeTab !== "discover") {
+      setMobileNavOpen(false);
+    }
+  }, [activeTab, signedIn]);
+
+  useEffect(() => {
+    function handleMarketplaceSearchToggle() {
+      if (activeTab !== "discover") return;
+      setMobileSearchOpen((current) => !current);
+    }
+
+    window.addEventListener("marketplace:search-toggle", handleMarketplaceSearchToggle);
+    return () => window.removeEventListener("marketplace:search-toggle", handleMarketplaceSearchToggle);
   }, [activeTab]);
 
   const discoverResources = useMemo(() => {
@@ -1493,10 +1515,12 @@ export default function MarketplacePageClient() {
 
   function handleTabSelect(tab) {
     if (tab?.href) {
+      setMobileNavOpen(false);
       router.push(tab.href);
       return;
     }
 
+    setMobileNavOpen(false);
     setActiveTab(tab.key);
   }
 
@@ -1747,22 +1771,100 @@ export default function MarketplacePageClient() {
         </aside>
 
         <div className="min-w-0 flex-1 px-4 pb-6 pt-0 sm:px-6 sm:pb-6 sm:pt-0 lg:px-6 lg:py-7 xl:px-8">
-          <div className="sticky top-[64px] z-30 -mx-4 bg-[linear-gradient(180deg,rgba(2,6,23,0.97),rgba(2,6,23,0.9))] px-4 pb-1 pt-0 backdrop-blur-md sm:-mx-6 sm:px-6 lg:hidden">
-            <div className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <div className="flex min-w-max gap-4 border-b border-white/10 px-1 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-              {tabs.map((tab) => (
-                <TabButton
-                  key={tab.key}
-                  active={tab.key === activeTab}
-                  label={tab.label}
-                  onClick={() => handleTabSelect(tab)}
-                />
-              ))}
+          <div className="lg:hidden">
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen((current) => !current)}
+              className="fixed left-3 top-[72px] z-40 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-slate-900/75 text-slate-100 shadow-[0_18px_38px_-22px_rgba(0,0,0,0.75)] backdrop-blur-md"
+              aria-label={mobileNavOpen ? "Collapse marketplace navigation" : "Expand marketplace navigation"}
+            >
+              {mobileNavOpen ? (
+                <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 6 9 12l6 6" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 7h16" />
+                  <path d="M4 12h16" />
+                  <path d="M4 17h16" />
+                </svg>
+              )}
+            </button>
+
+            {mobileNavOpen ? (
+              <button
+                type="button"
+                onClick={() => setMobileNavOpen(false)}
+                className="fixed inset-0 z-30 bg-black/45"
+                aria-label="Close marketplace navigation"
+              />
+            ) : null}
+
+            <aside
+              className={[
+                "fixed bottom-0 left-0 top-[56px] z-40 w-[248px] border-r border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(2,6,23,0.92))] px-3 pb-4 pt-3 shadow-[24px_0_56px_-30px_rgba(0,0,0,0.92)] backdrop-blur-xl transition-transform duration-300",
+                mobileNavOpen ? "translate-x-0" : "-translate-x-full",
+              ].join(" ")}
+            >
+              <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-2">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-300">Marketplace</div>
+                <button
+                  type="button"
+                  onClick={() => setMobileNavOpen(false)}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-slate-200"
+                  aria-label="Collapse marketplace navigation"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 6 9 12l6 6" />
+                  </svg>
+                </button>
               </div>
-            </div>
+
+              <div className="space-y-1.5">
+                {tabs.map((tab) => (
+                  <MobileSidebarTabButton
+                    key={tab.key}
+                    active={tab.key === activeTab}
+                    label={tab.label}
+                    icon={tab.icon}
+                    onClick={() => handleTabSelect(tab)}
+                  />
+                ))}
+              </div>
+            </aside>
+
+            {activeTab === "discover" && mobileSearchOpen ? (
+              <div className="mb-3 pl-12 pr-1 pt-2">
+                <div className="relative rounded-2xl border border-white/15 bg-white/[0.08] px-2 py-2 shadow-[0_16px_36px_-24px_rgba(14,165,233,0.45)] backdrop-blur-xl ring-1 ring-white/15">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-300" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="m20 20-3.5-3.5" />
+                  </svg>
+                  <TextInput
+                    value={discoverFilter.search}
+                    onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, search: event.target.value }))}
+                    placeholder="Search marketplace"
+                    className="h-10 rounded-full border-white/10 bg-slate-950/65 pl-11 pr-10 text-[13px]"
+                  />
+                  {discoverFilter.search ? (
+                    <button
+                      type="button"
+                      onClick={() => setDiscoverFilter((prev) => ({ ...prev, search: "" }))}
+                      className="absolute right-4 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-white/[0.08] text-slate-200"
+                      aria-label="Clear search"
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M6 6l12 12" />
+                        <path d="M18 6 6 18" />
+                      </svg>
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
           </div>
 
-          <div className="mt-5 min-w-0 lg:mt-0">
+          <div className="mt-3 min-w-0 lg:mt-0">
           {!signedIn ? (
             <section className="mb-6 overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] px-5 py-5 ring-1 ring-white/10">
               <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -1792,146 +1894,7 @@ export default function MarketplacePageClient() {
           <div className="space-y-6">
         {activeTab === "discover" ? (
           <>
-            <section className="overflow-hidden rounded-[30px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.035))] p-3.5 shadow-[0_28px_80px_-48px_rgba(0,0,0,0.82)] ring-1 ring-white/10 sm:p-4">
-              <div className="space-y-3 lg:hidden">
-                <div className="flex items-center gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setMobileSearchOpen((current) => !current)}
-                    className={["flex h-11 w-11 flex-none items-center justify-center rounded-full border transition", mobileSearchOpen ? "border-sky-300/40 bg-white text-slate-950" : "border-white/10 bg-white/[0.05] text-slate-200 hover:bg-white/[0.09]"] .join(" ")}
-                    aria-label="Toggle search"
-                  >
-                    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="11" cy="11" r="7" />
-                      <path d="m20 20-3.5-3.5" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMobileFilterPanel((current) => (current === "filters" ? null : "filters"))}
-                    className={["flex h-11 w-11 flex-none items-center justify-center rounded-full border transition", mobileFilterPanel === "filters" ? "border-sky-300/40 bg-white text-slate-950" : "border-white/10 bg-white/[0.05] text-slate-200 hover:bg-white/[0.09]"] .join(" ")}
-                    aria-label="Toggle access filters"
-                  >
-                    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M4 7h16" />
-                      <path d="M7 12h10" />
-                      <path d="M10 17h4" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMobileFilterPanel((current) => (current === "categories" ? null : "categories"))}
-                    className={["flex h-11 w-11 flex-none items-center justify-center rounded-full border transition", mobileFilterPanel === "categories" ? "border-sky-300/40 bg-white text-slate-950" : "border-white/10 bg-white/[0.05] text-slate-200 hover:bg-white/[0.09]"] .join(" ")}
-                    aria-label="Toggle category filters"
-                  >
-                    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="4" y="5" width="6" height="6" rx="1.5" />
-                      <rect x="14" y="5" width="6" height="6" rx="1.5" />
-                      <rect x="4" y="13" width="6" height="6" rx="1.5" />
-                      <rect x="14" y="13" width="6" height="6" rx="1.5" />
-                    </svg>
-                  </button>
-                </div>
-
-                {mobileSearchOpen ? (
-                  <div className="relative">
-                    <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="11" cy="11" r="7" />
-                      <path d="m20 20-3.5-3.5" />
-                    </svg>
-                    <TextInput
-                      value={discoverFilter.search}
-                      onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, search: event.target.value }))}
-                      placeholder="Search"
-                      className="h-10 rounded-full border-white/10 bg-slate-950/72 pl-11 pr-10 text-[13px]"
-                    />
-                    {discoverFilter.search ? (
-                      <button
-                        type="button"
-                        onClick={() => setDiscoverFilter((prev) => ({ ...prev, search: "" }))}
-                        className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-slate-200"
-                        aria-label="Clear search"
-                      >
-                        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M6 6l12 12" />
-                          <path d="M18 6 6 18" />
-                        </svg>
-                      </button>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                {mobileFilterPanel ? (
-                  <div className="space-y-3 rounded-[22px] border border-white/10 bg-slate-950/42 p-3.5 backdrop-blur-sm">
-                    {mobileFilterPanel === "filters" ? (
-                      <div className="flex flex-wrap gap-2">
-                        {[
-                          { label: "All", value: "" },
-                          { label: "External", value: "external" },
-                        ].map((option) => {
-                          const active = discoverFilter.type === option.value;
-                          return (
-                            <button
-                              key={option.label}
-                              type="button"
-                              onClick={() => setDiscoverFilter((prev) => ({ ...prev, type: option.value }))}
-                              className={[
-                                "rounded-full border px-3.5 py-2 text-sm font-semibold transition",
-                                active ? "border-sky-300/40 bg-white text-slate-950" : "border-white/10 bg-white/[0.04] text-slate-200",
-                              ].join(" ")}
-                            >
-                              {option.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setDiscoverFilter((prev) => ({ ...prev, categoryId: "" }))}
-                          className={[
-                            "rounded-full border px-3.5 py-2 text-sm font-semibold transition",
-                            !discoverFilter.categoryId ? "border-sky-300/40 bg-white text-slate-950" : "border-white/10 bg-white/[0.04] text-slate-200",
-                          ].join(" ")}
-                        >
-                          All categories
-                        </button>
-                        {categoryHighlights.map((category) => {
-                          const active = discoverFilter.categoryId === category.id;
-                          return (
-                            <button
-                              key={category.id}
-                              type="button"
-                              onClick={() => setDiscoverFilter((prev) => ({ ...prev, categoryId: category.id }))}
-                              className={[
-                                "rounded-full border px-3.5 py-2 text-sm font-semibold transition",
-                                active ? "border-sky-300/40 bg-white text-slate-950" : "border-white/10 bg-white/[0.04] text-slate-200",
-                              ].join(" ")}
-                            >
-                              {category.name}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {(discoverFilter.search || discoverFilter.type || discoverFilter.categoryId) ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDiscoverFilter({ search: "", type: "", categoryId: "" });
-                          setMobileFilterPanel(null);
-                        }}
-                        className="text-sm font-semibold text-sky-200"
-                      >
-                        Clear filters
-                      </button>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-
+            <section className="hidden overflow-hidden rounded-[30px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.035))] p-3.5 shadow-[0_28px_80px_-48px_rgba(0,0,0,0.82)] ring-1 ring-white/10 sm:p-4 lg:block">
               <div className="hidden flex-col gap-2.5 lg:flex xl:flex-row xl:items-center">
                 <div className="relative flex-1">
                   <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">

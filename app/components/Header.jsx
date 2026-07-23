@@ -12,6 +12,12 @@ export default function Header({ currentMarket = "mining" }) {
   const pathname = usePathname();
   const { theme } = useTheme();
   const isLight = theme === "light";
+  const isMarketplaceRoute = pathname === "/marketplace" || pathname?.startsWith("/marketplace/");
+
+  function triggerMarketplaceSearchToggle() {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(new CustomEvent("marketplace:search-toggle"));
+  }
 
   return (
     <header className="sticky top-0 z-40 pt-[env(safe-area-inset-top)]">
@@ -24,7 +30,22 @@ export default function Header({ currentMarket = "mining" }) {
           {/* Left */}
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <Logo className="select-none" variant={currentMarket === "both" ? "split-both" : "default"} />
-            <MarketToggle market={currentMarket} />
+            {isMarketplaceRoute ? (
+              <Link
+                href="/marketplace"
+                className={[
+                  "group relative inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] transition",
+                  isLight
+                    ? "border-slate-300/90 bg-gradient-to-r from-slate-100 to-white text-slate-800 shadow-[0_10px_22px_-16px_rgba(15,23,42,0.35)] hover:border-sky-300/80 hover:text-sky-700"
+                    : "border-white/15 bg-gradient-to-r from-sky-500/18 via-cyan-400/12 to-emerald-400/18 text-slate-100 shadow-[0_10px_26px_-16px_rgba(14,165,233,0.45)] hover:border-sky-300/40 hover:text-white",
+                ].join(" ")}
+                aria-label="Marketplace home"
+              >
+                <span className="bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-300 bg-clip-text text-transparent">Marketplace</span>
+              </Link>
+            ) : (
+              <MarketToggle market={currentMarket} />
+            )}
           </div>
 
           {/* Center (desktop) */}
@@ -54,7 +75,25 @@ export default function Header({ currentMarket = "mining" }) {
           </nav>
 
           {/* Right */}
-          <div className="ml-auto flex items-center">
+          <div className="ml-auto flex items-center gap-2">
+            {isMarketplaceRoute ? (
+              <button
+                type="button"
+                onClick={triggerMarketplaceSearchToggle}
+                className={[
+                  "inline-flex h-9 w-9 items-center justify-center rounded-full border transition md:hidden",
+                  isLight
+                    ? "border-slate-300/80 bg-white/80 text-slate-700 hover:border-sky-300/70 hover:text-sky-700"
+                    : "border-white/15 bg-white/[0.06] text-slate-200 hover:border-sky-300/50 hover:text-white",
+                ].join(" ")}
+                aria-label="Toggle marketplace search"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.5-3.5" />
+                </svg>
+              </button>
+            ) : null}
             <UserPill />
           </div>
         </div>
