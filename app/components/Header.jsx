@@ -30,22 +30,7 @@ export default function Header({ currentMarket = "mining" }) {
           {/* Left */}
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <Logo className="select-none" variant={currentMarket === "both" ? "split-both" : "default"} />
-            {isMarketplaceRoute ? (
-              <Link
-                href="/marketplace"
-                className={[
-                  "group relative inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] transition",
-                  isLight
-                    ? "border-slate-300/90 bg-gradient-to-r from-slate-100 to-white text-slate-800 shadow-[0_10px_22px_-16px_rgba(15,23,42,0.35)] hover:border-sky-300/80 hover:text-sky-700"
-                    : "border-white/15 bg-gradient-to-r from-sky-500/18 via-cyan-400/12 to-emerald-400/18 text-slate-100 shadow-[0_10px_26px_-16px_rgba(14,165,233,0.45)] hover:border-sky-300/40 hover:text-white",
-                ].join(" ")}
-                aria-label="Marketplace home"
-              >
-                <span className="bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-300 bg-clip-text text-transparent">Marketplace</span>
-              </Link>
-            ) : (
-              <MarketToggle market={currentMarket} />
-            )}
+            {!isMarketplaceRoute ? <MarketToggle market={currentMarket} /> : null}
           </div>
 
           {/* Center (desktop) */}

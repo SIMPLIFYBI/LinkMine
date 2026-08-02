@@ -45,6 +45,15 @@ const DEFAULT_PAYOUT_FORM = {
   currencyCode: "AUD",
 };
 
+const MAX_RESOURCE_PREVIEW_IMAGES = 3;
+const MAX_RESOURCE_PREVIEW_IMAGE_BYTES = 5 * 1024 * 1024;
+const MARKETPLACE_APP_HEADER_OFFSET = 56;
+const MARKETPLACE_COVER_EXPANDED_HEIGHT = 640;
+const MARKETPLACE_COVER_COLLAPSED_HEIGHT = 86;
+const MARKETPLACE_COVER_TRANSITION_MS = 360;
+const MARKETPLACE_COVER_BLEND_TIME_MS = 330;
+const MARKETPLACE_COVER_SPRING_TIME_CONSTANT_MS = 88;
+
 const RESOURCE_FORMAT_OPTIONS = [
   { value: "website", label: "Website" },
   { value: "repository", label: "Repository" },
@@ -95,6 +104,18 @@ async function apiSend(path, method, payload, isFormData = false) {
     body: payload == null ? undefined : isFormData ? payload : JSON.stringify(payload),
   });
   return readJson(response);
+}
+
+function clamp01(value) {
+  if (!Number.isFinite(value)) return 0;
+  if (value < 0) return 0;
+  if (value > 1) return 1;
+  return value;
+}
+
+function easeOutCubic(value) {
+  const t = clamp01(value);
+  return 1 - (1 - t) ** 3;
 }
 
 function formatMoney(cents, currencyCode = "AUD") {
@@ -1157,11 +1178,19 @@ export default function MarketplacePageClient() {
   const [requestForm, setRequestForm] = useState(DEFAULT_REQUEST_FORM);
   const [payoutForm, setPayoutForm] = useState(DEFAULT_PAYOUT_FORM);
   const [resourceFile, setResourceFile] = useState(null);
+  const [resourcePreviewImages, setResourcePreviewImages] = useState([]);
   const [discoverFilter, setDiscoverFilter] = useState({ search: "", type: "", categoryId: "" });
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobileHeroIndex, setMobileHeroIndex] = useState(0);
   const [accountArea, setAccountArea] = useState("library");
+  const [coverProgress, setCoverProgress] = useState(0);
+  const [coverCollapsed, setCoverCollapsed] = useState(false);
+  const [coverExpandedHeight, setCoverExpandedHeight] = useState(MARKETPLACE_COVER_EXPANDED_HEIGHT);
+  const coverProgressTargetRef = useRef(0);
+  const coverProgressCurrentRef = useRef(0);
+  const coverProgressFrameRef = useRef(null);
+  const coverProgressLastTimestampRef = useRef(0);
   const [loadedTabs, setLoadedTabs] = useState({
     discover: false,
     submit: false,
@@ -1338,6 +1367,12 @@ export default function MarketplacePageClient() {
   }, [activeTab]);
 
   useEffect(() => {
+    if (activeTab === "discover") {
+      setCoverCollapsed(false);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
     if (!signedIn && activeTab !== "discover") {
       setMobileNavOpen(false);
     }
@@ -1449,6 +1484,82 @@ export default function MarketplacePageClient() {
     return () => window.clearInterval(timer);
   }, [activeTab, mobileHeroResources]);
 
+  useEffect(() => {
+    if (activeTab !== "discover") {
+      if (coverProgressFrameRef.current != null) {
+        window.cancelAnimationFrame(coverProgressFrameRef.current);
+        coverProgressFrameRef.current = null;
+      }
+      coverProgressTargetRef.current = 1;
+      coverProgressCurrentRef.current = 1;
+      setCoverProgress(1);
+      return undefined;
+    }
+
+    function animateCoverProgress() {
+      if (coverProgressFrameRef.current != null) return;
+
+      const tick = (timestamp) => {
+        const lastTs = coverProgressLastTimestampRef.current || timestamp;
+        const dt = Math.max(0, timestamp - lastTs);
+        coverProgressLastTimestampRef.current = timestamp;
+
+        const current = coverProgressCurrentRef.current;
+        const target = coverProgressTargetRef.current;
+        const delta = target - current;
+        const blend = 1 - Math.exp(-dt / MARKETPLACE_COVER_SPRING_TIME_CONSTANT_MS);
+
+        if (Math.abs(delta) < 0.0015) {
+          coverProgressCurrentRef.current = target;
+          setCoverProgress(target);
+          coverProgressFrameRef.current = null;
+          coverProgressLastTimestampRef.current = 0;
+          return;
+        }
+
+        const next = current + delta * blend;
+        coverProgressCurrentRef.current = next;
+        setCoverProgress(next);
+        coverProgressFrameRef.current = window.requestAnimationFrame(tick);
+      };
+
+      coverProgressFrameRef.current = window.requestAnimationFrame(tick);
+    }
+
+    function syncCoverProgressFromToggle() {
+      const nextProgress = coverCollapsed ? 1 : 0;
+      coverProgressTargetRef.current = nextProgress;
+      animateCoverProgress();
+    }
+
+    syncCoverProgressFromToggle();
+    return () => {
+      if (coverProgressFrameRef.current != null) {
+        window.cancelAnimationFrame(coverProgressFrameRef.current);
+        coverProgressFrameRef.current = null;
+      }
+      coverProgressLastTimestampRef.current = 0;
+    };
+  }, [activeTab, coverCollapsed]);
+
+  useEffect(() => {
+    coverProgressCurrentRef.current = coverProgress;
+  }, [coverProgress]);
+
+  useEffect(() => {
+    if (activeTab !== "discover") return undefined;
+
+    function syncCoverHeight() {
+      const viewportHeight = typeof window !== "undefined" ? window.innerHeight : MARKETPLACE_COVER_EXPANDED_HEIGHT;
+      const nextHeight = Math.max(560, viewportHeight - MARKETPLACE_APP_HEADER_OFFSET - 18);
+      setCoverExpandedHeight(nextHeight);
+    }
+
+    syncCoverHeight();
+    window.addEventListener("resize", syncCoverHeight);
+    return () => window.removeEventListener("resize", syncCoverHeight);
+  }, [activeTab]);
+
   const tabs = useMemo(() => {
     if (!signedIn) {
       return [
@@ -1524,6 +1635,10 @@ export default function MarketplacePageClient() {
     setActiveTab(tab.key);
   }
 
+  function collapseMarketplaceCover() {
+    setCoverCollapsed(true);
+  }
+
   function beginEditResource(resource) {
     if (!resource?.id) return;
     router.push(`/marketplace/${resource.id}/edit`);
@@ -1552,6 +1667,26 @@ export default function MarketplacePageClient() {
         ? prev.tagIds.filter((id) => id !== tagId)
         : [...prev.tagIds, tagId],
     }));
+  }
+
+  function handlePreviewImagesChange(event) {
+    const files = Array.from(event.target.files || []);
+
+    if (files.length > MAX_RESOURCE_PREVIEW_IMAGES) {
+      setError(`You can upload up to ${MAX_RESOURCE_PREVIEW_IMAGES} preview images.`);
+      setResourcePreviewImages(files.slice(0, MAX_RESOURCE_PREVIEW_IMAGES));
+      return;
+    }
+
+    const tooLarge = files.find((file) => file.size > MAX_RESOURCE_PREVIEW_IMAGE_BYTES);
+    if (tooLarge) {
+      setError(`\"${tooLarge.name}\" is too large. Max ${Math.round(MAX_RESOURCE_PREVIEW_IMAGE_BYTES / (1024 * 1024))} MB per image.`);
+      event.target.value = "";
+      setResourcePreviewImages([]);
+      return;
+    }
+
+    setResourcePreviewImages(files);
   }
 
   async function handleResourceSubmit(event) {
@@ -1608,8 +1743,15 @@ export default function MarketplacePageClient() {
           await apiSend(`/api/resources/${createResult.resource.id}/upload`, "POST", form, true);
         }
 
+        if (resourcePreviewImages.length) {
+          const imagesForm = new FormData();
+          resourcePreviewImages.forEach((image) => imagesForm.append("images", image));
+          await apiSend(`/api/resources/${createResult.resource.id}/images`, "POST", imagesForm, true);
+        }
+
         setResourceForm(DEFAULT_RESOURCE_FORM);
         setResourceFile(null);
+        setResourcePreviewImages([]);
         setSuccess("Marketplace resource created.");
         invalidateTabs(["submit", "account"]);
         await refreshMarketplace("account");
@@ -1732,6 +1874,16 @@ export default function MarketplacePageClient() {
       }
     });
   }
+
+  const coverHeight = Math.round(
+    coverExpandedHeight -
+    (coverExpandedHeight - MARKETPLACE_COVER_COLLAPSED_HEIGHT) * coverProgress
+  );
+  const coverVisualProgress = easeOutCubic(coverProgress);
+  const coverHeroOpacity = clamp01(1 - coverVisualProgress * 1.35);
+  const coverHeroScale = 1 - coverVisualProgress * 0.05;
+  const coverBgBlur = `${Math.round(coverVisualProgress * 16)}px`;
+  const compactHeaderOpacity = clamp01((coverVisualProgress - 0.14) / 0.58);
 
   return (
     <main className="w-full px-0 py-0 lg:min-h-[calc(100vh-8rem)]">
@@ -1865,6 +2017,145 @@ export default function MarketplacePageClient() {
           </div>
 
           <div className="mt-3 min-w-0 lg:mt-0">
+          {activeTab === "discover" ? (
+            <section
+              className="sticky top-[calc(56px+env(safe-area-inset-top))] z-20 mb-6 overflow-hidden rounded-[34px] border border-white/15 shadow-[0_38px_120px_-68px_rgba(15,23,42,0.88)] ring-1 ring-white/10"
+              style={{
+                height: `${coverHeight}px`,
+                willChange: "height, transform, filter, opacity",
+                transition: `height ${MARKETPLACE_COVER_TRANSITION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+                background: "linear-gradient(170deg, rgba(2,6,23,0.94), rgba(15,23,42,0.9) 46%, rgba(30,41,59,0.86) 100%)",
+              }}
+            >
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  transform: `scale(${coverHeroScale})`,
+                  filter: `blur(${coverBgBlur}) saturate(${1 + coverVisualProgress * 0.08})`,
+                  willChange: "transform, filter",
+                  transition: `transform ${MARKETPLACE_COVER_TRANSITION_MS}ms cubic-bezier(0.22, 1, 0.36, 1), filter ${MARKETPLACE_COVER_TRANSITION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+                  background:
+                    "radial-gradient(circle at 14% 18%, rgba(59,130,246,0.34), transparent 28%), radial-gradient(circle at 82% 18%, rgba(34,211,238,0.26), transparent 34%), radial-gradient(circle at 60% 82%, rgba(244,114,182,0.16), transparent 30%)",
+                }}
+              />
+
+              <div className="absolute left-0 right-0 top-0 z-10 px-5 py-3 sm:px-7">
+                <div
+                  className="flex flex-wrap items-center gap-2.5 rounded-2xl border border-white/12 bg-white/[0.06] px-3 py-2.5 backdrop-blur-2xl"
+                  style={{
+                    opacity: compactHeaderOpacity,
+                    transform: `translateY(${(1 - compactHeaderOpacity) * -10}px)`,
+                    willChange: "opacity, transform",
+                    transition: `opacity ${MARKETPLACE_COVER_BLEND_TIME_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1), transform ${MARKETPLACE_COVER_BLEND_TIME_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1)`,
+                  }}
+                >
+                  <div className="min-w-0 pr-1">
+                    <div className="text-[10px] uppercase tracking-[0.24em] text-slate-300/80">Marketplace</div>
+                    <div className="text-sm font-semibold text-white">Marketplace</div>
+                  </div>
+
+                  <div className="relative min-w-[220px] flex-1">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="m20 20-3.5-3.5" />
+                    </svg>
+                    <TextInput
+                      value={discoverFilter.search}
+                      onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, search: event.target.value }))}
+                      placeholder="Search marketplace"
+                      className="h-10 rounded-full border-white/15 bg-slate-950/65 pl-9 pr-3 text-[13px]"
+                    />
+                  </div>
+
+                  <span className="hidden rounded-full border border-white/12 bg-white/[0.04] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200 md:inline-flex">Home / Discover</span>
+
+                  <button
+                    type="button"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-white/[0.05] text-slate-100 transition hover:bg-white/[0.12]"
+                    aria-label="Notifications"
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 9a6 6 0 0 1 12 0v4.5l1.5 2H4.5l1.5-2Z" />
+                      <path d="M10 18a2 2 0 0 0 4 0" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div
+                className="relative z-10 flex h-full flex-col px-6 pb-20 pt-14 sm:px-8 sm:pb-24 sm:pt-20"
+                style={{
+                  opacity: coverHeroOpacity,
+                  transform: `translateY(${coverVisualProgress * -40}px)`,
+                  willChange: "opacity, transform",
+                  transition: `opacity ${MARKETPLACE_COVER_BLEND_TIME_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1), transform ${MARKETPLACE_COVER_TRANSITION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+                }}
+              >
+                <div className="mx-auto w-full max-w-5xl">
+                  <div className="text-xs uppercase tracking-[0.34em] text-slate-300/85">Marketplace</div>
+                  <h1 className="mt-5 max-w-4xl text-4xl font-semibold leading-[1.08] tracking-[-0.02em] text-white sm:text-5xl lg:text-6xl">
+                    Discover the Mining Industry&apos;s Digital Marketplace
+                  </h1>
+                  <p className="mt-5 max-w-2xl text-base leading-7 text-slate-200/90 sm:text-lg">
+                    Find practical templates, field-ready workflows, and specialist resources curated for mining teams across planning, geology, operations, and delivery.
+                  </p>
+
+                  <div className="mt-8 max-w-[66rem] rounded-[28px] border border-white/16 bg-white/[0.08] p-2 shadow-[0_26px_50px_-34px_rgba(56,189,248,0.5)] backdrop-blur-2xl">
+                    <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
+                      <div className="relative min-w-0 flex-1">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-6 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-200" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="11" cy="11" r="7" />
+                          <path d="m20 20-3.5-3.5" />
+                        </svg>
+                        <TextInput
+                          value={discoverFilter.search}
+                          onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, search: event.target.value }))}
+                          placeholder="Search packs, templates, workflows, references, and field resources"
+                          className="h-12 rounded-full border-white/10 bg-slate-950/65 pl-12 pr-4 text-[15px]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mx-auto mt-auto grid w-full max-w-5xl grid-cols-1 gap-3 sm:grid-cols-3">
+                  {discoverResources.slice(0, 3).map((resource, cardIndex) => (
+                    <Link
+                      key={resource.id}
+                      href={`/marketplace/${resource.id}`}
+                      className="translate-y-8 rounded-[22px] border border-white/15 bg-white/[0.08] px-4 py-3 text-left shadow-[0_20px_42px_-30px_rgba(0,0,0,0.8)] backdrop-blur-xl transition hover:border-white/30 hover:bg-white/[0.12]"
+                      style={{
+                        transform: `translateY(${32 + coverVisualProgress * (26 + cardIndex * 6)}px) scale(${1 - coverVisualProgress * 0.04})`,
+                        opacity: clamp01(1 - coverVisualProgress * (0.72 + cardIndex * 0.08)),
+                        willChange: "opacity, transform",
+                        transition: `transform ${MARKETPLACE_COVER_TRANSITION_MS}ms cubic-bezier(0.22, 1, 0.36, 1), opacity ${MARKETPLACE_COVER_BLEND_TIME_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1)`,
+                      }}
+                    >
+                      <div className="text-[10px] uppercase tracking-[0.2em] text-slate-300/80">Featured</div>
+                      <div className="mt-2 line-clamp-1 text-sm font-semibold text-white">{resource.title}</div>
+                      <div className="mt-1 line-clamp-1 text-xs text-slate-300/85">{resource.category?.name || "Marketplace resource"}</div>
+                    </Link>
+                  ))}
+                </div>
+
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center pb-4 sm:pb-5">
+                  <button
+                    type="button"
+                    onClick={collapseMarketplaceCover}
+                    className="pointer-events-auto inline-flex flex-col items-center gap-1 rounded-full border border-white/16 bg-white/[0.08] px-4 py-2 text-slate-100/90 backdrop-blur-xl transition hover:bg-white/[0.14]"
+                    aria-label="Expand marketplace content"
+                  >
+                    <span className="h-1 w-10 rounded-full bg-white/55" />
+                    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </section>
+          ) : null}
+
           {!signedIn ? (
             <section className="mb-6 overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] px-5 py-5 ring-1 ring-white/10">
               <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -1894,45 +2185,6 @@ export default function MarketplacePageClient() {
           <div className="space-y-6">
         {activeTab === "discover" ? (
           <>
-            <section className="hidden overflow-hidden rounded-[30px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.035))] p-3.5 shadow-[0_28px_80px_-48px_rgba(0,0,0,0.82)] ring-1 ring-white/10 sm:p-4 lg:block">
-              <div className="hidden flex-col gap-2.5 lg:flex xl:flex-row xl:items-center">
-                <div className="relative flex-1">
-                  <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="m20 20-3.5-3.5" />
-                  </svg>
-                  <TextInput
-                    value={discoverFilter.search}
-                    onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, search: event.target.value }))}
-                    placeholder="Search packs, templates, workflows, references, and field resources"
-                    className="h-12 rounded-full border-white/10 bg-slate-950/80 pl-11 pr-4 text-[15px]"
-                  />
-                </div>
-                <div className="flex flex-col gap-2.5 sm:flex-row xl:flex-none">
-                  <Select value={discoverFilter.type} onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, type: event.target.value }))} className="h-12 min-w-[158px] rounded-full border-white/10 bg-slate-950/80 text-[13px]">
-                    <option value="">All access types</option>
-                    <option value="external">External</option>
-                  </Select>
-                  <Select value={discoverFilter.categoryId} onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, categoryId: event.target.value }))} className="h-12 min-w-[176px] rounded-full border-white/10 bg-slate-950/80 text-[13px]">
-                    <option value="">All categories</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>{category.name}</option>
-                    ))}
-                  </Select>
-                  {(discoverFilter.search || discoverFilter.type || discoverFilter.categoryId) ? (
-                    <button
-                      type="button"
-                      onClick={() => setDiscoverFilter({ search: "", type: "", categoryId: "" })}
-                      className="h-12 rounded-full border border-white/10 bg-white/[0.04] px-4.5 text-[13px] font-semibold text-white transition hover:bg-white/[0.08]"
-                    >
-                      Clear
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-
-            </section>
-
             <section className="space-y-4 lg:hidden">
               {mobileHeroResource ? <MobileHeroCard resource={mobileHeroResource} /> : null}
 
@@ -2122,6 +2374,24 @@ export default function MarketplacePageClient() {
                       />
                     </Field>
                   )}
+                  <Field label="Preview images" hint="Optional. Up to 3 images, JPG/PNG/WEBP, max 5 MB each.">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      onChange={handlePreviewImagesChange}
+                      className="block w-full rounded-2xl border border-dashed border-white/15 bg-slate-950/60 px-4 py-4 text-sm text-slate-300"
+                    />
+                    {resourcePreviewImages.length ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {resourcePreviewImages.map((image) => (
+                          <span key={`${image.name}-${image.size}`} className="inline-flex max-w-full items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-slate-300">
+                            <span className="truncate">{image.name}</span>
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                  </Field>
                 </div>
 
                 <div className="space-y-5">
@@ -2167,7 +2437,7 @@ export default function MarketplacePageClient() {
                   </label>
                   <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(56,189,248,0.08),rgba(15,23,42,0.58))] p-4 text-sm text-slate-300">
                     <div className="font-semibold text-white">Launch limits currently applied</div>
-                    <div className="mt-2">10 active hosted resources, 25 MB max hosted pack size, and 250 MB total hosted storage per user.</div>
+                    <div className="mt-2">10 active hosted resources, 25 MB max hosted pack size, up to 3 preview images (5 MB each), and 250 MB total hosted storage per user.</div>
                   </div>
                   <button
                     type="submit"

@@ -13,8 +13,10 @@ import {
 } from "@fluentui/react-icons";
 import { formatResourceBytes } from "@/lib/resourceHub";
 import { buildResourceRoutePayload, DEFAULT_RESOURCE_SELECT, getResourceAuthContext } from "@/lib/resourceHubServer";
+import { supabaseAdminClient } from "@/lib/supabaseAdminClient";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import ResourceDetailActions from "./ResourceDetailActions.client.jsx";
+import ResourceImageCarousel from "./ResourceImageCarousel.client.jsx";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -120,6 +122,38 @@ export default async function MarketplaceResourcePage({ params }) {
   const resource = buildResourceRoutePayload(data, data.resource_tag_links || []);
   const canEditResource = Boolean(userId && (resource.ownerUserId === userId || isAdmin));
 
+  const { data: resourceImageRows } = await sb
+    .from("resource_images")
+    .select("id, bucket_name, object_path, original_filename, sort_order")
+    .eq("resource_id", id)
+    .order("sort_order", { ascending: true })
+    .limit(3);
+
+  let resourceImages = [];
+  if (resourceImageRows?.length) {
+    try {
+      const adminSb = supabaseAdminClient();
+      const signedRows = await Promise.all(resourceImageRows.map(async (row) => {
+        const { data: signedData, error: signedError } = await adminSb.storage
+          .from(row.bucket_name)
+          .createSignedUrl(row.object_path, 60 * 60 * 24 * 7);
+
+        if (signedError || !signedData?.signedUrl) return null;
+
+        return {
+          id: row.id,
+          url: signedData.signedUrl,
+          alt: row.original_filename || "Resource preview image",
+          sortOrder: row.sort_order,
+        };
+      }));
+
+      resourceImages = signedRows.filter(Boolean);
+    } catch {
+      resourceImages = [];
+    }
+  }
+
   const { data: relatedRows } = await sb
     .from("resources")
     .select("id, title, summary")
@@ -147,6 +181,12 @@ export default async function MarketplaceResourcePage({ params }) {
         <section className="overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_35px_120px_-60px_rgba(0,0,0,0.9)] ring-1 ring-white/10">
           <div className="grid gap-8 px-6 py-7 sm:px-8 lg:grid-cols-[1.2fr,0.8fr] lg:px-10 lg:py-10">
             <div>
+              {resourceImages.length ? (
+                <div className="mb-5">
+                  <ResourceImageCarousel images={resourceImages} />
+                </div>
+              ) : null}
+
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
                 <ResourceFormatChip format={resource.resourceFormat} />
