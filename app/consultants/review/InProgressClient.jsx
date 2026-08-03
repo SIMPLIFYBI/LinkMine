@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 import { COUNTRY_OPTIONS, GLOBAL_REGION_OPTIONS } from "@/lib/geoOptions";
 
+const MAX_LOGO_BYTES = 300_000;
+const ALLOWED_LOGO_TYPES = ["image/png", "image/jpeg", "image/webp"];
+
 const initial = {
   display_name: "",
   headline: "",
@@ -24,7 +27,48 @@ const initial = {
   provider_kind: "both",
   visibility: "private",
   status: "pending",
+  metadata: {},
+  logo_url: "",
+  logo_path: "",
+  logo_mime: "",
 };
+
+function asObject(value) {
+  if (!value) return null;
+  if (typeof value === "object") return value;
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function getLogoFromMetadata(metadata) {
+  const m = asObject(metadata) || {};
+  const logoObj = asObject(m.logo) || asObject(m.branding?.logo) || asObject(m.profile?.logo) || {};
+
+  const url =
+    m.logo_url ||
+    m.logoUrl ||
+    logoObj.url ||
+    logoObj.publicUrl ||
+    m.avatar_url ||
+    m.image_url ||
+    m.photo_url ||
+    "";
+
+  const path = logoObj.path || m.logo_path || "";
+  const mime = logoObj.mime || "";
+
+  return {
+    url: typeof url === "string" ? url : "",
+    path: typeof path === "string" ? path : "",
+    mime: typeof mime === "string" ? mime : "",
+  };
+}
 
 export default function InProgressClient() {
   const [user, setUser] = useState(null);
@@ -34,6 +78,7 @@ export default function InProgressClient() {
   const [form, setForm] = useState(initial);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [busyLogo, setBusyLogo] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [visibilityFilter, setVisibilityFilter] = useState("all"); // new
@@ -63,7 +108,7 @@ export default function InProgressClient() {
         .from("consultants")
         .select(
           // include claimed_by for claimed flag
-          "id, display_name, headline, bio, company, location, country_code, global_region, contact_email, phone, linkedin_url, facebook_url, twitter_url, instagram_url, abn, acn, is_trainer, provider_kind, visibility, status, created_at, reviewed_at, view_count, invite_email, claimed_by"
+          "id, display_name, headline, bio, company, location, country_code, global_region, contact_email, phone, linkedin_url, facebook_url, twitter_url, instagram_url, abn, acn, is_trainer, provider_kind, visibility, status, metadata, created_at, reviewed_at, view_count, invite_email, claimed_by"
         )
         .order("created_at", { ascending: false })
         .limit(200);
@@ -93,6 +138,7 @@ export default function InProgressClient() {
   }
 
   function startEdit(item) {
+    const logo = getLogoFromMetadata(item.metadata);
     setEditing(item);
     setForm({
       ...initial,
@@ -100,6 +146,10 @@ export default function InProgressClient() {
       provider_kind: item.provider_kind || "both",
       visibility: item.visibility || "private",
       status: item.status || "pending",
+      metadata: asObject(item.metadata) || {},
+      logo_url: logo.url,
+      logo_path: logo.path,
+      logo_mime: logo.mime,
     });
     setFormOpen(true); // open form when editing
     setMessage("");
@@ -118,11 +168,34 @@ export default function InProgressClient() {
     setMessage("");
     try {
       const sb = supabaseBrowser();
+      const { logo_url, logo_path, logo_mime, ...restForm } = form;
+
+      const baseMetadata = asObject(restForm.metadata) || {};
+      const cleanLogoUrl = (logo_url || "").trim();
+      const cleanLogoPath = (logo_path || "").trim();
+      const cleanLogoMime = (logo_mime || "").trim();
+      const nextMetadata = { ...baseMetadata };
+
+      if (cleanLogoUrl) {
+        nextMetadata.logo_url = cleanLogoUrl;
+        const existingLogo = asObject(baseMetadata.logo) || {};
+        nextMetadata.logo = {
+          ...existingLogo,
+          url: cleanLogoUrl,
+          ...(cleanLogoPath ? { path: cleanLogoPath } : {}),
+          ...(cleanLogoMime ? { mime: cleanLogoMime } : {}),
+        };
+      } else {
+        delete nextMetadata.logo_url;
+        nextMetadata.logo = null;
+      }
+
       const payload = {
-        ...form,
+        ...restForm,
         status: form.status || "pending",
         visibility: form.visibility || "private",
         user_id: form.user_id ?? null,
+        metadata: nextMetadata,
       };
 
       let res;
@@ -143,6 +216,60 @@ export default function InProgressClient() {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleLogoFile(file) {
+    if (!file) return;
+    if (!editing?.id) {
+      setError("Save the draft first, then upload the logo.");
+      return;
+    }
+    if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
+      setError("Logo must be PNG, JPG, or WEBP.");
+      return;
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      setError("Logo too large (max ~300 KB).");
+      return;
+    }
+
+    setBusyLogo(true);
+    setError("");
+    setMessage("");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+
+      const res = await fetch(`/api/consultants/${editing.id}/logo/upload`, {
+        method: "POST",
+        body: fd,
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(body?.error || "Logo upload failed.");
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        logo_url: body.publicUrl || "",
+        logo_path: body.path || "",
+        logo_mime: body.mime || "",
+      }));
+      setMessage("Logo uploaded. Save changes to apply it to this consultant.");
+    } catch (e) {
+      setError(e.message || "Logo upload failed.");
+    } finally {
+      setBusyLogo(false);
+    }
+  }
+
+  function clearLogo() {
+    setForm((prev) => ({
+      ...prev,
+      logo_url: "",
+      logo_path: "",
+      logo_mime: "",
+    }));
   }
 
   async function toggleVisibility(item) {
@@ -369,6 +496,51 @@ export default function InProgressClient() {
                 <Text label="Facebook URL" value={form.facebook_url} onChange={(v) => setField("facebook_url", v)} />
                 <Text label="Twitter/X URL" value={form.twitter_url} onChange={(v) => setField("twitter_url", v)} />
                 <Text label="Instagram URL" value={form.instagram_url} onChange={(v) => setField("instagram_url", v)} />
+              </div>
+
+              <div className="space-y-3 rounded-xl border border-white/10 bg-slate-800/30 p-4">
+                <p className="text-sm font-medium text-slate-200">Brand logo</p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                  <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-slate-900/60">
+                    {form.logo_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={form.logo_url} alt="Consultant logo" className="h-20 w-20 object-contain" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-xs text-slate-500">No logo</div>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    <Text
+                      label="Logo URL"
+                      value={form.logo_url}
+                      onChange={(v) => setField("logo_url", v)}
+                      type="url"
+                    />
+                    <div>
+                      <label className="block text-xs text-slate-400">Upload logo (PNG, JPG, WEBP, max 300 KB)</label>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={(e) => handleLogoFile(e.target.files?.[0])}
+                        disabled={busyLogo || !editing?.id}
+                        className="mt-1 block w-full text-xs text-slate-200 file:mr-3 file:rounded file:border file:border-white/20 file:bg-white/10 file:px-2 file:py-1 file:text-xs file:text-slate-100"
+                      />
+                      {!editing?.id ? (
+                        <p className="mt-1 text-xs text-amber-300">Save draft first to enable file upload.</p>
+                      ) : null}
+                      {busyLogo ? <p className="mt-1 text-xs text-slate-400">Uploading...</p> : null}
+                    </div>
+                    {form.logo_url ? (
+                      <button
+                        type="button"
+                        onClick={clearLogo}
+                        className="rounded bg-slate-700/50 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-700"
+                      >
+                        Remove logo
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

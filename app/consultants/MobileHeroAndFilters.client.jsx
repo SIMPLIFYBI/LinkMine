@@ -142,8 +142,16 @@ export default function MobileHeroAndFilters({
               discipline, category, or name.
             </p>
 
+            <div className="mt-4 pr-14">
+              <NameSearch
+                initialValue={q}
+                placeholder="Search consultancy name"
+                submitLabel="Go"
+              />
+            </div>
+
             {/* CTA pill */}
-            <div className="mt-4">
+            <div className="mt-3">
               <AddConsultantButton
                 className="
                   relative inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px] font-semibold text-white

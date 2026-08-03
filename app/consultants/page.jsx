@@ -431,6 +431,10 @@ export default async function ConsultantsPage({ searchParams }) {
 
       {/* Filters (desktop only) */}
       <section className="hidden py-3 md:block md:py-4 space-y-3">
+        <div className="max-w-2xl">
+          <NameSearch initialValue={q} placeholder="Search consultancy or contractor name" />
+        </div>
+
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
             <ServiceFilter categories={allCategories} activeSlug={effectiveCategory?.slug || ""} />
@@ -438,7 +442,6 @@ export default async function ConsultantsPage({ searchParams }) {
             <ProviderKindFilter />
             <CountryFilter />
             <GlobalRegionFilter />
-            <NameSearch initialValue={q} />
           </div>
           {(activeService || activeCategory || q || kindParam || countryCode || globalRegion) && (
             <Link
