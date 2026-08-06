@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatResourceBytes } from "@/lib/resourceHub";
+import { RESOURCE_LAUNCH_LIMITS } from "@/lib/resourceHub";
+
+const MAX_PREVIEW_IMAGES = RESOURCE_LAUNCH_LIMITS.maxPreviewImages;
+const MAX_PREVIEW_IMAGE_BYTES = RESOURCE_LAUNCH_LIMITS.maxPreviewImageBytes;
 
 const RESOURCE_FORMAT_OPTIONS = [
   { value: "website", label: "Website" },
@@ -68,11 +72,19 @@ function Select(props) {
 }
 
 async function readJson(response) {
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(body?.error || body?.message || "Request failed.");
+  const raw = await response.text();
+  let parsedBody = {};
+  if (raw) {
+    try {
+      parsedBody = JSON.parse(raw);
+    } catch {
+      parsedBody = {};
+    }
   }
-  return body;
+  if (!response.ok) {
+    throw new Error(parsedBody?.error || parsedBody?.message || raw || "Request failed.");
+  }
+  return parsedBody;
 }
 
 async function apiSend(path, method, payload, isFormData = false) {
@@ -104,7 +116,7 @@ function buildForm(resource) {
   };
 }
 
-export default function EditResourcePageClient({ initialResource, categories, tags, consultantOptions = [] }) {
+export default function EditResourcePageClient({ initialResource, categories, tags, consultantOptions = [], initialImages = [] }) {
   const router = useRouter();
   const [busy, startBusy] = useTransition();
   const [error, setError] = useState("");
@@ -112,6 +124,9 @@ export default function EditResourcePageClient({ initialResource, categories, ta
   const [resource, setResource] = useState(initialResource);
   const [form, setForm] = useState(() => buildForm(initialResource));
   const [replacementFile, setReplacementFile] = useState(null);
+  const [resourceImages, setResourceImages] = useState(Array.isArray(initialImages) ? initialImages : []);
+  const [pendingImageFiles, setPendingImageFiles] = useState([]);
+  const [dragImageId, setDragImageId] = useState("");
 
   const selectedTagCount = useMemo(() => form.tagIds.length, [form.tagIds]);
 
@@ -226,6 +241,156 @@ export default function EditResourcePageClient({ initialResource, categories, ta
     });
   }
 
+  function choosePreviewImages(fileList) {
+    resetMessages();
+
+    const selected = Array.from(fileList || []);
+    if (!selected.length) {
+      setPendingImageFiles([]);
+      return;
+    }
+
+    const availableSlots = Math.max(0, MAX_PREVIEW_IMAGES - resourceImages.length);
+    if (availableSlots <= 0) {
+      setPendingImageFiles([]);
+      setError(`This resource already has the maximum of ${MAX_PREVIEW_IMAGES} preview images.`);
+      return;
+    }
+
+    const invalidBySize = selected.find((file) => Number(file?.size || 0) > MAX_PREVIEW_IMAGE_BYTES);
+    if (invalidBySize) {
+      setPendingImageFiles([]);
+      setError(`Image \"${invalidBySize.name}\" is too large. Max ${Math.round(MAX_PREVIEW_IMAGE_BYTES / (1024 * 1024))} MB per image.`);
+      return;
+    }
+
+    if (selected.length > availableSlots) {
+      setPendingImageFiles(selected.slice(0, availableSlots));
+      setError(`Only ${availableSlots} more preview image(s) can be added.`);
+      return;
+    }
+
+    setPendingImageFiles(selected);
+  }
+
+  function uploadPreviewImages() {
+    resetMessages();
+    if (!pendingImageFiles.length) {
+      setError("Select one or more images to upload.");
+      return;
+    }
+
+    startBusy(async () => {
+      try {
+        const uploadForm = new FormData();
+        for (const file of pendingImageFiles) {
+          uploadForm.append("images", file);
+        }
+
+        const result = await apiSend(`/api/resources/${form.id}/images`, "POST", uploadForm, true);
+        const insertedImages = Array.isArray(result?.images) ? result.images.filter((item) => item?.id && item?.url) : [];
+
+        if (insertedImages.length) {
+          setResourceImages((prev) => {
+            const merged = [...prev, ...insertedImages];
+            return merged
+              .sort((left, right) => Number(left.sortOrder || 0) - Number(right.sortOrder || 0))
+              .slice(0, MAX_PREVIEW_IMAGES);
+          });
+        }
+
+        setPendingImageFiles([]);
+        setSuccess(`Uploaded ${insertedImages.length || pendingImageFiles.length} preview image(s).`);
+        router.refresh();
+      } catch (nextError) {
+        setError(nextError.message || "Unable to upload preview images.");
+      }
+    });
+  }
+
+  function removePreviewImage(imageId) {
+    resetMessages();
+    const confirmed = window.confirm("Remove this preview image?");
+    if (!confirmed) return;
+
+    startBusy(async () => {
+      try {
+        await apiSend(`/api/resources/${form.id}/images`, "DELETE", { imageId });
+        setResourceImages((prev) => prev.filter((image) => image.id !== imageId));
+        setSuccess("Preview image removed.");
+        router.refresh();
+      } catch (nextError) {
+        setError(nextError.message || "Unable to remove preview image.");
+      }
+    });
+  }
+
+  function sortImages(images) {
+    return [...images].sort((left, right) => Number(left.sortOrder || 0) - Number(right.sortOrder || 0));
+  }
+
+  function reindexImages(images) {
+    return images.map((image, index) => ({ ...image, sortOrder: index }));
+  }
+
+  function persistImageOrder(nextImages) {
+    startBusy(async () => {
+      try {
+        await apiSend(`/api/resources/${form.id}/images`, "PATCH", { imageIds: nextImages.map((image) => image.id) });
+        setSuccess("Preview image order updated.");
+        router.refresh();
+      } catch (nextError) {
+        setError(nextError.message || "Unable to reorder preview images.");
+      }
+    });
+  }
+
+  function movePreviewImage(imageId, direction) {
+    resetMessages();
+    setResourceImages((prev) => {
+      const ordered = sortImages(prev);
+      const fromIndex = ordered.findIndex((image) => image.id === imageId);
+      if (fromIndex < 0) return prev;
+      const toIndex = fromIndex + direction;
+      if (toIndex < 0 || toIndex >= ordered.length) return prev;
+
+      const next = [...ordered];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      const reindexed = reindexImages(next);
+      persistImageOrder(reindexed);
+      return reindexed;
+    });
+  }
+
+  function handleImageDragStart(imageId) {
+    setDragImageId(imageId);
+  }
+
+  function handleImageDrop(targetImageId) {
+    if (!dragImageId || dragImageId === targetImageId) {
+      setDragImageId("");
+      return;
+    }
+
+    resetMessages();
+    setResourceImages((prev) => {
+      const ordered = sortImages(prev);
+      const fromIndex = ordered.findIndex((image) => image.id === dragImageId);
+      const toIndex = ordered.findIndex((image) => image.id === targetImageId);
+      if (fromIndex < 0 || toIndex < 0) return prev;
+
+      const next = [...ordered];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      const reindexed = reindexImages(next);
+      persistImageOrder(reindexed);
+      return reindexed;
+    });
+
+    setDragImageId("");
+  }
+
   return (
     <main className="w-full px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -335,6 +500,98 @@ export default function EditResourcePageClient({ initialResource, categories, ta
                     />
                   </Field>
                 ) : null}
+
+                <Field
+                  label="Preview images"
+                  hint={`${resourceImages.length}/${MAX_PREVIEW_IMAGES} uploaded. JPG, PNG, WEBP. Max ${Math.round(MAX_PREVIEW_IMAGE_BYTES / (1024 * 1024))} MB each.`}
+                >
+                  <div className="space-y-3">
+                    {resourceImages.length ? (
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {resourceImages.map((image, index) => (
+                          <div
+                            key={image.id || image.url || index}
+                            draggable={!busy}
+                            onDragStart={() => handleImageDragStart(image.id)}
+                            onDragOver={(event) => event.preventDefault()}
+                            onDrop={() => handleImageDrop(image.id)}
+                            onDragEnd={() => setDragImageId("")}
+                            className={[
+                              "overflow-hidden rounded-xl border bg-slate-900/45",
+                              dragImageId === image.id ? "border-sky-300/60 ring-2 ring-sky-300/25" : "border-white/12",
+                            ].join(" ")}
+                          >
+                            <img
+                              src={image.url}
+                              alt={image.filename || `Preview image ${index + 1}`}
+                              className="h-28 w-full object-cover"
+                              loading="lazy"
+                            />
+                            <div className="px-2.5 pt-2 text-[11px] uppercase tracking-[0.14em] text-slate-500">
+                              Drag to reorder
+                            </div>
+                            <div className="flex items-center justify-between gap-2 px-2.5 py-2">
+                              <div className="truncate text-xs text-slate-300">{image.filename || `Preview image ${index + 1}`}</div>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  disabled={busy || index === 0}
+                                  onClick={() => movePreviewImage(image.id, -1)}
+                                  className="rounded-full border border-white/15 bg-white/[0.04] px-2 py-1 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  Up
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={busy || index === resourceImages.length - 1}
+                                  onClick={() => movePreviewImage(image.id, 1)}
+                                  className="rounded-full border border-white/15 bg-white/[0.04] px-2 py-1 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  Down
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => removePreviewImage(image.id)}
+                                  className="rounded-full border border-red-300/25 bg-red-500/10 px-2.5 py-1 text-xs font-semibold text-red-100 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-dashed border-white/20 bg-slate-950/30 px-3 py-3 text-sm text-slate-400">
+                        No preview images uploaded yet.
+                      </div>
+                    )}
+
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      onChange={(event) => choosePreviewImages(event.target.files)}
+                      className="block w-full cursor-pointer rounded-xl border border-dashed border-white/20 bg-slate-950/45 px-3.5 py-2.5 text-sm text-slate-300 file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-white file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-slate-950"
+                    />
+
+                    {pendingImageFiles.length ? (
+                      <div className="rounded-xl border border-white/12 bg-slate-950/35 px-3 py-2 text-xs text-slate-300">
+                        Ready to upload: {pendingImageFiles.map((file) => file.name).join(", ")}
+                      </div>
+                    ) : null}
+
+                    <button
+                      type="button"
+                      disabled={busy || !pendingImageFiles.length}
+                      onClick={uploadPreviewImages}
+                      className="rounded-full border border-sky-300/25 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-100 transition hover:bg-sky-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {busy ? "Working..." : "Upload preview images"}
+                    </button>
+                  </div>
+                </Field>
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <Field label="License name">

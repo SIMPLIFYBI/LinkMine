@@ -5,6 +5,7 @@ import {
   getResourceAuthContext,
   listSelectableConsultantsForUser,
 } from "@/lib/resourceHubServer";
+import { supabaseAdminClient } from "@/lib/supabaseAdminClient";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import EditResourcePageClient from "./EditResourcePage.client.jsx";
 
@@ -60,12 +61,50 @@ export default async function MarketplaceResourceEditPage({ params }) {
 
   const consultantOptions = await listSelectableConsultantsForUser(sb, resource.ownerUserId);
 
+  const { data: resourceImageRows } = await sb
+    .from("resource_images")
+    .select("id, bucket_name, object_path, original_filename, sort_order")
+    .eq("resource_id", id)
+    .order("sort_order", { ascending: true })
+    .limit(3);
+
+  let initialImages = [];
+  if (resourceImageRows?.length) {
+    try {
+      let signingSb = null;
+      try {
+        signingSb = supabaseAdminClient();
+      } catch {
+        signingSb = sb;
+      }
+      const signedRows = await Promise.all(resourceImageRows.map(async (row) => {
+        const { data: signedData, error: signedError } = await signingSb.storage
+          .from(row.bucket_name)
+          .createSignedUrl(row.object_path, 60 * 60 * 24 * 7);
+
+        if (signedError || !signedData?.signedUrl) return null;
+
+        return {
+          id: row.id,
+          url: signedData.signedUrl,
+          filename: row.original_filename || "Resource preview image",
+          sortOrder: row.sort_order,
+        };
+      }));
+
+      initialImages = signedRows.filter(Boolean);
+    } catch {
+      initialImages = [];
+    }
+  }
+
   return (
     <EditResourcePageClient
       initialResource={resource}
       categories={categoriesRows || []}
       tags={tagsRows || []}
       consultantOptions={consultantOptions}
+      initialImages={initialImages}
     />
   );
 }

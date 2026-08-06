@@ -41,10 +41,22 @@ export async function GET(req) {
     const status = cleanText(url.searchParams.get("status"));
     const categoryId = cleanText(url.searchParams.get("categoryId"));
     const view = cleanText(url.searchParams.get("view"));
+    const search = cleanText(url.searchParams.get("q"));
+    const sortByParam = cleanText(url.searchParams.get("sortBy"));
+    const sortDirParam = cleanText(url.searchParams.get("sortDir")).toLowerCase();
     const { page, limit, rangeStart, rangeEnd } = parsePaginationParams(url, {
       defaultLimit: mineOnly ? 60 : 80,
       maxLimit: 200,
     });
+
+    const SORT_COLUMN_MAP = {
+      created_at: "created_at",
+      updated_at: "updated_at",
+      title: "title",
+      download_count: "download_count",
+    };
+    const sortBy = SORT_COLUMN_MAP[sortByParam] || "created_at";
+    const sortAscending = sortDirParam === "asc";
 
     if (mineOnly && !user) {
       return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
@@ -53,6 +65,7 @@ export async function GET(req) {
     let query = sb
       .from("resources")
       .select(view === "card" ? RESOURCE_CARD_SELECT : DEFAULT_RESOURCE_SELECT)
+      .order(sortBy, { ascending: sortAscending, nullsFirst: false })
       .order("created_at", { ascending: false })
       .range(rangeStart, rangeEnd);
 
@@ -65,6 +78,10 @@ export async function GET(req) {
 
     if (isValidResourceType(resourceType)) query = query.eq("resource_type", resourceType);
     if (categoryId) query = query.eq("category_id", categoryId);
+    if (search) {
+      const escaped = search.replace(/[,]/g, " ");
+      query = query.or(`title.ilike.%${escaped}%,summary.ilike.%${escaped}%,description.ilike.%${escaped}%`);
+    }
 
     const { data, error } = await query;
     if (error) {

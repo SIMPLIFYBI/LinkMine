@@ -123,9 +123,14 @@ export default async function MarketplaceResourcePage({ params }) {
   let resourceImages = [];
   if (resourceImageRows?.length) {
     try {
-      const adminSb = supabaseAdminClient();
+      let signingSb = null;
+      try {
+        signingSb = supabaseAdminClient();
+      } catch {
+        signingSb = sb;
+      }
       const signedRows = await Promise.all(resourceImageRows.map(async (row) => {
-        const { data: signedData, error: signedError } = await adminSb.storage
+        const { data: signedData, error: signedError } = await signingSb.storage
           .from(row.bucket_name)
           .createSignedUrl(row.object_path, 60 * 60 * 24 * 7);
 
@@ -173,7 +178,8 @@ export default async function MarketplaceResourcePage({ params }) {
           <div className="grid gap-8 px-6 py-7 sm:px-8 lg:grid-cols-[1.2fr,0.8fr] lg:px-10 lg:py-10">
             <div>
               {resourceImages.length ? (
-                <div className="mb-5">
+                <div className="mb-5 space-y-2">
+                  <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Preview images</div>
                   <ResourceImageCarousel images={resourceImages} />
                 </div>
               ) : null}

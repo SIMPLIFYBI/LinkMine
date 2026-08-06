@@ -2022,7 +2022,7 @@ export default function MarketplacePageClient() {
                 }}
               />
 
-              <div className="absolute left-0 right-0 top-0 z-10 px-4 py-2.5 sm:px-6">
+              <div className="absolute left-0 right-0 top-0 z-30 px-4 py-2.5 sm:px-6">
                 <div
                   className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/12 bg-white/[0.06] px-2.5 py-2 backdrop-blur-2xl"
                   style={{
@@ -2036,7 +2036,43 @@ export default function MarketplacePageClient() {
                     <div className="text-xs font-semibold text-white">Marketplace</div>
                   </div>
 
-                  <div className="relative min-w-[220px] flex-1">
+                  <div className="flex w-full items-center gap-2 sm:hidden">
+                    <div className="flex min-w-0 flex-1 items-center rounded-full border border-white/15 bg-slate-950/62 px-2.5 py-1.5">
+                      <div className="relative min-w-0 flex-1">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-1.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="11" cy="11" r="7" />
+                          <path d="m20 20-3.5-3.5" />
+                        </svg>
+                        <input
+                          value={discoverFilter.search}
+                          onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, search: event.target.value }))}
+                          placeholder="Search marketplace"
+                          className="h-7 w-full bg-transparent pl-7 pr-2 text-[13px] text-slate-100 placeholder:text-slate-300/80 outline-none"
+                        />
+                      </div>
+
+                      <div className="mx-1 h-5 w-px bg-white/18" />
+
+                      <div className="relative w-[8.9rem]">
+                        <select
+                          value={discoverFilter.categoryId}
+                          onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, categoryId: event.target.value }))}
+                          className="h-7 w-full appearance-none bg-transparent pl-2 pr-6 text-[12px] font-semibold text-slate-100 outline-none"
+                          aria-label="Filter by category"
+                        >
+                          <option value="">All categories</option>
+                          {categories.map((category) => (
+                            <option key={category.id} value={category.id}>{category.name}</option>
+                          ))}
+                        </select>
+                        <svg viewBox="0 0 20 20" aria-hidden="true" className="pointer-events-none absolute right-1.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-300" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="m5.5 7.5 4.5 5 4.5-5" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="relative hidden min-w-[220px] flex-1 sm:block">
                     <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="11" cy="11" r="7" />
                       <path d="m20 20-3.5-3.5" />
@@ -2050,6 +2086,17 @@ export default function MarketplacePageClient() {
                   </div>
 
                   <span className="hidden rounded-full border border-white/12 bg-white/[0.04] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-200 md:inline-flex">Home / Discover</span>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      window.location.assign("/marketplace/resources");
+                    }}
+                    className="inline-flex items-center rounded-full border border-sky-300/25 bg-sky-500/12 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-100 transition hover:bg-sky-500/22"
+                  >
+                    View all resources
+                  </button>
 
                 </div>
               </div>
