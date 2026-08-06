@@ -38,17 +38,9 @@ const DEFAULT_REQUEST_FORM = {
   bountyCents: "",
 };
 
-const DEFAULT_PAYOUT_FORM = {
-  provider: "stripe_connect",
-  providerAccountId: "",
-  countryCode: "AU",
-  currencyCode: "AUD",
-};
-
 const MAX_RESOURCE_PREVIEW_IMAGES = 3;
 const MAX_RESOURCE_PREVIEW_IMAGE_BYTES = 5 * 1024 * 1024;
-const MARKETPLACE_APP_HEADER_OFFSET = 56;
-const MARKETPLACE_COVER_EXPANDED_HEIGHT = 640;
+const MARKETPLACE_COVER_EXPANDED_HEIGHT = 450;
 const MARKETPLACE_COVER_COLLAPSED_HEIGHT = 86;
 const MARKETPLACE_COVER_TRANSITION_MS = 360;
 const MARKETPLACE_COVER_BLEND_TIME_MS = 330;
@@ -116,15 +108,6 @@ function clamp01(value) {
 function easeOutCubic(value) {
   const t = clamp01(value);
   return 1 - (1 - t) ** 3;
-}
-
-function formatMoney(cents, currencyCode = "AUD") {
-  const amount = Number(cents || 0) / 100;
-  return new Intl.NumberFormat("en-AU", {
-    style: "currency",
-    currency: currencyCode || "AUD",
-    maximumFractionDigits: 0,
-  }).format(amount);
 }
 
 function formatDate(value) {
@@ -523,7 +506,6 @@ function Select(props) {
 
 function ResourceCard({ resource, onSubmitForReview, onArchive, actionLabel = "View details" }) {
   const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file";
-  const priceLabel = resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free";
   const detailHref = `/marketplace/${resource.id}`;
 
   return (
@@ -543,7 +525,7 @@ function ResourceCard({ resource, onSubmitForReview, onArchive, actionLabel = "V
               <p className="mt-2 line-clamp-2 text-sm text-slate-400">{resource.summary || accessLabel}</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-slate-950/35 px-3 py-2 text-right">
-              <div className="text-sm font-semibold text-white">{priceLabel}</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">Included</div>
               <div className="mt-1 text-[11px] text-slate-400">{resource.downloadCount || 0} downloads</div>
             </div>
           </div>
@@ -592,7 +574,6 @@ function ResourceCard({ resource, onSubmitForReview, onArchive, actionLabel = "V
 function LibraryGalleryCard({ resource }) {
   const detailHref = `/marketplace/${resource.id}`;
   const artwork = getResourceArtwork(resource);
-  const priceLabel = resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free";
   const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file";
   const updatedLabel = formatDate(resource.updatedAt || resource.createdAt);
 
@@ -623,7 +604,7 @@ function LibraryGalleryCard({ resource }) {
             <div className="mt-2 line-clamp-2 text-[1.35rem] font-semibold leading-tight text-white sm:text-[1.8rem] lg:text-[1.95rem]">{resource.title}</div>
           </div>
           <div className="rounded-[20px] border border-white/12 bg-slate-950/30 px-3 py-2 text-right backdrop-blur-sm">
-            <div className="text-sm font-semibold text-white">{priceLabel}</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
             <div className="mt-1 text-[11px] text-slate-200/80">{resource.downloadCount || 0} downloads</div>
           </div>
         </div>
@@ -706,7 +687,6 @@ function ScrollShelf({ title, subtitle, metaLabel, children }) {
 function MarketplaceShelfCard({ resource }) {
   const detailHref = `/marketplace/${resource.id}`;
   const artwork = getResourceArtwork(resource);
-  const priceLabel = resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free";
   const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file";
   const shellClassName = "h-[304px] w-[286px] sm:h-[320px] sm:w-[320px] lg:w-[320px]";
   const titleClassName = "mt-3.5 block line-clamp-2 max-w-[13.5rem] text-[1.12rem] font-semibold leading-tight text-white transition hover:text-sky-100 sm:mt-4 sm:max-w-[15rem] sm:text-[1.35rem]";
@@ -745,7 +725,7 @@ function MarketplaceShelfCard({ resource }) {
           </div>
           <div className="mt-3.5 flex items-center justify-between gap-2.5 sm:mt-4 sm:gap-3">
             <div>
-              <div className="text-base font-semibold text-white sm:text-lg">{priceLabel}</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
               <div className="mt-1 line-clamp-1 max-w-[130px] text-[11px] text-slate-100/72 sm:max-w-[160px] sm:text-xs">{accessLabel}</div>
             </div>
             <Link href={detailHref} className="rounded-full border border-white/15 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100 sm:px-4 sm:py-2 sm:text-xs">
@@ -815,7 +795,7 @@ function PromoRailCard({ resource, variant = "compact" }) {
         </div>
         <div className="flex items-end justify-between gap-3">
           <div className="rounded-full border border-white/12 bg-slate-950/28 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-100/88">
-            {resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free"}
+            Included
           </div>
           <Link href={detailHref} className="rounded-full border border-white/15 bg-white px-3.5 py-2 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100">
             Open
@@ -972,7 +952,7 @@ function MobileHeroCard({ resource }) {
           <p className="mt-2 max-w-[16rem] line-clamp-2 text-[13px] leading-5 text-slate-100/84">{resource.summary || resource.description || "Open the resource to review the full pack details."}</p>
           <div className="mt-3.5 flex items-end justify-between gap-3">
             <div>
-              <div className="text-base font-semibold text-white">{resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free"}</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
               <div className="mt-1 text-xs text-slate-100/70">{resource.downloadCount || 0} downloads</div>
             </div>
             <Link href={detailHref} className="rounded-full bg-white px-3.5 py-1.5 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100">
@@ -1091,7 +1071,6 @@ function GalleryShelf({ title, subtitle, items, emptyTitle, emptyBody }) {
 function DiscoverListRow({ resource }) {
   const detailHref = `/marketplace/${resource.id}`;
   const artwork = getResourceArtwork(resource);
-  const priceLabel = resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free";
   const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file";
   const metaLabel = resource.category?.name || accessLabel;
   const updatedLabel = formatDate(resource.updatedAt || resource.createdAt);
@@ -1132,7 +1111,7 @@ function DiscoverListRow({ resource }) {
 
         <div className="flex min-w-[82px] flex-col items-end justify-between gap-2 sm:min-w-[148px] sm:justify-center">
           <div className="text-right">
-            <div className="text-[15px] font-semibold text-white sm:text-lg">{priceLabel}</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-200">Included</div>
             <div className="mt-1 text-[11px] text-slate-400">{resource.downloadCount || 0} downloads</div>
           </div>
           <Link href={detailHref} className="rounded-full bg-white px-3 py-1.5 text-[10px] font-semibold text-slate-950 transition hover:bg-slate-100 sm:px-4 sm:py-2 sm:text-xs">
@@ -1163,20 +1142,14 @@ export default function MarketplacePageClient() {
   const [myResources, setMyResources] = useState([]);
   const [library, setLibrary] = useState([]);
   const [requests, setRequests] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [payoutAccount, setPayoutAccount] = useState(null);
-  const [payoutLedger, setPayoutLedger] = useState([]);
   const [accountPaging, setAccountPaging] = useState({
     library: { limit: 0, hasMore: false },
     created: { limit: 0, hasMore: false },
-    orders: { limit: 0, hasMore: false },
-    payoutLedger: { limit: 0, hasMore: false },
     tags: { limit: 0, hasMore: false },
   });
 
   const [resourceForm, setResourceForm] = useState(DEFAULT_RESOURCE_FORM);
   const [requestForm, setRequestForm] = useState(DEFAULT_REQUEST_FORM);
-  const [payoutForm, setPayoutForm] = useState(DEFAULT_PAYOUT_FORM);
   const [resourceFile, setResourceFile] = useState(null);
   const [resourcePreviewImages, setResourcePreviewImages] = useState([]);
   const [discoverFilter, setDiscoverFilter] = useState({ search: "", type: "", categoryId: "" });
@@ -1259,16 +1232,11 @@ export default function MarketplacePageClient() {
       if (tabKey === "account") {
         const accountRes = await apiGet("/api/resources/account?libraryLimit=120&createdLimit=120&ordersLimit=120&payoutLedgerLimit=160&tagsLimit=120");
         setLibrary(accountRes.library || []);
-        setOrders(accountRes.orders || []);
         setMyResources(accountRes.myResources || []);
         setTags(accountRes.tags || []);
-        setPayoutAccount(accountRes.payoutAccount || null);
-        setPayoutLedger(accountRes.payoutLedger || []);
         setAccountPaging(accountRes.paging || {
           library: { limit: 0, hasMore: false },
           created: { limit: 0, hasMore: false },
-          orders: { limit: 0, hasMore: false },
-          payoutLedger: { limit: 0, hasMore: false },
           tags: { limit: 0, hasMore: false },
         });
       }
@@ -1291,14 +1259,9 @@ export default function MarketplacePageClient() {
       setMyResources([]);
       setLibrary([]);
       setRequests([]);
-      setOrders([]);
-      setPayoutAccount(null);
-      setPayoutLedger([]);
       setAccountPaging({
         library: { limit: 0, hasMore: false },
         created: { limit: 0, hasMore: false },
-        orders: { limit: 0, hasMore: false },
-        payoutLedger: { limit: 0, hasMore: false },
         tags: { limit: 0, hasMore: false },
       });
       setLoadedTabs({
@@ -1348,17 +1311,6 @@ export default function MarketplacePageClient() {
       setActiveTab("discover");
     }
   }, [activeTab, signedIn]);
-
-  useEffect(() => {
-    if (!payoutAccount) return;
-
-    setPayoutForm({
-      provider: payoutAccount.provider || "stripe_connect",
-      providerAccountId: payoutAccount.providerAccountId || "",
-      countryCode: payoutAccount.countryCode || "AU",
-      currencyCode: payoutAccount.currencyCode || "AUD",
-    });
-  }, [payoutAccount]);
 
   useEffect(() => {
     if (activeTab !== "discover") {
@@ -1460,8 +1412,7 @@ export default function MarketplacePageClient() {
 
     return {
       recentlyAdded: sorted,
-      purchased: sorted.filter((resource) => !resource.ownedByUser && Number(resource.priceCents || 0) > 0),
-      freeAccess: sorted.filter((resource) => !resource.ownedByUser && Number(resource.priceCents || 0) === 0),
+      teamResources: sorted.filter((resource) => !resource.ownedByUser),
     };
   }, [library]);
 
@@ -1548,16 +1499,8 @@ export default function MarketplacePageClient() {
 
   useEffect(() => {
     if (activeTab !== "discover") return undefined;
-
-    function syncCoverHeight() {
-      const viewportHeight = typeof window !== "undefined" ? window.innerHeight : MARKETPLACE_COVER_EXPANDED_HEIGHT;
-      const nextHeight = Math.max(560, viewportHeight - MARKETPLACE_APP_HEADER_OFFSET - 18);
-      setCoverExpandedHeight(nextHeight);
-    }
-
-    syncCoverHeight();
-    window.addEventListener("resize", syncCoverHeight);
-    return () => window.removeEventListener("resize", syncCoverHeight);
+    setCoverExpandedHeight(MARKETPLACE_COVER_EXPANDED_HEIGHT);
+    return undefined;
   }, [activeTab]);
 
   const tabs = useMemo(() => {
@@ -1570,8 +1513,8 @@ export default function MarketplacePageClient() {
     const baseTabs = [
       { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary" },
       { key: "submit", label: "Submit", hint: "Create hosted or external listings and send them for review.", icon: "submit", group: "primary" },
-      { key: "requests", label: "Requests", hint: "Track industry requests and bounty opportunities.", icon: "requests", group: "primary" },
-      { key: "account", label: "My Account", hint: "Manage your library, orders, and user-specific marketplace activity.", icon: "library", group: "secondary" },
+      { key: "requests", label: "Requests", hint: "Track industry requests and completion workflows.", icon: "requests", group: "primary" },
+      { key: "account", label: "My Account", hint: "Manage your library and created marketplace resources.", icon: "library", group: "secondary" },
     ];
     if (isAdmin) {
       baseTabs.push({ key: "admin", label: "Admin", hint: "Review submissions and manage marketplace administration.", icon: "review", group: "secondary", href: "/marketplace/admin" });
@@ -1584,9 +1527,7 @@ export default function MarketplacePageClient() {
   const accountAreas = useMemo(() => ([
     { key: "library", label: "Library", meta: `${library.length} items` },
     { key: "created", label: "Created", meta: `${myResources.length} resources` },
-    { key: "orders", label: "Orders", meta: `${orders.length} orders` },
-    { key: "payouts", label: "Payouts", meta: payoutLedger.length ? `${payoutLedger.length} entries` : "Seller details" },
-  ]), [library.length, myResources.length, orders.length, payoutLedger.length]);
+  ]), [library.length, myResources.length]);
 
   const categoryHighlights = useMemo(() => {
     return categories
@@ -1790,23 +1731,6 @@ export default function MarketplacePageClient() {
     });
   }
 
-  async function handleSavePayoutAccount(event) {
-    event.preventDefault();
-    resetMessages();
-
-    startBusyAction(async () => {
-      try {
-        const result = await apiSend("/api/resources/payout-account", "PUT", payoutForm);
-        if (result?.payoutAccount) {
-          setPayoutAccount(result.payoutAccount);
-        }
-        setSuccess("Payout details saved.");
-      } catch (nextError) {
-        setError(nextError.message || "Unable to save payout details.");
-      }
-    });
-  }
-
   async function handleRequestSubmit(event) {
     event.preventDefault();
     resetMessages();
@@ -1820,7 +1744,7 @@ export default function MarketplacePageClient() {
         await apiSend("/api/resources/requests", "POST", {
           title: requestForm.title,
           specifications: requestForm.specifications,
-          bountyCents: requestForm.bountyCents ? Math.round(Number(requestForm.bountyCents) * 100) : 0,
+          bountyCents: 0,
         });
         setRequestForm(DEFAULT_REQUEST_FORM);
         setSuccess("Resource request created.");
@@ -1851,7 +1775,7 @@ export default function MarketplacePageClient() {
     startBusyAction(async () => {
       try {
         const result = await apiSend("/api/resources/orders", "POST", { resourceIds: [resource.id] });
-        setSuccess(result.order.totalCents > 0 ? "Order draft created." : "Free order completed and access granted.");
+        setSuccess("Access has been granted.");
         invalidateTabs(["account"]);
         await refreshMarketplace("account", { refreshDiscover: false });
         setActiveTab("account");
@@ -2019,7 +1943,12 @@ export default function MarketplacePageClient() {
           <div className="mt-3 min-w-0 lg:mt-0">
           {activeTab === "discover" ? (
             <section
-              className="sticky top-[calc(56px+env(safe-area-inset-top))] z-20 mb-6 overflow-hidden rounded-[34px] border border-white/15 shadow-[0_38px_120px_-68px_rgba(15,23,42,0.88)] ring-1 ring-white/10"
+              className={[
+                "sticky top-[calc(56px+env(safe-area-inset-top))] z-20 mb-6 overflow-hidden border border-white/15 shadow-[0_38px_120px_-68px_rgba(15,23,42,0.88)] ring-1 ring-white/10",
+                coverCollapsed
+                  ? "-mx-4 rounded-none border-x-0 sm:mx-0 sm:rounded-[34px] sm:border-x"
+                  : "rounded-[34px]",
+              ].join(" ")}
               style={{
                 height: `${coverHeight}px`,
                 willChange: "height, transform, filter, opacity",
@@ -2040,9 +1969,9 @@ export default function MarketplacePageClient() {
                 }}
               />
 
-              <div className="absolute left-0 right-0 top-0 z-10 px-5 py-3 sm:px-7">
+              <div className="absolute left-0 right-0 top-0 z-10 px-4 py-2.5 sm:px-6">
                 <div
-                  className="flex flex-wrap items-center gap-2.5 rounded-2xl border border-white/12 bg-white/[0.06] px-3 py-2.5 backdrop-blur-2xl"
+                  className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/12 bg-white/[0.06] px-2.5 py-2 backdrop-blur-2xl"
                   style={{
                     opacity: compactHeaderOpacity,
                     transform: `translateY(${(1 - compactHeaderOpacity) * -10}px)`,
@@ -2050,9 +1979,8 @@ export default function MarketplacePageClient() {
                     transition: `opacity ${MARKETPLACE_COVER_BLEND_TIME_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1), transform ${MARKETPLACE_COVER_BLEND_TIME_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1)`,
                   }}
                 >
-                  <div className="min-w-0 pr-1">
-                    <div className="text-[10px] uppercase tracking-[0.24em] text-slate-300/80">Marketplace</div>
-                    <div className="text-sm font-semibold text-white">Marketplace</div>
+                  <div className="hidden min-w-0 pr-1 sm:block">
+                    <div className="text-xs font-semibold text-white">Marketplace</div>
                   </div>
 
                   <div className="relative min-w-[220px] flex-1">
@@ -2064,27 +1992,17 @@ export default function MarketplacePageClient() {
                       value={discoverFilter.search}
                       onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, search: event.target.value }))}
                       placeholder="Search marketplace"
-                      className="h-10 rounded-full border-white/15 bg-slate-950/65 pl-9 pr-3 text-[13px]"
+                      className="h-9 rounded-full border-white/15 bg-slate-950/65 pl-9 pr-3 text-[12px]"
                     />
                   </div>
 
-                  <span className="hidden rounded-full border border-white/12 bg-white/[0.04] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200 md:inline-flex">Home / Discover</span>
+                  <span className="hidden rounded-full border border-white/12 bg-white/[0.04] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-200 md:inline-flex">Home / Discover</span>
 
-                  <button
-                    type="button"
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-white/[0.05] text-slate-100 transition hover:bg-white/[0.12]"
-                    aria-label="Notifications"
-                  >
-                    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M6 9a6 6 0 0 1 12 0v4.5l1.5 2H4.5l1.5-2Z" />
-                      <path d="M10 18a2 2 0 0 0 4 0" />
-                    </svg>
-                  </button>
                 </div>
               </div>
 
               <div
-                className="relative z-10 flex h-full flex-col px-6 pb-20 pt-14 sm:px-8 sm:pb-24 sm:pt-20"
+                className="relative z-10 flex h-full flex-col px-5 pb-4 pt-12 sm:px-7 sm:pb-6 sm:pt-14"
                 style={{
                   opacity: coverHeroOpacity,
                   transform: `translateY(${coverVisualProgress * -40}px)`,
@@ -2093,15 +2011,15 @@ export default function MarketplacePageClient() {
                 }}
               >
                 <div className="mx-auto w-full max-w-5xl">
-                  <div className="text-xs uppercase tracking-[0.34em] text-slate-300/85">Marketplace</div>
-                  <h1 className="mt-5 max-w-4xl text-4xl font-semibold leading-[1.08] tracking-[-0.02em] text-white sm:text-5xl lg:text-6xl">
+                  <div className="text-[11px] uppercase tracking-[0.28em] text-slate-300/85">Marketplace</div>
+                  <h1 className="mt-3.5 max-w-4xl text-3xl font-semibold leading-[1.1] tracking-[-0.015em] text-white sm:text-4xl lg:text-5xl">
                     Discover the Mining Industry&apos;s Digital Marketplace
                   </h1>
-                  <p className="mt-5 max-w-2xl text-base leading-7 text-slate-200/90 sm:text-lg">
+                  <p className="mt-3.5 max-w-2xl text-sm leading-6 text-slate-200/90 sm:text-base">
                     Find practical templates, field-ready workflows, and specialist resources curated for mining teams across planning, geology, operations, and delivery.
                   </p>
 
-                  <div className="mt-8 max-w-[66rem] rounded-[28px] border border-white/16 bg-white/[0.08] p-2 shadow-[0_26px_50px_-34px_rgba(56,189,248,0.5)] backdrop-blur-2xl">
+                  <div className="mt-5 max-w-[66rem] rounded-[24px] border border-white/16 bg-white/[0.08] p-1.5 shadow-[0_24px_44px_-32px_rgba(56,189,248,0.5)] backdrop-blur-2xl">
                     <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
                       <div className="relative min-w-0 flex-1">
                         <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-6 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-200" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -2112,45 +2030,31 @@ export default function MarketplacePageClient() {
                           value={discoverFilter.search}
                           onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, search: event.target.value }))}
                           placeholder="Search packs, templates, workflows, references, and field resources"
-                          className="h-12 rounded-full border-white/10 bg-slate-950/65 pl-12 pr-4 text-[15px]"
+                          className="h-10 rounded-full border-white/10 bg-slate-950/65 pl-12 pr-4 text-[13px]"
                         />
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="mx-auto mt-auto grid w-full max-w-5xl grid-cols-1 gap-3 sm:grid-cols-3">
-                  {discoverResources.slice(0, 3).map((resource, cardIndex) => (
-                    <Link
-                      key={resource.id}
-                      href={`/marketplace/${resource.id}`}
-                      className="translate-y-8 rounded-[22px] border border-white/15 bg-white/[0.08] px-4 py-3 text-left shadow-[0_20px_42px_-30px_rgba(0,0,0,0.8)] backdrop-blur-xl transition hover:border-white/30 hover:bg-white/[0.12]"
-                      style={{
-                        transform: `translateY(${32 + coverVisualProgress * (26 + cardIndex * 6)}px) scale(${1 - coverVisualProgress * 0.04})`,
-                        opacity: clamp01(1 - coverVisualProgress * (0.72 + cardIndex * 0.08)),
-                        willChange: "opacity, transform",
-                        transition: `transform ${MARKETPLACE_COVER_TRANSITION_MS}ms cubic-bezier(0.22, 1, 0.36, 1), opacity ${MARKETPLACE_COVER_BLEND_TIME_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1)`,
-                      }}
+                  <div className="mt-4 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={collapseMarketplaceCover}
+                      className="group inline-flex items-center gap-2 rounded-full border border-sky-200/30 bg-[linear-gradient(135deg,rgba(56,189,248,0.26),rgba(14,116,144,0.35))] px-3.5 py-2 text-white shadow-[0_14px_34px_-18px_rgba(56,189,248,0.75)] ring-1 ring-white/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-sky-100/40 hover:shadow-[0_20px_44px_-20px_rgba(56,189,248,0.9)]"
+                      aria-label="Collapse marketplace banner"
                     >
-                      <div className="text-[10px] uppercase tracking-[0.2em] text-slate-300/80">Featured</div>
-                      <div className="mt-2 line-clamp-1 text-sm font-semibold text-white">{resource.title}</div>
-                      <div className="mt-1 line-clamp-1 text-xs text-slate-300/85">{resource.category?.name || "Marketplace resource"}</div>
-                    </Link>
-                  ))}
-                </div>
-
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center pb-4 sm:pb-5">
-                  <button
-                    type="button"
-                    onClick={collapseMarketplaceCover}
-                    className="pointer-events-auto inline-flex flex-col items-center gap-1 rounded-full border border-white/16 bg-white/[0.08] px-4 py-2 text-slate-100/90 backdrop-blur-xl transition hover:bg-white/[0.14]"
-                    aria-label="Expand marketplace content"
-                  >
-                    <span className="h-1 w-10 rounded-full bg-white/55" />
-                    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
-                  </button>
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/95">Collapse</span>
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/25 bg-white/15">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5 transition group-hover:translate-y-0.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="m6 9 6 6 6-6" />
+                        </svg>
+                      </span>
+                      <span className="h-1.5 w-6 rounded-full bg-white/70" />
+                      <span className="h-1.5 w-6 rounded-full bg-white/50" />
+                      <span className="h-1.5 w-6 rounded-full bg-white/35" />
+                      <span className="sr-only">Collapse header to compact search bar</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </section>
@@ -2163,7 +2067,7 @@ export default function MarketplacePageClient() {
                   <div className="text-sm font-medium uppercase tracking-[0.2em] text-slate-400">Marketplace</div>
                   <div className="mt-2 text-2xl font-semibold text-white">Browse approved industry resources without signing in.</div>
                   <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">
-                    Sign in to download resources, manage your library, submit resource packs, and access seller workflows.
+                    Sign in to download resources, manage your library, and submit resource packs.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-3">
@@ -2239,7 +2143,7 @@ export default function MarketplacePageClient() {
                       <div className="flex flex-wrap items-end justify-between gap-3.5">
                         <div className="flex flex-wrap items-center gap-2.5">
                           <div className="rounded-[18px] border border-white/10 bg-slate-950/24 px-3.5 py-2.5 text-sm text-slate-100 backdrop-blur-sm">
-                            <div className="font-semibold text-white">{heroResource.priceCents > 0 ? formatMoney(heroResource.priceCents, heroResource.currencyCode) : "Free"}</div>
+                            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
                             <div className="mt-1 text-xs text-slate-300/80">{heroResource.downloadCount || 0} downloads</div>
                           </div>
                           <div className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-1.5 text-xs font-medium text-slate-100">
@@ -2485,7 +2389,7 @@ export default function MarketplacePageClient() {
 
         {activeTab === "account" ? (
           <div className="space-y-6">
-            <SectionCard title="My Account" subtitle="Move between your library, created listings, orders, and payout setup with a single account workspace.">
+            <SectionCard title="My Account" subtitle="Move between your library and created listings with a single account workspace.">
               <div className="space-y-6">
                 <div className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   <div className="flex min-w-max gap-3">
@@ -2528,23 +2432,15 @@ export default function MarketplacePageClient() {
                       />
 
                       <GalleryShelf
-                        title="Purchased"
-                        subtitle="Resources you unlocked through paid marketplace orders."
-                        items={libraryShelves.purchased}
-                        emptyTitle="No purchased resources yet."
-                        emptyBody="Paid resources you acquire will collect here for quick return visits."
-                      />
-
-                      <GalleryShelf
-                        title="Free access"
-                        subtitle="Free entitlements and resources available without a paid order."
-                        items={libraryShelves.freeAccess}
-                        emptyTitle="No free-access resources yet."
-                        emptyBody="Free packs and no-cost access will appear here when available."
+                        title="Shared with you"
+                        subtitle="Resources added by other contributors that you can access from your library."
+                        items={libraryShelves.teamResources}
+                        emptyTitle="No shared resources yet."
+                        emptyBody="Resources shared by other contributors will appear here when available."
                       />
                     </div>
                   ) : (
-                    <EmptyState title="Your library is empty." body="Free resources and future paid resources will appear here once you gain access." />
+                    <EmptyState title="Your library is empty." body="Resources will appear here once you gain access." />
                   )
                 ) : null}
 
@@ -2570,110 +2466,6 @@ export default function MarketplacePageClient() {
                   </div>
                 ) : null}
 
-                {accountArea === "orders" ? (
-                  orders.length ? (
-                    <div className="space-y-4">
-                      {accountPaging.orders?.hasMore ? (
-                        <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 px-4 py-3 text-xs text-cyan-100">
-                          Showing the most recent {accountPaging.orders.limit} orders for faster loading.
-                        </div>
-                      ) : null}
-                      {orders.map((order) => (
-                        <article key={order.id} className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10">
-                          <div className="flex flex-wrap items-start justify-between gap-4">
-                            <div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <h3 className="text-base font-semibold text-white">Order {order.id.slice(0, 8)}</h3>
-                                <Badge tone={statusTone(order.status)}>{order.status}</Badge>
-                              </div>
-                              <div className="mt-3 space-y-2 text-sm text-slate-300">
-                                {order.items.map((item) => (
-                                  <div key={item.id} className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
-                                    <div className="font-medium text-white">{item.resource?.title || "Resource"}</div>
-                                    <div className="mt-1 text-slate-400">{formatMoney(item.lineTotalCents, item.currencyCode)} · seller net {formatMoney(item.sellerNetCents, item.currencyCode)}</div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                            <div className="min-w-[220px] rounded-[24px] border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">
-                              <div className="flex items-center justify-between"><span>Total</span><span className="font-semibold text-white">{formatMoney(order.totalCents, order.currencyCode)}</span></div>
-                              <div className="mt-2 flex items-center justify-between"><span>Platform fee</span><span>{formatMoney(order.platformFeeCents, order.currencyCode)}</span></div>
-                              <div className="mt-4 flex flex-wrap gap-2">
-                                {isAdmin && order.status !== "paid" ? (
-                                  <button type="button" onClick={() => handleOrderStatus(order.id, "paid")} className="rounded-full border border-emerald-300/25 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/15">
-                                    Mark paid
-                                  </button>
-                                ) : null}
-                                {order.status === "draft" || order.status === "pending" ? (
-                                  <button type="button" onClick={() => handleOrderStatus(order.id, "cancelled")} className="rounded-full border border-red-300/25 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-100 transition hover:bg-red-500/15">
-                                    Cancel
-                                  </button>
-                                ) : null}
-                              </div>
-                            </div>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  ) : (
-                    <EmptyState title="No orders yet." body="Paid flows are scaffolded, and free resources can already issue zero-dollar orders where needed." />
-                  )
-                ) : null}
-
-                {accountArea === "payouts" ? (
-                  <div className="grid gap-6 xl:grid-cols-[0.82fr,1.18fr]">
-                    {accountPaging.payoutLedger?.hasMore ? (
-                      <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 px-4 py-3 text-xs text-cyan-100 xl:col-span-2">
-                        Showing the most recent {accountPaging.payoutLedger.limit} payout entries for faster loading.
-                      </div>
-                    ) : null}
-                    <form className="space-y-4 rounded-[28px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10" onSubmit={handleSavePayoutAccount}>
-                      <div>
-                        <div className="text-lg font-semibold text-white">Payout profile</div>
-                        <div className="mt-2 text-sm text-slate-400">Keep seller payout details in one clean place and let settlement history sit beside it.</div>
-                      </div>
-                      <Field label="Provider">
-                        <TextInput value={payoutForm.provider} onChange={(event) => setPayoutForm((prev) => ({ ...prev, provider: event.target.value }))} />
-                      </Field>
-                      <Field label="Provider account id">
-                        <TextInput value={payoutForm.providerAccountId} onChange={(event) => setPayoutForm((prev) => ({ ...prev, providerAccountId: event.target.value }))} placeholder="acct_..." />
-                      </Field>
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <Field label="Country code">
-                          <TextInput value={payoutForm.countryCode} onChange={(event) => setPayoutForm((prev) => ({ ...prev, countryCode: event.target.value.toUpperCase() }))} maxLength={2} />
-                        </Field>
-                        <Field label="Currency">
-                          <TextInput value={payoutForm.currencyCode} onChange={(event) => setPayoutForm((prev) => ({ ...prev, currencyCode: event.target.value.toUpperCase() }))} maxLength={3} />
-                        </Field>
-                      </div>
-                      {payoutAccount ? <div className="rounded-[22px] border border-emerald-300/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">Current status: {payoutAccount.status}</div> : null}
-                      <button type="submit" disabled={busyAction} className="w-full rounded-full bg-white px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60">
-                        Save payout details
-                      </button>
-                    </form>
-
-                    <div className="space-y-4">
-                      {payoutLedger.length ? payoutLedger.map((entry) => (
-                        <article key={entry.id} className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10">
-                          <div className="flex flex-wrap items-start justify-between gap-4">
-                            <div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <div className="text-base font-semibold text-white">{entry.entryType}</div>
-                                <Badge tone={statusTone(entry.status)}>{entry.status}</Badge>
-                              </div>
-                              <div className="mt-2 text-sm text-slate-400">Available {formatDate(entry.availableAt) || "when settled"}</div>
-                            </div>
-                            <div className="text-right text-sm text-slate-300">
-                              <div className="font-semibold text-white">{formatMoney(entry.netCents, entry.currencyCode)}</div>
-                              <div className="mt-1">Gross {formatMoney(entry.grossCents, entry.currencyCode)}</div>
-                              <div className="mt-1">Fee {formatMoney(entry.platformFeeCents, entry.currencyCode)}</div>
-                            </div>
-                          </div>
-                        </article>
-                      )) : <EmptyState title="No payout entries yet." body="Once paid orders settle into the seller ledger, they will appear here alongside your payout profile." />}
-                    </div>
-                  </div>
-                ) : null}
               </div>
             </SectionCard>
           </div>
@@ -2688,9 +2480,6 @@ export default function MarketplacePageClient() {
                 </Field>
                 <Field label="Specifications">
                   <TextArea rows={6} value={requestForm.specifications} onChange={(event) => setRequestForm((prev) => ({ ...prev, specifications: event.target.value }))} placeholder="Describe the required file, intended workflow, expected format, and any constraints." />
-                </Field>
-                <Field label="Bounty amount" hint="Optional. Stored as cents on the backend.">
-                  <TextInput value={requestForm.bountyCents} onChange={(event) => setRequestForm((prev) => ({ ...prev, bountyCents: event.target.value }))} placeholder="0" type="number" min="0" step="1" />
                 </Field>
                 <button type="submit" disabled={busyAction} className="w-full rounded-full border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50">
                   Create request
@@ -2708,7 +2497,7 @@ export default function MarketplacePageClient() {
                         <p className="mt-3 text-sm leading-6 text-slate-300">{request.specifications}</p>
                       </div>
                       <div className="text-right text-sm text-slate-400">
-                        <div>{request.bountyCents > 0 ? formatMoney(request.bountyCents, request.currencyCode) : "No bounty yet"}</div>
+                        <div>Open request</div>
                         <div className="mt-1">{formatDate(request.createdAt) || "Recently"}</div>
                       </div>
                     </div>

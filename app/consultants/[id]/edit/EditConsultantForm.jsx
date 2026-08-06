@@ -53,6 +53,30 @@ const TO_DB_PROVIDER_KIND = {
   both: "both",
 };
 
+const MARKET_FOCUS_OPTIONS = [
+  { value: "mining", label: "Mining" },
+  { value: "oil_gas", label: "Oil & Gas" },
+  { value: "both", label: "Both" },
+];
+
+function normaliseMarketFocus(value) {
+  const v = String(value || "").toLowerCase();
+  if (v === "oil_gas" || v === "oil-gas") return "oil_gas";
+  if (v === "both") return "both";
+  return "mining";
+}
+
+function marketFocusFromMetadata(metadata) {
+  const m = metadata && typeof metadata === "object" ? metadata : {};
+  const direct = normaliseMarketFocus(m.market_focus || m.market || "");
+  if (direct !== "mining" || m.market_focus || m.market) return direct;
+
+  const legacy = String(m.services_markets || "").toLowerCase();
+  if (legacy.includes("both")) return "both";
+  if (legacy.includes("oil_gas") || legacy.includes("oil-gas") || legacy.includes("oil")) return "oil_gas";
+  return "mining";
+}
+
 const MAX_LOGO_BYTES = 300_000;
 const ALLOWED_LOGO_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
@@ -80,6 +104,7 @@ export default function EditConsultantForm({ consultant }) {
     instagram_url: consultant.instagram_url ?? "",
     place_id: consultant.place_id ?? "",
     provider_kind: fromDbProviderKind(consultant.provider_kind ?? "both"),
+    market_focus: marketFocusFromMetadata(consultant.metadata),
   });
 
   // If there was no original company value, keep company in sync with display_name edits.
@@ -243,6 +268,8 @@ export default function EditConsultantForm({ consultant }) {
       provider_kind: TO_DB_PROVIDER_KIND[form.provider_kind] || "both",
       metadata: {
         ...(consultant.metadata || {}),
+        market_focus: form.market_focus || "mining",
+        services_markets: form.market_focus || "mining",
         logo: logo?.url ? { url: logo.url, path: logo.path, mime: logo.mime } : null,
       },
     };
@@ -286,6 +313,16 @@ export default function EditConsultantForm({ consultant }) {
                 Choose whether you operate in operational services, professional services, or both.
               </p>
             </label>
+          </div>
+          <div className="md:col-span-1">
+            <SelectField
+              label="Market focus"
+              value={form.market_focus}
+              onChange={handleChange("market_focus")}
+              options={MARKET_FOCUS_OPTIONS}
+              placeholder="Select market focus"
+              hint="Controls whether this profile is tagged as Mining, Oil & Gas, or Both."
+            />
           </div>
           <Field label="Location" value={form.location} onChange={handleChange("location")} />
           <SelectField

@@ -421,6 +421,14 @@ export default function InProgressClient() {
                     </td>
                     <td className="px-3 py-2">
                       <div className="flex gap-2">
+                        <a
+                          href={`/consultants/${it.id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded border border-sky-400/30 bg-sky-500/10 px-3 py-1 text-xs text-sky-200 hover:bg-sky-500/20"
+                        >
+                          View Profile
+                        </a>
                         <button
                           className="rounded bg-white/10 px-3 py-1 text-xs text-white hover:bg-white/20"
                           onClick={() => startEdit(it)}

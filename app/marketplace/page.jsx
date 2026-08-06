@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Marketplace",
-  description: "Browse hosted files, external industry resources, requests, orders, and payouts in the YouMine marketplace.",
+  description: "Browse hosted files, external industry resources, and requests in the YouMine marketplace.",
 };
 
 export default function MarketplacePage() {

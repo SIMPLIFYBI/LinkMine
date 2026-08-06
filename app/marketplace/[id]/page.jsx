@@ -21,15 +21,6 @@ import ResourceImageCarousel from "./ResourceImageCarousel.client.jsx";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function formatMoney(cents, currencyCode = "AUD") {
-  const amount = Number(cents || 0) / 100;
-  return new Intl.NumberFormat("en-AU", {
-    style: "currency",
-    currency: currencyCode || "AUD",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
 function formatDate(value) {
   if (!value) return null;
   const date = new Date(value);
@@ -212,8 +203,8 @@ export default async function MarketplaceResourcePage({ params }) {
 
             <div className="space-y-4">
               <div className="rounded-[28px] border border-white/10 bg-slate-950/35 p-5 ring-1 ring-white/10">
-                <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Price</div>
-                <div className="mt-3 text-3xl font-semibold text-white">{resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free"}</div>
+                <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Access</div>
+                <div className="mt-3 text-3xl font-semibold text-white">Included</div>
                 <div className="mt-2 text-sm text-slate-400">{resource.downloadCount || 0} downloads</div>
               </div>
 

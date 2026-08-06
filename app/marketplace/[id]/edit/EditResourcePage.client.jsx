@@ -28,15 +28,6 @@ function formatDate(value) {
   });
 }
 
-function formatMoney(cents, currencyCode = "AUD") {
-  const amount = Number(cents || 0) / 100;
-  return new Intl.NumberFormat("en-AU", {
-    style: "currency",
-    currency: currencyCode || "AUD",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
 function statusTone(status) {
   if (["approved", "paid", "active", "available"].includes(status)) {
     return "border-emerald-400/30 bg-emerald-500/10 text-emerald-100";
@@ -412,8 +403,8 @@ export default function EditResourcePageClient({ initialResource, categories, ta
 
             <aside className="space-y-4">
               <div className="rounded-[28px] border border-white/10 bg-slate-950/35 p-5 ring-1 ring-white/10">
-                <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Current Price</div>
-                <div className="mt-3 text-3xl font-semibold text-white">{resource.priceCents > 0 ? formatMoney(resource.priceCents, resource.currencyCode) : "Free"}</div>
+                <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Availability</div>
+                <div className="mt-3 text-3xl font-semibold text-white">Included</div>
                 <div className="mt-2 text-sm text-slate-400">{resource.downloadCount || 0} downloads</div>
               </div>
 
