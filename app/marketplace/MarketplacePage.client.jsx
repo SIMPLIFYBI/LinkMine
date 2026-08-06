@@ -45,6 +45,10 @@ const MARKETPLACE_COVER_COLLAPSED_HEIGHT = 86;
 const MARKETPLACE_COVER_TRANSITION_MS = 360;
 const MARKETPLACE_COVER_BLEND_TIME_MS = 330;
 const MARKETPLACE_COVER_SPRING_TIME_CONSTANT_MS = 88;
+const DISCOVER_INITIAL_FETCH_LIMIT = 32;
+const DISCOVER_BACKGROUND_FETCH_LIMIT = 120;
+const DISCOVER_INITIAL_VISIBLE_ROWS = 24;
+const DISCOVER_VISIBLE_ROWS_INCREMENT = 24;
 
 const RESOURCE_FORMAT_OPTIONS = [
   { value: "website", label: "Website" },
@@ -1156,6 +1160,7 @@ export default function MarketplacePageClient() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobileHeroIndex, setMobileHeroIndex] = useState(0);
+  const [discoverVisibleRows, setDiscoverVisibleRows] = useState(DISCOVER_INITIAL_VISIBLE_ROWS);
   const [accountArea, setAccountArea] = useState("library");
   const [coverProgress, setCoverProgress] = useState(0);
   const [coverCollapsed, setCoverCollapsed] = useState(false);
@@ -1164,6 +1169,8 @@ export default function MarketplacePageClient() {
   const coverProgressCurrentRef = useRef(0);
   const coverProgressFrameRef = useRef(null);
   const coverProgressLastTimestampRef = useRef(0);
+  const mobileHeroTouchStartXRef = useRef(null);
+  const mobileHeroTouchDeltaXRef = useRef(0);
   const [loadedTabs, setLoadedTabs] = useState({
     discover: false,
     submit: false,
@@ -1177,14 +1184,27 @@ export default function MarketplacePageClient() {
     try {
       const [categoriesRes, resourcesRes] = await Promise.all([
         apiGet("/api/resources/categories"),
-        apiGet("/api/resources?view=card&limit=120"),
+        apiGet(`/api/resources?view=card&limit=${DISCOVER_INITIAL_FETCH_LIMIT}`),
       ]);
 
+      const initialResources = resourcesRes.resources || [];
       setCategories(categoriesRes.categories || []);
-      setResources(resourcesRes.resources || []);
+      setResources(initialResources);
       setCanCreateResources(Boolean(resourcesRes.canCreateResources));
       setCreateResourceRequirementMessage(resourcesRes.createResourceRequirementMessage || "");
       setLoadedTabs((prev) => ({ ...prev, discover: true }));
+
+      if (resourcesRes?.paging?.hasMore && DISCOVER_BACKGROUND_FETCH_LIMIT > DISCOVER_INITIAL_FETCH_LIMIT) {
+        void (async () => {
+          try {
+            const fullResourcesRes = await apiGet(`/api/resources?view=card&limit=${DISCOVER_BACKGROUND_FETCH_LIMIT}`);
+            const fullResources = fullResourcesRes.resources || [];
+            setResources((current) => (fullResources.length > current.length ? fullResources : current));
+          } catch {
+            // Keep initial fast payload if the background refresh fails.
+          }
+        })();
+      }
     } catch (nextError) {
       setError(nextError.message || "Unable to load marketplace data.");
     } finally {
@@ -1364,6 +1384,12 @@ export default function MarketplacePageClient() {
     });
   }, [discoverFilter, resources]);
 
+  const visibleDiscoverResources = useMemo(
+    () => discoverResources.slice(0, discoverVisibleRows),
+    [discoverResources, discoverVisibleRows]
+  );
+  const canShowMoreDiscoverResources = discoverVisibleRows < discoverResources.length;
+
   const featuredResources = useMemo(() => discoverResources.slice(0, 3), [discoverResources]);
   const mobileHeroResources = useMemo(() => discoverResources.slice(0, 5), [discoverResources]);
 
@@ -1426,14 +1452,41 @@ export default function MarketplacePageClient() {
   }, [mobileHeroResources]);
 
   useEffect(() => {
-    if (activeTab !== "discover" || mobileHeroResources.length < 2) return undefined;
+    setDiscoverVisibleRows(DISCOVER_INITIAL_VISIBLE_ROWS);
+  }, [discoverFilter.categoryId, discoverFilter.search, discoverFilter.type]);
 
-    const timer = window.setInterval(() => {
+  const handleMobileHeroTouchStart = useCallback((event) => {
+    if (activeTab !== "discover" || mobileHeroResources.length < 2) return;
+    mobileHeroTouchStartXRef.current = event.changedTouches?.[0]?.clientX ?? null;
+    mobileHeroTouchDeltaXRef.current = 0;
+  }, [activeTab, mobileHeroResources.length]);
+
+  const handleMobileHeroTouchMove = useCallback((event) => {
+    if (mobileHeroTouchStartXRef.current == null) return;
+    const currentX = event.changedTouches?.[0]?.clientX;
+    if (typeof currentX !== "number") return;
+    mobileHeroTouchDeltaXRef.current = currentX - mobileHeroTouchStartXRef.current;
+  }, []);
+
+  const handleMobileHeroTouchEnd = useCallback(() => {
+    if (activeTab !== "discover" || mobileHeroResources.length < 2) {
+      mobileHeroTouchStartXRef.current = null;
+      mobileHeroTouchDeltaXRef.current = 0;
+      return;
+    }
+
+    const SWIPE_THRESHOLD = 40;
+    const deltaX = mobileHeroTouchDeltaXRef.current;
+
+    if (deltaX <= -SWIPE_THRESHOLD) {
       setMobileHeroIndex((currentIndex) => (currentIndex + 1) % mobileHeroResources.length);
-    }, 4500);
+    } else if (deltaX >= SWIPE_THRESHOLD) {
+      setMobileHeroIndex((currentIndex) => (currentIndex - 1 + mobileHeroResources.length) % mobileHeroResources.length);
+    }
 
-    return () => window.clearInterval(timer);
-  }, [activeTab, mobileHeroResources]);
+    mobileHeroTouchStartXRef.current = null;
+    mobileHeroTouchDeltaXRef.current = 0;
+  }, [activeTab, mobileHeroResources.length]);
 
   useEffect(() => {
     if (activeTab !== "discover") {
@@ -2089,7 +2142,12 @@ export default function MarketplacePageClient() {
           <div className="space-y-6">
         {activeTab === "discover" ? (
           <>
-            <section className="space-y-4 lg:hidden">
+            <section
+              className="space-y-4 lg:hidden"
+              onTouchStart={handleMobileHeroTouchStart}
+              onTouchMove={handleMobileHeroTouchMove}
+              onTouchEnd={handleMobileHeroTouchEnd}
+            >
               {mobileHeroResource ? <MobileHeroCard resource={mobileHeroResource} /> : null}
 
               {mobileHeroResources.length > 1 ? (
@@ -2212,9 +2270,20 @@ export default function MarketplacePageClient() {
             >
               {discoverResources.length ? (
                 <div className="space-y-3">
-                  {discoverResources.map((resource) => (
+                  {visibleDiscoverResources.map((resource) => (
                     <DiscoverListRow key={resource.id} resource={resource} />
                   ))}
+                  {canShowMoreDiscoverResources ? (
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setDiscoverVisibleRows((current) => current + DISCOVER_VISIBLE_ROWS_INCREMENT)}
+                        className="rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-100 transition hover:bg-white/[0.12]"
+                      >
+                        Load more resources
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               ) : (
                 <EmptyState title="No resources match this filter." body="Adjust the type or category filter, or start the collection by creating your first hosted or external listing." />
