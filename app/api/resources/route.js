@@ -1,6 +1,7 @@
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
+import { supabaseAdminClient } from "@/lib/supabaseAdminClient";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import {
   buildResourceRoutePayload,
@@ -12,6 +13,7 @@ import {
   getApprovedConsultantOwnership,
   getResourceAuthContext,
   listSelectableConsultantsForUser,
+  RESOURCE_STORAGE_BUCKET,
   resolveResourceConsultantIcons,
   isValidResourceFormat,
   isSafeHttpUrl,
@@ -92,6 +94,52 @@ export async function GET(req) {
     const hasMore = rows.length > limit;
     const slicedRows = hasMore ? rows.slice(0, limit) : rows;
     const consultantIconByResourceId = await resolveResourceConsultantIcons(sb, slicedRows);
+    const resourceIds = slicedRows.map((row) => row.id).filter(Boolean);
+    const resourceImagesByResourceId = new Map();
+
+    if (resourceIds.length) {
+      try {
+        const { data: resourceImageRows } = await sb
+          .from("resource_images")
+          .select("id, resource_id, bucket_name, object_path, original_filename, sort_order")
+          .in("resource_id", resourceIds)
+          .order("resource_id", { ascending: true })
+          .order("sort_order", { ascending: true });
+
+        if (Array.isArray(resourceImageRows) && resourceImageRows.length) {
+          let signingSb = sb;
+          try {
+            signingSb = supabaseAdminClient();
+          } catch {}
+
+          const signedRows = await Promise.all(resourceImageRows.map(async (row) => {
+            const { data: signedData, error: signedError } = await signingSb.storage
+              .from(row.bucket_name || RESOURCE_STORAGE_BUCKET)
+              .createSignedUrl(row.object_path, 60 * 60 * 24 * 7);
+
+            if (signedError || !signedData?.signedUrl) return null;
+
+            return {
+              resourceId: row.resource_id,
+              image: {
+                id: row.id,
+                url: signedData.signedUrl,
+                alt: row.original_filename || "Resource preview image",
+                sortOrder: row.sort_order,
+              },
+            };
+          }));
+
+          signedRows.filter(Boolean).forEach(({ resourceId, image }) => {
+            const current = resourceImagesByResourceId.get(resourceId) || [];
+            if (current.length < 3) {
+              current.push(image);
+              resourceImagesByResourceId.set(resourceId, current);
+            }
+          });
+        }
+      } catch {}
+    }
 
     return NextResponse.json({
       ok: true,
@@ -99,10 +147,13 @@ export async function GET(req) {
       createResourceRequirementMessage: canCreateResources
         ? ""
         : "You need an approved consultant or service provider profile before you can publish marketplace resources.",
-      resources: slicedRows.map((row) => buildResourceRoutePayload({
+      resources: slicedRows.map((row) => ({
+        ...buildResourceRoutePayload({
           ...row,
           consultant_icon_url: consultantIconByResourceId.get(row.id) || null,
-        }, row.resource_tag_links || [])),
+        }, row.resource_tag_links || []),
+        resourceImages: resourceImagesByResourceId.get(row.id) || [],
+      })),
       paging: {
         page,
         limit,

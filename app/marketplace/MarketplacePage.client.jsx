@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   Apps24Regular,
@@ -47,8 +47,6 @@ const MARKETPLACE_COVER_BLEND_TIME_MS = 330;
 const MARKETPLACE_COVER_SPRING_TIME_CONSTANT_MS = 88;
 const DISCOVER_INITIAL_FETCH_LIMIT = 32;
 const DISCOVER_BACKGROUND_FETCH_LIMIT = 120;
-const DISCOVER_INITIAL_VISIBLE_ROWS = 24;
-const DISCOVER_VISIBLE_ROWS_INCREMENT = 24;
 
 const RESOURCE_FORMAT_OPTIONS = [
   { value: "website", label: "Website" },
@@ -1072,65 +1070,11 @@ function GalleryShelf({ title, subtitle, items, emptyTitle, emptyBody }) {
   );
 }
 
-function DiscoverListRow({ resource }) {
-  const detailHref = `/marketplace/${resource.id}`;
-  const artwork = getResourceArtwork(resource);
-  const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file";
-  const metaLabel = resource.category?.name || accessLabel;
-  const updatedLabel = formatDate(resource.updatedAt || resource.createdAt);
-
-  return (
-    <article
-      className="min-h-[206px] overflow-hidden rounded-[24px] border border-white/10 shadow-[0_18px_48px_-38px_rgba(0,0,0,0.85)] ring-1 ring-white/10 transition hover:border-white/20 hover:bg-white/[0.06] sm:h-[188px]"
-      style={{ backgroundImage: artwork.panelBackground }}
-    >
-      <div className="flex gap-3 p-3 sm:items-center sm:gap-4 sm:p-4">
-        <div className="flex min-w-0 flex-1 gap-3.5 sm:items-center sm:gap-4">
-          <ResourceOwnerBadge
-            resource={resource}
-            className="flex h-[72px] w-[72px] flex-none items-center justify-center overflow-hidden rounded-[20px] border border-white/12 text-base font-semibold text-slate-950 shadow-[0_16px_36px_-24px_rgba(0,0,0,0.8)] sm:h-16 sm:w-16"
-            style={{ backgroundImage: artwork.chipBackground }}
-          />
-
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5">
-              {resource.status !== "approved" ? <Badge tone={statusTone(resource.status)}>{resource.status}</Badge> : null}
-              <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/40" />
-              <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">{metaLabel}</div>
-            </div>
-            <Link href={detailHref} className="mt-2 block line-clamp-2 text-[15px] font-semibold leading-5 text-white transition hover:text-sky-100 sm:line-clamp-1 sm:text-lg sm:leading-6">
-              {resource.title}
-            </Link>
-            <p className="mt-1.5 line-clamp-1 max-w-2xl text-sm leading-5 text-slate-400 sm:line-clamp-2 sm:leading-6">{resource.summary || accessLabel}</p>
-            <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-400">
-              {(resource.tags || []).slice(0, 3).map((tag) => (
-                <span key={tag.id} className="max-w-[112px] truncate rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
-                  {tag.name}
-                </span>
-              ))}
-              {updatedLabel ? <span className="rounded-full border border-transparent bg-slate-950/35 px-3 py-1">Updated {updatedLabel}</span> : null}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex min-w-[82px] flex-col items-end justify-between gap-2 sm:min-w-[148px] sm:justify-center">
-          <div className="text-right">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-200">Included</div>
-            <div className="mt-1 text-[11px] text-slate-400">{resource.downloadCount || 0} downloads</div>
-          </div>
-          <Link href={detailHref} className="rounded-full bg-white px-3 py-1.5 text-[10px] font-semibold text-slate-950 transition hover:bg-slate-100 sm:px-4 sm:py-2 sm:text-xs">
-            Open
-          </Link>
-        </div>
-      </div>
-    </article>
-  );
-}
-
 export default function MarketplacePageClient() {
   const { session, loading: authLoading, authError } = useAuth();
   const signedIn = Boolean(session);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isAdmin, setIsAdmin] = useState(false);
   const [canCreateResources, setCanCreateResources] = useState(false);
   const [createResourceRequirementMessage, setCreateResourceRequirementMessage] = useState("");
@@ -1160,7 +1104,6 @@ export default function MarketplacePageClient() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobileHeroIndex, setMobileHeroIndex] = useState(0);
-  const [discoverVisibleRows, setDiscoverVisibleRows] = useState(DISCOVER_INITIAL_VISIBLE_ROWS);
   const [accountArea, setAccountArea] = useState("library");
   const [coverProgress, setCoverProgress] = useState(0);
   const [coverCollapsed, setCoverCollapsed] = useState(false);
@@ -1333,6 +1276,32 @@ export default function MarketplacePageClient() {
   }, [activeTab, signedIn]);
 
   useEffect(() => {
+    const requestedTab = String(searchParams.get("tab") || "").toLowerCase();
+    if (!requestedTab) return;
+
+    if (requestedTab === "admin") {
+      if (isAdmin) {
+        router.push("/marketplace/admin");
+      }
+      return;
+    }
+
+    const allowedTabs = new Set(["discover", "submit", "requests", "account"]);
+    if (!allowedTabs.has(requestedTab)) return;
+
+    if (!signedIn && requestedTab !== "discover") {
+      if (activeTab !== "discover") {
+        setActiveTab("discover");
+      }
+      return;
+    }
+
+    if (activeTab !== requestedTab) {
+      setActiveTab(requestedTab);
+    }
+  }, [activeTab, isAdmin, router, searchParams, signedIn]);
+
+  useEffect(() => {
     if (activeTab !== "discover") {
       setMobileSearchOpen(false);
     }
@@ -1383,12 +1352,6 @@ export default function MarketplacePageClient() {
       return true;
     });
   }, [discoverFilter, resources]);
-
-  const visibleDiscoverResources = useMemo(
-    () => discoverResources.slice(0, discoverVisibleRows),
-    [discoverResources, discoverVisibleRows]
-  );
-  const canShowMoreDiscoverResources = discoverVisibleRows < discoverResources.length;
 
   const featuredResources = useMemo(() => discoverResources.slice(0, 3), [discoverResources]);
   const mobileHeroResources = useMemo(() => discoverResources.slice(0, 5), [discoverResources]);
@@ -1450,10 +1413,6 @@ export default function MarketplacePageClient() {
 
     setMobileHeroIndex((currentIndex) => (currentIndex >= mobileHeroResources.length ? 0 : currentIndex));
   }, [mobileHeroResources]);
-
-  useEffect(() => {
-    setDiscoverVisibleRows(DISCOVER_INITIAL_VISIBLE_ROWS);
-  }, [discoverFilter.categoryId, discoverFilter.search, discoverFilter.type]);
 
   const handleMobileHeroTouchStart = useCallback((event) => {
     if (activeTab !== "discover" || mobileHeroResources.length < 2) return;
@@ -1560,11 +1519,13 @@ export default function MarketplacePageClient() {
     if (!signedIn) {
       return [
         { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary" },
+        { key: "all-resources", label: "All Resources", hint: "Browse the full marketplace resource index.", icon: "orders", group: "primary", href: "/marketplace/resources" },
       ];
     }
 
     const baseTabs = [
       { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary" },
+      { key: "all-resources", label: "All Resources", hint: "Browse the full marketplace resource index.", icon: "orders", group: "primary", href: "/marketplace/resources" },
       { key: "submit", label: "Submit", hint: "Create hosted or external listings and send them for review.", icon: "submit", group: "primary" },
       { key: "requests", label: "Requests", hint: "Track industry requests and completion workflows.", icon: "requests", group: "primary" },
       { key: "account", label: "My Account", hint: "Manage your library and created marketplace resources.", icon: "library", group: "secondary" },
@@ -2086,18 +2047,6 @@ export default function MarketplacePageClient() {
                   </div>
 
                   <span className="hidden rounded-full border border-white/12 bg-white/[0.04] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-200 md:inline-flex">Home / Discover</span>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      window.location.assign("/marketplace/resources");
-                    }}
-                    className="inline-flex items-center rounded-full border border-sky-300/25 bg-sky-500/12 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-100 transition hover:bg-sky-500/22"
-                  >
-                    View all resources
-                  </button>
-
                 </div>
               </div>
 
@@ -2293,6 +2242,15 @@ export default function MarketplacePageClient() {
             </ScrollShelf>
             </div>
 
+            <div className="flex justify-center">
+              <Link
+                href="/marketplace/resources"
+                className="inline-flex items-center rounded-full border border-sky-300/25 bg-sky-500/12 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-sky-100 transition hover:bg-sky-500/22"
+              >
+                View all resources
+              </Link>
+            </div>
+
             <section className="grid gap-4 xl:grid-cols-[minmax(0,1.32fr),minmax(0,1fr)]">
               <ScrollShelf title="Trending resources" subtitle="High-activity items presented as a card rail for quick scanning." metaLabel="Top activity">
                 {trendingResources.length ? trendingResources.map((resource) => (
@@ -2311,31 +2269,6 @@ export default function MarketplacePageClient() {
               </ScrollShelf>
             </section>
 
-            <SectionCard
-              title="Discover resources"
-              subtitle="Approved hosted packs and curated external industry sources, kept as a denser browse-all list below the hero shelves."
-            >
-              {discoverResources.length ? (
-                <div className="space-y-3">
-                  {visibleDiscoverResources.map((resource) => (
-                    <DiscoverListRow key={resource.id} resource={resource} />
-                  ))}
-                  {canShowMoreDiscoverResources ? (
-                    <div className="pt-1">
-                      <button
-                        type="button"
-                        onClick={() => setDiscoverVisibleRows((current) => current + DISCOVER_VISIBLE_ROWS_INCREMENT)}
-                        className="rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-100 transition hover:bg-white/[0.12]"
-                      >
-                        Load more resources
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-              ) : (
-                <EmptyState title="No resources match this filter." body="Adjust the type or category filter, or start the collection by creating your first hosted or external listing." />
-              )}
-            </SectionCard>
           </>
         ) : null}
 
