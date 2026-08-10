@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   Apps24Regular,
@@ -47,6 +47,10 @@ const MARKETPLACE_COVER_BLEND_TIME_MS = 330;
 const MARKETPLACE_COVER_SPRING_TIME_CONSTANT_MS = 88;
 const DISCOVER_INITIAL_FETCH_LIMIT = 32;
 const DISCOVER_BACKGROUND_FETCH_LIMIT = 120;
+function normalizePrimaryTab(value) {
+  const allowedTabs = new Set(["discover", "submit", "requests", "account"]);
+  return allowedTabs.has(value) ? value : "discover";
+}
 
 const RESOURCE_FORMAT_OPTIONS = [
   { value: "website", label: "Website" },
@@ -124,13 +128,13 @@ function formatDate(value) {
 }
 
 function statusTone(status) {
-  if (status === "approved" || status === "paid" || status === "active" || status === "available") {
+  if (status === "approved" || status === "paid" || status === "active" || status === "available" || status === "accepted") {
     return "border-emerald-400/30 bg-emerald-500/10 text-emerald-100";
   }
-  if (status === "pending" || status === "draft") {
+  if (status === "pending" || status === "draft" || status === "submitted") {
     return "border-amber-400/30 bg-amber-500/10 text-amber-100";
   }
-  if (status === "rejected" || status === "failed" || status === "cancelled" || status === "disabled") {
+  if (status === "rejected" || status === "failed" || status === "cancelled" || status === "disabled" || status === "withdrawn") {
     return "border-red-400/30 bg-red-500/10 text-red-100";
   }
   return "border-cyan-400/30 bg-cyan-500/10 text-cyan-100"; 
@@ -494,6 +498,23 @@ function Field({ label, hint, children }) {
   );
 }
 
+function InlineHelpTip({ label, children }) {
+  return (
+    <span className="group relative inline-flex items-center">
+      <button
+        type="button"
+        className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/20 bg-white/[0.05] text-[11px] font-semibold text-slate-200 transition hover:border-sky-300/50 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60"
+        aria-label={label}
+      >
+        ?
+      </button>
+      <span className="pointer-events-none absolute left-1/2 top-[calc(100%+10px)] z-20 hidden w-64 -translate-x-1/2 rounded-xl border border-white/15 bg-slate-950/95 px-3 py-2 text-left text-xs leading-5 text-slate-200 shadow-[0_18px_38px_-24px_rgba(0,0,0,0.9)] group-hover:block group-focus-within:block">
+        {children}
+      </span>
+    </span>
+  );
+}
+
 function TextInput(props) {
   return <input {...props} className={`w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-400/40 focus:ring-2 focus:ring-sky-500/30 ${props.className || ""}`} />;
 }
@@ -504,6 +525,48 @@ function TextArea(props) {
 
 function Select(props) {
   return <select {...props} className={`w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-400/40 focus:ring-2 focus:ring-sky-500/30 ${props.className || ""}`} />;
+}
+
+function CreateFlowSection({ step, title, subtitle, completed = false, onToggleComplete, showCompleteToggle = true, children }) {
+  return (
+    <section className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10 sm:p-6">
+      <div className="flex items-start gap-4">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-sky-300/35 bg-sky-500/15 text-sm font-semibold text-sky-100">{step}</div>
+        <div className="flex-1 space-y-4">
+          <button
+            type="button"
+            onClick={() => {
+              if (completed && onToggleComplete) onToggleComplete(false);
+            }}
+            className="w-full text-left"
+          >
+            <div className="text-lg font-semibold text-white">{title}</div>
+            <div className="mt-1 text-sm text-slate-400">{completed ? "Section complete. Click title to review or edit." : subtitle}</div>
+          </button>
+
+          {!completed ? children : null}
+
+          {showCompleteToggle && onToggleComplete ? (
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => onToggleComplete(!completed)}
+                className={[
+                  "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] transition",
+                  completed
+                    ? "border-emerald-300/45 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/22"
+                    : "border-emerald-300/35 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/18",
+                ].join(" ")}
+              >
+                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-emerald-200/60 bg-emerald-400/25 text-[11px] leading-none">✓</span>
+                {completed ? "Completed" : "Mark section complete"}
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function ResourceCard({ resource, onSubmitForReview, onArchive, actionLabel = "View details" }) {
@@ -769,6 +832,33 @@ function CategoryShelfCard({ category, onSelect }) {
         </div>
       </div>
     </button>
+  );
+}
+
+function ActiveRequestShelfCard({ request }) {
+  const statusLabel = request.status === "claimed" ? "Claimed" : "Open";
+  const postedLabel = formatDate(request.createdAt);
+
+  return (
+    <article className="group relative flex h-[188px] w-[286px] flex-none snap-start overflow-hidden rounded-[24px] border border-white/10 shadow-[0_24px_60px_-40px_rgba(0,0,0,0.85)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20 sm:w-[320px] lg:w-[320px]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.2),transparent_34%),linear-gradient(160deg,rgba(15,23,42,0.9),rgba(30,41,59,0.95))]" />
+      <div className="relative flex flex-1 flex-col justify-between p-4">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone={statusTone(request.status)}>{statusLabel}</Badge>
+            <span className="rounded-full border border-white/12 bg-white/[0.06] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-200">Resource request</span>
+          </div>
+          <div className="mt-3 line-clamp-2 max-w-[14rem] text-[1.12rem] font-semibold leading-tight text-white sm:max-w-[15.5rem] sm:text-[1.3rem]">{request.title || "Untitled request"}</div>
+          <p className="mt-2 line-clamp-2 text-[13px] leading-5 text-slate-300">{request.specifications || "Open this request to review the requested deliverables."}</p>
+        </div>
+        <div className="flex items-end justify-between gap-3">
+          <div className="text-[11px] text-slate-300/85">{postedLabel ? `Posted ${postedLabel}` : "Recently posted"}</div>
+          <Link href="/marketplace?tab=requests" className="rounded-full border border-white/15 bg-white px-3.5 py-2 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100">
+            View request
+          </Link>
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -1070,16 +1160,17 @@ function GalleryShelf({ title, subtitle, items, emptyTitle, emptyBody }) {
   );
 }
 
-export default function MarketplacePageClient() {
+export default function MarketplacePageClient({ initialTab = "discover" }) {
   const { session, loading: authLoading, authError } = useAuth();
   const signedIn = Boolean(session);
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isAdmin, setIsAdmin] = useState(false);
   const [canCreateResources, setCanCreateResources] = useState(false);
   const [createResourceRequirementMessage, setCreateResourceRequirementMessage] = useState("");
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("discover");
+  const [activeTab, setActiveTab] = useState(() => normalizePrimaryTab(initialTab));
   const [busyAction, startBusyAction] = useTransition();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -1090,6 +1181,8 @@ export default function MarketplacePageClient() {
   const [myResources, setMyResources] = useState([]);
   const [library, setLibrary] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [requestResponsesByRequestId, setRequestResponsesByRequestId] = useState({});
+  const [requestResponseDrafts, setRequestResponseDrafts] = useState({});
   const [accountPaging, setAccountPaging] = useState({
     library: { limit: 0, hasMore: false },
     created: { limit: 0, hasMore: false },
@@ -1104,6 +1197,12 @@ export default function MarketplacePageClient() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobileHeroIndex, setMobileHeroIndex] = useState(0);
+  const [submitArea, setSubmitArea] = useState("create");
+  const [createSectionCompletion, setCreateSectionCompletion] = useState({
+    details: false,
+    classify: false,
+    source: false,
+  });
   const [accountArea, setAccountArea] = useState("library");
   const [coverProgress, setCoverProgress] = useState(0);
   const [coverCollapsed, setCoverCollapsed] = useState(false);
@@ -1120,6 +1219,25 @@ export default function MarketplacePageClient() {
     requests: false,
     account: false,
   });
+  const currentUserId = session?.user?.id || "";
+
+  const loadRequestResponses = useCallback(async (requestRows) => {
+    if (!Array.isArray(requestRows) || !requestRows.length) {
+      setRequestResponsesByRequestId({});
+      return;
+    }
+
+    const responseEntries = await Promise.all(requestRows.map(async (request) => {
+      try {
+        const responseBody = await apiGet(`/api/resources/requests/${request.id}/responses`);
+        return [request.id, responseBody.responses || []];
+      } catch {
+        return [request.id, []];
+      }
+    }));
+
+    setRequestResponsesByRequestId(Object.fromEntries(responseEntries));
+  }, []);
 
   const loadPublicData = useCallback(async () => {
     setLoading(true);
@@ -1135,6 +1253,18 @@ export default function MarketplacePageClient() {
       setResources(initialResources);
       setCanCreateResources(Boolean(resourcesRes.canCreateResources));
       setCreateResourceRequirementMessage(resourcesRes.createResourceRequirementMessage || "");
+
+      if (signedIn) {
+        try {
+          const requestsRes = await apiGet("/api/resources/requests?limit=40");
+          setRequests(requestsRes.requests || []);
+        } catch {
+          setRequests([]);
+        }
+      } else {
+        setRequests([]);
+      }
+
       setLoadedTabs((prev) => ({ ...prev, discover: true }));
 
       if (resourcesRes?.paging?.hasMore && DISCOVER_BACKGROUND_FETCH_LIMIT > DISCOVER_INITIAL_FETCH_LIMIT) {
@@ -1153,7 +1283,7 @@ export default function MarketplacePageClient() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [signedIn]);
 
   const loadAdminStatus = useCallback(async (currentSession) => {
     if (!currentSession) {
@@ -1172,6 +1302,10 @@ export default function MarketplacePageClient() {
   const loadTabData = useCallback(async (tabKey, currentSession, { force = false } = {}) => {
     if (!currentSession || tabKey === "discover") return;
     if (!force && loadedTabs[tabKey]) return;
+    if (tabKey === "submit" && !force && loadedTabs.account) {
+      setLoadedTabs((prev) => ({ ...prev, submit: true }));
+      return;
+    }
 
     setLoading(true);
     setError("");
@@ -1188,8 +1322,15 @@ export default function MarketplacePageClient() {
       }
 
       if (tabKey === "requests") {
-        const requestsRes = await apiGet("/api/resources/requests");
-        setRequests(requestsRes.requests || []);
+        const [requestsRes, mineRes] = await Promise.all([
+          apiGet("/api/resources/requests"),
+          apiGet("/api/resources?mine=1"),
+        ]);
+
+        const requestRows = requestsRes.requests || [];
+        setRequests(requestRows);
+        setMyResources(mineRes.resources || []);
+        await loadRequestResponses(requestRows);
       }
 
       if (tabKey === "account") {
@@ -1202,6 +1343,7 @@ export default function MarketplacePageClient() {
           created: { limit: 0, hasMore: false },
           tags: { limit: 0, hasMore: false },
         });
+        setLoadedTabs((prev) => ({ ...prev, submit: true }));
       }
 
       setLoadedTabs((prev) => ({ ...prev, [tabKey]: true }));
@@ -1210,7 +1352,18 @@ export default function MarketplacePageClient() {
     } finally {
       setLoading(false);
     }
-  }, [loadedTabs]);
+  }, [loadRequestResponses, loadedTabs]);
+
+  useEffect(() => {
+    const nextInitialTab = normalizePrimaryTab(initialTab);
+
+    // Signed-out users are constrained to Discover to avoid route/tab state loops.
+    if (!signedIn && nextInitialTab !== "discover") {
+      return;
+    }
+
+    setActiveTab((current) => (current === nextInitialTab ? current : nextInitialTab));
+  }, [initialTab, signedIn]);
 
   useEffect(() => {
     let mounted = true;
@@ -1222,6 +1375,8 @@ export default function MarketplacePageClient() {
       setMyResources([]);
       setLibrary([]);
       setRequests([]);
+      setRequestResponsesByRequestId({});
+      setRequestResponseDrafts({});
       setAccountPaging({
         library: { limit: 0, hasMore: false },
         created: { limit: 0, hasMore: false },
@@ -1276,6 +1431,8 @@ export default function MarketplacePageClient() {
   }, [activeTab, signedIn]);
 
   useEffect(() => {
+    if (pathname !== "/marketplace") return;
+
     const requestedTab = String(searchParams.get("tab") || "").toLowerCase();
     if (!requestedTab) return;
 
@@ -1299,7 +1456,33 @@ export default function MarketplacePageClient() {
     if (activeTab !== requestedTab) {
       setActiveTab(requestedTab);
     }
-  }, [activeTab, isAdmin, router, searchParams, signedIn]);
+  }, [activeTab, isAdmin, pathname, router, searchParams, signedIn]);
+
+  useEffect(() => {
+    if (activeTab !== "submit") return;
+    const requestedSubmitArea = String(searchParams.get("submit") || "").toLowerCase();
+    if (requestedSubmitArea !== "create" && requestedSubmitArea !== "edit") return;
+    if (submitArea !== requestedSubmitArea) {
+      setSubmitArea(requestedSubmitArea);
+    }
+  }, [activeTab, searchParams, submitArea]);
+
+  useEffect(() => {
+    if (activeTab !== "submit") return;
+
+    const requestedSubmitArea = String(searchParams.get("submit") || "").toLowerCase();
+    if (requestedSubmitArea === "create" || requestedSubmitArea === "edit") return;
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    if (pathname === "/marketplace") {
+      nextParams.set("tab", "submit");
+    } else {
+      nextParams.delete("tab");
+    }
+    nextParams.set("submit", "create");
+    const nextQuery = nextParams.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname);
+  }, [activeTab, pathname, router, searchParams]);
 
   useEffect(() => {
     if (activeTab !== "discover") {
@@ -1518,17 +1701,17 @@ export default function MarketplacePageClient() {
   const tabs = useMemo(() => {
     if (!signedIn) {
       return [
-        { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary" },
+        { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary", href: "/marketplace" },
         { key: "all-resources", label: "All Resources", hint: "Browse the full marketplace resource index.", icon: "orders", group: "primary", href: "/marketplace/resources" },
       ];
     }
 
     const baseTabs = [
-      { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary" },
+      { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary", href: "/marketplace" },
       { key: "all-resources", label: "All Resources", hint: "Browse the full marketplace resource index.", icon: "orders", group: "primary", href: "/marketplace/resources" },
-      { key: "submit", label: "Submit", hint: "Create hosted or external listings and send them for review.", icon: "submit", group: "primary" },
-      { key: "requests", label: "Requests", hint: "Track industry requests and completion workflows.", icon: "requests", group: "primary" },
-      { key: "account", label: "My Account", hint: "Manage your library and created marketplace resources.", icon: "library", group: "secondary" },
+      { key: "submit", label: "Submit", hint: "Create hosted or external listings and send them for review.", icon: "submit", group: "primary", href: "/marketplace/submit" },
+      { key: "requests", label: "Requests", hint: "Track industry requests and completion workflows.", icon: "requests", group: "primary", href: "/marketplace/requests" },
+      { key: "account", label: "My Account", hint: "Manage your library and created marketplace resources.", icon: "library", group: "secondary", href: "/marketplace/account" },
     ];
     if (isAdmin) {
       baseTabs.push({ key: "admin", label: "Admin", hint: "Review submissions and manage marketplace administration.", icon: "review", group: "secondary", href: "/marketplace/admin" });
@@ -1542,6 +1725,10 @@ export default function MarketplacePageClient() {
     { key: "library", label: "Library", meta: `${library.length} items` },
     { key: "created", label: "Created", meta: `${myResources.length} resources` },
   ]), [library.length, myResources.length]);
+  const submitAreas = useMemo(() => ([
+    { key: "create", label: "Create resource", meta: canCreateResources ? "New listing" : "Access required" },
+    { key: "edit", label: "Edit resources", meta: `${myResources.length} managed` },
+  ]), [canCreateResources, myResources.length]);
 
   const categoryHighlights = useMemo(() => {
     return categories
@@ -1553,6 +1740,12 @@ export default function MarketplacePageClient() {
       .sort((left, right) => right.count - left.count)
       .slice(0, 6);
   }, [categories, resources]);
+
+  const activeHomeRequests = useMemo(() => {
+    return requests
+      .filter((request) => request.status === "open" || request.status === "claimed")
+      .slice(0, 12);
+  }, [requests]);
 
   function invalidateTabs(tabKeys) {
     setLoadedTabs((prev) => {
@@ -1588,6 +1781,20 @@ export default function MarketplacePageClient() {
 
     setMobileNavOpen(false);
     setActiveTab(tab.key);
+  }
+
+  function handleSubmitAreaSelect(nextArea) {
+    setSubmitArea(nextArea);
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    if (pathname === "/marketplace") {
+      nextParams.set("tab", "submit");
+    } else {
+      nextParams.delete("tab");
+    }
+    nextParams.set("submit", nextArea);
+    const nextQuery = nextParams.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname);
   }
 
   function collapseMarketplaceCover() {
@@ -1709,7 +1916,7 @@ export default function MarketplacePageClient() {
         setResourcePreviewImages([]);
         setSuccess("Marketplace resource created.");
         invalidateTabs(["submit", "account"]);
-        await refreshMarketplace("account");
+        await refreshMarketplace("account", { refreshDiscover: false });
         setActiveTab("account");
       } catch (nextError) {
         setError(nextError.message || "Unable to create resource.");
@@ -1724,7 +1931,7 @@ export default function MarketplacePageClient() {
         await apiSend(`/api/resources/${resource.id}`, "PATCH", { resource: { status: "pending" } });
         setSuccess("Resource submitted for review.");
         invalidateTabs(["submit"]);
-        await refreshMarketplace("submit");
+        await refreshMarketplace("submit", { refreshDiscover: false });
       } catch (nextError) {
         setError(nextError.message || "Unable to submit resource for review.");
       }
@@ -1738,7 +1945,7 @@ export default function MarketplacePageClient() {
         await apiSend(`/api/resources/${resource.id}`, "DELETE");
         setSuccess("Resource archived.");
         invalidateTabs(["submit", "account"]);
-        await refreshMarketplace("submit");
+        await refreshMarketplace("submit", { refreshDiscover: false });
       } catch (nextError) {
         setError(nextError.message || "Unable to archive resource.");
       }
@@ -1780,6 +1987,65 @@ export default function MarketplacePageClient() {
         await refreshMarketplace("requests", { refreshDiscover: false });
       } catch (nextError) {
         setError(nextError.message || "Unable to update request.");
+      }
+    });
+  }
+
+  function updateRequestResponseDraft(requestId, patch) {
+    setRequestResponseDrafts((prev) => ({
+      ...prev,
+      [requestId]: {
+        resourceId: "",
+        message: "",
+        ...(prev[requestId] || {}),
+        ...patch,
+      },
+    }));
+  }
+
+  async function submitRequestResponse(request) {
+    const draft = requestResponseDrafts[request.id] || {};
+    const resourceId = String(draft.resourceId || "").trim();
+    const message = String(draft.message || "").trim();
+
+    resetMessages();
+
+    if (!resourceId) {
+      setError("Select one of your resources to respond.");
+      return;
+    }
+
+    startBusyAction(async () => {
+      try {
+        await apiSend(`/api/resources/requests/${request.id}/responses`, "POST", {
+          resourceId,
+          message,
+        });
+        setSuccess("Response submitted.");
+        updateRequestResponseDraft(request.id, { resourceId: "", message: "" });
+        invalidateTabs(["requests"]);
+        await refreshMarketplace("requests", { refreshDiscover: false });
+      } catch (nextError) {
+        setError(nextError.message || "Unable to submit response.");
+      }
+    });
+  }
+
+  async function updateRequestResponse(requestId, responseId, action) {
+    resetMessages();
+    startBusyAction(async () => {
+      try {
+        await apiSend(`/api/resources/requests/${requestId}/responses/${responseId}`, "PATCH", { action });
+        const successMessageByAction = {
+          accept: "Response accepted and request completed.",
+          reject: "Response rejected.",
+          withdraw: "Response withdrawn.",
+        };
+        setSuccess(successMessageByAction[action] || "Response updated.");
+        invalidateTabs(["requests", "account"]);
+        await refreshMarketplace("requests", { refreshDiscover: false });
+      } catch (nextError) {
+        setError(nextError.message || `Unable to ${action} response.`);
       }
     });
   }
@@ -2269,168 +2535,221 @@ export default function MarketplacePageClient() {
               </ScrollShelf>
             </section>
 
+            {activeHomeRequests.length ? (
+              <ScrollShelf
+                title="Active resource requests"
+                subtitle="Current demand from the marketplace. Respond in the Requests workspace."
+                metaLabel={`${activeHomeRequests.length} active`}
+              >
+                {activeHomeRequests.map((request) => (
+                  <ActiveRequestShelfCard key={request.id} request={request} />
+                ))}
+              </ScrollShelf>
+            ) : null}
+
           </>
         ) : null}
 
         {activeTab === "submit" ? (
-          <SectionCard title="Create a marketplace resource" subtitle="Submit a hosted pack or an external listing. Hosted packs can stay draft until the file is uploaded.">
-            {canCreateResources ? (
-              <form className="grid gap-5 lg:grid-cols-[1.2fr,0.8fr]" onSubmit={handleResourceSubmit}>
-                <div className="space-y-5">
-                  <Field label="Title">
-                    <TextInput value={resourceForm.title} onChange={(event) => setResourceForm((prev) => ({ ...prev, title: event.target.value }))} placeholder="Open pit drill and blast sign-off pack" required />
-                  </Field>
-                  <div className="grid gap-5 md:grid-cols-2">
-                    <Field label="Category">
-                      <Select value={resourceForm.categoryId} onChange={(event) => setResourceForm((prev) => ({ ...prev, categoryId: event.target.value }))}>
-                        <option value="">Select category</option>
-                        {categories.map((category) => (
-                          <option key={category.id} value={category.id}>{category.name}</option>
-                        ))}
-                      </Select>
-                    </Field>
-                    <Field label="Resource type">
-                      <Select value={resourceForm.resourceType} onChange={(event) => setResourceForm((prev) => ({ ...prev, resourceType: event.target.value }))}>
-                        <option value="hosted">Hosted pack</option>
-                        <option value="external">External source</option>
-                      </Select>
-                    </Field>
-                  </div>
-                  <Field label="Resource format" hint="Used to display the marketplace icon for this resource.">
-                    <Select value={resourceForm.resourceFormat} onChange={(event) => setResourceForm((prev) => ({ ...prev, resourceFormat: event.target.value }))} required>
-                      {RESOURCE_FORMAT_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </Select>
-                  </Field>
-                  <Field label="Summary">
-                    <TextArea rows={3} value={resourceForm.summary} onChange={(event) => setResourceForm((prev) => ({ ...prev, summary: event.target.value }))} placeholder="Explain the practical use of this file pack or source." />
-                  </Field>
-                  <Field label="Description">
-                    <TextArea rows={6} value={resourceForm.description} onChange={(event) => setResourceForm((prev) => ({ ...prev, description: event.target.value }))} placeholder="Add context, expected use, assumptions, and what a downloader should know before opening the files." />
-                  </Field>
-                  {resourceForm.resourceType === "external" ? (
-                    <div className="grid gap-5 md:grid-cols-2">
-                      <Field label="Source name">
-                        <TextInput value={resourceForm.sourceName} onChange={(event) => setResourceForm((prev) => ({ ...prev, sourceName: event.target.value }))} placeholder="Queensland Government open data" />
-                      </Field>
-                      <Field label="Source URL">
-                        <TextInput value={resourceForm.sourceUrl} onChange={(event) => setResourceForm((prev) => ({ ...prev, sourceUrl: event.target.value }))} placeholder="https://..." />
-                      </Field>
-                    </div>
-                  ) : (
-                    <Field label="Hosted pack upload" hint="ZIP, PDF, Office docs, text, and JSON are supported in this first pass.">
-                      <input
-                        type="file"
-                        onChange={(event) => setResourceFile(event.target.files?.[0] || null)}
-                        className="block w-full rounded-2xl border border-dashed border-white/15 bg-slate-950/60 px-4 py-4 text-sm text-slate-300"
-                      />
-                    </Field>
-                  )}
-                  <Field label="Preview images" hint="Optional. Up to 3 images, JPG/PNG/WEBP, max 5 MB each.">
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      multiple
-                      onChange={handlePreviewImagesChange}
-                      className="block w-full rounded-2xl border border-dashed border-white/15 bg-slate-950/60 px-4 py-4 text-sm text-slate-300"
-                    />
-                    {resourcePreviewImages.length ? (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {resourcePreviewImages.map((image) => (
-                          <span key={`${image.name}-${image.size}`} className="inline-flex max-w-full items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-slate-300">
-                            <span className="truncate">{image.name}</span>
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-                  </Field>
-                </div>
-
-                <div className="space-y-5">
-                  <Field label="License name">
-                    <TextInput value={resourceForm.licenseName} onChange={(event) => setResourceForm((prev) => ({ ...prev, licenseName: event.target.value }))} placeholder="Internal use only" />
-                  </Field>
-                  <Field label="License URL">
-                    <TextInput value={resourceForm.licenseUrl} onChange={(event) => setResourceForm((prev) => ({ ...prev, licenseUrl: event.target.value }))} placeholder="https://..." />
-                  </Field>
-                  <Field label="Tags" hint="Pick a few tags so people can discover the resource more easily.">
-                    <div className="flex flex-wrap gap-2">
-                      {tags.map((tag) => {
-                        const active = resourceForm.tagIds.includes(tag.id);
-                        return (
-                          <button
-                            key={tag.id}
-                            type="button"
-                            onClick={() => toggleTag(tag.id)}
-                            className={[
-                              "rounded-full border px-3 py-2 text-xs font-semibold transition",
-                              active
-                                ? "border-sky-300/30 bg-sky-500/12 text-sky-100"
-                                : "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.06]",
-                            ].join(" ")}
-                          >
-                            {tag.name}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </Field>
-                  <label className="flex items-start gap-3 rounded-[24px] border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-300">
-                    <input
-                      type="checkbox"
-                      checked={resourceForm.submitForReview}
-                      onChange={(event) => setResourceForm((prev) => ({ ...prev, submitForReview: event.target.checked }))}
-                      className="mt-1 h-4 w-4 rounded border-white/20 bg-slate-950/70 text-sky-500"
-                    />
-                    <span>
-                      <span className="block font-semibold text-white">Send this resource for review immediately</span>
-                      <span className="mt-1 block text-slate-400">Hosted resources need a file upload before they can move into review.</span>
-                    </span>
-                  </label>
-                  <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(56,189,248,0.08),rgba(15,23,42,0.58))] p-4 text-sm text-slate-300">
-                    <div className="font-semibold text-white">Launch limits currently applied</div>
-                    <div className="mt-2">10 active hosted resources, 25 MB max hosted pack size, up to 3 preview images (5 MB each), and 250 MB total hosted storage per user.</div>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={busyAction}
-                    className="w-full rounded-full bg-gradient-to-r from-sky-500 to-cyan-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:from-sky-400 hover:to-cyan-400 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {busyAction ? "Saving resource..." : "Create resource"}
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div className="rounded-[28px] border border-amber-400/20 bg-[linear-gradient(180deg,rgba(245,158,11,0.12),rgba(15,23,42,0.6))] p-6 text-sm text-slate-300 ring-1 ring-amber-300/10">
-                <div className="text-lg font-semibold text-white">Marketplace publishing is currently limited to approved service providers</div>
-                <p className="mt-3 max-w-2xl leading-7 text-slate-300">
-                  {createResourceRequirementMessage || "You need an approved consultant or service provider profile before you can publish marketplace resources."}
-                </p>
-                <div className="mt-5">
-                  <Link href="/account?tab=consultants" className="inline-flex rounded-full border border-white/10 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
-                    Open consultant settings
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            <div className="mt-8">
-              <div className="mb-4 text-sm font-semibold text-white">My resources</div>
-              {myResources.length ? (
-                <div className="grid gap-4 xl:grid-cols-2">
-                  {myResources.map((resource) => (
-                    <ResourceCard
-                      key={resource.id}
-                      resource={resource}
-                      onSubmitForReview={handleSubmitForReview}
-                      onArchive={handleArchive}
-                      actionLabel="View details"
+          <SectionCard title="Submit resources" subtitle="Create new listings or switch to the resource editor to maintain existing ones.">
+            <div className="space-y-6">
+              <div className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex min-w-max gap-3">
+                  {submitAreas.map((area) => (
+                    <AccountTopTab
+                      key={area.key}
+                      active={submitArea === area.key}
+                      label={area.label}
+                      meta={area.meta}
+                      onClick={() => handleSubmitAreaSelect(area.key)}
                     />
                   ))}
                 </div>
+              </div>
+
+              {submitArea === "create" ? (
+                canCreateResources ? (
+                  <form className="space-y-5" onSubmit={handleResourceSubmit}>
+                    <section className="overflow-hidden rounded-[28px] border border-white/12 bg-[linear-gradient(150deg,rgba(56,189,248,0.16),rgba(15,23,42,0.92))] ring-1 ring-white/10">
+                      <div className="border-b border-white/10 px-5 py-4 sm:px-6">
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-100/90">Create resource flow</div>
+                        <div className="mt-2 text-lg font-semibold text-white">Tell us what you are publishing</div>
+                      </div>
+                    </section>
+
+                    <CreateFlowSection
+                      step="1"
+                      title="What should people call this resource?"
+                      subtitle="Start with a practical title and explain the value clearly."
+                      completed={createSectionCompletion.details}
+                      onToggleComplete={(nextValue) => setCreateSectionCompletion((prev) => ({ ...prev, details: nextValue }))}
+                    >
+                          <Field label="Title">
+                            <TextInput value={resourceForm.title} onChange={(event) => setResourceForm((prev) => ({ ...prev, title: event.target.value }))} placeholder="Open pit drill and blast sign-off pack" required />
+                          </Field>
+                          <Field label="Summary">
+                            <TextArea rows={3} value={resourceForm.summary} onChange={(event) => setResourceForm((prev) => ({ ...prev, summary: event.target.value }))} placeholder="Explain the practical use of this file pack or source." />
+                          </Field>
+                          <Field label="Description">
+                            <TextArea rows={6} value={resourceForm.description} onChange={(event) => setResourceForm((prev) => ({ ...prev, description: event.target.value }))} placeholder="Add context, expected use, assumptions, and what a downloader should know before opening the files." />
+                          </Field>
+                    </CreateFlowSection>
+
+                    <CreateFlowSection
+                      step="2"
+                      title="Where does this fit in the marketplace?"
+                      subtitle="Classify the asset so buyers can discover it quickly."
+                      completed={createSectionCompletion.classify}
+                      onToggleComplete={(nextValue) => setCreateSectionCompletion((prev) => ({ ...prev, classify: nextValue }))}
+                    >
+                          <div className="grid gap-5 md:grid-cols-2">
+                            <Field label="Category">
+                              <Select value={resourceForm.categoryId} onChange={(event) => setResourceForm((prev) => ({ ...prev, categoryId: event.target.value }))}>
+                                <option value="">Select category</option>
+                                {categories.map((category) => (
+                                  <option key={category.id} value={category.id}>{category.name}</option>
+                                ))}
+                              </Select>
+                            </Field>
+                            <Field
+                              label={(
+                                <span className="inline-flex items-center gap-2">
+                                  <span>Resource type</span>
+                                  <InlineHelpTip label="Resource type help">
+                                    Hosted pack: you upload files directly to marketplace storage so users access them inside the platform. External source: you list a link/reference to content hosted elsewhere.
+                                  </InlineHelpTip>
+                                </span>
+                              )}
+                            >
+                              <Select value={resourceForm.resourceType} onChange={(event) => setResourceForm((prev) => ({ ...prev, resourceType: event.target.value }))}>
+                                <option value="hosted">Hosted pack</option>
+                                <option value="external">External source</option>
+                              </Select>
+                            </Field>
+                          </div>
+                          <Field label="Resource format" hint="Used to display the marketplace icon for this resource.">
+                            <Select value={resourceForm.resourceFormat} onChange={(event) => setResourceForm((prev) => ({ ...prev, resourceFormat: event.target.value }))} required>
+                              {RESOURCE_FORMAT_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>{option.label}</option>
+                              ))}
+                            </Select>
+                          </Field>
+                    </CreateFlowSection>
+
+                    <CreateFlowSection
+                      step="3"
+                      title="Add the source file or external link"
+                      subtitle="Hosted resources need an upload. External resources need source details."
+                      completed={createSectionCompletion.source}
+                      onToggleComplete={(nextValue) => setCreateSectionCompletion((prev) => ({ ...prev, source: nextValue }))}
+                    >
+                          {resourceForm.resourceType === "external" ? (
+                            <div className="grid gap-5 md:grid-cols-2">
+                              <Field label="Source name">
+                                <TextInput value={resourceForm.sourceName} onChange={(event) => setResourceForm((prev) => ({ ...prev, sourceName: event.target.value }))} placeholder="Queensland Government open data" />
+                              </Field>
+                              <Field label="Source URL">
+                                <TextInput value={resourceForm.sourceUrl} onChange={(event) => setResourceForm((prev) => ({ ...prev, sourceUrl: event.target.value }))} placeholder="https://..." />
+                              </Field>
+                            </div>
+                          ) : (
+                            <Field label="Hosted pack upload" hint="ZIP, PDF, Office docs, text, and JSON are supported in this first pass.">
+                              <input
+                                type="file"
+                                onChange={(event) => setResourceFile(event.target.files?.[0] || null)}
+                                className="block w-full rounded-2xl border border-dashed border-white/15 bg-slate-950/60 px-4 py-4 text-sm text-slate-300"
+                              />
+                            </Field>
+                          )}
+                          <Field label="Preview images" hint="Optional. Up to 3 images, JPG/PNG/WEBP, max 5 MB each.">
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              multiple
+                              onChange={handlePreviewImagesChange}
+                              className="block w-full rounded-2xl border border-dashed border-white/15 bg-slate-950/60 px-4 py-4 text-sm text-slate-300"
+                            />
+                            {resourcePreviewImages.length ? (
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {resourcePreviewImages.map((image) => (
+                                  <span key={`${image.name}-${image.size}`} className="inline-flex max-w-full items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-slate-300">
+                                    <span className="truncate">{image.name}</span>
+                                  </span>
+                                ))}
+                              </div>
+                            ) : null}
+                          </Field>
+                      </CreateFlowSection>
+
+                      <CreateFlowSection
+                        step="4"
+                        title="Finalize discovery and publish settings"
+                        subtitle="Set optional license details and submission preference."
+                        showCompleteToggle={false}
+                      >
+                          <div className="grid gap-5 md:grid-cols-2">
+                            <Field label="License name">
+                              <TextInput value={resourceForm.licenseName} onChange={(event) => setResourceForm((prev) => ({ ...prev, licenseName: event.target.value }))} placeholder="Internal use only" />
+                            </Field>
+                            <Field label="License URL">
+                              <TextInput value={resourceForm.licenseUrl} onChange={(event) => setResourceForm((prev) => ({ ...prev, licenseUrl: event.target.value }))} placeholder="https://..." />
+                            </Field>
+                          </div>
+                          <label className="flex items-start gap-3 rounded-[20px] border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-300">
+                            <input
+                              type="checkbox"
+                              checked={resourceForm.submitForReview}
+                              onChange={(event) => setResourceForm((prev) => ({ ...prev, submitForReview: event.target.checked }))}
+                              className="mt-1 h-4 w-4 rounded border-white/20 bg-slate-950/70 text-sky-500"
+                            />
+                            <span>
+                              <span className="block font-semibold text-white">Send this resource for review immediately</span>
+                              <span className="mt-1 block text-slate-400">Hosted resources need a file upload before they can move into review.</span>
+                            </span>
+                          </label>
+                          <div className="rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(56,189,248,0.08),rgba(15,23,42,0.58))] p-4 text-sm text-slate-300">
+                            <div className="font-semibold text-white">Launch limits currently applied</div>
+                            <div className="mt-2">10 active hosted resources, 25 MB max hosted pack size, up to 3 preview images (5 MB each), and 250 MB total hosted storage per user.</div>
+                          </div>
+                          <button
+                            type="submit"
+                            disabled={busyAction}
+                            className="w-full rounded-full bg-gradient-to-r from-sky-500 to-cyan-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:from-sky-400 hover:to-cyan-400 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {busyAction ? "Saving resource..." : "Create resource"}
+                          </button>
+                    </CreateFlowSection>
+                  </form>
+                ) : (
+                  <div className="rounded-[28px] border border-amber-400/20 bg-[linear-gradient(180deg,rgba(245,158,11,0.12),rgba(15,23,42,0.6))] p-6 text-sm text-slate-300 ring-1 ring-amber-300/10">
+                    <div className="text-lg font-semibold text-white">Marketplace publishing is currently limited to approved service providers</div>
+                    <p className="mt-3 max-w-2xl leading-7 text-slate-300">
+                      {createResourceRequirementMessage || "You need an approved consultant or service provider profile before you can publish marketplace resources."}
+                    </p>
+                    <div className="mt-5">
+                      <Link href="/account?tab=consultants" className="inline-flex rounded-full border border-white/10 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
+                        Open consultant settings
+                      </Link>
+                    </div>
+                  </div>
+                )
               ) : (
-                <EmptyState title="No managed resources yet." body="Create a hosted pack or an external listing to start building your marketplace presence." />
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300 ring-1 ring-white/10">
+                    Open full editor on any card to update metadata, uploads, images, and status.
+                  </div>
+                  {myResources.length ? myResources.map((resource) => (
+                    <CreatedResourceCard
+                      key={resource.id}
+                      resource={resource}
+                      onEdit={beginEditResource}
+                      onSubmitForReview={handleSubmitForReview}
+                      onArchive={handleArchive}
+                    />
+                  )) : (
+                    <EmptyState title="No managed resources yet." body="Switch to Create resource to publish your first hosted pack or external listing." />
+                  )}
+                </div>
               )}
             </div>
           </SectionCard>
@@ -2551,22 +2870,92 @@ export default function MarketplacePageClient() {
                       </div>
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2">
-                      {request.status === "open" ? (
-                        <button type="button" onClick={() => updateRequestStatus(request.id, "claimed")} className="rounded-full border border-sky-300/25 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-100 transition hover:bg-sky-500/15">
-                          Claim request
-                        </button>
-                      ) : null}
-                      {request.status === "claimed" ? (
-                        <button type="button" onClick={() => updateRequestStatus(request.id, "completed")} className="rounded-full border border-emerald-300/25 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/15">
-                          Mark completed
-                        </button>
-                      ) : null}
-                      {(request.status === "open" || request.status === "claimed") ? (
+                      {request.requesterUserId === currentUserId && (request.status === "open" || request.status === "claimed") ? (
                         <button type="button" onClick={() => updateRequestStatus(request.id, "cancelled")} className="rounded-full border border-red-300/25 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-100 transition hover:bg-red-500/15">
                           Cancel
                         </button>
                       ) : null}
+                      {request.requesterUserId === currentUserId && request.status === "completed" ? (
+                        <button type="button" onClick={() => updateRequestStatus(request.id, "open")} className="rounded-full border border-white/15 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.08]">
+                          Reopen
+                        </button>
+                      ) : null}
                     </div>
+
+                    <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/28 p-4">
+                      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Responses</div>
+                      {(requestResponsesByRequestId[request.id] || []).length ? (
+                        <div className="space-y-2.5">
+                          {(requestResponsesByRequestId[request.id] || []).map((response) => (
+                            <div key={response.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="min-w-0">
+                                  <div className="line-clamp-1 text-sm font-semibold text-white">{response.resourceTitle || "Linked resource"}</div>
+                                  <div className="mt-1 text-xs text-slate-400">{response.responderUserId === currentUserId ? "Your response" : "Responder submission"}</div>
+                                </div>
+                                <Badge tone={statusTone(response.status)}>{response.status}</Badge>
+                              </div>
+                              {response.message ? <p className="mt-2 text-xs leading-5 text-slate-300">{response.message}</p> : null}
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {request.requesterUserId === currentUserId && response.status === "submitted" && request.status !== "cancelled" ? (
+                                  <button type="button" onClick={() => updateRequestResponse(request.id, response.id, "accept")} className="rounded-full border border-emerald-300/25 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500/15">
+                                    Accept response
+                                  </button>
+                                ) : null}
+                                {request.requesterUserId === currentUserId && response.status === "submitted" ? (
+                                  <button type="button" onClick={() => updateRequestResponse(request.id, response.id, "reject")} className="rounded-full border border-red-300/25 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-100 transition hover:bg-red-500/15">
+                                    Reject
+                                  </button>
+                                ) : null}
+                                {response.responderUserId === currentUserId && response.status === "submitted" ? (
+                                  <button type="button" onClick={() => updateRequestResponse(request.id, response.id, "withdraw")} className="rounded-full border border-white/15 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-white/[0.08]">
+                                    Withdraw
+                                  </button>
+                                ) : null}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-slate-400">No responses yet.</div>
+                      )}
+                    </div>
+
+                    {request.requesterUserId !== currentUserId && request.status !== "cancelled" && request.status !== "completed" ? (
+                      <div className="mt-4 rounded-2xl border border-sky-400/20 bg-sky-500/8 p-4">
+                        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-200">Respond with your resource</div>
+                        <div className="mt-3 space-y-3">
+                          <Select
+                            value={requestResponseDrafts[request.id]?.resourceId || ""}
+                            onChange={(event) => updateRequestResponseDraft(request.id, { resourceId: event.target.value })}
+                          >
+                            <option value="">Select one of your resources</option>
+                            {myResources.map((resource) => (
+                              <option key={resource.id} value={resource.id}>{resource.title}</option>
+                            ))}
+                          </Select>
+                          <TextArea
+                            rows={3}
+                            value={requestResponseDrafts[request.id]?.message || ""}
+                            onChange={(event) => updateRequestResponseDraft(request.id, { message: event.target.value })}
+                            placeholder="Optional note for the requester"
+                          />
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => submitRequestResponse(request)}
+                              disabled={busyAction}
+                              className="rounded-full border border-sky-300/30 bg-sky-500/12 px-4 py-2 text-sm font-semibold text-sky-100 transition hover:bg-sky-500/18 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Submit response
+                            </button>
+                            <Link href="/marketplace?tab=submit&submit=create" className="rounded-full border border-white/12 bg-white/[0.05] px-4 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08]">
+                              Need to upload first?
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
                   </article>
                 )) : <EmptyState title="No requests yet." body="Use requests to seed the marketplace with practical file demand before creators publish the finished asset." />}
               </div>

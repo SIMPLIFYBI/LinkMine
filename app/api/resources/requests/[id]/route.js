@@ -16,6 +16,7 @@ function mapRequestRow(row) {
     requesterUserId: row.requester_user_id,
     fulfillerUserId: row.fulfiller_user_id,
     fulfilledResourceId: row.fulfilled_resource_id,
+    acceptedResponseId: row.accepted_response_id,
     title: row.title,
     specifications: row.specifications,
     bountyCents: row.bounty_cents,
@@ -42,7 +43,7 @@ export async function GET(_req, { params }) {
 
   const { data, error } = await sb
     .from("resource_requests")
-    .select("id, requester_user_id, fulfiller_user_id, fulfilled_resource_id, title, specifications, bounty_cents, currency_code, status, created_at, updated_at, claimed_at, completed_at")
+    .select("id, requester_user_id, fulfiller_user_id, fulfilled_resource_id, accepted_response_id, title, specifications, bounty_cents, currency_code, status, created_at, updated_at, claimed_at, completed_at")
     .eq("id", id)
     .maybeSingle();
 
@@ -72,7 +73,7 @@ export async function PATCH(req, { params }) {
 
   const { data: existing, error: existingError } = await sb
     .from("resource_requests")
-    .select("id, requester_user_id, fulfiller_user_id, fulfilled_resource_id, title, specifications, bounty_cents, currency_code, status, claimed_at, completed_at")
+    .select("id, requester_user_id, fulfiller_user_id, fulfilled_resource_id, accepted_response_id, title, specifications, bounty_cents, currency_code, status, claimed_at, completed_at")
     .eq("id", id)
     .maybeSingle();
 
@@ -169,6 +170,8 @@ export async function PATCH(req, { params }) {
       }
       update.status = "open";
       update.fulfiller_user_id = null;
+      update.accepted_response_id = null;
+      update.fulfilled_resource_id = null;
       update.claimed_at = null;
       update.completed_at = null;
       if (fulfilledResourceId !== undefined) update.fulfilled_resource_id = fulfilledResourceId;
@@ -190,7 +193,7 @@ export async function PATCH(req, { params }) {
     .from("resource_requests")
     .update(update)
     .eq("id", id)
-    .select("id, requester_user_id, fulfiller_user_id, fulfilled_resource_id, title, specifications, bounty_cents, currency_code, status, created_at, updated_at, claimed_at, completed_at")
+    .select("id, requester_user_id, fulfiller_user_id, fulfilled_resource_id, accepted_response_id, title, specifications, bounty_cents, currency_code, status, created_at, updated_at, claimed_at, completed_at")
     .single();
 
   if (error) {
