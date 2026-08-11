@@ -741,7 +741,7 @@ function ScrollShelf({ title, subtitle, metaLabel, children }) {
       <div className="relative">
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-10 bg-gradient-to-r from-slate-950/50 to-transparent sm:block" />
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-10 bg-gradient-to-l from-slate-950/50 to-transparent sm:block" />
-        <div ref={railRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 py-5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-6">
+        <div ref={railRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 py-5 scroll-pl-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-4 sm:scroll-pl-4">
           {children}
         </div>
       </div>
@@ -768,9 +768,7 @@ function MarketplaceShelfCard({ resource }) {
       <div className="relative flex h-full flex-col justify-between p-4">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            {resource.status !== "approved" ? <Badge tone={statusTone(resource.status)}>{resource.status}</Badge> : null}
             <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/25" />
-            <span className="line-clamp-1 max-w-[120px] rounded-full border border-white/12 bg-slate-950/25 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-100/90">{resource.category?.name || "Resource"}</span>
           </div>
           <div className="mt-3 text-[10px] uppercase tracking-[0.22em] text-slate-200/78 sm:mt-4 sm:text-[11px] sm:tracking-[0.26em]">Marketplace pick</div>
           <Link href={detailHref} className={titleClassName}>
@@ -780,14 +778,7 @@ function MarketplaceShelfCard({ resource }) {
         </div>
 
         <div>
-          <div className="flex min-h-[28px] flex-nowrap items-center gap-2 overflow-hidden text-[11px] text-slate-100/76">
-            {(resource.tags || []).slice(0, 1).map((tag) => (
-              <span key={tag.id} className="max-w-[132px] truncate rounded-full border border-white/12 bg-slate-950/25 px-3 py-1 backdrop-blur-sm">
-                {tag.name}
-              </span>
-            ))}
-            <span className="shrink-0 rounded-full border border-white/12 bg-slate-950/25 px-3 py-1 backdrop-blur-sm">{resource.downloadCount || 0} downloads</span>
-          </div>
+          <div className="min-h-[28px] text-[11px] text-slate-100/76">{resource.downloadCount || 0} downloads</div>
           <div className="mt-3.5 flex items-center justify-between gap-2.5 sm:mt-4 sm:gap-3">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
@@ -1036,9 +1027,7 @@ function MobileHeroCard({ resource }) {
         />
         <div className="flex h-full flex-col justify-end">
           <div className="flex flex-wrap items-center gap-2">
-            {resource.status !== "approved" ? <Badge tone={statusTone(resource.status)}>{resource.status}</Badge> : null}
             <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/28" />
-            <span className="rounded-full border border-white/12 bg-slate-950/28 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-100/90">{resource.category?.name || "Resource"}</span>
           </div>
           <div className="mt-3.5 line-clamp-2 max-w-[13.5rem] text-[1.35rem] font-semibold leading-[1.08] text-white">{resource.title}</div>
           <p className="mt-2 max-w-[16rem] line-clamp-2 text-[13px] leading-5 text-slate-100/84">{resource.summary || resource.description || "Open the resource to review the full pack details."}</p>
@@ -2220,7 +2209,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
             ) : null}
           </div>
 
-          <div className="mt-3 min-w-0 lg:mt-0">
+          <div className={`${activeTab === "discover" && coverCollapsed ? "mt-0" : "mt-3"} min-w-0 lg:mt-0`}>
           {activeTab === "discover" ? (
             <section
               className={[
@@ -2450,9 +2439,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                     <div className="relative z-10 flex h-full flex-col justify-between gap-8 pt-16">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <Badge tone={statusTone(heroResource.status)}>{heroResource.status}</Badge>
                           <ResourceFormatChip format={heroResource.resourceFormat} />
-                          {heroResource.category?.name ? <Badge tone="border-sky-300/20 bg-sky-500/10 text-sky-100">{heroResource.category.name}</Badge> : null}
                         </div>
                         <div className="mt-6 max-w-[34rem]">
                           <div className="text-[11px] uppercase tracking-[0.28em] text-slate-200">Featured pack</div>
@@ -2465,9 +2452,6 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                           <div className="rounded-[18px] border border-white/10 bg-slate-950/24 px-3.5 py-2.5 text-sm text-slate-100 backdrop-blur-sm">
                             <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
                             <div className="mt-1 text-xs text-slate-300/80">{heroResource.downloadCount || 0} downloads</div>
-                          </div>
-                          <div className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-1.5 text-xs font-medium text-slate-100">
-                            {heroResource.resourceType === "external" ? (heroResource.sourceName || "External reference") : "Resource file"}
                           </div>
                         </div>
                         <Link href={`/marketplace/${heroResource.id}`} className="rounded-full bg-white px-4.5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 hover:shadow-[0_12px_24px_-14px_rgba(255,255,255,0.65)]">
@@ -2508,12 +2492,12 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
             </ScrollShelf>
             </div>
 
-            <div className="flex justify-center">
+            <div>
               <Link
                 href="/marketplace/resources"
-                className="inline-flex items-center rounded-full border border-sky-300/25 bg-sky-500/12 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-sky-100 transition hover:bg-sky-500/22"
+                className="flex w-full items-center justify-center rounded-2xl border border-sky-300/30 bg-[linear-gradient(135deg,rgba(14,165,233,0.24),rgba(6,182,212,0.18))] px-4 py-3 text-sm font-semibold text-sky-50 transition hover:bg-[linear-gradient(135deg,rgba(14,165,233,0.32),rgba(6,182,212,0.24))]"
               >
-                View all resources
+                Click here to view all Resources
               </Link>
             </div>
 

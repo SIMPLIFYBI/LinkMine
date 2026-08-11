@@ -2,6 +2,17 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import {
+  Apps24Regular,
+  BranchFork24Regular,
+  Code24Regular,
+  Document24Regular,
+  DocumentPdf24Regular,
+  DocumentText24Regular,
+  Globe24Regular,
+  SlideText24Regular,
+  TableSimple24Regular,
+} from "@fluentui/react-icons";
 import { useAuth } from "@/app/components/AuthProvider";
 
 const SORTABLE_COLUMNS = [
@@ -74,6 +85,96 @@ function categoryTheme(resource) {
 
 function classNames(parts) {
   return parts.filter(Boolean).join(" ");
+}
+
+const RESOURCE_FORMAT_LABELS = {
+  website: "Website",
+  repository: "Repository",
+  excel: "Excel",
+  word: "Word",
+  powerpoint: "PowerPoint",
+  script: "Script",
+  app: "App",
+  pdf: "PDF",
+  generic: "Resource",
+};
+
+const RESOURCE_FORMAT_ICONS = {
+  website: Globe24Regular,
+  repository: BranchFork24Regular,
+  excel: TableSimple24Regular,
+  word: DocumentText24Regular,
+  powerpoint: SlideText24Regular,
+  script: Code24Regular,
+  app: Apps24Regular,
+  pdf: DocumentPdf24Regular,
+  generic: Document24Regular,
+};
+
+const RESOURCE_FORMAT_THEME = {
+  website: {
+    chip: "border-cyan-300/30 bg-gradient-to-r from-cyan-500/25 to-sky-500/20 text-cyan-50",
+    iconWrap: "border-cyan-200/40 bg-cyan-300/20",
+    iconColor: "text-cyan-100",
+  },
+  repository: {
+    chip: "border-emerald-300/30 bg-gradient-to-r from-emerald-500/25 to-teal-500/20 text-emerald-50",
+    iconWrap: "border-emerald-200/40 bg-emerald-300/20",
+    iconColor: "text-emerald-100",
+  },
+  excel: {
+    chip: "border-green-300/30 bg-gradient-to-r from-green-500/25 to-lime-500/20 text-green-50",
+    iconWrap: "border-green-200/40 bg-green-300/20",
+    iconColor: "text-green-100",
+  },
+  word: {
+    chip: "border-blue-300/30 bg-gradient-to-r from-blue-500/25 to-indigo-500/20 text-blue-50",
+    iconWrap: "border-blue-200/40 bg-blue-300/20",
+    iconColor: "text-blue-100",
+  },
+  powerpoint: {
+    chip: "border-orange-300/30 bg-gradient-to-r from-orange-500/25 to-amber-500/20 text-orange-50",
+    iconWrap: "border-orange-200/40 bg-orange-300/20",
+    iconColor: "text-orange-100",
+  },
+  script: {
+    chip: "border-violet-300/30 bg-gradient-to-r from-violet-500/25 to-fuchsia-500/20 text-violet-50",
+    iconWrap: "border-violet-200/40 bg-violet-300/20",
+    iconColor: "text-violet-100",
+  },
+  app: {
+    chip: "border-pink-300/30 bg-gradient-to-r from-pink-500/25 to-rose-500/20 text-pink-50",
+    iconWrap: "border-pink-200/40 bg-pink-300/20",
+    iconColor: "text-pink-100",
+  },
+  pdf: {
+    chip: "border-red-300/30 bg-gradient-to-r from-red-500/25 to-rose-500/20 text-red-50",
+    iconWrap: "border-red-200/40 bg-red-300/20",
+    iconColor: "text-red-100",
+  },
+  generic: {
+    chip: "border-slate-300/30 bg-gradient-to-r from-slate-600/35 to-slate-500/20 text-slate-100",
+    iconWrap: "border-slate-200/35 bg-slate-300/20",
+    iconColor: "text-slate-100",
+  },
+};
+
+function ResourceFormatGlyph({ format, className = "h-3.5 w-3.5" }) {
+  const Icon = RESOURCE_FORMAT_ICONS[format] || RESOURCE_FORMAT_ICONS.generic;
+  return <Icon aria-hidden="true" className={className} />;
+}
+
+function ResourceFormatChip({ format, className = "" }) {
+  const safeFormat = format || "generic";
+  const theme = RESOURCE_FORMAT_THEME[safeFormat] || RESOURCE_FORMAT_THEME.generic;
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${className} ${theme.chip}`}>
+      <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full border ${theme.iconWrap}`}>
+        <ResourceFormatGlyph format={safeFormat} className={`h-3.5 w-3.5 ${theme.iconColor}`} />
+      </span>
+      <span>{RESOURCE_FORMAT_LABELS[safeFormat] || RESOURCE_FORMAT_LABELS.generic}</span>
+    </span>
+  );
 }
 
 function hashSeed(value) {
@@ -586,81 +687,95 @@ export default function ResourcesTablePageClient() {
           </div>
 
           <div className="space-y-6">
-        <div className="relative overflow-hidden rounded-[32px] border border-white/12 bg-[linear-gradient(140deg,rgba(10,20,38,0.95),rgba(15,31,53,0.92)_45%,rgba(8,47,73,0.78))] px-6 py-6 shadow-[0_42px_120px_-72px_rgba(2,6,23,0.95)] ring-1 ring-white/10 sm:px-8 sm:py-8">
-          <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-cyan-300/20 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-14 -left-14 h-52 w-52 rounded-full bg-sky-500/20 blur-3xl" />
 
-          <div className="relative z-10 flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <div className="text-[11px] uppercase tracking-[0.24em] text-slate-300/90">Marketplace Index</div>
-              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">View All Resources</h1>
-              <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-200/85">
-                A high-speed index of marketplace resources with powerful filters, server-side sorting, and pagination.
-              </p>
-            </div>
+        <section className="sticky top-[calc(56px+env(safe-area-inset-top))] z-20 -mx-4 border-y border-white/12 bg-[linear-gradient(170deg,rgba(2,6,23,0.94),rgba(15,23,42,0.9)_46%,rgba(30,41,59,0.86)_100%)] px-4 py-2.5 shadow-[0_20px_48px_-34px_rgba(15,23,42,0.88)] backdrop-blur-2xl sm:mx-0 sm:rounded-2xl sm:border sm:px-3 sm:py-3 md:hidden">
+          <div className="flex w-full items-center gap-2">
+            <div className="flex min-w-0 flex-1 items-center rounded-full border border-white/15 bg-slate-950/62 px-2.5 py-1.5">
+              <div className="relative min-w-0 flex-1">
+                <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-1.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.5-3.5" />
+                </svg>
+                <input
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
+                  placeholder="Search resources"
+                  className="h-7 w-full bg-transparent pl-7 pr-2 text-[13px] text-slate-100 placeholder:text-slate-300/80 outline-none"
+                />
+              </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href="/marketplace"
-                className="rounded-full border border-white/20 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.12]"
-              >
-                Back to marketplace
-              </Link>
+              <div className="mx-1 h-5 w-px bg-white/18" />
+
+              <div className="relative w-[8.9rem]">
+                <select
+                  value={filters.categoryId}
+                  onChange={(event) => updateFilter("categoryId", event.target.value)}
+                  className="h-7 w-full appearance-none bg-transparent pl-2 pr-6 text-[12px] font-semibold text-slate-100 outline-none"
+                  aria-label="Filter by category"
+                >
+                  {categoryOptions.map((category) => (
+                    <option key={category.id || "all"} value={category.id}>{category.name}</option>
+                  ))}
+                </select>
+                <svg viewBox="0 0 20 20" aria-hidden="true" className="pointer-events-none absolute right-1.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-300" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m5.5 7.5 4.5 5 4.5-5" />
+                </svg>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
         <section className="rounded-[28px] border border-white/10 bg-slate-950/45 p-4 ring-1 ring-white/10 sm:p-5">
           <div className="hidden gap-3 md:grid md:grid-cols-2 xl:grid-cols-5">
-            <label className="xl:col-span-2">
-              <span className="mb-1.5 block text-xs uppercase tracking-[0.16em] text-slate-400">Search</span>
-              <input
-                value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
-                placeholder="Title, summary, description"
-                className="h-10 w-full rounded-xl border border-white/12 bg-slate-950/55 px-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-sky-300/45 focus:ring-2 focus:ring-sky-400/20"
-              />
-            </label>
+              <label className="xl:col-span-2">
+                <span className="mb-1.5 block text-xs uppercase tracking-[0.16em] text-slate-400">Search</span>
+                <input
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
+                  placeholder="Title, summary, description"
+                  className="h-10 w-full rounded-xl border border-white/12 bg-slate-950/55 px-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-sky-300/45 focus:ring-2 focus:ring-sky-400/20"
+                />
+              </label>
 
-            <label>
-              <span className="mb-1.5 block text-xs uppercase tracking-[0.16em] text-slate-400">Type</span>
-              <select
-                value={filters.type}
-                onChange={(event) => updateFilter("type", event.target.value)}
-                className="h-10 w-full rounded-xl border border-white/12 bg-slate-950/55 px-3 text-sm text-white outline-none transition focus:border-sky-300/45 focus:ring-2 focus:ring-sky-400/20"
-              >
-                {RESOURCE_TYPE_OPTIONS.map((option) => (
-                  <option key={option.value || "all"} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </label>
+              <label>
+                <span className="mb-1.5 block text-xs uppercase tracking-[0.16em] text-slate-400">Type</span>
+                <select
+                  value={filters.type}
+                  onChange={(event) => updateFilter("type", event.target.value)}
+                  className="h-10 w-full rounded-xl border border-white/12 bg-slate-950/55 px-3 text-sm text-white outline-none transition focus:border-sky-300/45 focus:ring-2 focus:ring-sky-400/20"
+                >
+                  {RESOURCE_TYPE_OPTIONS.map((option) => (
+                    <option key={option.value || "all"} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
 
-            <label>
-              <span className="mb-1.5 block text-xs uppercase tracking-[0.16em] text-slate-400">Category</span>
-              <select
-                value={filters.categoryId}
-                onChange={(event) => updateFilter("categoryId", event.target.value)}
-                className="h-10 w-full rounded-xl border border-white/12 bg-slate-950/55 px-3 text-sm text-white outline-none transition focus:border-sky-300/45 focus:ring-2 focus:ring-sky-400/20"
-              >
-                {categoryOptions.map((category) => (
-                  <option key={category.id || "all"} value={category.id}>{category.name}</option>
-                ))}
-              </select>
-            </label>
+              <label>
+                <span className="mb-1.5 block text-xs uppercase tracking-[0.16em] text-slate-400">Category</span>
+                <select
+                  value={filters.categoryId}
+                  onChange={(event) => updateFilter("categoryId", event.target.value)}
+                  className="h-10 w-full rounded-xl border border-white/12 bg-slate-950/55 px-3 text-sm text-white outline-none transition focus:border-sky-300/45 focus:ring-2 focus:ring-sky-400/20"
+                >
+                  {categoryOptions.map((category) => (
+                    <option key={category.id || "all"} value={category.id}>{category.name}</option>
+                  ))}
+                </select>
+              </label>
 
-            <label>
-              <span className="mb-1.5 block text-xs uppercase tracking-[0.16em] text-slate-400">Rows</span>
-              <select
-                value={filters.limit}
-                onChange={(event) => updateFilter("limit", Number(event.target.value) || 25)}
-                className="h-10 w-full rounded-xl border border-white/12 bg-slate-950/55 px-3 text-sm text-white outline-none transition focus:border-sky-300/45 focus:ring-2 focus:ring-sky-400/20"
-              >
-                {PAGE_SIZE_OPTIONS.map((size) => (
-                  <option key={size} value={size}>{size} / page</option>
-                ))}
-              </select>
-            </label>
-          </div>
+              <label>
+                <span className="mb-1.5 block text-xs uppercase tracking-[0.16em] text-slate-400">Rows</span>
+                <select
+                  value={filters.limit}
+                  onChange={(event) => updateFilter("limit", Number(event.target.value) || 25)}
+                  className="h-10 w-full rounded-xl border border-white/12 bg-slate-950/55 px-3 text-sm text-white outline-none transition focus:border-sky-300/45 focus:ring-2 focus:ring-sky-400/20"
+                >
+                  {PAGE_SIZE_OPTIONS.map((size) => (
+                    <option key={size} value={size}>{size} / page</option>
+                  ))}
+                </select>
+              </label>
+            </div>
 
           <div className="mt-4 space-y-3">
             <div className="hidden flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/45 px-3 py-2.5 md:flex">
@@ -750,15 +865,7 @@ export default function ResourcesTablePageClient() {
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div className="min-w-0 flex-1 pr-28 sm:pr-0">
                               <div className="mb-2 flex flex-wrap items-center gap-2">
-                                <span
-                                  className="rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em]"
-                                  style={theme.pillStyle}
-                                >
-                                  {toDisplayLabel(resource.resourceType, "Unknown")}
-                                </span>
-                                <span className="rounded-full border border-white/14 bg-white/[0.05] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-200">
-                                  {toDisplayLabel(resource.resourceFormat, "Generic")}
-                                </span>
+                                <ResourceFormatChip format={resource.resourceFormat} />
                                 <span className="rounded-full border border-white/14 bg-white/[0.05] px-2.5 py-1 text-[11px] text-slate-300">
                                   {resource.category?.name || "Uncategorized"}
                                 </span>
