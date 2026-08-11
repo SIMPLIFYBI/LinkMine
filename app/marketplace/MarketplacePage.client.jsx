@@ -2115,7 +2115,17 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
           </div>
         </aside>
 
-        <div className="min-w-0 flex-1 px-4 pb-6 pt-0 sm:px-6 sm:pb-6 sm:pt-0 lg:px-6 lg:py-7 xl:px-8">
+        <div className="relative min-w-0 flex-1 px-4 pb-6 pt-0 sm:px-6 sm:pb-6 sm:pt-0 lg:px-6 lg:py-7 xl:px-8">
+          {activeTab === "discover" ? (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 -z-10"
+              style={{
+                background:
+                  "radial-gradient(circle at 12% 14%, rgba(56,189,248,0.22), transparent 28%), radial-gradient(circle at 86% 10%, rgba(34,211,238,0.16), transparent 30%), radial-gradient(circle at 52% 74%, rgba(244,114,182,0.1), transparent 36%), linear-gradient(180deg, rgba(2,6,23,0.94) 0%, rgba(10,18,36,0.92) 36%, rgba(12,23,43,0.9) 62%, rgba(15,23,42,0.92) 100%)",
+              }}
+            />
+          ) : null}
           <div className="lg:hidden">
             <button
               type="button"

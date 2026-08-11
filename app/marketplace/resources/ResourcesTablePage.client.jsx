@@ -164,13 +164,13 @@ function ResourceFormatGlyph({ format, className = "h-3.5 w-3.5" }) {
   return <Icon aria-hidden="true" className={className} />;
 }
 
-function ResourceFormatChip({ format, className = "" }) {
+function ResourceFormatChip({ format, className = "", compact = false }) {
   const safeFormat = format || "generic";
   const theme = RESOURCE_FORMAT_THEME[safeFormat] || RESOURCE_FORMAT_THEME.generic;
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${className} ${theme.chip}`}>
-      <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full border ${theme.iconWrap}`}>
-        <ResourceFormatGlyph format={safeFormat} className={`h-3.5 w-3.5 ${theme.iconColor}`} />
+    <span className={`inline-flex items-center gap-1.5 rounded-full border font-semibold ${compact ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-[11px]"} ${className} ${theme.chip}`}>
+      <span className={`inline-flex items-center justify-center rounded-full border ${compact ? "h-4 w-4" : "h-5 w-5"} ${theme.iconWrap}`}>
+        <ResourceFormatGlyph format={safeFormat} className={`${compact ? "h-3 w-3" : "h-3.5 w-3.5"} ${theme.iconColor}`} />
       </span>
       <span>{RESOURCE_FORMAT_LABELS[safeFormat] || RESOURCE_FORMAT_LABELS.generic}</span>
     </span>
@@ -862,22 +862,18 @@ export default function ResourcesTablePageClient() {
                         />
 
                         <div className="relative z-10 h-full">
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div className="min-w-0 flex-1 pr-28 sm:pr-0">
-                              <div className="mb-2 flex flex-wrap items-center gap-2">
-                                <ResourceFormatChip format={resource.resourceFormat} />
-                                <span className="rounded-full border border-white/14 bg-white/[0.05] px-2.5 py-1 text-[11px] text-slate-300">
-                                  {resource.category?.name || "Uncategorized"}
-                                </span>
-                              </div>
-
-                              <h2 className="line-clamp-3 text-base font-semibold tracking-tight text-white sm:text-xl">{resource.title || "Untitled resource"}</h2>
-                              <p className="mt-1.5 line-clamp-2 text-sm leading-5 text-slate-300/90">
-                                {summary || "Open this resource to view full details, attachments, and usage guidance."}
-                              </p>
+                          <div className="min-w-0 pr-28 sm:pr-0">
+                            <h2 className="line-clamp-3 text-lg font-bold tracking-tight text-white sm:text-2xl">{resource.title || "Untitled resource"}</h2>
+                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                              <ResourceFormatChip format={resource.resourceFormat} compact />
+                              <span className="rounded-full border border-white/14 bg-white/[0.05] px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-slate-300">
+                                {resource.category?.name || "Uncategorized"}
+                              </span>
                             </div>
+                            <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-300/85 sm:text-[13px]">
+                              {summary || "Open this resource to view full details, attachments, and usage guidance."}
+                            </p>
                           </div>
-
                         </div>
 
                         {leadImage ? (
@@ -912,7 +908,7 @@ export default function ResourcesTablePageClient() {
 
                         <Link
                           href={detailHref}
-                          className="absolute right-3 top-3 z-30 inline-flex items-center rounded-[10px] border border-sky-300/65 bg-sky-400 px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-950 transition hover:bg-sky-300"
+                          className="absolute right-3 top-3 z-30 inline-flex items-center rounded-[10px] border border-sky-300/65 bg-sky-400 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-950 transition hover:bg-sky-300"
                         >
                           Open resource
                         </Link>
