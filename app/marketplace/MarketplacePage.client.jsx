@@ -26,8 +26,6 @@ const DEFAULT_RESOURCE_FORM = {
   description: "",
   sourceName: "",
   sourceUrl: "",
-  licenseName: "",
-  licenseUrl: "",
   tagIds: [],
   submitForReview: false,
 };
@@ -1881,8 +1879,6 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
             description: resourceForm.description,
             sourceName: resourceForm.sourceName,
             sourceUrl: resourceForm.sourceUrl,
-            licenseName: resourceForm.licenseName,
-            licenseUrl: resourceForm.licenseUrl,
             tagIds: resourceForm.tagIds,
             status: resourceForm.submitForReview ? "pending" : "draft",
           },
@@ -2678,17 +2674,9 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                       <CreateFlowSection
                         step="4"
                         title="Finalize discovery and publish settings"
-                        subtitle="Set optional license details and submission preference."
+                        subtitle="Choose your submission preference and publish settings."
                         showCompleteToggle={false}
                       >
-                          <div className="grid gap-5 md:grid-cols-2">
-                            <Field label="License name">
-                              <TextInput value={resourceForm.licenseName} onChange={(event) => setResourceForm((prev) => ({ ...prev, licenseName: event.target.value }))} placeholder="Internal use only" />
-                            </Field>
-                            <Field label="License URL">
-                              <TextInput value={resourceForm.licenseUrl} onChange={(event) => setResourceForm((prev) => ({ ...prev, licenseUrl: event.target.value }))} placeholder="https://..." />
-                            </Field>
-                          </div>
                           <label className="flex items-start gap-3 rounded-[20px] border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-300">
                             <input
                               type="checkbox"

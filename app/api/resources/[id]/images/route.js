@@ -338,7 +338,7 @@ export async function PATCH(req, { params }) {
 
   const { data: existingRows, error: existingError } = await sb
     .from("resource_images")
-    .select("id")
+    .select("id, resource_id, bucket_name, object_path, original_filename, mime_type, size_bytes, uploaded_by")
     .eq("resource_id", id)
     .order("sort_order", { ascending: true });
 
@@ -360,30 +360,28 @@ export async function PATCH(req, { params }) {
     return NextResponse.json({ ok: false, error: "imageIds contains an image that does not belong to this resource." }, { status: 400 });
   }
 
-  for (let index = 0; index < imageIds.length; index += 1) {
-    const imageId = imageIds[index];
-    const { error: tempOrderError } = await sb
-      .from("resource_images")
-      .update({ sort_order: 100 + index })
-      .eq("resource_id", id)
-      .eq("id", imageId);
+  const rowById = new Map((existingRows || []).map((row) => [row.id, row]));
+  const reorderedRows = imageIds.map((imageId, index) => {
+    const row = rowById.get(imageId);
+    return {
+      id: row.id,
+      resource_id: row.resource_id,
+      bucket_name: row.bucket_name,
+      object_path: row.object_path,
+      original_filename: row.original_filename,
+      mime_type: row.mime_type,
+      size_bytes: row.size_bytes,
+      uploaded_by: row.uploaded_by,
+      sort_order: index,
+    };
+  });
 
-    if (tempOrderError) {
-      return NextResponse.json({ ok: false, error: tempOrderError.message }, { status: 400 });
-    }
-  }
+  const { error: reorderError } = await sb
+    .from("resource_images")
+    .upsert(reorderedRows, { onConflict: "id" });
 
-  for (let index = 0; index < imageIds.length; index += 1) {
-    const imageId = imageIds[index];
-    const { error: finalOrderError } = await sb
-      .from("resource_images")
-      .update({ sort_order: index })
-      .eq("resource_id", id)
-      .eq("id", imageId);
-
-    if (finalOrderError) {
-      return NextResponse.json({ ok: false, error: finalOrderError.message }, { status: 400 });
-    }
+  if (reorderError) {
+    return NextResponse.json({ ok: false, error: reorderError.message }, { status: 400 });
   }
 
   return NextResponse.json({ ok: true, imageIds });

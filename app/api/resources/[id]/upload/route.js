@@ -122,7 +122,17 @@ export async function POST(req, { params }) {
     return NextResponse.json({ ok: false, error: assetError.message }, { status: 400 });
   }
 
-  await sb.from("resources").update({ estimated_size_bytes: file.size }).eq("id", id);
+  const resourceUpdate = { estimated_size_bytes: file.size };
+  if (resource.status === "approved") {
+    resourceUpdate.status = "pending";
+    resourceUpdate.submitted_at = new Date().toISOString();
+    resourceUpdate.approved_at = null;
+    resourceUpdate.approved_by = null;
+    resourceUpdate.rejected_at = null;
+    resourceUpdate.rejection_notes = null;
+  }
+
+  await sb.from("resources").update(resourceUpdate).eq("id", id);
 
   return NextResponse.json({ ok: true, asset });
 }

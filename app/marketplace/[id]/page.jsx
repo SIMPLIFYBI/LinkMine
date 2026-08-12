@@ -177,13 +177,6 @@ export default async function MarketplaceResourcePage({ params }) {
         <section className="overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_35px_120px_-60px_rgba(0,0,0,0.9)] ring-1 ring-white/10">
           <div className="grid gap-8 px-6 py-7 sm:px-8 lg:grid-cols-[1.2fr,0.8fr] lg:px-10 lg:py-10">
             <div>
-              {resourceImages.length ? (
-                <div className="mb-5 space-y-2">
-                  <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Preview images</div>
-                  <ResourceImageCarousel images={resourceImages} />
-                </div>
-              ) : null}
-
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
                 <ResourceFormatChip format={resource.resourceFormat} />
@@ -195,6 +188,13 @@ export default async function MarketplaceResourcePage({ params }) {
               <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
                 {resource.description || resource.summary || "No description has been added for this resource yet."}
               </p>
+
+              {resourceImages.length ? (
+                <div className="mt-5 space-y-2">
+                  <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Preview images</div>
+                  <ResourceImageCarousel images={resourceImages} />
+                </div>
+              ) : null}
 
               {resource.tags?.length ? (
                 <div className="mt-5 flex flex-wrap gap-2">

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatResourceBytes } from "@/lib/resourceHub";
 import { RESOURCE_LAUNCH_LIMITS } from "@/lib/resourceHub";
@@ -116,7 +116,7 @@ function buildForm(resource) {
   };
 }
 
-export default function EditResourcePageClient({ initialResource, categories, tags, consultantOptions = [], initialImages = [] }) {
+export default function EditResourcePageClient({ initialResource, categories, consultantOptions = [], initialImages = [] }) {
   const router = useRouter();
   const [busy, startBusy] = useTransition();
   const [error, setError] = useState("");
@@ -127,17 +127,6 @@ export default function EditResourcePageClient({ initialResource, categories, ta
   const [resourceImages, setResourceImages] = useState(Array.isArray(initialImages) ? initialImages : []);
   const [pendingImageFiles, setPendingImageFiles] = useState([]);
   const [dragImageId, setDragImageId] = useState("");
-
-  const selectedTagCount = useMemo(() => form.tagIds.length, [form.tagIds]);
-
-  function toggleTag(tagId) {
-    setForm((prev) => ({
-      ...prev,
-      tagIds: prev.tagIds.includes(tagId)
-        ? prev.tagIds.filter((id) => id !== tagId)
-        : [...prev.tagIds, tagId],
-    }));
-  }
 
   function resetMessages() {
     setError("");
@@ -166,6 +155,14 @@ export default function EditResourcePageClient({ initialResource, categories, ta
       try {
         validate();
 
+        const nextStatus = submitForReview
+          ? "pending"
+          : form.status === "pending"
+            ? "pending"
+            : form.status === "draft"
+              ? "draft"
+              : undefined;
+
         const updateBody = {
           resource: {
             title: form.title,
@@ -181,7 +178,7 @@ export default function EditResourcePageClient({ initialResource, categories, ta
             licenseName: form.licenseName,
             licenseUrl: form.licenseUrl,
             tagIds: form.tagIds,
-            status: submitForReview ? "pending" : form.status === "pending" ? "pending" : "draft",
+            status: nextStatus,
           },
         };
 
@@ -347,20 +344,18 @@ export default function EditResourcePageClient({ initialResource, categories, ta
 
   function movePreviewImage(imageId, direction) {
     resetMessages();
-    setResourceImages((prev) => {
-      const ordered = sortImages(prev);
-      const fromIndex = ordered.findIndex((image) => image.id === imageId);
-      if (fromIndex < 0) return prev;
-      const toIndex = fromIndex + direction;
-      if (toIndex < 0 || toIndex >= ordered.length) return prev;
+    const ordered = sortImages(resourceImages);
+    const fromIndex = ordered.findIndex((image) => image.id === imageId);
+    if (fromIndex < 0) return;
+    const toIndex = fromIndex + direction;
+    if (toIndex < 0 || toIndex >= ordered.length) return;
 
-      const next = [...ordered];
-      const [moved] = next.splice(fromIndex, 1);
-      next.splice(toIndex, 0, moved);
-      const reindexed = reindexImages(next);
-      persistImageOrder(reindexed);
-      return reindexed;
-    });
+    const next = [...ordered];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    const reindexed = reindexImages(next);
+    setResourceImages(reindexed);
+    persistImageOrder(reindexed);
   }
 
   function handleImageDragStart(imageId) {
@@ -374,19 +369,20 @@ export default function EditResourcePageClient({ initialResource, categories, ta
     }
 
     resetMessages();
-    setResourceImages((prev) => {
-      const ordered = sortImages(prev);
-      const fromIndex = ordered.findIndex((image) => image.id === dragImageId);
-      const toIndex = ordered.findIndex((image) => image.id === targetImageId);
-      if (fromIndex < 0 || toIndex < 0) return prev;
+    const ordered = sortImages(resourceImages);
+    const fromIndex = ordered.findIndex((image) => image.id === dragImageId);
+    const toIndex = ordered.findIndex((image) => image.id === targetImageId);
+    if (fromIndex < 0 || toIndex < 0) {
+      setDragImageId("");
+      return;
+    }
 
-      const next = [...ordered];
-      const [moved] = next.splice(fromIndex, 1);
-      next.splice(toIndex, 0, moved);
-      const reindexed = reindexImages(next);
-      persistImageOrder(reindexed);
-      return reindexed;
-    });
+    const next = [...ordered];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    const reindexed = reindexImages(next);
+    setResourceImages(reindexed);
+    persistImageOrder(reindexed);
 
     setDragImageId("");
   }
@@ -601,27 +597,6 @@ export default function EditResourcePageClient({ initialResource, categories, ta
                     <TextInput value={form.licenseUrl} onChange={(event) => setForm((prev) => ({ ...prev, licenseUrl: event.target.value }))} />
                   </Field>
                 </div>
-
-                <Field label="Tags" hint={`${selectedTagCount} selected`}>
-                  <div className="flex flex-wrap gap-2">
-                    {tags.map((tag) => {
-                      const active = form.tagIds.includes(tag.id);
-                      return (
-                        <button
-                          key={tag.id}
-                          type="button"
-                          onClick={() => toggleTag(tag.id)}
-                          className={[
-                            "rounded-full border px-3 py-1.5 text-sm transition",
-                            active ? "border-sky-300/30 bg-sky-500/10 text-sky-100" : "border-white/10 bg-white/[0.04] text-slate-300",
-                          ].join(" ")}
-                        >
-                          {tag.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </Field>
 
                 <div className="flex flex-wrap gap-2 pt-2">
                   <button type="submit" disabled={busy} className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60">

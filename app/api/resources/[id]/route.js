@@ -78,7 +78,7 @@ export async function PATCH(req, { params }) {
 
   const { data: existing, error: existingError } = await sb
     .from("resources")
-    .select("id, owner_user_id, resource_type, status, consultant_id")
+    .select("id, owner_user_id, resource_type, status, consultant_id, source_url")
     .eq("id", id)
     .maybeSingle();
 
@@ -183,6 +183,24 @@ export async function PATCH(req, { params }) {
     } else {
       update.source_url = null;
     }
+  }
+
+  // If an approved resource changes delivery source details, force it back to review.
+  const currentSourceUrl = cleanNullableText(existing.source_url);
+  const resolvedNextSourceUrl = nextType === "external"
+    ? (sourceUrl !== undefined ? sourceUrl : currentSourceUrl)
+    : null;
+  const sourceConfigChanged =
+    nextType !== existing.resource_type ||
+    (nextType === "external" && resolvedNextSourceUrl !== currentSourceUrl);
+
+  if (existing.status === "approved" && requestedStatus === undefined && sourceConfigChanged) {
+    update.status = "pending";
+    update.submitted_at = new Date().toISOString();
+    update.approved_at = null;
+    update.approved_by = null;
+    update.rejected_at = null;
+    update.rejection_notes = null;
   }
 
   if (requestedStatus !== undefined) {
