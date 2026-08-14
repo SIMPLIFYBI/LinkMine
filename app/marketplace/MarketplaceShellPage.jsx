@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import MarketplacePageClient from "./MarketplacePage.client.jsx";
 
-export default function MarketplaceShellPage({ initialTab = "discover", fallbackLabel = "Loading marketplace..." }) {
+export default function MarketplaceShellPage({ initialTab = "discover", fallbackLabel = "Loading vault..." }) {
   return (
     <Suspense
       fallback={

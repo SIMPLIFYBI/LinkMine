@@ -5,8 +5,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "All Marketplace Resources",
-  description: "View marketplace resources in a sortable, filterable table with fast pagination.",
+  title: "All Vault Resources",
+  description: "View vault resources in a sortable, filterable table with fast pagination.",
 };
 
 export default function MarketplaceResourcesPage() {

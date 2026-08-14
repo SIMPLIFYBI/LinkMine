@@ -45,6 +45,38 @@ const LIBRARY_SELECT = `
   resource_assets ( id, bucket_name, object_path, original_filename, file_ext, mime_type, size_bytes, version_no, is_current, created_at )
 `;
 
+const LIBRARY_SELECT_LIGHT = `
+  id,
+  owner_user_id,
+  consultant_id,
+  category_id,
+  title,
+  slug,
+  summary,
+  description,
+  resource_type,
+  resource_format,
+  status,
+  source_name,
+  source_url,
+  license_name,
+  license_url,
+  estimated_size_bytes,
+  price_cents,
+  currency_code,
+  download_count,
+  is_featured,
+  submitted_at,
+  approved_at,
+  approved_by,
+  rejected_at,
+  rejection_notes,
+  created_at,
+  updated_at,
+  resource_categories ( id, name, slug ),
+  resource_tag_links ( resource_tags ( id, name, slug ) )
+`;
+
 export async function GET(req) {
   return timedRoute("resources.account", async () => {
     const sb = await supabaseServerClient();
@@ -55,6 +87,9 @@ export async function GET(req) {
 
     const requestUrl = new URL(req.url);
     const incomingParams = requestUrl.searchParams;
+    const includeCommerce = incomingParams.get("includeCommerce") !== "0";
+    const includeTags = incomingParams.get("includeTags") !== "0";
+    const includeAssets = incomingParams.get("includeAssets") !== "0";
 
     function sectionLimit(name, defaultLimit, maxLimit) {
       const sectionUrl = new URL("http://localhost");
@@ -70,6 +105,7 @@ export async function GET(req) {
     const ordersLimit = sectionLimit("orders", 80, 200);
     const payoutLedgerLimit = sectionLimit("payoutLedger", 120, 300);
     const tagsLimit = sectionLimit("tags", 80, 200);
+    const librarySelect = includeAssets ? LIBRARY_SELECT : LIBRARY_SELECT_LIGHT;
 
     const entitlementQuery = sb
       .from("resource_entitlements")
@@ -79,7 +115,7 @@ export async function GET(req) {
 
     const ownedResourcesQuery = sb
       .from("resources")
-      .select(LIBRARY_SELECT)
+      .select(librarySelect)
       .eq("owner_user_id", userId)
       .neq("status", "archived")
       .order("updated_at", { ascending: false })
@@ -92,33 +128,44 @@ export async function GET(req) {
       .order("created_at", { ascending: false })
       .limit(createdLimit + 1);
 
-    let ordersQuery = sb
-      .from("resource_orders")
-      .select(RESOURCE_ORDER_SELECT)
-      .order("created_at", { ascending: false })
-      .limit(ordersLimit + 1);
-    if (!isAdmin) {
-      ordersQuery = ordersQuery.eq("buyer_user_id", userId);
-    }
+    const ordersPromise = includeCommerce
+      ? (async () => {
+          let ordersQuery = sb
+            .from("resource_orders")
+            .select(RESOURCE_ORDER_SELECT)
+            .order("created_at", { ascending: false })
+            .limit(ordersLimit + 1);
+          if (!isAdmin) {
+            ordersQuery = ordersQuery.eq("buyer_user_id", userId);
+          }
+          return ordersQuery;
+        })()
+      : Promise.resolve({ data: [], error: null });
 
-    const payoutAccountQuery = sb
-      .from("resource_payout_accounts")
-      .select("id, user_id, provider, provider_account_id, status, country_code, currency_code, details, created_at, updated_at")
-      .eq("user_id", userId)
-      .maybeSingle();
+    const payoutAccountPromise = includeCommerce
+      ? sb
+        .from("resource_payout_accounts")
+        .select("id, user_id, provider, provider_account_id, status, country_code, currency_code, details, created_at, updated_at")
+        .eq("user_id", userId)
+        .maybeSingle()
+      : Promise.resolve({ data: null, error: null });
 
-    const payoutLedgerQuery = sb
-      .from("resource_payout_ledger")
-      .select("id, order_item_id, seller_user_id, payout_account_id, entry_type, status, gross_cents, platform_fee_cents, net_cents, currency_code, available_at, paid_at, metadata, created_at, updated_at")
-      .eq("seller_user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(payoutLedgerLimit + 1);
+    const payoutLedgerPromise = includeCommerce
+      ? sb
+        .from("resource_payout_ledger")
+        .select("id, order_item_id, seller_user_id, payout_account_id, entry_type, status, gross_cents, platform_fee_cents, net_cents, currency_code, available_at, paid_at, metadata, created_at, updated_at")
+        .eq("seller_user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(payoutLedgerLimit + 1)
+      : Promise.resolve({ data: [], error: null });
 
-    const tagsQuery = sb
-      .from("resource_tags")
-      .select("id, name, slug")
-      .order("name", { ascending: true })
-      .limit(tagsLimit + 1);
+    const tagsPromise = includeTags
+      ? sb
+        .from("resource_tags")
+        .select("id, name, slug")
+        .order("name", { ascending: true })
+        .limit(tagsLimit + 1)
+      : Promise.resolve({ data: [], error: null });
 
     const [
       entitlementResult,
@@ -132,10 +179,10 @@ export async function GET(req) {
       entitlementQuery,
       ownedResourcesQuery,
       myResourcesQuery,
-      ordersQuery,
-      payoutAccountQuery,
-      payoutLedgerQuery,
-      tagsQuery,
+      ordersPromise,
+      payoutAccountPromise,
+      payoutLedgerPromise,
+      tagsPromise,
     ]);
 
     if (entitlementResult.error) {
@@ -167,7 +214,7 @@ export async function GET(req) {
     if (entitledIds.length) {
       const entitledResult = await sb
         .from("resources")
-        .select(LIBRARY_SELECT)
+        .select(librarySelect)
         .in("id", entitledIds)
         .eq("status", "approved")
         .order("updated_at", { ascending: false })
@@ -216,7 +263,7 @@ export async function GET(req) {
           },
           row.resource_tag_links || []
         ),
-        currentAsset: Array.isArray(row.resource_assets)
+        currentAsset: includeAssets && Array.isArray(row.resource_assets)
           ? row.resource_assets.find((asset) => asset.is_current) || null
           : null,
         ownedByUser: row.owner_user_id === userId,

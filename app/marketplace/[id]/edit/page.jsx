@@ -29,7 +29,7 @@ export default async function MarketplaceResourceEditPage({ params }) {
   const { userId, isAdmin } = await getResourceAuthContext(sb);
 
   if (!userId) {
-    redirect(`/login?redirect=${encodeURIComponent(`/marketplace/${id}/edit`)}`);
+    redirect(`/login?redirect=${encodeURIComponent(`/vault/${id}/edit`)}`);
   }
 
   const [{ data: resourceRow, error: resourceError }, { data: categoriesRows }, { data: tagsRows }] = await Promise.all([

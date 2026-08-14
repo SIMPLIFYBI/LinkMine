@@ -4,10 +4,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Marketplace",
-  description: "Browse hosted files, external industry resources, and requests in the YouMine marketplace.",
+  title: "Vault",
+  description: "Browse hosted files, external industry resources, and requests in the YouMine vault.",
 };
 
 export default function MarketplacePage() {
-  return <MarketplaceShellPage initialTab="discover" fallbackLabel="Loading marketplace..." />;
+  return <MarketplaceShellPage initialTab="discover" fallbackLabel="Loading vault..." />;
 }

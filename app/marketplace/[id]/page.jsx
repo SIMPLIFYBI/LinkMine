@@ -164,11 +164,11 @@ export default async function MarketplaceResourcePage({ params }) {
     <main className="w-full px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link href="/marketplace" className="inline-flex items-center text-sm text-slate-400 transition hover:text-white">
-            Back to marketplace
+          <Link href="/vault" className="inline-flex items-center text-sm text-slate-400 transition hover:text-white">
+            Back to vault
           </Link>
           {canEditResource ? (
-            <Link href={`/marketplace/${resource.id}/edit`} className="rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
+            <Link href={`/vault/${resource.id}/edit`} className="rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
               Edit resource
             </Link>
           ) : null}
@@ -272,7 +272,7 @@ export default async function MarketplaceResourcePage({ params }) {
               <div className="text-lg font-semibold text-white">Related resources</div>
               <div className="mt-4 space-y-3">
                 {related.length ? related.map((item) => (
-                  <Link key={item.id} href={`/marketplace/${item.id}`} className="block rounded-[22px] border border-white/10 bg-slate-950/35 px-4 py-4 transition hover:border-white/20 hover:bg-white/[0.08]">
+                  <Link key={item.id} href={`/vault/${item.id}`} className="block rounded-[22px] border border-white/10 bg-slate-950/35 px-4 py-4 transition hover:border-white/20 hover:bg-white/[0.08]">
                     <div className="text-sm font-semibold text-white">{item.title}</div>
                     <div className="mt-1 text-sm text-slate-400">{item.summary || "View full details for this resource."}</div>
                   </Link>

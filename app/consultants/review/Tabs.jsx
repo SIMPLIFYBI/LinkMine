@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -45,12 +45,13 @@ export default function Tabs() {
         })}
 
         <Link
-          href="/marketplace"
+          href="/vault"
           className="px-3 py-2 text-sm text-sky-300 transition-colors hover:text-sky-200"
         >
-          Marketplace
+          Vault
         </Link>
       </nav>
     </div>
   );
 }
+

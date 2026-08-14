@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
@@ -160,13 +160,13 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Marketplace</div>
+            <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Vault</div>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">Admin Console</h1>
             <p className="mt-2 max-w-3xl text-sm text-slate-300">Review submissions, approve trusted resources, and keep quality standards consistent.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href="/marketplace" className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.08]">
-              Back to marketplace
+            <Link href="/vault" className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.08]">
+              Back to vault
             </Link>
             <button
               type="button"
@@ -226,7 +226,7 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
                         <div className="mt-3 text-sm text-slate-400">Submitted {formatDate(resource.submittedAt) || formatDate(resource.createdAt) || "recently"}</div>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        <Link href={`/marketplace/${resource.id}`} className="rounded-full border border-white/15 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
+                        <Link href={`/vault/${resource.id}`} className="rounded-full border border-white/15 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
                           Open
                         </Link>
                         <button
@@ -270,12 +270,12 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
           <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10">
             <h2 className="text-base font-semibold text-white">Admin Shortcuts</h2>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Link href="/marketplace" className="rounded-full border border-white/12 bg-white/[0.05] px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
-                Marketplace home
+              <Link href="/vault" className="rounded-full border border-white/12 bg-white/[0.05] px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
+                Vault home
               </Link>
             </div>
             <p className="mt-3 text-sm text-slate-300">
-              Use the marketplace sidebar to jump into Submit, Requests, or My Account flows while keeping this moderation queue open in a separate tab.
+              Use the vault sidebar to jump into Submit, Requests, or My Vault flows while keeping this moderation queue open in a separate tab.
             </p>
           </div>
         </section>
@@ -283,3 +283,4 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
     </main>
   );
 }
+

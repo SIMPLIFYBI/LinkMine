@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -437,6 +437,8 @@ export default function ResourcesTablePageClient() {
   const { session } = useAuth();
   const signedIn = Boolean(session);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [error, setError] = useState("");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -492,8 +494,30 @@ export default function ResourcesTablePageClient() {
   useEffect(() => {
     const controller = new AbortController();
 
+    async function loadCategories() {
+      try {
+        const categoriesRes = await fetch("/api/resources/categories", {
+          signal: controller.signal,
+        }).then(readJson);
+        setCategories(categoriesRes.categories || []);
+      } catch (nextError) {
+        if (nextError?.name === "AbortError") return;
+      }
+    }
+
+    void loadCategories();
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
     async function fetchData() {
-      setLoading(true);
+      if (hasLoadedOnce) {
+        setIsRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       setError("");
       try {
         const params = new URLSearchParams();
@@ -505,19 +529,20 @@ export default function ResourcesTablePageClient() {
         if (filters.categoryId) params.set("categoryId", filters.categoryId);
         if (filters.q) params.set("q", filters.q);
 
-        const [categoriesRes, resourcesRes] = await Promise.all([
-          fetch("/api/resources/categories", { cache: "no-store", signal: controller.signal }).then(readJson),
-          fetch(`/api/resources?${params.toString()}`, { cache: "no-store", signal: controller.signal }).then(readJson),
-        ]);
+        const resourcesRes = await fetch(`/api/resources?${params.toString()}`, {
+          cache: "no-store",
+          signal: controller.signal,
+        }).then(readJson);
 
-        setCategories(categoriesRes.categories || []);
         setResources(resourcesRes.resources || []);
         setPaging(resourcesRes.paging || { page: filters.page, limit: filters.limit, hasMore: false });
+        setHasLoadedOnce(true);
       } catch (nextError) {
         if (nextError?.name === "AbortError") return;
         setError(nextError.message || "Unable to load resources.");
       } finally {
         setLoading(false);
+        setIsRefreshing(false);
       }
     }
 
@@ -533,21 +558,21 @@ export default function ResourcesTablePageClient() {
   const tabs = useMemo(() => {
     if (!signedIn) {
       return [
-        { key: "discover", label: "Home", icon: "discover", group: "primary", href: "/marketplace?tab=discover" },
-        { key: "all-resources", label: "All Resources", icon: "orders", group: "primary", href: "/marketplace/resources", active: true },
+        { key: "discover", label: "Home", icon: "discover", group: "primary", href: "/vault?tab=discover" },
+        { key: "all-resources", label: "All Resources", icon: "orders", group: "primary", href: "/vault/resources", active: true },
       ];
     }
 
     const baseTabs = [
-      { key: "discover", label: "Home", icon: "discover", group: "primary", href: "/marketplace?tab=discover" },
-      { key: "all-resources", label: "All Resources", icon: "orders", group: "primary", href: "/marketplace/resources", active: true },
-      { key: "submit", label: "Submit", icon: "submit", group: "primary", href: "/marketplace?tab=submit" },
-      { key: "requests", label: "Requests", icon: "requests", group: "primary", href: "/marketplace?tab=requests" },
-      { key: "account", label: "My Account", icon: "library", group: "secondary", href: "/marketplace?tab=account" },
+      { key: "discover", label: "Home", icon: "discover", group: "primary", href: "/vault?tab=discover" },
+      { key: "all-resources", label: "All Resources", icon: "orders", group: "primary", href: "/vault/resources", active: true },
+      { key: "submit", label: "Submit", icon: "submit", group: "primary", href: "/vault?tab=submit" },
+      { key: "requests", label: "Requests", icon: "requests", group: "primary", href: "/vault?tab=requests" },
+      { key: "account", label: "My Vault", icon: "library", group: "secondary", href: "/vault?tab=account" },
     ];
 
     if (isAdmin) {
-      baseTabs.push({ key: "admin", label: "Admin", icon: "review", group: "secondary", href: "/marketplace/admin" });
+      baseTabs.push({ key: "admin", label: "Admin", icon: "review", group: "secondary", href: "/vault/admin" });
     }
     return baseTabs;
   }, [isAdmin, signedIn]);
@@ -625,7 +650,7 @@ export default function ResourcesTablePageClient() {
               type="button"
               onClick={() => setMobileNavOpen((current) => !current)}
               className="fixed left-3 top-[72px] z-40 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-slate-900/75 text-slate-100 shadow-[0_18px_38px_-22px_rgba(0,0,0,0.75)] backdrop-blur-md"
-              aria-label={mobileNavOpen ? "Collapse marketplace navigation" : "Expand marketplace navigation"}
+              aria-label={mobileNavOpen ? "Collapse vault navigation" : "Expand vault navigation"}
             >
               {mobileNavOpen ? (
                 <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -645,7 +670,7 @@ export default function ResourcesTablePageClient() {
                 type="button"
                 onClick={() => setMobileNavOpen(false)}
                 className="fixed inset-0 z-30 bg-black/45"
-                aria-label="Close marketplace navigation"
+                aria-label="Close vault navigation"
               />
             ) : null}
 
@@ -656,12 +681,12 @@ export default function ResourcesTablePageClient() {
               ].join(" ")}
             >
               <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-2">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-300">Marketplace</div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-300">Vault</div>
                 <button
                   type="button"
                   onClick={() => setMobileNavOpen(false)}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-slate-200"
-                  aria-label="Collapse marketplace navigation"
+                  aria-label="Collapse vault navigation"
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M15 6 9 12l6 6" />
@@ -782,7 +807,7 @@ export default function ResourcesTablePageClient() {
               <span className="mr-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Sort by</span>
               {SORTABLE_COLUMNS.map((column) => {
                 const active = filters.sortBy === column.key;
-                const arrow = active ? (filters.sortDir === "asc" ? "↑" : "↓") : "↕";
+                const arrow = active ? (filters.sortDir === "asc" ? "â†‘" : "â†“") : "â†•";
                 return (
                   <button
                     key={column.key}
@@ -802,9 +827,15 @@ export default function ResourcesTablePageClient() {
               })}
             </div>
 
+            {isRefreshing ? (
+              <div className="rounded-xl border border-sky-300/25 bg-sky-500/10 px-3 py-2 text-xs text-sky-100">
+                Refreshing resources...
+              </div>
+            ) : null}
+
             {loading ? (
               <div className="rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-12 text-center text-sm text-slate-300">Loading resources...</div>
-            ) : error ? (
+            ) : error && resources.length === 0 ? (
               <div className="rounded-2xl border border-red-300/30 bg-red-500/10 px-4 py-12 text-center text-sm text-red-100">{error}</div>
             ) : resources.length === 0 ? (
               <div className="rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-12 text-center text-sm text-slate-300">No resources matched your filters.</div>
@@ -819,7 +850,7 @@ export default function ResourcesTablePageClient() {
                     ? resource.resourceImages.filter((image) => image?.url)
                     : [];
                   const leadImage = resourceImages[0] || null;
-                  const detailHref = `/marketplace/${resource.id}`;
+                  const detailHref = `/vault/${resource.id}`;
 
                   return (
                     <article
@@ -918,17 +949,23 @@ export default function ResourcesTablePageClient() {
                 })}
               </div>
             )}
+
+            {error && resources.length > 0 ? (
+              <div className="rounded-2xl border border-red-300/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                {error}
+              </div>
+            ) : null}
           </div>
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <div className="text-xs uppercase tracking-[0.16em] text-slate-400">
-              Page {filters.page} • {resources.length} shown
+              Page {filters.page} â€¢ {resources.length} shown
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={prevPage}
-                disabled={filters.page <= 1 || loading}
+                disabled={filters.page <= 1 || loading || isRefreshing}
                 className="rounded-full border border-white/15 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Prev
@@ -936,7 +973,7 @@ export default function ResourcesTablePageClient() {
               <button
                 type="button"
                 onClick={nextPage}
-                disabled={!paging.hasMore || loading}
+                disabled={!paging.hasMore || loading || isRefreshing}
                 className="rounded-full border border-sky-300/30 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-100 transition hover:bg-sky-500/18 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Next
@@ -950,3 +987,4 @@ export default function ResourcesTablePageClient() {
     </main>
   );
 }
+

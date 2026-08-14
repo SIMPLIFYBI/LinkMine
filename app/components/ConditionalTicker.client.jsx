@@ -6,7 +6,7 @@ import TradingViewTicker from "@/app/components/TradingViewTicker";
 export default function ConditionalTicker() {
   const pathname = usePathname();
 
-  if (pathname?.startsWith("/marketplace")) {
+  if (pathname?.startsWith("/vault")) {
     return null;
   }
 

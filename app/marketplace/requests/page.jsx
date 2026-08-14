@@ -4,8 +4,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Marketplace Requests",
-  description: "Track and create marketplace resource requests.",
+  title: "Vault Requests",
+  description: "Track and create vault resource requests.",
 };
 
 export default function MarketplaceRequestsPage() {

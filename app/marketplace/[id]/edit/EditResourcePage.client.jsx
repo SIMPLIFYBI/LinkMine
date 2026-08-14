@@ -211,7 +211,7 @@ export default function EditResourcePageClient({ initialResource, categories, co
     startBusy(async () => {
       try {
         await apiSend(`/api/resources/${form.id}?hard=1`, "DELETE");
-        router.push("/marketplace");
+        router.push("/vault");
         router.refresh();
       } catch (nextError) {
         setError(nextError.message || "Unable to delete this resource.");
@@ -391,10 +391,10 @@ export default function EditResourcePageClient({ initialResource, categories, co
     <main className="w-full px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link href="/marketplace" className="inline-flex items-center text-sm text-slate-400 transition hover:text-white">
-            Back to marketplace
+          <Link href="/vault" className="inline-flex items-center text-sm text-slate-400 transition hover:text-white">
+            Back to vault
           </Link>
-          <Link href={`/marketplace/${resource.id}`} className="rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
+          <Link href={`/vault/${resource.id}`} className="rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
             View resource page
           </Link>
         </div>
@@ -449,7 +449,7 @@ export default function EditResourcePageClient({ initialResource, categories, co
                   </Field>
                 </div>
 
-                <Field label="Consultancy badge" hint="Choose which consultancy logo appears on marketplace cards for this resource.">
+                <Field label="Consultancy badge" hint="Choose which consultancy logo appears on vault cards for this resource.">
                   <Select value={form.consultantId} onChange={(event) => setForm((prev) => ({ ...prev, consultantId: event.target.value }))}>
                     <option value="">Automatic (owner default)</option>
                     {consultantOptions.map((consultant) => (
@@ -460,7 +460,7 @@ export default function EditResourcePageClient({ initialResource, categories, co
                   </Select>
                 </Field>
 
-                <Field label="Resource format" hint="Used to display the marketplace icon for this resource.">
+                <Field label="Resource format" hint="Used to display the vault icon for this resource.">
                   <Select value={form.resourceFormat} onChange={(event) => setForm((prev) => ({ ...prev, resourceFormat: event.target.value }))} required>
                     {RESOURCE_FORMAT_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>{option.label}</option>
@@ -610,7 +610,7 @@ export default function EditResourcePageClient({ initialResource, categories, co
                   >
                     Save and submit
                   </button>
-                  <Link href="/marketplace" className="rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
+                  <Link href="/vault" className="rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
                     Exit editor
                   </Link>
                   <button

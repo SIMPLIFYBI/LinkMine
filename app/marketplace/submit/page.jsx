@@ -4,8 +4,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Marketplace Submit",
-  description: "Create and manage marketplace resource submissions.",
+  title: "Vault Submit",
+  description: "Create and manage vault resource submissions.",
 };
 
 export default function MarketplaceSubmitPage() {

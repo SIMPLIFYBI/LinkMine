@@ -28,9 +28,9 @@ export default function ResourceDetailActions({ resource, requiresAuth = false }
   if (requiresAuth) {
     return (
       <div className="space-y-3">
-        <div className="text-sm leading-7 text-slate-300">Sign in to download this resource and add it to your marketplace library.</div>
+        <div className="text-sm leading-7 text-slate-300">Sign in to download this resource and add it to your vault library.</div>
         <div className="flex flex-wrap gap-3">
-          <Link href={`/login?redirect=${encodeURIComponent(`/marketplace/${resource.id}`)}`} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
+          <Link href={`/login?redirect=${encodeURIComponent(`/vault/${resource.id}`)}`} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
             Sign in to access
           </Link>
         </div>

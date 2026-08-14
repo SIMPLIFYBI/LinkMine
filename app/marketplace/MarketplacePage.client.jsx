@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -43,8 +43,7 @@ const MARKETPLACE_COVER_COLLAPSED_HEIGHT = 86;
 const MARKETPLACE_COVER_TRANSITION_MS = 360;
 const MARKETPLACE_COVER_BLEND_TIME_MS = 330;
 const MARKETPLACE_COVER_SPRING_TIME_CONSTANT_MS = 88;
-const DISCOVER_INITIAL_FETCH_LIMIT = 32;
-const DISCOVER_BACKGROUND_FETCH_LIMIT = 120;
+const DISCOVER_INITIAL_FETCH_LIMIT = 20;
 function normalizePrimaryTab(value) {
   const allowedTabs = new Set(["discover", "submit", "requests", "account"]);
   return allowedTabs.has(value) ? value : "discover";
@@ -556,7 +555,7 @@ function CreateFlowSection({ step, title, subtitle, completed = false, onToggleC
                     : "border-emerald-300/35 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/18",
                 ].join(" ")}
               >
-                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-emerald-200/60 bg-emerald-400/25 text-[11px] leading-none">✓</span>
+                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-emerald-200/60 bg-emerald-400/25 text-[11px] leading-none">âœ“</span>
                 {completed ? "Completed" : "Mark section complete"}
               </button>
             </div>
@@ -569,7 +568,7 @@ function CreateFlowSection({ step, title, subtitle, completed = false, onToggleC
 
 function ResourceCard({ resource, onSubmitForReview, onArchive, actionLabel = "View details" }) {
   const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file";
-  const detailHref = `/marketplace/${resource.id}`;
+  const detailHref = `/vault/${resource.id}`;
 
   return (
     <article className="h-[228px] overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_18px_48px_-38px_rgba(0,0,0,0.85)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20 hover:shadow-[0_26px_70px_-42px_rgba(0,0,0,0.95)]">
@@ -635,7 +634,7 @@ function ResourceCard({ resource, onSubmitForReview, onArchive, actionLabel = "V
 }
 
 function LibraryGalleryCard({ resource }) {
-  const detailHref = `/marketplace/${resource.id}`;
+  const detailHref = `/vault/${resource.id}`;
   const artwork = getResourceArtwork(resource);
   const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file";
   const updatedLabel = formatDate(resource.updatedAt || resource.createdAt);
@@ -748,7 +747,7 @@ function ScrollShelf({ title, subtitle, metaLabel, children }) {
 }
 
 function MarketplaceShelfCard({ resource }) {
-  const detailHref = `/marketplace/${resource.id}`;
+  const detailHref = `/vault/${resource.id}`;
   const artwork = getResourceArtwork(resource);
   const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file";
   const shellClassName = "h-[304px] w-[286px] sm:h-[320px] sm:w-[320px] lg:w-[320px]";
@@ -768,7 +767,7 @@ function MarketplaceShelfCard({ resource }) {
           <div className="flex flex-wrap items-center gap-2">
             <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/25" />
           </div>
-          <div className="mt-3 text-[10px] uppercase tracking-[0.22em] text-slate-200/78 sm:mt-4 sm:text-[11px] sm:tracking-[0.26em]">Marketplace pick</div>
+          <div className="mt-3 text-[10px] uppercase tracking-[0.22em] text-slate-200/78 sm:mt-4 sm:text-[11px] sm:tracking-[0.26em]">Vault pick</div>
           <Link href={detailHref} className={titleClassName}>
             {resource.title}
           </Link>
@@ -842,7 +841,7 @@ function ActiveRequestShelfCard({ request }) {
         </div>
         <div className="flex items-end justify-between gap-3">
           <div className="text-[11px] text-slate-300/85">{postedLabel ? `Posted ${postedLabel}` : "Recently posted"}</div>
-          <Link href="/marketplace?tab=requests" className="rounded-full border border-white/15 bg-white px-3.5 py-2 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100">
+          <Link href="/vault?tab=requests" className="rounded-full border border-white/15 bg-white px-3.5 py-2 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100">
             View request
           </Link>
         </div>
@@ -852,7 +851,7 @@ function ActiveRequestShelfCard({ request }) {
 }
 
 function PromoRailCard({ resource, variant = "compact" }) {
-  const detailHref = `/marketplace/${resource.id}`;
+  const detailHref = `/vault/${resource.id}`;
   const artwork = getResourceArtwork(resource);
   const shellClassName = "h-[228px] w-[320px]";
 
@@ -1012,7 +1011,7 @@ function CreatedResourceCard({ resource, onEdit, onSubmitForReview, onArchive })
 
 function MobileHeroCard({ resource }) {
   const artwork = getResourceArtwork(resource);
-  const detailHref = `/marketplace/${resource.id}`;
+  const detailHref = `/vault/${resource.id}`;
 
   return (
     <article className="relative h-[252px] overflow-hidden rounded-[24px] border border-white/10 shadow-[0_22px_56px_-36px_rgba(0,0,0,0.9)] ring-1 ring-white/10" style={{ backgroundImage: artwork.heroBackground }}>
@@ -1046,7 +1045,7 @@ function MobileHeroCard({ resource }) {
 
 function MobilePromoBillboard({ resource, eyebrow = "Featured" }) {
   const artwork = getResourceArtwork(resource);
-  const detailHref = `/marketplace/${resource.id}`;
+  const detailHref = `/vault/${resource.id}`;
 
   return (
     <article className="relative h-[206px] overflow-hidden rounded-[22px] border border-white/10 shadow-[0_20px_50px_-34px_rgba(0,0,0,0.86)] ring-1 ring-white/10" style={{ backgroundImage: artwork.panelBackground }}>
@@ -1069,7 +1068,7 @@ function MobilePromoBillboard({ resource, eyebrow = "Featured" }) {
 
 function MobileMiniPromoCard({ resource }) {
   const artwork = getResourceArtwork(resource);
-  const detailHref = `/marketplace/${resource.id}`;
+  const detailHref = `/vault/${resource.id}`;
 
   return (
     <article className="relative h-[142px] overflow-hidden rounded-[20px] border border-white/10 shadow-[0_18px_44px_-30px_rgba(0,0,0,0.82)] ring-1 ring-white/10" style={{ backgroundImage: artwork.cardBackground }}>
@@ -1184,7 +1183,6 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobileHeroIndex, setMobileHeroIndex] = useState(0);
-  const [submitArea, setSubmitArea] = useState("create");
   const [createSectionCompletion, setCreateSectionCompletion] = useState({
     details: false,
     classify: false,
@@ -1253,20 +1251,8 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
       }
 
       setLoadedTabs((prev) => ({ ...prev, discover: true }));
-
-      if (resourcesRes?.paging?.hasMore && DISCOVER_BACKGROUND_FETCH_LIMIT > DISCOVER_INITIAL_FETCH_LIMIT) {
-        void (async () => {
-          try {
-            const fullResourcesRes = await apiGet(`/api/resources?view=card&limit=${DISCOVER_BACKGROUND_FETCH_LIMIT}`);
-            const fullResources = fullResourcesRes.resources || [];
-            setResources((current) => (fullResources.length > current.length ? fullResources : current));
-          } catch {
-            // Keep initial fast payload if the background refresh fails.
-          }
-        })();
-      }
     } catch (nextError) {
-      setError(nextError.message || "Unable to load marketplace data.");
+      setError(nextError.message || "Unable to load vault data.");
     } finally {
       setLoading(false);
     }
@@ -1289,23 +1275,20 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
   const loadTabData = useCallback(async (tabKey, currentSession, { force = false } = {}) => {
     if (!currentSession || tabKey === "discover") return;
     if (!force && loadedTabs[tabKey]) return;
-    if (tabKey === "submit" && !force && loadedTabs.account) {
-      setLoadedTabs((prev) => ({ ...prev, submit: true }));
-      return;
-    }
 
     setLoading(true);
     setError("");
 
     try {
       if (tabKey === "submit") {
-        const [tagsRes, mineRes] = await Promise.all([
-          apiGet("/api/resources/tags"),
-          apiGet("/api/resources?mine=1"),
+        const [categoriesRes, permissionsRes] = await Promise.all([
+          apiGet("/api/resources/categories"),
+          apiGet("/api/resources?view=card&limit=1"),
         ]);
 
-        setTags(tagsRes.tags || []);
-        setMyResources(mineRes.resources || []);
+        setCategories(categoriesRes.categories || []);
+        setCanCreateResources(Boolean(permissionsRes.canCreateResources));
+        setCreateResourceRequirementMessage(permissionsRes.createResourceRequirementMessage || "");
       }
 
       if (tabKey === "requests") {
@@ -1321,21 +1304,19 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
       }
 
       if (tabKey === "account") {
-        const accountRes = await apiGet("/api/resources/account?libraryLimit=120&createdLimit=120&ordersLimit=120&payoutLedgerLimit=160&tagsLimit=120");
+        const accountRes = await apiGet("/api/resources/account?libraryLimit=48&createdLimit=36&includeCommerce=0&includeTags=0&includeAssets=0");
         setLibrary(accountRes.library || []);
         setMyResources(accountRes.myResources || []);
-        setTags(accountRes.tags || []);
         setAccountPaging(accountRes.paging || {
           library: { limit: 0, hasMore: false },
           created: { limit: 0, hasMore: false },
           tags: { limit: 0, hasMore: false },
         });
-        setLoadedTabs((prev) => ({ ...prev, submit: true }));
       }
 
       setLoadedTabs((prev) => ({ ...prev, [tabKey]: true }));
     } catch (nextError) {
-      setError(nextError.message || "Unable to load marketplace data.");
+      setError(nextError.message || "Unable to load vault data.");
     } finally {
       setLoading(false);
     }
@@ -1379,6 +1360,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
 
     async function syncMarketplace() {
       if (authLoading) return;
+      const nextInitialTab = normalizePrimaryTab(initialTab);
 
       if (!session) {
         if (!mounted) return;
@@ -1389,11 +1371,13 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
 
       try {
         if (!mounted) return;
-        await loadPublicData();
+        if (nextInitialTab === "discover") {
+          await loadPublicData();
+        }
         void loadAdminStatus(session);
       } catch (nextError) {
         if (!mounted) return;
-        setError(nextError.message || "Unable to load marketplace data.");
+        setError(nextError.message || "Unable to load vault data.");
         setLoading(false);
       }
     }
@@ -1403,7 +1387,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
     return () => {
       mounted = false;
     };
-  }, [authLoading, loadAdminStatus, loadPublicData, session]);
+  }, [authLoading, initialTab, loadAdminStatus, loadPublicData, session]);
 
   useEffect(() => {
     if (authLoading || !session || activeTab === "discover") return;
@@ -1418,14 +1402,14 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
   }, [activeTab, signedIn]);
 
   useEffect(() => {
-    if (pathname !== "/marketplace") return;
+    if (pathname !== "/vault") return;
 
     const requestedTab = String(searchParams.get("tab") || "").toLowerCase();
     if (!requestedTab) return;
 
     if (requestedTab === "admin") {
       if (isAdmin) {
-        router.push("/marketplace/admin");
+        router.push("/vault/admin");
       }
       return;
     }
@@ -1444,32 +1428,6 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
       setActiveTab(requestedTab);
     }
   }, [activeTab, isAdmin, pathname, router, searchParams, signedIn]);
-
-  useEffect(() => {
-    if (activeTab !== "submit") return;
-    const requestedSubmitArea = String(searchParams.get("submit") || "").toLowerCase();
-    if (requestedSubmitArea !== "create" && requestedSubmitArea !== "edit") return;
-    if (submitArea !== requestedSubmitArea) {
-      setSubmitArea(requestedSubmitArea);
-    }
-  }, [activeTab, searchParams, submitArea]);
-
-  useEffect(() => {
-    if (activeTab !== "submit") return;
-
-    const requestedSubmitArea = String(searchParams.get("submit") || "").toLowerCase();
-    if (requestedSubmitArea === "create" || requestedSubmitArea === "edit") return;
-
-    const nextParams = new URLSearchParams(searchParams.toString());
-    if (pathname === "/marketplace") {
-      nextParams.set("tab", "submit");
-    } else {
-      nextParams.delete("tab");
-    }
-    nextParams.set("submit", "create");
-    const nextQuery = nextParams.toString();
-    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname);
-  }, [activeTab, pathname, router, searchParams]);
 
   useEffect(() => {
     if (activeTab !== "discover") {
@@ -1495,8 +1453,8 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
       setMobileSearchOpen((current) => !current);
     }
 
-    window.addEventListener("marketplace:search-toggle", handleMarketplaceSearchToggle);
-    return () => window.removeEventListener("marketplace:search-toggle", handleMarketplaceSearchToggle);
+    window.addEventListener("vault:search-toggle", handleMarketplaceSearchToggle);
+    return () => window.removeEventListener("vault:search-toggle", handleMarketplaceSearchToggle);
   }, [activeTab]);
 
   const discoverResources = useMemo(() => {
@@ -1688,20 +1646,20 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
   const tabs = useMemo(() => {
     if (!signedIn) {
       return [
-        { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary", href: "/marketplace" },
-        { key: "all-resources", label: "All Resources", hint: "Browse the full marketplace resource index.", icon: "orders", group: "primary", href: "/marketplace/resources" },
+        { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary", href: "/vault" },
+        { key: "all-resources", label: "All Resources", hint: "Browse the full vault resource index.", icon: "orders", group: "primary", href: "/vault/resources" },
       ];
     }
 
     const baseTabs = [
-      { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary", href: "/marketplace" },
-      { key: "all-resources", label: "All Resources", hint: "Browse the full marketplace resource index.", icon: "orders", group: "primary", href: "/marketplace/resources" },
-      { key: "submit", label: "Submit", hint: "Create hosted or external listings and send them for review.", icon: "submit", group: "primary", href: "/marketplace/submit" },
-      { key: "requests", label: "Requests", hint: "Track industry requests and completion workflows.", icon: "requests", group: "primary", href: "/marketplace/requests" },
-      { key: "account", label: "My Account", hint: "Manage your library and created marketplace resources.", icon: "library", group: "secondary", href: "/marketplace/account" },
+      { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary", href: "/vault" },
+      { key: "all-resources", label: "All Resources", hint: "Browse the full vault resource index.", icon: "orders", group: "primary", href: "/vault/resources" },
+      { key: "submit", label: "Submit", hint: "Create hosted or external listings and send them for review.", icon: "submit", group: "primary", href: "/vault/submit" },
+      { key: "requests", label: "Requests", hint: "Track industry requests and completion workflows.", icon: "requests", group: "primary", href: "/vault/requests" },
+      { key: "account", label: "My Vault", hint: "Manage your library and created vault resources.", icon: "library", group: "secondary", href: "/vault/account" },
     ];
     if (isAdmin) {
-      baseTabs.push({ key: "admin", label: "Admin", hint: "Review submissions and manage marketplace administration.", icon: "review", group: "secondary", href: "/marketplace/admin" });
+      baseTabs.push({ key: "admin", label: "Admin", hint: "Review submissions and manage vault administration.", icon: "review", group: "secondary", href: "/vault/admin" });
     }
     return baseTabs;
   }, [isAdmin, signedIn]);
@@ -1712,11 +1670,6 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
     { key: "library", label: "Library", meta: `${library.length} items` },
     { key: "created", label: "Created", meta: `${myResources.length} resources` },
   ]), [library.length, myResources.length]);
-  const submitAreas = useMemo(() => ([
-    { key: "create", label: "Create resource", meta: canCreateResources ? "New listing" : "Access required" },
-    { key: "edit", label: "Edit resources", meta: `${myResources.length} managed` },
-  ]), [canCreateResources, myResources.length]);
-
   const categoryHighlights = useMemo(() => {
     return categories
       .map((category) => ({
@@ -1770,27 +1723,13 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
     setActiveTab(tab.key);
   }
 
-  function handleSubmitAreaSelect(nextArea) {
-    setSubmitArea(nextArea);
-
-    const nextParams = new URLSearchParams(searchParams.toString());
-    if (pathname === "/marketplace") {
-      nextParams.set("tab", "submit");
-    } else {
-      nextParams.delete("tab");
-    }
-    nextParams.set("submit", nextArea);
-    const nextQuery = nextParams.toString();
-    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname);
-  }
-
   function collapseMarketplaceCover() {
     setCoverCollapsed(true);
   }
 
   function beginEditResource(resource) {
     if (!resource?.id) return;
-    router.push(`/marketplace/${resource.id}/edit`);
+    router.push(`/vault/${resource.id}/edit`);
   }
 
   async function handleAccess(resource) {
@@ -1843,7 +1782,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
     resetMessages();
 
     if (!canCreateResources) {
-      setError(createResourceRequirementMessage || "You need an approved consultant or service provider profile before you can publish marketplace resources.");
+      setError(createResourceRequirementMessage || "You need an approved consultant or service provider profile before you can publish vault resources.");
       return;
     }
 
@@ -1899,7 +1838,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
         setResourceForm(DEFAULT_RESOURCE_FORM);
         setResourceFile(null);
         setResourcePreviewImages([]);
-        setSuccess("Marketplace resource created.");
+        setSuccess("Vault resource created.");
         invalidateTabs(["submit", "account"]);
         await refreshMarketplace("account", { refreshDiscover: false });
         setActiveTab("account");
@@ -2127,7 +2066,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
               type="button"
               onClick={() => setMobileNavOpen((current) => !current)}
               className="fixed left-3 top-[72px] z-40 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-slate-900/75 text-slate-100 shadow-[0_18px_38px_-22px_rgba(0,0,0,0.75)] backdrop-blur-md"
-              aria-label={mobileNavOpen ? "Collapse marketplace navigation" : "Expand marketplace navigation"}
+              aria-label={mobileNavOpen ? "Collapse vault navigation" : "Expand vault navigation"}
             >
               {mobileNavOpen ? (
                 <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -2147,7 +2086,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                 type="button"
                 onClick={() => setMobileNavOpen(false)}
                 className="fixed inset-0 z-30 bg-black/45"
-                aria-label="Close marketplace navigation"
+                aria-label="Close vault navigation"
               />
             ) : null}
 
@@ -2158,12 +2097,12 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
               ].join(" ")}
             >
               <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-2">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-300">Marketplace</div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-300">Vault</div>
                 <button
                   type="button"
                   onClick={() => setMobileNavOpen(false)}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-slate-200"
-                  aria-label="Collapse marketplace navigation"
+                  aria-label="Collapse vault navigation"
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M15 6 9 12l6 6" />
@@ -2194,7 +2133,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                   <TextInput
                     value={discoverFilter.search}
                     onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, search: event.target.value }))}
-                    placeholder="Search marketplace"
+                    placeholder="Search vault"
                     className="h-10 rounded-full border-white/10 bg-slate-950/65 pl-11 pr-10 text-[13px]"
                   />
                   {discoverFilter.search ? (
@@ -2255,7 +2194,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                   }}
                 >
                   <div className="hidden min-w-0 pr-1 sm:block">
-                    <div className="text-xs font-semibold text-white">Marketplace</div>
+                    <div className="text-xs font-semibold text-white">Vault</div>
                   </div>
 
                   <div className="flex w-full items-center gap-2 sm:hidden">
@@ -2268,7 +2207,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                         <input
                           value={discoverFilter.search}
                           onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, search: event.target.value }))}
-                          placeholder="Search marketplace"
+                          placeholder="Search vault"
                           className="h-7 w-full bg-transparent pl-7 pr-2 text-[13px] text-slate-100 placeholder:text-slate-300/80 outline-none"
                         />
                       </div>
@@ -2302,7 +2241,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                     <TextInput
                       value={discoverFilter.search}
                       onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, search: event.target.value }))}
-                      placeholder="Search marketplace"
+                      placeholder="Search vault"
                       className="h-9 rounded-full border-white/15 bg-slate-950/65 pl-9 pr-3 text-[12px]"
                     />
                   </div>
@@ -2321,9 +2260,9 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                 }}
               >
                 <div className="mx-auto w-full max-w-5xl">
-                  <div className="text-[11px] uppercase tracking-[0.28em] text-slate-300/85">Marketplace</div>
+                  <div className="text-[11px] uppercase tracking-[0.28em] text-slate-300/85">Vault</div>
                   <h1 className="mt-3.5 max-w-4xl text-3xl font-semibold leading-[1.1] tracking-[-0.015em] text-white sm:text-4xl lg:text-5xl">
-                    Discover the Mining Industry&apos;s Digital Marketplace
+                    Discover the Mining Industry&apos;s Digital Vault
                   </h1>
                   <p className="mt-3.5 max-w-2xl text-sm leading-6 text-slate-200/90 sm:text-base">
                     Find practical templates, field-ready workflows, and specialist resources curated for mining teams across planning, geology, operations, and delivery.
@@ -2351,7 +2290,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                       type="button"
                       onClick={collapseMarketplaceCover}
                       className="group inline-flex items-center gap-2 rounded-full border border-sky-200/30 bg-[linear-gradient(135deg,rgba(56,189,248,0.26),rgba(14,116,144,0.35))] px-3.5 py-2 text-white shadow-[0_14px_34px_-18px_rgba(56,189,248,0.75)] ring-1 ring-white/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-sky-100/40 hover:shadow-[0_20px_44px_-20px_rgba(56,189,248,0.9)]"
-                      aria-label="Collapse marketplace banner"
+                      aria-label="Collapse vault banner"
                     >
                       <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/95">Collapse</span>
                       <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/25 bg-white/15">
@@ -2374,17 +2313,17 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
             <section className="mb-6 overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] px-5 py-5 ring-1 ring-white/10">
               <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div>
-                  <div className="text-sm font-medium uppercase tracking-[0.2em] text-slate-400">Marketplace</div>
+                  <div className="text-sm font-medium uppercase tracking-[0.2em] text-slate-400">Vault</div>
                   <div className="mt-2 text-2xl font-semibold text-white">Browse approved industry resources without signing in.</div>
                   <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">
                     Sign in to download resources, manage your library, and submit resource packs.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <Link href="/login?redirect=%2Fmarketplace" className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
+                  <Link href="/login?redirect=%2Fvault" className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
                     Sign in
                   </Link>
-                  <Link href="/signup?redirect=%2Fmarketplace" className="rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]">
+                  <Link href="/signup?redirect=%2Fvault" className="rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]">
                     Create account
                   </Link>
                 </div>
@@ -2394,7 +2333,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
           {error ? <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-5 py-4 text-sm text-red-100">{error}</div> : null}
           {authError && session ? <div className="rounded-2xl border border-amber-300/30 bg-amber-500/10 px-5 py-4 text-sm text-amber-100">{authError}</div> : null}
           {success ? <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-5 py-4 text-sm text-emerald-100">{success}</div> : null}
-          {loading ? <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-6 text-sm text-slate-300">Loading marketplace data...</div> : null}
+          {loading ? <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-6 text-sm text-slate-300">Loading vault data...</div> : null}
 
           <div className="space-y-6">
         {activeTab === "discover" ? (
@@ -2460,7 +2399,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                             <div className="mt-1 text-xs text-slate-300/80">{heroResource.downloadCount || 0} downloads</div>
                           </div>
                         </div>
-                        <Link href={`/marketplace/${heroResource.id}`} className="rounded-full bg-white px-4.5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 hover:shadow-[0_12px_24px_-14px_rgba(255,255,255,0.65)]">
+                        <Link href={`/vault/${heroResource.id}`} className="rounded-full bg-white px-4.5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 hover:shadow-[0_12px_24px_-14px_rgba(255,255,255,0.65)]">
                           View resource
                         </Link>
                       </div>
@@ -2477,7 +2416,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
             <div className="lg:hidden">
               <ScrollShelf
                 title="More to explore"
-                subtitle="Swipe through new marketplace picks."
+                subtitle="Swipe through new vault picks."
                 metaLabel="Storefront lane"
               >
                 {homeShelfResources.length ? homeShelfResources.map((resource) => (
@@ -2488,7 +2427,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
 
             <div className="hidden lg:block">
             <ScrollShelf
-              title="Fresh in marketplace"
+              title="Fresh in vault"
               subtitle="A billboard-style shelf with consistent card sizes for cleaner scanning."
               metaLabel="Storefront lane"
             >
@@ -2500,7 +2439,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
 
             <div>
               <Link
-                href="/marketplace/resources"
+                href="/vault/resources"
                 className="flex w-full items-center justify-center rounded-2xl border border-sky-300/30 bg-[linear-gradient(135deg,rgba(14,165,233,0.24),rgba(6,182,212,0.18))] px-4 py-3 text-sm font-semibold text-sky-50 transition hover:bg-[linear-gradient(135deg,rgba(14,165,233,0.32),rgba(6,182,212,0.24))]"
               >
                 Click here to view all Resources
@@ -2528,7 +2467,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
             {activeHomeRequests.length ? (
               <ScrollShelf
                 title="Active resource requests"
-                subtitle="Current demand from the marketplace. Respond in the Requests workspace."
+                subtitle="Current demand from the vault. Respond in the Requests workspace."
                 metaLabel={`${activeHomeRequests.length} active`}
               >
                 {activeHomeRequests.map((request) => (
@@ -2541,25 +2480,10 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
         ) : null}
 
         {activeTab === "submit" ? (
-          <SectionCard title="Submit resources" subtitle="Create new listings or switch to the resource editor to maintain existing ones.">
+          <SectionCard title="Submit resources" subtitle="Create new vault listings for review.">
             <div className="space-y-6">
-              <div className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <div className="flex min-w-max gap-3">
-                  {submitAreas.map((area) => (
-                    <AccountTopTab
-                      key={area.key}
-                      active={submitArea === area.key}
-                      label={area.label}
-                      meta={area.meta}
-                      onClick={() => handleSubmitAreaSelect(area.key)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {submitArea === "create" ? (
-                canCreateResources ? (
-                  <form className="space-y-5" onSubmit={handleResourceSubmit}>
+              {canCreateResources ? (
+                <form className="space-y-5" onSubmit={handleResourceSubmit}>
                     <section className="overflow-hidden rounded-[28px] border border-white/12 bg-[linear-gradient(150deg,rgba(56,189,248,0.16),rgba(15,23,42,0.92))] ring-1 ring-white/10">
                       <div className="border-b border-white/10 px-5 py-4 sm:px-6">
                         <div className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-100/90">Create resource flow</div>
@@ -2587,7 +2511,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
 
                     <CreateFlowSection
                       step="2"
-                      title="Where does this fit in the marketplace?"
+                      title="Where does this fit in the vault?"
                       subtitle="Classify the asset so buyers can discover it quickly."
                       completed={createSectionCompletion.classify}
                       onToggleComplete={(nextValue) => setCreateSectionCompletion((prev) => ({ ...prev, classify: nextValue }))}
@@ -2606,7 +2530,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                                 <span className="inline-flex items-center gap-2">
                                   <span>Resource type</span>
                                   <InlineHelpTip label="Resource type help">
-                                    Hosted pack: you upload files directly to marketplace storage so users access them inside the platform. External source: you list a link/reference to content hosted elsewhere.
+                                    Hosted pack: you upload files directly to vault storage so users access them inside the platform. External source: you list a link/reference to content hosted elsewhere.
                                   </InlineHelpTip>
                                 </span>
                               )}
@@ -2617,7 +2541,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                               </Select>
                             </Field>
                           </div>
-                          <Field label="Resource format" hint="Used to display the marketplace icon for this resource.">
+                          <Field label="Resource format" hint="Used to display the vault icon for this resource.">
                             <Select value={resourceForm.resourceFormat} onChange={(event) => setResourceForm((prev) => ({ ...prev, resourceFormat: event.target.value }))} required>
                               {RESOURCE_FORMAT_OPTIONS.map((option) => (
                                 <option key={option.value} value={option.value}>{option.label}</option>
@@ -2701,36 +2625,18 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                             {busyAction ? "Saving resource..." : "Create resource"}
                           </button>
                     </CreateFlowSection>
-                  </form>
-                ) : (
-                  <div className="rounded-[28px] border border-amber-400/20 bg-[linear-gradient(180deg,rgba(245,158,11,0.12),rgba(15,23,42,0.6))] p-6 text-sm text-slate-300 ring-1 ring-amber-300/10">
-                    <div className="text-lg font-semibold text-white">Marketplace publishing is currently limited to approved service providers</div>
-                    <p className="mt-3 max-w-2xl leading-7 text-slate-300">
-                      {createResourceRequirementMessage || "You need an approved consultant or service provider profile before you can publish marketplace resources."}
-                    </p>
-                    <div className="mt-5">
-                      <Link href="/account?tab=consultants" className="inline-flex rounded-full border border-white/10 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
-                        Open consultant settings
-                      </Link>
-                    </div>
-                  </div>
-                )
+                </form>
               ) : (
-                <div className="space-y-4">
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300 ring-1 ring-white/10">
-                    Open full editor on any card to update metadata, uploads, images, and status.
+                <div className="rounded-[28px] border border-amber-400/20 bg-[linear-gradient(180deg,rgba(245,158,11,0.12),rgba(15,23,42,0.6))] p-6 text-sm text-slate-300 ring-1 ring-amber-300/10">
+                  <div className="text-lg font-semibold text-white">Vault publishing is currently limited to approved service providers</div>
+                  <p className="mt-3 max-w-2xl leading-7 text-slate-300">
+                    {createResourceRequirementMessage || "You need an approved consultant or service provider profile before you can publish vault resources."}
+                  </p>
+                  <div className="mt-5">
+                    <Link href="/account?tab=consultants" className="inline-flex rounded-full border border-white/10 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
+                      Open consultant settings
+                    </Link>
                   </div>
-                  {myResources.length ? myResources.map((resource) => (
-                    <CreatedResourceCard
-                      key={resource.id}
-                      resource={resource}
-                      onEdit={beginEditResource}
-                      onSubmitForReview={handleSubmitForReview}
-                      onArchive={handleArchive}
-                    />
-                  )) : (
-                    <EmptyState title="No managed resources yet." body="Switch to Create resource to publish your first hosted pack or external listing." />
-                  )}
                 </div>
               )}
             </div>
@@ -2739,7 +2645,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
 
         {activeTab === "account" ? (
           <div className="space-y-6">
-            <SectionCard title="My Account" subtitle="Move between your library and created listings with a single account workspace.">
+            <SectionCard title="My Vault" subtitle="Move between your library and created listings with a single account workspace.">
               <div className="space-y-6">
                 <div className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   <div className="flex min-w-max gap-3">
@@ -2931,7 +2837,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                             >
                               Submit response
                             </button>
-                            <Link href="/marketplace?tab=submit&submit=create" className="rounded-full border border-white/12 bg-white/[0.05] px-4 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08]">
+                            <Link href="/vault?tab=submit&submit=create" className="rounded-full border border-white/12 bg-white/[0.05] px-4 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08]">
                               Need to upload first?
                             </Link>
                           </div>
@@ -2939,7 +2845,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                       </div>
                     ) : null}
                   </article>
-                )) : <EmptyState title="No requests yet." body="Use requests to seed the marketplace with practical file demand before creators publish the finished asset." />}
+                )) : <EmptyState title="No requests yet." body="Use requests to seed the vault with practical file demand before creators publish the finished asset." />}
               </div>
             </div>
           </SectionCard>
@@ -2952,3 +2858,4 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
     </main>
   );
 }
+

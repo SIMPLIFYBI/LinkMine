@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+﻿import { redirect } from "next/navigation";
 import {
   buildResourceRoutePayload,
   DEFAULT_RESOURCE_SELECT,
@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Marketplace Admin",
+  title: "Vault Admin",
 };
 
 export default async function MarketplaceAdminPage() {
@@ -19,11 +19,11 @@ export default async function MarketplaceAdminPage() {
   const { userId, isAdmin } = await getResourceAuthContext(sb);
 
   if (!userId) {
-    redirect(`/login?redirect=${encodeURIComponent("/marketplace/admin")}`);
+    redirect(`/login?redirect=${encodeURIComponent("/vault/admin")}`);
   }
 
   if (!isAdmin) {
-    redirect("/marketplace");
+    redirect("/vault");
   }
 
   const [
@@ -68,3 +68,4 @@ export default async function MarketplaceAdminPage() {
     />
   );
 }
+
