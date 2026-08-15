@@ -6,6 +6,8 @@ import { useId } from "react";
 export default function VaultLogo({ className = "", neutralFill = "#090D12" }) {
   const vaultBlueId = useId();
   const youMineBlueId = useId();
+  const vaultNeutralId = useId();
+  const isDarkTheme = String(neutralFill).trim().toUpperCase() === "#FFFFFF";
 
   return (
     <Link
@@ -24,6 +26,12 @@ export default function VaultLogo({ className = "", neutralFill = "#090D12" }) {
           <linearGradient id={vaultBlueId} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="#2563eb" />
             <stop offset="100%" stopColor="#38bdf8" />
+          </linearGradient>
+
+          <linearGradient id={vaultNeutralId} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={isDarkTheme ? "#FFFFFF" : "#090D12"} />
+            <stop offset="54%" stopColor={isDarkTheme ? "#E2E8F0" : "#1F2937"} />
+            <stop offset="100%" stopColor={isDarkTheme ? "#BFDBFE" : "#334155"} />
           </linearGradient>
 
           <linearGradient id={youMineBlueId} x1="0" y1="0" x2="1" y2="0">
@@ -45,7 +53,7 @@ export default function VaultLogo({ className = "", neutralFill = "#090D12" }) {
 
         <g transform="translate(25 55) scale(0.92) translate(-25 -55)">
           <path
-            fill={neutralFill}
+            fill={`url(#${vaultNeutralId})`}
             d="
               M25 55
               L50 55
@@ -61,11 +69,11 @@ export default function VaultLogo({ className = "", neutralFill = "#090D12" }) {
           <path
             fill={`url(#${vaultBlueId})`}
             d="
-              M172 145
-              L198 145
+              M172 161
+              L198 161
               L242 73
-              L287 145
-              L313 145
+              L287 161
+              L313 161
               L257 56
               C250 45 236 45 229 56
               Z
@@ -73,7 +81,7 @@ export default function VaultLogo({ className = "", neutralFill = "#090D12" }) {
           />
 
           <path
-            fill={neutralFill}
+            fill={`url(#${vaultNeutralId})`}
             d="
               M330 55
               H353
@@ -90,7 +98,7 @@ export default function VaultLogo({ className = "", neutralFill = "#090D12" }) {
           />
 
           <path
-            fill={neutralFill}
+            fill={`url(#${vaultNeutralId})`}
             d="
               M478 55
               H501
@@ -103,7 +111,7 @@ export default function VaultLogo({ className = "", neutralFill = "#090D12" }) {
           />
 
           <path
-            fill={neutralFill}
+            fill={`url(#${vaultNeutralId})`}
             d="
               M590 55
               H700
