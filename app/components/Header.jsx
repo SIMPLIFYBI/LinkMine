@@ -2,66 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useId } from "react";
 import navTabs from "./navTabs";
 import UserPill from "./UserPill";
 import Logo from "@/app/components/Logo";
+import VaultLogo from "@/app/components/VaultLogo";
 import { useTheme } from "@/app/components/ThemeProvider";
 import MarketToggle from "@/app/components/MarketToggle.client";
-
-function VaultWordmark({ className = "", neutralFill = "#090D12" }) {
-  const gradientId = useId();
-
-  return (
-    <svg
-      viewBox="220 320 1435 245"
-      xmlns="http://www.w3.org/2000/svg"
-      role="img"
-      aria-label="Vault"
-      className={className}
-    >
-      <defs>
-        <linearGradient id={gradientId} x1="680" y1="330" x2="680" y2="540" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="48%" stopColor="#4f93f4" />
-          <stop offset="100%" stopColor="#6366f1" />
-        </linearGradient>
-      </defs>
-
-      <path
-        fill={neutralFill}
-        d="M228 333 L270 337 L375 498 L481 334 L517 331 L519 336 L395 529 C389 537 380 540 371 539 C364 539 358 535 357 530 Z"
-      />
-
-      <path
-        fill={`url(#${gradientId})`}
-        d="M534 537 L569 539 C573 539 576 536 579 532 L679 375 L784 535 C787 538 789 539 792 539 L826 536 L699 342 C694 334 687 329 679 331 C672 332 667 338 663 344 Z"
-      />
-
-      <path
-        fill={neutralFill}
-        d="M889 333 L921 333 L921 462 C921 491 934 508 958 519 C979 529 1003 532 1026 532 C1052 532 1074 528 1091 518 C1114 505 1126 486 1126 461 L1126 333 L1158 333 L1158 464 C1158 494 1148 518 1127 536 C1106 554 1074 562 1027 562 C980 562 945 553 922 535 C900 517 889 494 889 465 Z"
-      />
-
-      <path
-        fill={neutralFill}
-        d="M1215 332 L1248 332 L1248 504 C1248 506 1250 507 1253 507 L1416 507 C1419 507 1420 509 1420 512 L1420 538 L1244 539 C1234 539 1226 536 1219 530 C1215 525 1213 518 1213 510 Z"
-      />
-
-      <path
-        fill={neutralFill}
-        d="M1426 332 L1637 332 L1637 359 C1637 362 1635 363 1631 363 L1551 363 L1551 538 L1517 539 L1517 366 C1517 364 1515 363 1514 363 L1428 363 C1425 363 1424 361 1424 359 Z"
-      />
-    </svg>
-  );
-}
 
 export default function Header({ currentMarket = "mining" }) {
   const pathname = usePathname();
   const { theme } = useTheme();
   const isLight = theme === "light";
-  const isMarketplaceRoute = pathname === "/vault" || pathname?.startsWith("/vault/");
-  const vaultWordmarkNeutralFill = isLight ? "#090D12" : "#FFFFFF";
+  const isMarketplaceRoute =
+    pathname === "/vault" ||
+    pathname?.startsWith("/vault/") ||
+    pathname === "/marketplace" ||
+    pathname?.startsWith("/marketplace/");
+  const vaultLogoNeutralFill = isLight ? "#090D12" : "#FFFFFF";
 
   function triggerMarketplaceSearchToggle() {
     if (typeof window === "undefined") return;
@@ -78,9 +35,14 @@ export default function Header({ currentMarket = "mining" }) {
         <div className="mx-auto flex h-14 max-w-screen-xl items-center gap-3 px-4">
           {/* Left */}
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <Logo className="select-none" variant={currentMarket === "both" ? "split-both" : "default"} />
-            {isMarketplaceRoute ? <VaultWordmark className="h-4 w-auto shrink-0 sm:h-4.5" neutralFill={vaultWordmarkNeutralFill} /> : null}
-            {!isMarketplaceRoute ? <MarketToggle market={currentMarket} /> : null}
+            {isMarketplaceRoute ? (
+              <VaultLogo className="w-[230px] sm:w-[300px]" neutralFill={vaultLogoNeutralFill} />
+            ) : (
+              <>
+                <Logo className="select-none" variant={currentMarket === "both" ? "split-both" : "default"} />
+                <MarketToggle market={currentMarket} />
+              </>
+            )}
           </div>
 
           {/* Center (desktop) */}

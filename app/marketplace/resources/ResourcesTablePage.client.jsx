@@ -807,7 +807,7 @@ export default function ResourcesTablePageClient() {
               <span className="mr-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Sort by</span>
               {SORTABLE_COLUMNS.map((column) => {
                 const active = filters.sortBy === column.key;
-                const arrow = active ? (filters.sortDir === "asc" ? "â†‘" : "â†“") : "â†•";
+                const arrow = active ? (filters.sortDir === "asc" ? "\u2191" : "\u2193") : "\u2195";
                 return (
                   <button
                     key={column.key}
@@ -959,7 +959,7 @@ export default function ResourcesTablePageClient() {
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <div className="text-xs uppercase tracking-[0.16em] text-slate-400">
-              Page {filters.page} â€¢ {resources.length} shown
+              Page {filters.page} {" \u2022 "} {resources.length} shown
             </div>
             <div className="flex items-center gap-2">
               <button
