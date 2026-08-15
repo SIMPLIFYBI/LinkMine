@@ -51,7 +51,7 @@ export default function VaultLogo({ className = "", neutralFill = "#090D12" }) {
           The
         </text>
 
-        <g transform="translate(25 55) scale(0.92) translate(-25 -55)">
+        <g transform="translate(25 55) scale(0.86) translate(-25 -55)">
           <path
             fill={`url(#${vaultNeutralId})`}
             d="
@@ -130,7 +130,7 @@ export default function VaultLogo({ className = "", neutralFill = "#090D12" }) {
 
         <text
           x="714"
-          y="125"
+          y="142"
           fill={neutralFill}
           fontFamily="Arial, sans-serif"
           fontSize="27"
@@ -141,10 +141,10 @@ export default function VaultLogo({ className = "", neutralFill = "#090D12" }) {
 
         <text
           x="756"
-          y="125"
+          y="146"
           fill={`url(#${youMineBlueId})`}
           fontFamily="Arial, sans-serif"
-          fontSize="36"
+          fontSize="46"
           fontWeight="700"
           letterSpacing="-1.5"
         >
