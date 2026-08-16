@@ -142,6 +142,18 @@ const RESOURCE_TYPE_COLORWAY = {
   external: { base: 24, accent: 346, glow: 52 },
 };
 
+const RESOURCE_FORMAT_COLORWAY = {
+  website: { base: 191, accent: 204, glow: 188 },
+  repository: { base: 156, accent: 173, glow: 148 },
+  excel: { base: 128, accent: 96, glow: 112 },
+  word: { base: 216, accent: 236, glow: 206 },
+  powerpoint: { base: 24, accent: 40, glow: 32 },
+  script: { base: 268, accent: 304, glow: 286 },
+  app: { base: 336, accent: 351, glow: 324 },
+  pdf: { base: 5, accent: 350, glow: 14 },
+  generic: { base: 210, accent: 222, glow: 198 },
+};
+
 function hashString(value) {
   let hash = 0;
   for (let index = 0; index < value.length; index += 1) {
@@ -191,12 +203,14 @@ function ResourceOwnerBadge({ resource, className, style, imageClassName = "h-fu
 }
 
 function getResourceArtwork(resource) {
-  const palette = RESOURCE_TYPE_COLORWAY[resource?.resourceType] || RESOURCE_TYPE_COLORWAY.hosted;
+  const formatKey = resource?.resourceFormat || "generic";
+  const palette = RESOURCE_FORMAT_COLORWAY[formatKey] || RESOURCE_TYPE_COLORWAY[resource?.resourceType] || RESOURCE_TYPE_COLORWAY.hosted;
+  const typeBias = resource?.resourceType === "external" ? 12 : 0;
   const driftSeed = `${resource?.category?.name || "general"}-${resource?.title || "resource"}`;
   const drift = (hashString(driftSeed) % 28) - 14;
-  const hue = (palette.base + drift + 360) % 360;
-  const accentHue = (palette.accent + Math.round(drift * 0.7) + 360) % 360;
-  const glowHue = (palette.glow + Math.round(drift * 0.5) + 360) % 360;
+  const hue = (palette.base + drift + typeBias + 360) % 360;
+  const accentHue = (palette.accent + Math.round(drift * 0.7) + Math.round(typeBias * 0.55) + 360) % 360;
+  const glowHue = (palette.glow + Math.round(drift * 0.5) + Math.round(typeBias * 0.45) + 360) % 360;
 
   return {
     heroBackground: `radial-gradient(circle at 18% 18%, hsla(${glowHue}, 78%, 66%, 0.32), transparent 34%), linear-gradient(135deg, hsla(${hue}, 72%, 54%, 0.92), hsla(${accentHue}, 72%, 32%, 0.78) 58%, rgba(15,23,42,0.96) 100%)`,
@@ -476,6 +490,152 @@ function ResourceFormatChip({ format, className = "" }) {
   );
 }
 
+const RESOURCE_FORMAT_CARD_VARIANTS = {
+  website: {
+    orbClass: "-right-10 top-3 h-24 w-24 rounded-full border border-cyan-100/35 bg-cyan-200/18 backdrop-blur-md",
+    blockClass: "bottom-[-10%] right-[14%] h-20 w-20 rotate-[16deg] rounded-[22px] border border-cyan-100/30 bg-cyan-950/24",
+    homeTitleRowClass: "min-h-[3.4rem] pr-14 sm:min-h-[3.75rem]",
+    homeSummaryClass: "mt-3 line-clamp-2 max-w-[28ch] text-[13px] leading-5 text-slate-100/82 sm:text-sm sm:leading-6",
+    railTitleRowClass: "min-h-[3.2rem] pr-12",
+    railSummaryClass: "mt-2 line-clamp-2 max-w-[26ch] text-sm leading-6 text-slate-100/84",
+    mobileHeroTitleClass: "mt-3.5 line-clamp-2 max-w-[14.2rem] text-[1.35rem] font-semibold leading-[1.08] text-white",
+    mobileHeroSummaryClass: "mt-2 max-w-[17rem] line-clamp-2 text-[13px] leading-5 text-slate-100/84",
+    billboardBodyClass: "relative flex h-full max-w-[54%] flex-col justify-end",
+    miniTitleClass: "mt-2.5 line-clamp-2 max-w-[10.4rem] text-[1rem] font-semibold leading-tight text-white",
+    heroTitleClass: "mt-3 max-w-[30rem] text-[2rem] font-semibold tracking-tight text-white sm:text-[2.35rem]",
+    heroSummaryClass: "mt-3 line-clamp-2 max-w-[24rem] text-sm leading-5 text-slate-100/85 sm:text-[14px]",
+    heroLabel: "Featured website",
+  },
+  repository: {
+    orbClass: "-right-11 top-2 h-24 w-24 rounded-[28px] border border-emerald-100/30 bg-emerald-200/16 backdrop-blur-md",
+    blockClass: "bottom-[-12%] right-[20%] h-16 w-24 -rotate-[11deg] rounded-[16px] border border-emerald-100/25 bg-emerald-950/26",
+    homeTitleRowClass: "min-h-[3.4rem] pr-14 sm:min-h-[3.75rem]",
+    homeSummaryClass: "mt-3 line-clamp-3 max-w-[24ch] text-[13px] leading-5 text-slate-100/82 sm:line-clamp-2 sm:max-w-[26ch] sm:text-sm sm:leading-6",
+    railTitleRowClass: "min-h-[3.2rem] pr-12",
+    railSummaryClass: "mt-2 line-clamp-2 max-w-[22ch] text-sm leading-6 text-slate-100/84",
+    mobileHeroTitleClass: "mt-3.5 line-clamp-2 max-w-[13.2rem] text-[1.35rem] font-semibold leading-[1.08] text-white",
+    mobileHeroSummaryClass: "mt-2 max-w-[15.6rem] line-clamp-2 text-[13px] leading-5 text-slate-100/84",
+    billboardBodyClass: "relative flex h-full max-w-[50%] flex-col justify-end",
+    miniTitleClass: "mt-2.5 line-clamp-2 max-w-[9.4rem] text-[1rem] font-semibold leading-tight text-white",
+    heroTitleClass: "mt-3 max-w-[26rem] text-[2rem] font-semibold tracking-tight text-white sm:text-[2.35rem]",
+    heroSummaryClass: "mt-3 line-clamp-2 max-w-[21rem] text-sm leading-5 text-slate-100/85 sm:text-[14px]",
+    heroLabel: "Featured repository",
+  },
+  excel: {
+    orbClass: "-right-9 top-3 h-20 w-20 rounded-[20px] border border-green-100/32 bg-green-200/16 backdrop-blur-md",
+    blockClass: "bottom-[-14%] right-[16%] h-20 w-20 rotate-[4deg] rounded-[12px] border border-green-100/24 bg-green-950/28",
+    homeTitleRowClass: "min-h-[3.1rem] pr-14 sm:min-h-[3.45rem]",
+    homeSummaryClass: "mt-3 line-clamp-2 max-w-[24ch] text-[13px] leading-5 text-slate-100/82 sm:max-w-[25ch] sm:text-sm sm:leading-6",
+    railTitleRowClass: "min-h-[2.9rem] pr-12",
+    railSummaryClass: "mt-2 line-clamp-2 max-w-[21ch] text-sm leading-6 text-slate-100/84",
+    mobileHeroTitleClass: "mt-3.5 line-clamp-2 max-w-[12.6rem] text-[1.32rem] font-semibold leading-[1.08] text-white",
+    mobileHeroSummaryClass: "mt-2 max-w-[14.8rem] line-clamp-2 text-[13px] leading-5 text-slate-100/84",
+    billboardBodyClass: "relative flex h-full max-w-[49%] flex-col justify-end",
+    miniTitleClass: "mt-2.5 line-clamp-2 max-w-[9rem] text-[1rem] font-semibold leading-tight text-white",
+    heroTitleClass: "mt-3 max-w-[25rem] text-[1.94rem] font-semibold tracking-tight text-white sm:text-[2.2rem]",
+    heroSummaryClass: "mt-3 line-clamp-2 max-w-[20rem] text-sm leading-5 text-slate-100/85 sm:text-[14px]",
+    heroLabel: "Featured spreadsheet",
+  },
+  word: {
+    orbClass: "-right-10 top-3 h-24 w-24 rounded-full border border-blue-100/35 bg-blue-200/16 backdrop-blur-md",
+    blockClass: "bottom-[-12%] right-[16%] h-16 w-24 rotate-[8deg] rounded-[20px] border border-blue-100/26 bg-blue-950/24",
+    homeTitleRowClass: "min-h-[3.4rem] pr-14 sm:min-h-[3.75rem]",
+    homeSummaryClass: "mt-3 line-clamp-2 max-w-[27ch] text-[13px] leading-5 text-slate-100/82 sm:max-w-[29ch] sm:text-sm sm:leading-6",
+    railTitleRowClass: "min-h-[3.2rem] pr-12",
+    railSummaryClass: "mt-2 line-clamp-3 max-w-[25ch] text-sm leading-5 text-slate-100/84",
+    mobileHeroTitleClass: "mt-3.5 line-clamp-2 max-w-[13.8rem] text-[1.35rem] font-semibold leading-[1.08] text-white",
+    mobileHeroSummaryClass: "mt-2 max-w-[16.8rem] line-clamp-2 text-[13px] leading-5 text-slate-100/84",
+    billboardBodyClass: "relative flex h-full max-w-[53%] flex-col justify-end",
+    miniTitleClass: "mt-2.5 line-clamp-2 max-w-[10rem] text-[1rem] font-semibold leading-tight text-white",
+    heroTitleClass: "mt-3 max-w-[29rem] text-[2rem] font-semibold tracking-tight text-white sm:text-[2.35rem]",
+    heroSummaryClass: "mt-3 line-clamp-2 max-w-[23rem] text-sm leading-5 text-slate-100/85 sm:text-[14px]",
+    heroLabel: "Featured document",
+  },
+  powerpoint: {
+    orbClass: "-right-8 top-3 h-20 w-20 rounded-full border border-orange-100/35 bg-orange-200/16 backdrop-blur-md",
+    blockClass: "bottom-[-10%] right-[14%] h-[4.5rem] w-[5.5rem] -rotate-[14deg] rounded-[16px] border border-orange-100/26 bg-orange-950/26",
+    homeTitleRowClass: "min-h-[3.2rem] pr-14 sm:min-h-[3.55rem]",
+    homeSummaryClass: "mt-3 line-clamp-2 max-w-[23ch] text-[13px] leading-5 text-slate-100/82 sm:max-w-[24ch] sm:text-sm sm:leading-6",
+    railTitleRowClass: "min-h-[3rem] pr-12",
+    railSummaryClass: "mt-2 line-clamp-2 max-w-[20ch] text-sm leading-6 text-slate-100/84",
+    mobileHeroTitleClass: "mt-3.5 line-clamp-2 max-w-[12.8rem] text-[1.32rem] font-semibold leading-[1.08] text-white",
+    mobileHeroSummaryClass: "mt-2 max-w-[15.2rem] line-clamp-2 text-[13px] leading-5 text-slate-100/84",
+    billboardBodyClass: "relative flex h-full max-w-[50%] flex-col justify-end",
+    miniTitleClass: "mt-2.5 line-clamp-2 max-w-[9.2rem] text-[1rem] font-semibold leading-tight text-white",
+    heroTitleClass: "mt-3 max-w-[25.5rem] text-[1.95rem] font-semibold tracking-tight text-white sm:text-[2.22rem]",
+    heroSummaryClass: "mt-3 line-clamp-2 max-w-[20.5rem] text-sm leading-5 text-slate-100/85 sm:text-[14px]",
+    heroLabel: "Featured slide pack",
+  },
+  script: {
+    orbClass: "-right-10 top-2 h-24 w-24 rounded-[24px] border border-violet-100/34 bg-violet-200/16 backdrop-blur-md",
+    blockClass: "bottom-[-14%] right-[18%] h-[4.5rem] w-20 rotate-[24deg] rounded-[12px] border border-violet-100/24 bg-violet-950/30",
+    homeTitleRowClass: "min-h-[3.1rem] pr-14 sm:min-h-[3.5rem]",
+    homeSummaryClass: "mt-3 line-clamp-3 max-w-[24ch] text-[13px] leading-5 text-slate-100/82 sm:line-clamp-2 sm:max-w-[25ch] sm:text-sm sm:leading-6",
+    railTitleRowClass: "min-h-[2.9rem] pr-12",
+    railSummaryClass: "mt-2 line-clamp-2 max-w-[21ch] text-sm leading-6 text-slate-100/84",
+    mobileHeroTitleClass: "mt-3.5 line-clamp-2 max-w-[12.5rem] text-[1.32rem] font-semibold leading-[1.08] text-white",
+    mobileHeroSummaryClass: "mt-2 max-w-[15rem] line-clamp-2 text-[13px] leading-5 text-slate-100/84",
+    billboardBodyClass: "relative flex h-full max-w-[49%] flex-col justify-end",
+    miniTitleClass: "mt-2.5 line-clamp-2 max-w-[9.1rem] text-[1rem] font-semibold leading-tight text-white",
+    heroTitleClass: "mt-3 max-w-[25rem] text-[1.94rem] font-semibold tracking-tight text-white sm:text-[2.2rem]",
+    heroSummaryClass: "mt-3 line-clamp-2 max-w-[20rem] text-sm leading-5 text-slate-100/85 sm:text-[14px]",
+    heroLabel: "Featured script",
+  },
+  app: {
+    orbClass: "-right-10 top-3 h-[5.5rem] w-[5.5rem] rounded-[26px] border border-pink-100/32 bg-pink-200/16 backdrop-blur-md",
+    blockClass: "bottom-[-12%] right-[17%] h-20 w-16 -rotate-[18deg] rounded-[20px] border border-pink-100/25 bg-pink-950/26",
+    homeTitleRowClass: "min-h-[3.4rem] pr-14 sm:min-h-[3.75rem]",
+    homeSummaryClass: "mt-3 line-clamp-2 max-w-[26ch] text-[13px] leading-5 text-slate-100/82 sm:max-w-[27ch] sm:text-sm sm:leading-6",
+    railTitleRowClass: "min-h-[3.2rem] pr-12",
+    railSummaryClass: "mt-2 line-clamp-2 max-w-[23ch] text-sm leading-6 text-slate-100/84",
+    mobileHeroTitleClass: "mt-3.5 line-clamp-2 max-w-[13.6rem] text-[1.35rem] font-semibold leading-[1.08] text-white",
+    mobileHeroSummaryClass: "mt-2 max-w-[16.4rem] line-clamp-2 text-[13px] leading-5 text-slate-100/84",
+    billboardBodyClass: "relative flex h-full max-w-[52%] flex-col justify-end",
+    miniTitleClass: "mt-2.5 line-clamp-2 max-w-[9.8rem] text-[1rem] font-semibold leading-tight text-white",
+    heroTitleClass: "mt-3 max-w-[27rem] text-[2rem] font-semibold tracking-tight text-white sm:text-[2.28rem]",
+    heroSummaryClass: "mt-3 line-clamp-2 max-w-[22rem] text-sm leading-5 text-slate-100/85 sm:text-[14px]",
+    heroLabel: "Featured app",
+  },
+  pdf: {
+    orbClass: "-right-9 top-3 h-[5.5rem] w-[5.5rem] rounded-full border border-red-100/34 bg-red-200/16 backdrop-blur-md",
+    blockClass: "bottom-[-12%] right-[15%] h-20 w-[4.5rem] rotate-[10deg] rounded-[14px] border border-red-100/26 bg-red-950/28",
+    homeTitleRowClass: "min-h-[3.25rem] pr-14 sm:min-h-[3.6rem]",
+    homeSummaryClass: "mt-3 line-clamp-2 max-w-[24ch] text-[13px] leading-5 text-slate-100/82 sm:max-w-[25ch] sm:text-sm sm:leading-6",
+    railTitleRowClass: "min-h-[3rem] pr-12",
+    railSummaryClass: "mt-2 line-clamp-2 max-w-[21ch] text-sm leading-6 text-slate-100/84",
+    mobileHeroTitleClass: "mt-3.5 line-clamp-2 max-w-[13rem] text-[1.33rem] font-semibold leading-[1.08] text-white",
+    mobileHeroSummaryClass: "mt-2 max-w-[15.4rem] line-clamp-2 text-[13px] leading-5 text-slate-100/84",
+    billboardBodyClass: "relative flex h-full max-w-[51%] flex-col justify-end",
+    miniTitleClass: "mt-2.5 line-clamp-2 max-w-[9.3rem] text-[1rem] font-semibold leading-tight text-white",
+    heroTitleClass: "mt-3 max-w-[26rem] text-[1.97rem] font-semibold tracking-tight text-white sm:text-[2.24rem]",
+    heroSummaryClass: "mt-3 line-clamp-2 max-w-[21rem] text-sm leading-5 text-slate-100/85 sm:text-[14px]",
+    heroLabel: "Featured PDF",
+  },
+  generic: {
+    orbClass: "-right-9 top-4 h-24 w-24 rounded-full border border-white/12 bg-white/10 backdrop-blur-md",
+    blockClass: "bottom-[-10%] right-[16%] h-20 w-20 rotate-12 rounded-[22px] border border-white/12 bg-slate-950/16",
+    homeTitleRowClass: "min-h-[3.4rem] pr-14 sm:min-h-[3.75rem]",
+    homeSummaryClass: "mt-3 line-clamp-2 max-w-[25ch] text-[13px] leading-5 text-slate-100/82 sm:max-w-[28ch] sm:text-sm sm:leading-6",
+    railTitleRowClass: "min-h-[3.1rem] pr-12",
+    railSummaryClass: "mt-2 line-clamp-3 max-w-[24ch] text-sm leading-6 text-slate-100/84",
+    mobileHeroTitleClass: "mt-3.5 line-clamp-2 max-w-[13.5rem] text-[1.35rem] font-semibold leading-[1.08] text-white",
+    mobileHeroSummaryClass: "mt-2 max-w-[16rem] line-clamp-2 text-[13px] leading-5 text-slate-100/84",
+    billboardBodyClass: "relative flex h-full max-w-[52%] flex-col justify-end",
+    miniTitleClass: "mt-2.5 line-clamp-2 max-w-[10rem] text-[1rem] font-semibold leading-tight text-white",
+    heroTitleClass: "mt-3 max-w-[28rem] text-[2rem] font-semibold tracking-tight text-white sm:text-[2.35rem]",
+    heroSummaryClass: "mt-3 line-clamp-2 max-w-[23rem] text-sm leading-5 text-slate-100/85 sm:text-[14px]",
+    heroLabel: "Featured pack",
+  },
+};
+
+function getResourceCardVariant(format) {
+  const safeFormat = format || "generic";
+  return RESOURCE_FORMAT_CARD_VARIANTS[safeFormat] || RESOURCE_FORMAT_CARD_VARIANTS.generic;
+}
+
+const HOME_CTA_CLASS = "inline-flex items-center justify-center rounded-full border border-sky-200/45 bg-[linear-gradient(135deg,rgba(56,189,248,0.95),rgba(59,130,246,0.92)_46%,rgba(14,165,233,0.95))] px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-white shadow-[0_14px_30px_-14px_rgba(14,165,233,0.95)] ring-1 ring-white/30 transition hover:-translate-y-0.5 hover:border-sky-100/60 hover:shadow-[0_20px_38px_-16px_rgba(14,165,233,1)]";
+const HOME_CTA_COMPACT_CLASS = "inline-flex items-center justify-center rounded-full border border-sky-200/45 bg-[linear-gradient(135deg,rgba(56,189,248,0.95),rgba(59,130,246,0.92)_46%,rgba(14,165,233,0.95))] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white shadow-[0_14px_30px_-14px_rgba(14,165,233,0.95)] ring-1 ring-white/30 transition hover:-translate-y-0.5 hover:border-sky-100/60 hover:shadow-[0_20px_38px_-16px_rgba(14,165,233,1)]";
+
 function EmptyState({ title, body }) {
   return (
     <div className="rounded-[24px] border border-dashed border-white/10 bg-white/[0.03] px-5 py-8 text-sm text-slate-300">
@@ -749,14 +909,16 @@ function ScrollShelf({ title, subtitle, metaLabel, children }) {
 function MarketplaceShelfCard({ resource }) {
   const detailHref = `/vault/${resource.id}`;
   const artwork = getResourceArtwork(resource);
+  const cardVariant = getResourceCardVariant(resource.resourceFormat);
   const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file";
   const shellClassName = "h-[304px] w-[286px] sm:h-[320px] sm:w-[320px] lg:w-[320px]";
-  const titleClassName = "mt-3.5 block line-clamp-2 max-w-[13.5rem] text-[1.12rem] font-semibold leading-tight text-white transition hover:text-sky-100 sm:mt-4 sm:max-w-[15rem] sm:text-[1.35rem]";
-  const summaryClassName = "mt-2 line-clamp-2 max-w-[25ch] text-[13px] leading-5 text-slate-100/82 sm:max-w-[28ch] sm:text-sm sm:leading-6";
+  const titleClassName = "block line-clamp-2 text-[1.12rem] font-semibold leading-tight text-white transition hover:text-sky-100 sm:text-[1.3rem]";
 
   return (
     <article className={["group relative flex flex-none snap-start overflow-hidden rounded-[26px] border border-white/10 shadow-[0_24px_62px_-38px_rgba(0,0,0,0.9)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20", shellClassName].join(" ")} style={{ backgroundImage: artwork.cardBackground }}>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_34%),linear-gradient(180deg,rgba(15,23,42,0.06),rgba(15,23,42,0.84)_76%)]" />
+      <div className={["pointer-events-none absolute", cardVariant.orbClass].join(" ")} />
+      <div className={["pointer-events-none absolute", cardVariant.blockClass].join(" ")} />
       <ResourceOwnerBadge
         resource={resource}
         className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center overflow-hidden rounded-[14px] border border-white/18 text-sm font-semibold text-slate-950 shadow-[0_14px_30px_-18px_rgba(255,255,255,0.8)]"
@@ -764,14 +926,16 @@ function MarketplaceShelfCard({ resource }) {
       />
       <div className="relative flex h-full flex-col justify-between p-4">
         <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/25" />
+          <div className={cardVariant.homeTitleRowClass}>
+            <Link href={detailHref} className={titleClassName}>
+              {resource.title}
+            </Link>
           </div>
-          <div className="mt-3 text-[10px] uppercase tracking-[0.22em] text-slate-200/78 sm:mt-4 sm:text-[11px] sm:tracking-[0.26em]">Vault pick</div>
-          <Link href={detailHref} className={titleClassName}>
-            {resource.title}
-          </Link>
-          <p className={summaryClassName}>{resource.summary || accessLabel}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-4">
+            <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/25" />
+            <div className="text-[10px] uppercase tracking-[0.22em] text-slate-200/78 sm:text-[11px] sm:tracking-[0.26em]">Vault pick</div>
+          </div>
+          <p className={cardVariant.homeSummaryClass}>{resource.summary || accessLabel}</p>
         </div>
 
         <div>
@@ -781,7 +945,7 @@ function MarketplaceShelfCard({ resource }) {
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
               <div className="mt-1 line-clamp-1 max-w-[130px] text-[11px] text-slate-100/72 sm:max-w-[160px] sm:text-xs">{accessLabel}</div>
             </div>
-            <Link href={detailHref} className="rounded-full border border-white/15 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100 sm:px-4 sm:py-2 sm:text-xs">
+            <Link href={detailHref} className={HOME_CTA_CLASS}>
               View resource
             </Link>
           </div>
@@ -804,6 +968,8 @@ function CategoryShelfCard({ category, onSelect }) {
       style={{ backgroundImage: background }}
     >
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))]" />
+      <div className="pointer-events-none absolute -right-8 top-4 h-20 w-20 rounded-full border border-white/12 bg-white/10 backdrop-blur-md" />
+      <div className="pointer-events-none absolute bottom-[-12%] right-[18%] h-16 w-16 rotate-12 rounded-[18px] border border-white/12 bg-slate-950/16" />
       <div className="relative flex flex-1 flex-col justify-between p-4">
         <div>
           <div className="text-[10px] uppercase tracking-[0.2em] text-slate-200/80 sm:text-[11px] sm:tracking-[0.24em]">Category</div>
@@ -830,6 +996,8 @@ function ActiveRequestShelfCard({ request }) {
   return (
     <article className="group relative flex h-[188px] w-[286px] flex-none snap-start overflow-hidden rounded-[24px] border border-white/10 shadow-[0_24px_60px_-40px_rgba(0,0,0,0.85)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20 sm:w-[320px] lg:w-[320px]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.2),transparent_34%),linear-gradient(160deg,rgba(15,23,42,0.9),rgba(30,41,59,0.95))]" />
+      <div className="pointer-events-none absolute -right-8 top-4 h-20 w-20 rounded-full border border-white/12 bg-white/10 backdrop-blur-md" />
+      <div className="pointer-events-none absolute bottom-[-12%] right-[18%] h-16 w-16 rotate-12 rounded-[18px] border border-white/12 bg-slate-950/16" />
       <div className="relative flex flex-1 flex-col justify-between p-4">
         <div>
           <div className="flex flex-wrap items-center gap-2">
@@ -853,11 +1021,14 @@ function ActiveRequestShelfCard({ request }) {
 function PromoRailCard({ resource, variant = "compact" }) {
   const detailHref = `/vault/${resource.id}`;
   const artwork = getResourceArtwork(resource);
+  const cardVariant = getResourceCardVariant(resource.resourceFormat);
   const shellClassName = "h-[228px] w-[320px]";
 
   return (
     <article className={["group relative flex flex-none snap-start overflow-hidden rounded-[24px] border border-white/10 shadow-[0_20px_56px_-34px_rgba(0,0,0,0.82)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20", shellClassName].join(" ")} style={{ backgroundImage: variant === "spotlight" ? artwork.spotlightBackground : artwork.cardBackground }}>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_34%),linear-gradient(180deg,rgba(15,23,42,0.08),rgba(15,23,42,0.82)_76%)]" />
+      <div className={["pointer-events-none absolute", cardVariant.orbClass].join(" ")} />
+      <div className={["pointer-events-none absolute", cardVariant.blockClass].join(" ")} />
       <ResourceOwnerBadge
         resource={resource}
         className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center overflow-hidden rounded-[13px] border border-white/18 text-sm font-semibold text-slate-950 shadow-[0_14px_30px_-18px_rgba(255,255,255,0.75)]"
@@ -865,11 +1036,16 @@ function PromoRailCard({ resource, variant = "compact" }) {
       />
       <div className="relative flex flex-1 flex-col justify-between p-4">
         <div>
-          <div className="text-[11px] uppercase tracking-[0.24em] text-slate-100/78">{variant === "spotlight" ? "Spotlight" : (resource.category?.name || "Resource")}</div>
-          <Link href={detailHref} className="mt-3 block line-clamp-2 max-w-[12rem] text-[1.2rem] font-semibold leading-tight text-white transition hover:text-sky-100">
-            {resource.title}
-          </Link>
-          <p className="mt-2 line-clamp-3 max-w-[24ch] text-sm leading-6 text-slate-100/84">
+          <div className={cardVariant.railTitleRowClass}>
+            <Link href={detailHref} className="block line-clamp-2 text-[1.18rem] font-semibold leading-tight text-white transition hover:text-sky-100">
+              {resource.title}
+            </Link>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/28" />
+            <div className="text-[11px] uppercase tracking-[0.24em] text-slate-100/78">{variant === "spotlight" ? "Spotlight" : (resource.category?.name || "Resource")}</div>
+          </div>
+          <p className={cardVariant.railSummaryClass}>
             {resource.summary || "Open the resource to review the pack or linked source details."}
           </p>
         </div>
@@ -877,7 +1053,7 @@ function PromoRailCard({ resource, variant = "compact" }) {
           <div className="rounded-full border border-white/12 bg-slate-950/28 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-100/88">
             Included
           </div>
-          <Link href={detailHref} className="rounded-full border border-white/15 bg-white px-3.5 py-2 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100">
+          <Link href={detailHref} className={HOME_CTA_COMPACT_CLASS}>
             Open
           </Link>
         </div>
@@ -1011,11 +1187,14 @@ function CreatedResourceCard({ resource, onEdit, onSubmitForReview, onArchive })
 
 function MobileHeroCard({ resource }) {
   const artwork = getResourceArtwork(resource);
+  const cardVariant = getResourceCardVariant(resource.resourceFormat);
   const detailHref = `/vault/${resource.id}`;
 
   return (
     <article className="relative h-[252px] overflow-hidden rounded-[24px] border border-white/10 shadow-[0_22px_56px_-36px_rgba(0,0,0,0.9)] ring-1 ring-white/10" style={{ backgroundImage: artwork.heroBackground }}>
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.08),rgba(15,23,42,0.74)_68%)]" />
+      <div className={["pointer-events-none absolute", cardVariant.orbClass].join(" ")} />
+      <div className={["pointer-events-none absolute", cardVariant.blockClass].join(" ")} />
       <div className="relative h-full p-4.5">
         <ResourceOwnerBadge
           resource={resource}
@@ -1026,14 +1205,14 @@ function MobileHeroCard({ resource }) {
           <div className="flex flex-wrap items-center gap-2">
             <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/28" />
           </div>
-          <div className="mt-3.5 line-clamp-2 max-w-[13.5rem] text-[1.35rem] font-semibold leading-[1.08] text-white">{resource.title}</div>
-          <p className="mt-2 max-w-[16rem] line-clamp-2 text-[13px] leading-5 text-slate-100/84">{resource.summary || resource.description || "Open the resource to review the full pack details."}</p>
+          <div className={cardVariant.mobileHeroTitleClass}>{resource.title}</div>
+          <p className={cardVariant.mobileHeroSummaryClass}>{resource.summary || resource.description || "Open the resource to review the full pack details."}</p>
           <div className="mt-3.5 flex items-end justify-between gap-3">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
               <div className="mt-1 text-xs text-slate-100/70">{resource.downloadCount || 0} downloads</div>
             </div>
-            <Link href={detailHref} className="rounded-full bg-white px-3.5 py-1.5 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100">
+            <Link href={detailHref} className={HOME_CTA_COMPACT_CLASS}>
               Open
             </Link>
           </div>
@@ -1045,19 +1224,22 @@ function MobileHeroCard({ resource }) {
 
 function MobilePromoBillboard({ resource, eyebrow = "Featured" }) {
   const artwork = getResourceArtwork(resource);
+  const cardVariant = getResourceCardVariant(resource.resourceFormat);
   const detailHref = `/vault/${resource.id}`;
 
   return (
     <article className="relative h-[206px] overflow-hidden rounded-[22px] border border-white/10 shadow-[0_20px_50px_-34px_rgba(0,0,0,0.86)] ring-1 ring-white/10" style={{ backgroundImage: artwork.panelBackground }}>
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.1),rgba(15,23,42,0.82)_74%)]" />
+      <div className={["pointer-events-none absolute", cardVariant.orbClass].join(" ")} />
+      <div className={["pointer-events-none absolute", cardVariant.blockClass].join(" ")} />
       <div className="relative h-full p-4.5">
         <div className="absolute inset-y-0 right-0 w-[48%] opacity-85" style={{ backgroundImage: artwork.cardBackground }} />
         <div className="absolute inset-y-0 right-0 w-[48%] bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))]" />
-        <div className="relative flex h-full max-w-[52%] flex-col justify-end">
+        <div className={cardVariant.billboardBodyClass}>
           <div className="text-[10px] uppercase tracking-[0.2em] text-slate-100/76">{eyebrow}</div>
           <div className="mt-2.5 line-clamp-2 text-[1.18rem] font-semibold leading-[1.12] text-white">{resource.title}</div>
           <div className="mt-1.5 line-clamp-2 text-[13px] leading-5 text-slate-100/80">{resource.summary || "Explore the resource details."}</div>
-          <Link href={detailHref} className="mt-3 inline-flex w-fit rounded-full bg-white px-3.5 py-1.5 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100">
+          <Link href={detailHref} className={`${HOME_CTA_COMPACT_CLASS} mt-3 w-fit`}>
             View resource
           </Link>
         </div>
@@ -1068,17 +1250,20 @@ function MobilePromoBillboard({ resource, eyebrow = "Featured" }) {
 
 function MobileMiniPromoCard({ resource }) {
   const artwork = getResourceArtwork(resource);
+  const cardVariant = getResourceCardVariant(resource.resourceFormat);
   const detailHref = `/vault/${resource.id}`;
 
   return (
     <article className="relative h-[142px] overflow-hidden rounded-[20px] border border-white/10 shadow-[0_18px_44px_-30px_rgba(0,0,0,0.82)] ring-1 ring-white/10" style={{ backgroundImage: artwork.cardBackground }}>
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.1),rgba(15,23,42,0.82)_78%)]" />
+      <div className={["pointer-events-none absolute", cardVariant.orbClass].join(" ")} />
+      <div className={["pointer-events-none absolute", cardVariant.blockClass].join(" ")} />
       <div className="relative flex h-full flex-col justify-between p-3.5">
         <div>
           <div className="text-[10px] uppercase tracking-[0.2em] text-slate-100/76">{resource.category?.name || "Resource"}</div>
-          <div className="mt-2.5 line-clamp-2 max-w-[10rem] text-[1rem] font-semibold leading-tight text-white">{resource.title}</div>
+          <div className={cardVariant.miniTitleClass}>{resource.title}</div>
         </div>
-        <Link href={detailHref} className="inline-flex w-fit rounded-full border border-white/15 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-950 transition hover:bg-slate-100">
+        <Link href={detailHref} className={`${HOME_CTA_COMPACT_CLASS} w-fit`}>
           Open
         </Link>
       </div>
@@ -1520,6 +1705,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
   }, [mobileHeroResource?.id, spotlightResource, supportingResources, trendingResources]);
 
   const heroArtwork = useMemo(() => (heroResource ? getResourceArtwork(heroResource) : null), [heroResource]);
+  const heroCardVariant = useMemo(() => getResourceCardVariant(heroResource?.resourceFormat), [heroResource?.resourceFormat]);
   const spotlightArtwork = useMemo(() => (spotlightResource ? getResourceArtwork(spotlightResource) : null), [spotlightResource]);
   const libraryShelves = useMemo(() => {
     const sorted = [...library].sort(
@@ -2374,22 +2560,22 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                 <article className="relative overflow-hidden rounded-[24px] border border-white/10 shadow-[0_18px_52px_-36px_rgba(0,0,0,0.52)] ring-1 ring-white/10" style={{ backgroundImage: heroArtwork?.heroBackground }}>
                   <div className="relative min-h-[336px] overflow-hidden p-5 sm:p-6">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.18),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))]" />
-                    <div className="absolute -right-10 top-5 h-32 w-32 rounded-full border border-white/15 bg-white/10 backdrop-blur-md" />
-                    <div className="absolute bottom-[-8%] right-[18%] h-28 w-28 rounded-[30px] border border-white/15 bg-slate-950/18 rotate-12" />
+                    <div className={["pointer-events-none absolute", heroCardVariant.orbClass].join(" ")} />
+                    <div className={["pointer-events-none absolute", heroCardVariant.blockClass].join(" ")} />
                     <ResourceOwnerBadge
                       resource={heroResource}
                       className="absolute left-7 top-7 flex h-14 w-14 items-center justify-center overflow-hidden rounded-[18px] border border-white/20 text-base font-semibold text-slate-950 shadow-[0_10px_26px_-12px_rgba(255,255,255,0.7)]"
                       style={{ backgroundImage: heroArtwork?.chipBackground }}
                     />
-                    <div className="relative z-10 flex h-full flex-col justify-between gap-8 pt-16">
+                    <div className="relative z-10 flex h-full flex-col justify-between gap-6 pt-6 sm:pt-7">
                       <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <ResourceFormatChip format={heroResource.resourceFormat} />
-                        </div>
                         <div className="mt-6 max-w-[34rem]">
-                          <div className="text-[11px] uppercase tracking-[0.28em] text-slate-200">Featured pack</div>
-                          <div className="mt-3 max-w-[28rem] text-[2rem] font-semibold tracking-tight text-white sm:text-[2.35rem]">{heroResource.title}</div>
-                          <p className="mt-3 line-clamp-2 max-w-[23rem] text-sm leading-5 text-slate-100/85 sm:text-[14px]">{heroResource.summary || heroResource.description || "Open the resource to review the full pack details."}</p>
+                          <div className="text-[11px] uppercase tracking-[0.28em] text-slate-200">{heroCardVariant.heroLabel}</div>
+                          <div className={heroCardVariant.heroTitleClass}>{heroResource.title}</div>
+                          <p className={heroCardVariant.heroSummaryClass}>{heroResource.summary || heroResource.description || "Open the resource to review the full pack details."}</p>
+                        </div>
+                        <div className="mt-4 flex flex-wrap items-center gap-2">
+                          <ResourceFormatChip format={heroResource.resourceFormat} />
                         </div>
                       </div>
                       <div className="flex flex-wrap items-end justify-between gap-3.5">
@@ -2399,7 +2585,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                             <div className="mt-1 text-xs text-slate-300/80">{heroResource.downloadCount || 0} downloads</div>
                           </div>
                         </div>
-                        <Link href={`/vault/${heroResource.id}`} className="rounded-full bg-white px-4.5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 hover:shadow-[0_12px_24px_-14px_rgba(255,255,255,0.65)]">
+                        <Link href={`/vault/${heroResource.id}`} className={`${HOME_CTA_CLASS} px-4.5 py-2.5 text-sm`}>
                           View resource
                         </Link>
                       </div>
