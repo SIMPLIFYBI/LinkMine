@@ -13,7 +13,6 @@ import {
 } from "@fluentui/react-icons";
 import { formatResourceBytes } from "@/lib/resourceHub";
 import { buildResourceRoutePayload, DEFAULT_RESOURCE_SELECT, getResourceAuthContext } from "@/lib/resourceHubServer";
-import { supabaseAdminClient } from "@/lib/supabaseAdminClient";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import ResourceDetailActions from "./ResourceDetailActions.client.jsx";
 import ResourceImageCarousel from "./ResourceImageCarousel.client.jsx";
@@ -160,6 +159,18 @@ export default async function MarketplaceResourcePage({ params }) {
 
   const related = relatedRows || [];
 
+  let uniqueOpeners30d = null;
+  try {
+    const { data: uniqueOpeners } = await sb.rpc("resource_unique_openers_30d", {
+      p_resource_id: id,
+    });
+    uniqueOpeners30d = Number(uniqueOpeners ?? 0);
+  } catch {
+    uniqueOpeners30d = null;
+  }
+
+  const totalOpenCount = Number(resource.openCount ?? resource.downloadCount ?? 0);
+
   return (
     <main className="w-full px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -211,7 +222,16 @@ export default async function MarketplaceResourcePage({ params }) {
               <div className="rounded-[28px] border border-white/10 bg-slate-950/35 p-5 ring-1 ring-white/10">
                 <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Access</div>
                 <div className="mt-3 text-3xl font-semibold text-white">Included</div>
-                <div className="mt-2 text-sm text-slate-400">{resource.downloadCount || 0} downloads</div>
+                <div className="mt-2 text-sm text-slate-400">Use Open resource to access this pack or source.</div>
+              </div>
+
+              <div className="rounded-[28px] border border-white/10 bg-slate-950/35 p-5 ring-1 ring-white/10">
+                <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Click-through</div>
+                <div className="mt-3 text-3xl font-semibold text-white">{totalOpenCount}</div>
+                <div className="mt-2 text-sm text-slate-400">Total open clicks</div>
+                <div className="mt-2 text-xs text-slate-500">
+                  {uniqueOpeners30d == null ? "Unique users (30d): unavailable" : `Unique users (30d): ${uniqueOpeners30d}`}
+                </div>
               </div>
 
               <div className="rounded-[28px] border border-white/10 bg-slate-950/35 p-5 ring-1 ring-white/10">

@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   Apps24Regular,
   BranchFork24Regular,
@@ -106,6 +106,16 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
   });
   const [busyResourceId, setBusyResourceId] = useState(null);
   const [loadingQueue, setLoadingQueue] = useState(false);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [analytics, setAnalytics] = useState({
+    windowDays: 30,
+    totals: {
+      totalOpenEvents: 0,
+      uniqueOpenersInWindow: 0,
+      openEventsInWindow: 0,
+    },
+    leaderboard: [],
+  });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -113,6 +123,36 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
   function resetMessages() {
     setError("");
     setSuccess("");
+  }
+
+  async function refreshAnalytics({ silent = false } = {}) {
+    if (!silent) {
+      setLoadingAnalytics(true);
+    }
+
+    try {
+      const analyticsRes = await apiSend("/api/resources/analytics?limit=8&days=30");
+      setAnalytics({
+        windowDays: Number(analyticsRes.windowDays || 30),
+        totals: {
+          totalOpenEvents: Number(analyticsRes?.totals?.totalOpenEvents || 0),
+          uniqueOpenersInWindow: Number(analyticsRes?.totals?.uniqueOpenersInWindow || 0),
+          openEventsInWindow: Number(analyticsRes?.totals?.openEventsInWindow || 0),
+        },
+        leaderboard: Array.isArray(analyticsRes.leaderboard) ? analyticsRes.leaderboard : [],
+      });
+      if (!silent) {
+        setSuccess("Analytics refreshed.");
+      }
+    } catch (nextError) {
+      if (!silent) {
+        setError(nextError.message || "Unable to refresh analytics.");
+      }
+    } finally {
+      if (!silent) {
+        setLoadingAnalytics(false);
+      }
+    }
   }
 
   async function refreshQueue() {
@@ -130,6 +170,10 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
       setLoadingQueue(false);
     }
   }
+
+  useEffect(() => {
+    void refreshAnalytics({ silent: true });
+  }, []);
 
   function handleReview(resource, status) {
     resetMessages();
@@ -176,6 +220,14 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
             >
               {loadingQueue ? "Refreshing..." : "Refresh queue"}
             </button>
+            <button
+              type="button"
+              onClick={() => refreshAnalytics()}
+              disabled={loadingAnalytics || isPending}
+              className="rounded-full border border-cyan-300/25 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loadingAnalytics ? "Refreshing analytics..." : "Refresh analytics"}
+            </button>
           </div>
         </div>
 
@@ -194,6 +246,58 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
             <div className="text-xs uppercase tracking-[0.18em] text-red-200/85">Rejected</div>
             <div className="mt-2 text-3xl font-semibold text-red-50">{counts.rejected}</div>
             <div className="mt-1 text-sm text-red-100/90">Needs fixes before approval</div>
+          </div>
+        </section>
+
+        <section className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-semibold text-white">Click-through analytics</h2>
+              <p className="mt-1 text-sm text-slate-300">Resource opens and unique users in the last {analytics.windowDays} days.</p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-4">
+              <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Total opens</div>
+              <div className="mt-2 text-3xl font-semibold text-white">{analytics.totals.totalOpenEvents}</div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-4">
+              <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Opens (30d)</div>
+              <div className="mt-2 text-3xl font-semibold text-white">{analytics.totals.openEventsInWindow}</div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-4">
+              <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Unique users (30d)</div>
+              <div className="mt-2 text-3xl font-semibold text-white">{analytics.totals.uniqueOpenersInWindow}</div>
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {analytics.leaderboard.length ? (
+              analytics.leaderboard.map((item) => (
+                <article key={item.resourceId} className="rounded-[20px] border border-white/10 bg-slate-950/25 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.16em] text-slate-500">#{item.rank}</div>
+                      <div className="mt-1 text-base font-semibold text-white">{item.title}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/vault/${item.resourceId}`} className="rounded-full border border-white/15 bg-white/[0.05] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/[0.12]">
+                        Open resource
+                      </Link>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-300">
+                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">{item.totalOpens} total opens</span>
+                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">{item.uniqueOpenersInWindow} unique users ({analytics.windowDays}d)</span>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div className="rounded-2xl border border-white/10 bg-slate-950/25 px-5 py-8 text-center text-sm text-slate-300">
+                No click-through analytics yet.
+              </div>
+            )}
           </div>
         </section>
 

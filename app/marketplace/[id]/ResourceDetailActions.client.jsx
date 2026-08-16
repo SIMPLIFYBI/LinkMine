@@ -4,9 +4,17 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 
 async function readJson(response) {
-  const body = await response.json().catch(() => ({}));
+  const raw = await response.text();
+  let body = {};
+  if (raw) {
+    try {
+      body = JSON.parse(raw);
+    } catch {
+      body = {};
+    }
+  }
   if (!response.ok) {
-    throw new Error(body?.error || body?.message || "Request failed.");
+    throw new Error(body?.error || body?.message || raw || `Request failed (${response.status}).`);
   }
   return body;
 }
@@ -44,7 +52,9 @@ export default function ResourceDetailActions({ resource, requiresAuth = false }
 
     startBusy(async () => {
       try {
-        const result = await apiSend(`/api/resources/${resource.id}/access`, "POST");
+        const result = await apiSend(`/api/resources/${resource.id}/access`, "POST", {
+          sourceSurface: "resource_detail",
+        });
         const targetUrl = result.signedUrl || result.sourceUrl;
         if (!targetUrl) throw new Error("No access URL returned.");
         window.open(targetUrl, "_blank", "noopener,noreferrer");

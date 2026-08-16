@@ -62,9 +62,17 @@ const RESOURCE_FORMAT_OPTIONS = [
 ];
 
 async function readJson(response) {
-  const body = await response.json().catch(() => ({}));
+  const raw = await response.text();
+  let body = {};
+  if (raw) {
+    try {
+      body = JSON.parse(raw);
+    } catch {
+      body = {};
+    }
+  }
   if (!response.ok) {
-    throw new Error(body?.error || body?.message || "Request failed.");
+    throw new Error(body?.error || body?.message || raw || `Request failed (${response.status}).`);
   }
   return body;
 }
@@ -748,7 +756,7 @@ function ResourceCard({ resource, onSubmitForReview, onArchive, actionLabel = "V
             </div>
             <div className="rounded-2xl border border-white/10 bg-slate-950/35 px-3 py-2 text-right">
               <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">Included</div>
-              <div className="mt-1 text-[11px] text-slate-400">{resource.downloadCount || 0} downloads</div>
+              <div className="mt-1 text-[11px] text-slate-400">{resource.openCount ?? resource.downloadCount ?? 0} opens</div>
             </div>
           </div>
         </div>
@@ -827,7 +835,7 @@ function LibraryGalleryCard({ resource }) {
           </div>
           <div className="rounded-[20px] border border-white/12 bg-slate-950/30 px-3 py-2 text-right backdrop-blur-sm">
             <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
-            <div className="mt-1 text-[11px] text-slate-200/80">{resource.downloadCount || 0} downloads</div>
+            <div className="mt-1 text-[11px] text-slate-200/80">{resource.openCount ?? resource.downloadCount ?? 0} opens</div>
           </div>
         </div>
 
@@ -939,7 +947,7 @@ function MarketplaceShelfCard({ resource, onResourceClick }) {
         </div>
 
         <div>
-          <div className="min-h-[28px] text-[11px] text-slate-100/76">{resource.downloadCount || 0} downloads</div>
+          <div className="min-h-[28px] text-[11px] text-slate-100/76">{resource.openCount ?? resource.downloadCount ?? 0} opens</div>
           <div className="mt-3.5 flex items-center justify-between gap-2.5 sm:mt-4 sm:gap-3">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
@@ -1157,7 +1165,7 @@ function CreatedResourceCard({ resource, onEdit, onSubmitForReview, onArchive })
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
           <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">Updated {formatDate(resource.updatedAt) || "Recently"}</span>
-          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">{resource.downloadCount || 0} downloads</span>
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">{resource.openCount ?? resource.downloadCount ?? 0} opens</span>
         </div>
         <div className="mt-auto flex flex-wrap gap-2 pt-4">
           <button
@@ -1210,7 +1218,7 @@ function MobileHeroCard({ resource, onResourceClick }) {
           <div className="mt-3.5 flex items-end justify-between gap-3">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
-              <div className="mt-1 text-xs text-slate-100/70">{resource.downloadCount || 0} downloads</div>
+              <div className="mt-1 text-xs text-slate-100/70">{resource.openCount ?? resource.downloadCount ?? 0} opens</div>
             </div>
             <Link href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} className={HOME_CTA_COMPACT_CLASS}>
               Open
@@ -1653,7 +1661,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
 
   const trendingResources = useMemo(() => {
     return [...discoverResources]
-      .sort((left, right) => (Number(right.downloadCount || 0) - Number(left.downloadCount || 0)) || right.updatedAt?.localeCompare?.(left.updatedAt || "") || 0)
+      .sort((left, right) => (Number(right.openCount ?? right.downloadCount ?? 0) - Number(left.openCount ?? left.downloadCount ?? 0)) || right.updatedAt?.localeCompare?.(left.updatedAt || "") || 0)
       .slice(0, 4);
   }, [discoverResources]);
 
@@ -1958,7 +1966,9 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
   async function handleAccess(resource) {
     resetMessages();
     try {
-      const body = await apiSend(`/api/resources/${resource.id}/access`, "POST");
+      const body = await apiSend(`/api/resources/${resource.id}/access`, "POST", {
+        sourceSurface: `marketplace_${activeTab}`,
+      });
       const targetUrl = body.signedUrl || body.sourceUrl;
       if (!targetUrl) throw new Error("No access URL returned.");
       window.open(targetUrl, "_blank", "noopener,noreferrer");
@@ -2605,7 +2615,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                         <div className="flex flex-wrap items-center gap-2.5">
                           <div className="rounded-[18px] border border-white/10 bg-slate-950/24 px-3.5 py-2.5 text-sm text-slate-100 backdrop-blur-sm">
                             <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
-                            <div className="mt-1 text-xs text-slate-300/80">{heroResource.downloadCount || 0} downloads</div>
+                            <div className="mt-1 text-xs text-slate-300/80">{heroResource.openCount ?? heroResource.downloadCount ?? 0} opens</div>
                           </div>
                         </div>
                         <Link href={`/vault/${heroResource.id}`} onClick={(event) => handleResourceOpenIntent(event, `/vault/${heroResource.id}`)} className={`${HOME_CTA_CLASS} px-4.5 py-2.5 text-sm`}>

@@ -637,7 +637,7 @@ export default function EditResourcePageClient({ initialResource, categories, co
               <div className="rounded-[28px] border border-white/10 bg-slate-950/35 p-5 ring-1 ring-white/10">
                 <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Availability</div>
                 <div className="mt-3 text-3xl font-semibold text-white">Included</div>
-                <div className="mt-2 text-sm text-slate-400">{resource.downloadCount || 0} downloads</div>
+                <div className="mt-2 text-sm text-slate-400">{resource.openCount ?? resource.downloadCount ?? 0} opens</div>
               </div>
 
               <div className="rounded-[28px] border border-white/10 bg-slate-950/35 p-5 ring-1 ring-white/10">

@@ -17,7 +17,7 @@ import { useAuth } from "@/app/components/AuthProvider";
 
 const SORTABLE_COLUMNS = [
   { key: "title", label: "Title" },
-  { key: "download_count", label: "Downloads" },
+  { key: "download_count", label: "Opens" },
   { key: "updated_at", label: "Updated" },
   { key: "created_at", label: "Created" },
 ];
@@ -920,7 +920,7 @@ export default function ResourcesTablePageClient() {
                         </div>
 
                         <div>
-                          <div className="min-h-[28px] text-[11px] text-slate-100/76">{resource.downloadCount || 0} downloads</div>
+                          <div className="min-h-[28px] text-[11px] text-slate-100/76">{resource.openCount ?? resource.downloadCount ?? 0} opens</div>
                           <div className="mt-3.5 flex items-center justify-between gap-2.5 sm:mt-4 sm:gap-3">
                             <div>
                               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>

@@ -9,6 +9,50 @@ function bytesUsedToday(events = []) {
   return events.reduce((sum, event) => sum + Number(event?.bytes_served || 0), 0);
 }
 
+function normalizeSourceSurface(value) {
+  const source = typeof value === "string" ? value.trim().toLowerCase() : "";
+  if (!source) return "unknown";
+  return source.slice(0, 60);
+}
+
+async function logOpenEvent(sb, { userId, resourceId, accessKind, sourceSurface }) {
+  const { error } = await sb.from("resource_open_events").insert({
+    user_id: userId,
+    resource_id: resourceId,
+    access_kind: accessKind,
+    source_surface: sourceSurface,
+  });
+
+  if (error) {
+    console.error("[resources.access] Failed to log open event", {
+      resourceId,
+      userId,
+      accessKind,
+      sourceSurface,
+      error: error.message,
+    });
+  }
+}
+
+async function incrementOpenCount(sb, resourceId, currentOpenCount, currentDownloadCount) {
+  const nextOpenCount = Number(currentOpenCount || 0) + 1;
+  const nextDownloadCount = Number(currentDownloadCount || 0) + 1;
+  const { error } = await sb
+    .from("resources")
+    .update({
+      open_count: nextOpenCount,
+      download_count: nextDownloadCount,
+    })
+    .eq("id", resourceId);
+
+  if (error) {
+    console.error("[resources.access] Failed to update open counters", {
+      resourceId,
+      error: error.message,
+    });
+  }
+}
+
 export async function POST(req, { params }) {
   const { id } = await params;
   if (!id) {
@@ -16,15 +60,17 @@ export async function POST(req, { params }) {
   }
 
   const sb = await supabaseServerClient();
-  const adminSb = supabaseAdminClient();
   const { userId, isAdmin } = await getResourceAuthContext(sb);
   if (!userId) {
     return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
   }
 
+  const payload = await req.json().catch(() => ({}));
+  const sourceSurface = normalizeSourceSurface(payload?.sourceSurface);
+
   const { data: resource, error: resourceError } = await sb
     .from("resources")
-    .select("id, owner_user_id, resource_type, status, source_url, estimated_size_bytes, download_count")
+    .select("id, owner_user_id, resource_type, status, source_url, estimated_size_bytes, open_count, download_count")
     .eq("id", id)
     .maybeSingle();
 
@@ -42,28 +88,35 @@ export async function POST(req, { params }) {
   }
 
   if (resource.resource_type === "external") {
-    const { error: logError } = await sb.from("resource_download_events").insert({
-      user_id: userId,
-      resource_id: id,
-      asset_id: null,
-      access_kind: "external",
-      bytes_served: 0,
-    });
-
-    if (logError) {
-      return NextResponse.json({ ok: false, error: logError.message }, { status: 400 });
+    if (!resource.source_url) {
+      return NextResponse.json({ ok: false, error: "External resource is missing a source URL." }, { status: 400 });
     }
 
-    await adminSb
-      .from("resources")
-      .update({ download_count: Number(resource.download_count || 0) + 1 })
-      .eq("id", id);
+    void logOpenEvent(sb, {
+      userId,
+      resourceId: id,
+      accessKind: "external",
+      sourceSurface,
+    });
+
+    void incrementOpenCount(sb, id, resource.open_count, resource.download_count);
 
     return NextResponse.json({
       ok: true,
       accessKind: "external",
       sourceUrl: resource.source_url,
     });
+  }
+
+  let adminSb;
+  try {
+    adminSb = supabaseAdminClient();
+  } catch (error) {
+    console.error("[resources.access] Missing admin client configuration for hosted resource access", {
+      resourceId: id,
+      error: error?.message || String(error),
+    });
+    return NextResponse.json({ ok: false, error: "Hosted resource access is temporarily unavailable." }, { status: 503 });
   }
 
   await sb.rpc("ensure_resource_user_quota_row", { p_user_id: userId });
@@ -137,10 +190,14 @@ export async function POST(req, { params }) {
     return NextResponse.json({ ok: false, error: logError.message }, { status: 400 });
   }
 
-  await adminSb
-    .from("resources")
-    .update({ download_count: Number(resource.download_count || 0) + 1 })
-    .eq("id", id);
+  await logOpenEvent(sb, {
+    userId,
+    resourceId: id,
+    accessKind: "hosted",
+    sourceSurface,
+  });
+
+  await incrementOpenCount(sb, id, resource.open_count, resource.download_count);
 
   return NextResponse.json({
     ok: true,
