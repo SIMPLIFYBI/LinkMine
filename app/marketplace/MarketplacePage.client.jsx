@@ -1368,7 +1368,6 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
   const [resourceFile, setResourceFile] = useState(null);
   const [resourcePreviewImages, setResourcePreviewImages] = useState([]);
   const [discoverFilter, setDiscoverFilter] = useState({ search: "", type: "", categoryId: "" });
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobileHeroIndex, setMobileHeroIndex] = useState(0);
   const [createSectionCompletion, setCreateSectionCompletion] = useState({
@@ -1614,12 +1613,6 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
   }, [activeTab, isAdmin, pathname, router, searchParams, signedIn]);
 
   useEffect(() => {
-    if (activeTab !== "discover") {
-      setMobileSearchOpen(false);
-    }
-  }, [activeTab]);
-
-  useEffect(() => {
     if (activeTab === "discover") {
       setCoverCollapsed(false);
     }
@@ -1630,16 +1623,6 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
       setMobileNavOpen(false);
     }
   }, [activeTab, signedIn]);
-
-  useEffect(() => {
-    function handleMarketplaceSearchToggle() {
-      if (activeTab !== "discover") return;
-      setMobileSearchOpen((current) => !current);
-    }
-
-    window.addEventListener("vault:search-toggle", handleMarketplaceSearchToggle);
-    return () => window.removeEventListener("vault:search-toggle", handleMarketplaceSearchToggle);
-  }, [activeTab]);
 
   const discoverResources = useMemo(() => {
     const searchTerm = discoverFilter.search.trim().toLowerCase();
@@ -2302,25 +2285,6 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
             />
           ) : null}
           <div className="lg:hidden">
-            <button
-              type="button"
-              onClick={() => setMobileNavOpen((current) => !current)}
-              className="fixed left-3 top-[72px] z-40 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-slate-900/75 text-slate-100 shadow-[0_18px_38px_-22px_rgba(0,0,0,0.75)] backdrop-blur-md"
-              aria-label={mobileNavOpen ? "Collapse vault navigation" : "Expand vault navigation"}
-            >
-              {mobileNavOpen ? (
-                <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M15 6 9 12l6 6" />
-                </svg>
-              ) : (
-                <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 7h16" />
-                  <path d="M4 12h16" />
-                  <path d="M4 17h16" />
-                </svg>
-              )}
-            </button>
-
             {mobileNavOpen ? (
               <button
                 type="button"
@@ -2363,35 +2327,6 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
               </div>
             </aside>
 
-            {activeTab === "discover" && mobileSearchOpen ? (
-              <div className="mb-3 pl-12 pr-1 pt-2">
-                <div className="relative rounded-2xl border border-white/15 bg-white/[0.08] px-2 py-2 shadow-[0_16px_36px_-24px_rgba(14,165,233,0.45)] backdrop-blur-xl ring-1 ring-white/15">
-                  <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-300" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="m20 20-3.5-3.5" />
-                  </svg>
-                  <TextInput
-                    value={discoverFilter.search}
-                    onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, search: event.target.value }))}
-                    placeholder="Search vault"
-                    className="h-10 rounded-full border-white/10 bg-slate-950/65 pl-11 pr-10 text-[13px]"
-                  />
-                  {discoverFilter.search ? (
-                    <button
-                      type="button"
-                      onClick={() => setDiscoverFilter((prev) => ({ ...prev, search: "" }))}
-                      className="absolute right-4 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-white/[0.08] text-slate-200"
-                      aria-label="Clear search"
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M6 6l12 12" />
-                        <path d="M18 6 6 18" />
-                      </svg>
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
           </div>
 
           <div className={`${activeTab === "discover" && coverCollapsed ? "mt-0" : "mt-3"} min-w-0 lg:mt-0`}>
@@ -2449,6 +2384,27 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
 
                   <div className="flex w-full items-center gap-2 sm:hidden">
                     <div className="flex min-w-0 flex-1 items-center rounded-full border border-white/15 bg-slate-950/62 px-2.5 py-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setMobileNavOpen((current) => !current)}
+                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/14 bg-white/[0.08] text-slate-100"
+                        aria-label={mobileNavOpen ? "Collapse vault navigation" : "Expand vault navigation"}
+                      >
+                        {mobileNavOpen ? (
+                          <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M15 6 9 12l6 6" />
+                          </svg>
+                        ) : (
+                          <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 7h16" />
+                            <path d="M4 12h16" />
+                            <path d="M4 17h16" />
+                          </svg>
+                        )}
+                      </button>
+
+                      <div className="mx-1 h-5 w-px bg-white/18" />
+
                       <div className="relative min-w-0 flex-1">
                         <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-1.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                           <circle cx="11" cy="11" r="7" />
@@ -2464,7 +2420,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
 
                       <div className="mx-1 h-5 w-px bg-white/18" />
 
-                      <div className="relative w-[8.9rem]">
+                      <div className="relative w-[7.8rem]">
                         <select
                           value={discoverFilter.categoryId}
                           onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, categoryId: event.target.value }))}
