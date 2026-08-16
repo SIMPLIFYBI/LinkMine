@@ -64,7 +64,9 @@ export async function GET(req) {
       return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
     }
 
-    let query = sb
+    const dataSb = sb;
+
+    let query = dataSb
       .from("resources")
       .select(view === "card" ? RESOURCE_CARD_SELECT : DEFAULT_RESOURCE_SELECT)
       .order(sortBy, { ascending: sortAscending, nullsFirst: false })
@@ -93,13 +95,13 @@ export async function GET(req) {
     const rows = data || [];
     const hasMore = rows.length > limit;
     const slicedRows = hasMore ? rows.slice(0, limit) : rows;
-    const consultantIconByResourceId = await resolveResourceConsultantIcons(sb, slicedRows);
+    const consultantIconByResourceId = await resolveResourceConsultantIcons(dataSb, slicedRows);
     const resourceIds = slicedRows.map((row) => row.id).filter(Boolean);
     const resourceImagesByResourceId = new Map();
 
     if (resourceIds.length) {
       try {
-        const { data: resourceImageRows } = await sb
+        const { data: resourceImageRows } = await dataSb
           .from("resource_images")
           .select("id, resource_id, bucket_name, object_path, original_filename, sort_order")
           .in("resource_id", resourceIds)

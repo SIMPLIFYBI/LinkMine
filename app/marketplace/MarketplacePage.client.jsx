@@ -906,7 +906,7 @@ function ScrollShelf({ title, subtitle, metaLabel, children }) {
   );
 }
 
-function MarketplaceShelfCard({ resource }) {
+function MarketplaceShelfCard({ resource, onResourceClick }) {
   const detailHref = `/vault/${resource.id}`;
   const artwork = getResourceArtwork(resource);
   const cardVariant = getResourceCardVariant(resource.resourceFormat);
@@ -927,7 +927,7 @@ function MarketplaceShelfCard({ resource }) {
       <div className="relative flex h-full flex-col justify-between p-4">
         <div>
           <div className={cardVariant.homeTitleRowClass}>
-            <Link href={detailHref} className={titleClassName}>
+            <Link href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} className={titleClassName}>
               {resource.title}
             </Link>
           </div>
@@ -945,7 +945,7 @@ function MarketplaceShelfCard({ resource }) {
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
               <div className="mt-1 line-clamp-1 max-w-[130px] text-[11px] text-slate-100/72 sm:max-w-[160px] sm:text-xs">{accessLabel}</div>
             </div>
-            <Link href={detailHref} className={HOME_CTA_CLASS}>
+            <Link href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} className={HOME_CTA_CLASS}>
               View resource
             </Link>
           </div>
@@ -1018,7 +1018,7 @@ function ActiveRequestShelfCard({ request }) {
   );
 }
 
-function PromoRailCard({ resource, variant = "compact" }) {
+function PromoRailCard({ resource, variant = "compact", onResourceClick }) {
   const detailHref = `/vault/${resource.id}`;
   const artwork = getResourceArtwork(resource);
   const cardVariant = getResourceCardVariant(resource.resourceFormat);
@@ -1037,7 +1037,7 @@ function PromoRailCard({ resource, variant = "compact" }) {
       <div className="relative flex flex-1 flex-col justify-between p-4">
         <div>
           <div className={cardVariant.railTitleRowClass}>
-            <Link href={detailHref} className="block line-clamp-2 text-[1.18rem] font-semibold leading-tight text-white transition hover:text-sky-100">
+            <Link href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} className="block line-clamp-2 text-[1.18rem] font-semibold leading-tight text-white transition hover:text-sky-100">
               {resource.title}
             </Link>
           </div>
@@ -1053,7 +1053,7 @@ function PromoRailCard({ resource, variant = "compact" }) {
           <div className="rounded-full border border-white/12 bg-slate-950/28 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-100/88">
             Included
           </div>
-          <Link href={detailHref} className={HOME_CTA_COMPACT_CLASS}>
+          <Link href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} className={HOME_CTA_COMPACT_CLASS}>
             Open
           </Link>
         </div>
@@ -1062,7 +1062,7 @@ function PromoRailCard({ resource, variant = "compact" }) {
   );
 }
 
-function PromoRail({ spotlightResource, supportingResources }) {
+function PromoRail({ spotlightResource, supportingResources, onResourceClick }) {
   const railRef = useRef(null);
   const items = [spotlightResource, ...supportingResources].filter(Boolean);
 
@@ -1111,7 +1111,7 @@ function PromoRail({ spotlightResource, supportingResources }) {
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-8 bg-gradient-to-l from-slate-950/55 to-transparent sm:block" />
         <div ref={railRef} className="flex snap-x snap-mandatory gap-3.5 overflow-x-auto px-4 py-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {items.map((resource, index) => (
-            <PromoRailCard key={resource.id} resource={resource} variant={index === 0 ? "spotlight" : "compact"} />
+            <PromoRailCard key={resource.id} resource={resource} variant={index === 0 ? "spotlight" : "compact"} onResourceClick={onResourceClick} />
           ))}
         </div>
       </div>
@@ -1185,7 +1185,7 @@ function CreatedResourceCard({ resource, onEdit, onSubmitForReview, onArchive })
   );
 }
 
-function MobileHeroCard({ resource }) {
+function MobileHeroCard({ resource, onResourceClick }) {
   const artwork = getResourceArtwork(resource);
   const cardVariant = getResourceCardVariant(resource.resourceFormat);
   const detailHref = `/vault/${resource.id}`;
@@ -1202,17 +1202,17 @@ function MobileHeroCard({ resource }) {
           style={{ backgroundImage: artwork.chipBackground }}
         />
         <div className="flex h-full flex-col justify-end">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className={cardVariant.mobileHeroTitleClass}>{resource.title}</div>
+          <div className="mt-2.5 flex flex-wrap items-center gap-2">
             <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/28" />
           </div>
-          <div className={cardVariant.mobileHeroTitleClass}>{resource.title}</div>
           <p className={cardVariant.mobileHeroSummaryClass}>{resource.summary || resource.description || "Open the resource to review the full pack details."}</p>
           <div className="mt-3.5 flex items-end justify-between gap-3">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
               <div className="mt-1 text-xs text-slate-100/70">{resource.downloadCount || 0} downloads</div>
             </div>
-            <Link href={detailHref} className={HOME_CTA_COMPACT_CLASS}>
+            <Link href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} className={HOME_CTA_COMPACT_CLASS}>
               Open
             </Link>
           </div>
@@ -1222,7 +1222,7 @@ function MobileHeroCard({ resource }) {
   );
 }
 
-function MobilePromoBillboard({ resource, eyebrow = "Featured" }) {
+function MobilePromoBillboard({ resource, eyebrow = "Featured", onResourceClick }) {
   const artwork = getResourceArtwork(resource);
   const cardVariant = getResourceCardVariant(resource.resourceFormat);
   const detailHref = `/vault/${resource.id}`;
@@ -1239,7 +1239,7 @@ function MobilePromoBillboard({ resource, eyebrow = "Featured" }) {
           <div className="text-[10px] uppercase tracking-[0.2em] text-slate-100/76">{eyebrow}</div>
           <div className="mt-2.5 line-clamp-2 text-[1.18rem] font-semibold leading-[1.12] text-white">{resource.title}</div>
           <div className="mt-1.5 line-clamp-2 text-[13px] leading-5 text-slate-100/80">{resource.summary || "Explore the resource details."}</div>
-          <Link href={detailHref} className={`${HOME_CTA_COMPACT_CLASS} mt-3 w-fit`}>
+          <Link href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} className={`${HOME_CTA_COMPACT_CLASS} mt-3 w-fit`}>
             View resource
           </Link>
         </div>
@@ -1248,7 +1248,7 @@ function MobilePromoBillboard({ resource, eyebrow = "Featured" }) {
   );
 }
 
-function MobileMiniPromoCard({ resource }) {
+function MobileMiniPromoCard({ resource, onResourceClick }) {
   const artwork = getResourceArtwork(resource);
   const cardVariant = getResourceCardVariant(resource.resourceFormat);
   const detailHref = `/vault/${resource.id}`;
@@ -1263,7 +1263,7 @@ function MobileMiniPromoCard({ resource }) {
           <div className="text-[10px] uppercase tracking-[0.2em] text-slate-100/76">{resource.category?.name || "Resource"}</div>
           <div className={cardVariant.miniTitleClass}>{resource.title}</div>
         </div>
-        <Link href={detailHref} className={`${HOME_CTA_COMPACT_CLASS} w-fit`}>
+        <Link href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} className={`${HOME_CTA_COMPACT_CLASS} w-fit`}>
           Open
         </Link>
       </div>
@@ -1345,6 +1345,9 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
   const [busyAction, startBusyAction] = useTransition();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [authPromptResourceHref, setAuthPromptResourceHref] = useState("");
+  const [authPromptVisible, setAuthPromptVisible] = useState(false);
+  const authPromptCloseTimeoutRef = useRef(null);
 
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
@@ -1424,14 +1427,10 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
       setCanCreateResources(Boolean(resourcesRes.canCreateResources));
       setCreateResourceRequirementMessage(resourcesRes.createResourceRequirementMessage || "");
 
-      if (signedIn) {
-        try {
-          const requestsRes = await apiGet("/api/resources/requests?limit=40");
-          setRequests(requestsRes.requests || []);
-        } catch {
-          setRequests([]);
-        }
-      } else {
+      try {
+        const requestsRes = await apiGet("/api/resources/requests?limit=40");
+        setRequests(requestsRes.requests || []);
+      } catch {
         setRequests([]);
       }
 
@@ -1694,15 +1693,18 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
     if (!mobileHeroResources.length) return heroResource;
     return mobileHeroResources[mobileHeroIndex] || mobileHeroResources[0];
   }, [heroResource, mobileHeroIndex, mobileHeroResources]);
+  const mobileHeroAnchorId = useMemo(() => {
+    return mobileHeroResources[0]?.id || heroResource?.id || null;
+  }, [heroResource?.id, mobileHeroResources]);
   const mobilePromoResources = useMemo(() => {
     const candidates = [spotlightResource, ...supportingResources, ...trendingResources].filter(Boolean);
     const seen = new Set();
     return candidates.filter((resource) => {
-      if (seen.has(resource.id) || resource.id === mobileHeroResource?.id) return false;
+      if (seen.has(resource.id) || resource.id === mobileHeroAnchorId) return false;
       seen.add(resource.id);
       return true;
     });
-  }, [mobileHeroResource?.id, spotlightResource, supportingResources, trendingResources]);
+  }, [mobileHeroAnchorId, spotlightResource, supportingResources, trendingResources]);
 
   const heroArtwork = useMemo(() => (heroResource ? getResourceArtwork(heroResource) : null), [heroResource]);
   const heroCardVariant = useMemo(() => getResourceCardVariant(heroResource?.resourceFormat), [heroResource?.resourceFormat]);
@@ -1897,6 +1899,58 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
     setError("");
     setSuccess("");
   }
+
+  function handleResourceOpenIntent(event, href) {
+    if (signedIn) return;
+    event.preventDefault();
+    if (authPromptCloseTimeoutRef.current != null) {
+      window.clearTimeout(authPromptCloseTimeoutRef.current);
+      authPromptCloseTimeoutRef.current = null;
+    }
+    setAuthPromptResourceHref(href);
+  }
+
+  function closeAuthPrompt() {
+    setAuthPromptVisible(false);
+    if (authPromptCloseTimeoutRef.current != null) {
+      window.clearTimeout(authPromptCloseTimeoutRef.current);
+    }
+    authPromptCloseTimeoutRef.current = window.setTimeout(() => {
+      setAuthPromptResourceHref("");
+      authPromptCloseTimeoutRef.current = null;
+    }, 200);
+  }
+
+  useEffect(() => {
+    if (!authPromptResourceHref) {
+      setAuthPromptVisible(false);
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      setAuthPromptVisible(true);
+    });
+
+    function handleEscape(event) {
+      if (event.key === "Escape") {
+        closeAuthPrompt();
+      }
+    }
+
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [authPromptResourceHref]);
+
+  useEffect(() => {
+    return () => {
+      if (authPromptCloseTimeoutRef.current != null) {
+        window.clearTimeout(authPromptCloseTimeoutRef.current);
+      }
+    };
+  }, []);
 
   function handleTabSelect(tab) {
     if (tab?.href) {
@@ -2419,17 +2473,40 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                     </div>
                   </div>
 
-                  <div className="relative hidden min-w-[220px] flex-1 sm:block">
-                    <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="11" cy="11" r="7" />
-                      <path d="m20 20-3.5-3.5" />
-                    </svg>
-                    <TextInput
-                      value={discoverFilter.search}
-                      onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, search: event.target.value }))}
-                      placeholder="Search vault"
-                      className="h-9 rounded-full border-white/15 bg-slate-950/65 pl-9 pr-3 text-[12px]"
-                    />
+                  <div className="relative hidden min-w-[320px] flex-1 sm:block">
+                    <div className="flex w-full items-center rounded-full border border-white/15 bg-slate-950/62 px-2.5 py-1.5">
+                      <div className="relative min-w-0 flex-1">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-1.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="11" cy="11" r="7" />
+                          <path d="m20 20-3.5-3.5" />
+                        </svg>
+                        <input
+                          value={discoverFilter.search}
+                          onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, search: event.target.value }))}
+                          placeholder="Search vault"
+                          className="h-7 w-full bg-transparent pl-7 pr-2 text-[13px] text-slate-100 placeholder:text-slate-300/80 outline-none"
+                        />
+                      </div>
+
+                      <div className="mx-1 h-5 w-px bg-white/18" />
+
+                      <div className="relative w-[10.5rem]">
+                        <select
+                          value={discoverFilter.categoryId}
+                          onChange={(event) => setDiscoverFilter((prev) => ({ ...prev, categoryId: event.target.value }))}
+                          className="h-7 w-full appearance-none bg-transparent pl-2 pr-6 text-[12px] font-semibold text-slate-100 outline-none"
+                          aria-label="Filter by category"
+                        >
+                          <option value="">All categories</option>
+                          {categories.map((category) => (
+                            <option key={category.id} value={category.id}>{category.name}</option>
+                          ))}
+                        </select>
+                        <svg viewBox="0 0 20 20" aria-hidden="true" className="pointer-events-none absolute right-1.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-300" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="m5.5 7.5 4.5 5 4.5-5" />
+                        </svg>
+                      </div>
+                    </div>
                   </div>
 
                   <span className="hidden rounded-full border border-white/12 bg-white/[0.04] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-200 md:inline-flex">Home / Discover</span>
@@ -2495,27 +2572,6 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
             </section>
           ) : null}
 
-          {!signedIn ? (
-            <section className="mb-6 overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] px-5 py-5 ring-1 ring-white/10">
-              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                <div>
-                  <div className="text-sm font-medium uppercase tracking-[0.2em] text-slate-400">Vault</div>
-                  <div className="mt-2 text-2xl font-semibold text-white">Browse approved industry resources without signing in.</div>
-                  <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-300">
-                    Sign in to download resources, manage your library, and submit resource packs.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <Link href="/login?redirect=%2Fvault" className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
-                    Sign in
-                  </Link>
-                  <Link href="/signup?redirect=%2Fvault" className="rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]">
-                    Create account
-                  </Link>
-                </div>
-              </div>
-            </section>
-          ) : null}
           {error ? <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-5 py-4 text-sm text-red-100">{error}</div> : null}
           {authError && session ? <div className="rounded-2xl border border-amber-300/30 bg-amber-500/10 px-5 py-4 text-sm text-amber-100">{authError}</div> : null}
           {success ? <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-5 py-4 text-sm text-emerald-100">{success}</div> : null}
@@ -2530,7 +2586,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
               onTouchMove={handleMobileHeroTouchMove}
               onTouchEnd={handleMobileHeroTouchEnd}
             >
-              {mobileHeroResource ? <MobileHeroCard resource={mobileHeroResource} /> : null}
+              {mobileHeroResource ? <MobileHeroCard resource={mobileHeroResource} onResourceClick={handleResourceOpenIntent} /> : null}
 
               {mobileHeroResources.length > 1 ? (
                 <div className="flex items-center justify-center gap-2">
@@ -2546,11 +2602,11 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                 </div>
               ) : null}
 
-              {mobilePromoResources[0] ? <MobilePromoBillboard resource={mobilePromoResources[0]} eyebrow="Spotlight" /> : null}
+              {mobilePromoResources[0] ? <MobilePromoBillboard resource={mobilePromoResources[0]} eyebrow="Spotlight" onResourceClick={handleResourceOpenIntent} /> : null}
 
               <div className="grid grid-cols-2 gap-3.5">
                 {mobilePromoResources.slice(1, 3).map((resource) => (
-                  <MobileMiniPromoCard key={resource.id} resource={resource} />
+                  <MobileMiniPromoCard key={resource.id} resource={resource} onResourceClick={handleResourceOpenIntent} />
                 ))}
               </div>
             </section>
@@ -2585,7 +2641,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                             <div className="mt-1 text-xs text-slate-300/80">{heroResource.downloadCount || 0} downloads</div>
                           </div>
                         </div>
-                        <Link href={`/vault/${heroResource.id}`} className={`${HOME_CTA_CLASS} px-4.5 py-2.5 text-sm`}>
+                        <Link href={`/vault/${heroResource.id}`} onClick={(event) => handleResourceOpenIntent(event, `/vault/${heroResource.id}`)} className={`${HOME_CTA_CLASS} px-4.5 py-2.5 text-sm`}>
                           View resource
                         </Link>
                       </div>
@@ -2596,7 +2652,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                 <EmptyState title="No featured resources available." body="Approved resources that match your current filters will appear here." />
               )}
 
-              <PromoRail spotlightResource={spotlightResource} supportingResources={supportingResources} />
+              <PromoRail spotlightResource={spotlightResource} supportingResources={supportingResources} onResourceClick={handleResourceOpenIntent} />
             </section>
 
             <div className="lg:hidden">
@@ -2606,7 +2662,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                 metaLabel="Storefront lane"
               >
                 {homeShelfResources.length ? homeShelfResources.map((resource) => (
-                    <MarketplaceShelfCard key={resource.id} resource={resource} />
+                    <MarketplaceShelfCard key={resource.id} resource={resource} onResourceClick={handleResourceOpenIntent} />
                 )) : <div className="py-2 text-sm text-slate-400">New resources will appear here as the approved catalogue grows.</div>}
               </ScrollShelf>
             </div>
@@ -2618,7 +2674,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
               metaLabel="Storefront lane"
             >
               {homeShelfResources.length ? homeShelfResources.map((resource) => (
-                <MarketplaceShelfCard key={resource.id} resource={resource} />
+                <MarketplaceShelfCard key={resource.id} resource={resource} onResourceClick={handleResourceOpenIntent} />
               )) : <div className="py-2 text-sm text-slate-400">New resources will appear here as the approved catalogue grows.</div>}
             </ScrollShelf>
             </div>
@@ -2635,7 +2691,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
             <section className="grid gap-4 xl:grid-cols-[minmax(0,1.32fr),minmax(0,1fr)]">
               <ScrollShelf title="Trending resources" subtitle="High-activity items presented as a card rail for quick scanning." metaLabel="Top activity">
                 {trendingResources.length ? trendingResources.map((resource) => (
-                  <MarketplaceShelfCard key={resource.id} resource={resource} />
+                  <MarketplaceShelfCard key={resource.id} resource={resource} onResourceClick={handleResourceOpenIntent} />
                 )) : <div className="py-2 text-sm text-slate-400">Trending resources will appear once usage data builds up.</div>}
               </ScrollShelf>
 
@@ -3041,6 +3097,45 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
         </div>
       </div>
       </div>
+
+      {authPromptResourceHref ? (
+        <div className="fixed inset-0 z-[140] flex items-center justify-center px-4 py-6">
+          <button
+            type="button"
+            onClick={closeAuthPrompt}
+            className={[
+              "absolute inset-0 bg-slate-950/70 backdrop-blur-[2px] transition-opacity duration-200",
+              authPromptVisible ? "opacity-100" : "opacity-0",
+            ].join(" ")}
+            aria-label="Close sign in prompt"
+          />
+          <section className={[
+            "relative w-full max-w-xl overflow-hidden rounded-[28px] border border-white/20 bg-[linear-gradient(155deg,rgba(56,189,248,0.18),rgba(15,23,42,0.9)_42%,rgba(2,6,23,0.94)_100%)] p-6 shadow-[0_42px_110px_-48px_rgba(0,0,0,0.95)] ring-1 ring-sky-200/35 backdrop-blur-2xl transition-all duration-200 sm:p-7",
+            authPromptVisible ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-[0.98] opacity-0",
+          ].join(" ")}>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-100/90">Account required</div>
+            <div className="mt-2 text-2xl font-semibold leading-tight text-white">Sign in or create an account to open this resource.</div>
+            <p className="mt-3 text-sm leading-7 text-slate-200/90">
+              You can browse freely while signed out. Opening resources requires an account so we can manage your vault access and library.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link href={`/login?redirect=${encodeURIComponent(authPromptResourceHref)}`} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
+                Sign in
+              </Link>
+              <Link href={`/signup?redirect=${encodeURIComponent(authPromptResourceHref)}`} className="rounded-full border border-white/20 bg-white/[0.08] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.14]">
+                Create account
+              </Link>
+              <button
+                type="button"
+                onClick={closeAuthPrompt}
+                className="rounded-full border border-white/14 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/[0.1]"
+              >
+                Not now
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }

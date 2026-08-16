@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Apps24Regular,
   BranchFork24Regular,
@@ -41,50 +41,89 @@ function formatDate(value) {
   });
 }
 
-function formatNumber(value) {
-  const parsed = Number(value || 0);
-  if (!Number.isFinite(parsed)) return "0";
-  return parsed.toLocaleString("en-AU");
-}
-
-function toDisplayLabel(value, fallback = "-") {
-  const raw = String(value || "").trim();
-  if (!raw) return fallback;
-  return raw
-    .split(/[_\s-]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-    .join(" ");
-}
-
-function categoryTheme(resource) {
-  const normalizedType = String(resource?.resourceType || "").toLowerCase();
-  const categoryKey = String(resource?.category?.id || resource?.category?.name || "uncategorized");
-  const seed = hashSeed(categoryKey);
-  const typeHueShift = normalizedType === "hosted" ? 0 : normalizedType === "external" ? 28 : -20;
-  const hue = (seed + typeHueShift) % 360;
-  const hueMid = (hue + 28) % 360;
-  const hueEnd = (hue + 58) % 360;
-
-  return {
-    categorySeed: seed,
-    hue,
-    hueMid,
-    hueEnd,
-    accent: `linear-gradient(90deg, hsla(${hue}, 90%, 62%, 0.28), hsla(${hueMid}, 86%, 56%, 0.2) 46%, hsla(${hueEnd}, 82%, 54%, 0.08))`,
-    pillStyle: {
-      borderColor: `hsla(${hue}, 86%, 72%, 0.52)`,
-      backgroundColor: `hsla(${hueMid}, 76%, 52%, 0.2)`,
-      color: `hsla(${hue}, 100%, 93%, 0.98)`,
-    },
-    glow: `hsla(${hueMid}, 84%, 58%, 0.16)`,
-    contour: `hsla(${hueEnd}, 78%, 70%, 0.2)`,
-    motif: seed % 5,
-  };
-}
-
 function classNames(parts) {
   return parts.filter(Boolean).join(" ");
+}
+
+const RESOURCE_TYPE_COLORWAY = {
+  hosted: { base: 206, accent: 248, glow: 180 },
+  external: { base: 24, accent: 346, glow: 52 },
+};
+
+const RESOURCE_FORMAT_COLORWAY = {
+  website: { base: 191, accent: 204, glow: 188 },
+  repository: { base: 156, accent: 173, glow: 148 },
+  excel: { base: 128, accent: 96, glow: 112 },
+  word: { base: 216, accent: 236, glow: 206 },
+  powerpoint: { base: 24, accent: 40, glow: 32 },
+  script: { base: 268, accent: 304, glow: 286 },
+  app: { base: 336, accent: 351, glow: 324 },
+  pdf: { base: 5, accent: 350, glow: 14 },
+  generic: { base: 210, accent: 222, glow: 198 },
+};
+
+function hashString(value) {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) % 360;
+  }
+  return hash;
+}
+
+function getResourceMonogram(resource) {
+  return String(resource?.title || "RM")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase() || "RM";
+}
+
+function getConsultantIconUrl(resource) {
+  const iconUrl = String(resource?.consultantIconUrl || "").trim();
+  return iconUrl || null;
+}
+
+function ResourceOwnerBadge({ resource, className, style, imageClassName = "h-full w-full object-cover" }) {
+  const [imageLoadError, setImageLoadError] = useState(false);
+  const iconUrl = getConsultantIconUrl(resource);
+  const canShowImage = Boolean(iconUrl && !imageLoadError);
+
+  return (
+    <div className={classNames([
+      "bg-white/12 backdrop-blur-md ring-1 ring-white/35",
+      className,
+    ])} style={style}>
+      {canShowImage ? (
+        <img
+          src={iconUrl}
+          alt="Consultant icon"
+          loading="lazy"
+          className={imageClassName}
+          onError={() => setImageLoadError(true)}
+        />
+      ) : (
+        getResourceMonogram(resource)
+      )}
+    </div>
+  );
+}
+
+function getResourceArtwork(resource) {
+  const formatKey = resource?.resourceFormat || "generic";
+  const palette = RESOURCE_FORMAT_COLORWAY[formatKey] || RESOURCE_TYPE_COLORWAY[resource?.resourceType] || RESOURCE_TYPE_COLORWAY.hosted;
+  const typeBias = resource?.resourceType === "external" ? 12 : 0;
+  const driftSeed = `${resource?.category?.name || "general"}-${resource?.title || "resource"}`;
+  const drift = (hashString(driftSeed) % 28) - 14;
+  const hue = (palette.base + drift + typeBias + 360) % 360;
+  const accentHue = (palette.accent + Math.round(drift * 0.7) + Math.round(typeBias * 0.55) + 360) % 360;
+  const glowHue = (palette.glow + Math.round(drift * 0.5) + Math.round(typeBias * 0.45) + 360) % 360;
+
+  return {
+    cardBackground: `radial-gradient(circle at 20% 16%, hsla(${glowHue}, 90%, 72%, 0.28), transparent 28%), linear-gradient(145deg, hsla(${hue}, 58%, 44%, 0.94), hsla(${accentHue}, 64%, 26%, 0.84))`,
+    chipBackground: `linear-gradient(135deg, hsla(${glowHue}, 90%, 86%, 0.95), hsla(${hue}, 86%, 70%, 0.88))`,
+  };
 }
 
 const RESOURCE_FORMAT_LABELS = {
@@ -123,9 +162,9 @@ const RESOURCE_FORMAT_THEME = {
     iconColor: "text-emerald-100",
   },
   excel: {
-    chip: "border-green-300/30 bg-gradient-to-r from-green-500/25 to-lime-500/20 text-green-50",
-    iconWrap: "border-green-200/40 bg-green-300/20",
-    iconColor: "text-green-100",
+    chip: "border-lime-300/30 bg-gradient-to-r from-lime-500/25 to-green-500/20 text-lime-50",
+    iconWrap: "border-lime-200/40 bg-lime-300/20",
+    iconColor: "text-lime-100",
   },
   word: {
     chip: "border-blue-300/30 bg-gradient-to-r from-blue-500/25 to-indigo-500/20 text-blue-50",
@@ -164,139 +203,78 @@ function ResourceFormatGlyph({ format, className = "h-3.5 w-3.5" }) {
   return <Icon aria-hidden="true" className={className} />;
 }
 
-function ResourceFormatChip({ format, className = "", compact = false }) {
+function ResourceFormatChip({ format, className = "" }) {
   const safeFormat = format || "generic";
   const theme = RESOURCE_FORMAT_THEME[safeFormat] || RESOURCE_FORMAT_THEME.generic;
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border font-semibold ${compact ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-[11px]"} ${className} ${theme.chip}`}>
-      <span className={`inline-flex items-center justify-center rounded-full border ${compact ? "h-4 w-4" : "h-5 w-5"} ${theme.iconWrap}`}>
-        <ResourceFormatGlyph format={safeFormat} className={`${compact ? "h-3 w-3" : "h-3.5 w-3.5"} ${theme.iconColor}`} />
+    <span className={classNames(["inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold", className, theme.chip])}>
+      <span className={classNames(["inline-flex h-5 w-5 items-center justify-center rounded-full border", theme.iconWrap])}>
+        <ResourceFormatGlyph format={safeFormat} className={classNames(["h-3.5 w-3.5", theme.iconColor])} />
       </span>
       <span>{RESOURCE_FORMAT_LABELS[safeFormat] || RESOURCE_FORMAT_LABELS.generic}</span>
     </span>
   );
 }
 
-function hashSeed(value) {
-  const source = String(value || "resource");
-  let hash = 0;
-  for (let index = 0; index < source.length; index += 1) {
-    hash = ((hash << 5) - hash + source.charCodeAt(index)) | 0;
-  }
-  return Math.abs(hash);
-}
+const RESOURCE_FORMAT_CARD_VARIANTS = {
+  website: {
+    orbClass: "-right-10 top-3 h-24 w-24 rounded-full border border-cyan-100/35 bg-cyan-200/18 backdrop-blur-md",
+    blockClass: "bottom-[-10%] right-[14%] h-20 w-20 rotate-[16deg] rounded-[22px] border border-cyan-100/30 bg-cyan-950/24",
+    titleRowClass: "min-h-[3.4rem] pr-14 sm:min-h-[3.75rem]",
+    summaryClass: "mt-3 line-clamp-2 max-w-[28ch] text-[13px] leading-5 text-slate-100/82 sm:text-sm sm:leading-6",
+  },
+  repository: {
+    orbClass: "-right-11 top-2 h-24 w-24 rounded-[28px] border border-emerald-100/30 bg-emerald-200/16 backdrop-blur-md",
+    blockClass: "bottom-[-12%] right-[20%] h-16 w-24 -rotate-[11deg] rounded-[16px] border border-emerald-100/25 bg-emerald-950/26",
+    titleRowClass: "min-h-[3.4rem] pr-14 sm:min-h-[3.75rem]",
+    summaryClass: "mt-3 line-clamp-2 max-w-[26ch] text-[13px] leading-5 text-slate-100/82 sm:text-sm sm:leading-6",
+  },
+  excel: {
+    orbClass: "-right-9 top-3 h-20 w-20 rounded-[20px] border border-green-100/32 bg-green-200/16 backdrop-blur-md",
+    blockClass: "bottom-[-14%] right-[16%] h-20 w-20 rotate-[4deg] rounded-[12px] border border-green-100/24 bg-green-950/28",
+    titleRowClass: "min-h-[3.1rem] pr-14 sm:min-h-[3.45rem]",
+    summaryClass: "mt-3 line-clamp-2 max-w-[25ch] text-[13px] leading-5 text-slate-100/82 sm:text-sm sm:leading-6",
+  },
+  word: {
+    orbClass: "-right-10 top-3 h-24 w-24 rounded-full border border-blue-100/35 bg-blue-200/16 backdrop-blur-md",
+    blockClass: "bottom-[-12%] right-[16%] h-16 w-24 rotate-[8deg] rounded-[20px] border border-blue-100/26 bg-blue-950/24",
+    titleRowClass: "min-h-[3.4rem] pr-14 sm:min-h-[3.75rem]",
+    summaryClass: "mt-3 line-clamp-2 max-w-[29ch] text-[13px] leading-5 text-slate-100/82 sm:text-sm sm:leading-6",
+  },
+  powerpoint: {
+    orbClass: "-right-8 top-3 h-20 w-20 rounded-full border border-orange-100/35 bg-orange-200/16 backdrop-blur-md",
+    blockClass: "bottom-[-10%] right-[14%] h-[4.5rem] w-[5.5rem] -rotate-[14deg] rounded-[16px] border border-orange-100/26 bg-orange-950/26",
+    titleRowClass: "min-h-[3.2rem] pr-14 sm:min-h-[3.55rem]",
+    summaryClass: "mt-3 line-clamp-2 max-w-[24ch] text-[13px] leading-5 text-slate-100/82 sm:text-sm sm:leading-6",
+  },
+  script: {
+    orbClass: "-right-10 top-2 h-24 w-24 rounded-[24px] border border-violet-100/34 bg-violet-200/16 backdrop-blur-md",
+    blockClass: "bottom-[-14%] right-[18%] h-[4.5rem] w-20 rotate-[24deg] rounded-[12px] border border-violet-100/24 bg-violet-950/30",
+    titleRowClass: "min-h-[3.1rem] pr-14 sm:min-h-[3.5rem]",
+    summaryClass: "mt-3 line-clamp-2 max-w-[25ch] text-[13px] leading-5 text-slate-100/82 sm:text-sm sm:leading-6",
+  },
+  app: {
+    orbClass: "-right-10 top-3 h-24 w-24 rounded-[30px] border border-pink-100/34 bg-pink-200/16 backdrop-blur-md",
+    blockClass: "bottom-[-12%] right-[16%] h-[4.25rem] w-24 -rotate-[9deg] rounded-[18px] border border-pink-100/26 bg-pink-950/28",
+    titleRowClass: "min-h-[3.2rem] pr-14 sm:min-h-[3.6rem]",
+    summaryClass: "mt-3 line-clamp-2 max-w-[25ch] text-[13px] leading-5 text-slate-100/82 sm:text-sm sm:leading-6",
+  },
+  pdf: {
+    orbClass: "-right-9 top-3 h-20 w-20 rounded-[18px] border border-rose-100/34 bg-rose-200/16 backdrop-blur-md",
+    blockClass: "bottom-[-12%] right-[16%] h-20 w-20 rotate-[9deg] rounded-[16px] border border-rose-100/26 bg-rose-950/28",
+    titleRowClass: "min-h-[3.15rem] pr-14 sm:min-h-[3.5rem]",
+    summaryClass: "mt-3 line-clamp-2 max-w-[24ch] text-[13px] leading-5 text-slate-100/82 sm:text-sm sm:leading-6",
+  },
+  generic: {
+    orbClass: "-right-10 top-3 h-24 w-24 rounded-full border border-slate-100/30 bg-slate-200/12 backdrop-blur-md",
+    blockClass: "bottom-[-10%] right-[16%] h-[4.75rem] w-[5.5rem] rotate-[8deg] rounded-[16px] border border-slate-100/24 bg-slate-950/30",
+    titleRowClass: "min-h-[3.3rem] pr-14 sm:min-h-[3.65rem]",
+    summaryClass: "mt-3 line-clamp-2 max-w-[26ch] text-[13px] leading-5 text-slate-100/82 sm:text-sm sm:leading-6",
+  },
+};
 
-function cardArtwork(resource, theme) {
-  const seed = theme.categorySeed ?? hashSeed(resource?.category?.id || resource?.category?.name || "resource");
-  const angle = 132 + (seed % 18) - 9;
-  const bendA = 18 + (seed % 20);
-  const bendB = 58 + (seed % 22);
-  const motif =
-    theme.motif === 0
-      ? "linear-gradient(116deg, transparent 26%, rgba(255,255,255,0.08) 26%, rgba(255,255,255,0.08) 35%, transparent 35%, transparent 64%, rgba(255,255,255,0.07) 64%, rgba(255,255,255,0.07) 73%, transparent 73%)"
-      : theme.motif === 1
-        ? "radial-gradient(circle at 18% 20%, rgba(255,255,255,0.11) 0%, transparent 36%), radial-gradient(circle at 82% 74%, rgba(255,255,255,0.1) 0%, transparent 34%)"
-        : theme.motif === 2
-          ? "conic-gradient(from 210deg at 18% 82%, rgba(255,255,255,0.12), transparent 22%, rgba(255,255,255,0.08) 34%, transparent 54%, rgba(255,255,255,0.06) 72%, transparent 100%)"
-          : theme.motif === 3
-            ? "linear-gradient(140deg, transparent 24%, rgba(255,255,255,0.08) 24%, rgba(255,255,255,0.08) 32%, transparent 32%, transparent 68%, rgba(255,255,255,0.07) 68%, rgba(255,255,255,0.07) 76%, transparent 76%)"
-            : "radial-gradient(72% 68% at 82% 18%, rgba(255,255,255,0.12) 0%, transparent 58%), linear-gradient(132deg, transparent 0%, transparent 58%, rgba(255,255,255,0.07) 58%, rgba(255,255,255,0.07) 76%, transparent 76%)";
-
-  return {
-    panel: `linear-gradient(${angle}deg, hsla(${theme.hue}, 30%, 18%, 0.9), hsla(${theme.hueMid}, 28%, 14%, 0.9) 52%, hsla(${theme.hueEnd}, 34%, 11%, 0.93))`,
-    strata: `linear-gradient(${angle + 20}deg, transparent ${bendA}%, rgba(255,255,255,0.07) ${bendA}%, rgba(255,255,255,0.07) ${bendA + 8}%, transparent ${bendA + 8}%, transparent ${bendB}%, rgba(255,255,255,0.06) ${bendB}%, rgba(255,255,255,0.06) ${bendB + 7}%, transparent ${bendB + 7}%)`,
-    contour: `radial-gradient(140% 92% at 10% 0%, ${theme.contour} 0%, transparent 62%), radial-gradient(130% 88% at 92% 100%, ${theme.contour} 0%, transparent 58%)`,
-    motif,
-  };
-}
-
-function cardVariantClasses(theme) {
-  switch (theme.motif) {
-    case 0:
-      return {
-        outer: "rounded-[28px] border-white/16 hover:border-white/28 hover:shadow-[0_34px_86px_-44px_rgba(244,114,182,0.46)]",
-        inner: "rounded-[27px]",
-        cta: "rounded-full border-white/18 bg-white/[0.08] hover:border-pink-200/50 hover:bg-pink-400/20",
-      };
-    case 1:
-      return {
-        outer: "rounded-[14px] border-white/18 hover:border-white/30 hover:shadow-[0_34px_86px_-44px_rgba(16,185,129,0.46)]",
-        inner: "rounded-[13px]",
-        cta: "rounded-md border-emerald-200/30 bg-emerald-400/14 hover:border-emerald-200/55 hover:bg-emerald-300/20",
-      };
-    case 2:
-      return {
-        outer: "rounded-[24px] border-white/14 hover:border-white/24 hover:shadow-[0_34px_86px_-44px_rgba(14,165,233,0.5)]",
-        inner: "rounded-[23px]",
-        cta: "rounded-[10px] border-sky-200/30 bg-sky-400/14 hover:border-sky-200/55 hover:bg-sky-300/22",
-      };
-    case 3:
-      return {
-        outer: "rounded-[20px] border-white/20 hover:border-white/35 hover:shadow-[0_34px_86px_-44px_rgba(245,158,11,0.5)]",
-        inner: "rounded-[19px]",
-        cta: "rounded-full border-amber-200/30 bg-amber-400/14 hover:border-amber-200/55 hover:bg-amber-300/22",
-      };
-    default:
-      return {
-        outer: "rounded-[32px] border-white/16 hover:border-white/30 hover:shadow-[0_34px_86px_-44px_rgba(168,85,247,0.5)]",
-        inner: "rounded-[31px]",
-        cta: "rounded-[14px] border-violet-200/30 bg-violet-400/14 hover:border-violet-200/55 hover:bg-violet-300/22",
-      };
-  }
-}
-
-function CategoryDecor({ theme }) {
-  switch (theme.motif) {
-    case 0:
-      return (
-        <>
-          <div aria-hidden className="pointer-events-none absolute -right-8 top-4 h-24 w-56 rotate-[-14deg] rounded-[18px] border border-white/12 bg-white/[0.02]" />
-          <div aria-hidden className="pointer-events-none absolute left-[-6%] top-[58%] h-14 w-44 rotate-[8deg] rounded-[12px] border border-white/8 bg-slate-900/20" />
-        </>
-      );
-    case 1:
-      return (
-        <>
-          <div aria-hidden className="pointer-events-none absolute right-6 top-5 h-20 w-20 rounded-full border border-white/18" />
-          <div aria-hidden className="pointer-events-none absolute right-10 top-9 h-12 w-12 rounded-full border border-white/16" />
-          <div aria-hidden className="pointer-events-none absolute left-3 bottom-3 h-8 w-24 border border-white/10 bg-white/[0.02]" style={{ clipPath: "polygon(8% 0%,100% 0%,92% 100%,0% 100%)" }} />
-        </>
-      );
-    case 2:
-      return (
-        <>
-          <div
-            aria-hidden
-            className="pointer-events-none absolute right-6 top-4 h-24 w-24 border border-white/12 bg-white/[0.02]"
-            style={{ clipPath: "polygon(25% 8%,75% 8%,92% 50%,75% 92%,25% 92%,8% 50%)" }}
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute left-4 bottom-4 h-14 w-14 border border-white/10 bg-white/[0.02]"
-            style={{ clipPath: "polygon(22% 8%,78% 8%,92% 50%,78% 92%,22% 92%,8% 50%)" }}
-          />
-        </>
-      );
-    case 3:
-      return (
-        <>
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-24 opacity-45"
-            style={{ backgroundImage: "radial-gradient(140% 90% at 20% 100%, rgba(255,255,255,0.1), transparent 56%), radial-gradient(120% 82% at 74% 100%, rgba(255,255,255,0.08), transparent 58%)" }}
-          />
-          <div aria-hidden className="pointer-events-none absolute right-5 bottom-4 h-10 w-32 border border-white/10 bg-white/[0.02]" style={{ clipPath: "polygon(10% 0%,100% 0%,90% 100%,0% 100%)" }} />
-        </>
-      );
-    default:
-      return (
-        <>
-          <div aria-hidden className="pointer-events-none absolute right-6 top-5 h-24 w-8 border border-white/10 bg-white/[0.02]" style={{ clipPath: "polygon(28% 0%,100% 0%,72% 100%,0% 100%)" }} />
-          <div aria-hidden className="pointer-events-none absolute right-18 top-9 h-18 w-6 border border-white/8 bg-white/[0.02]" style={{ clipPath: "polygon(28% 0%,100% 0%,72% 100%,0% 100%)" }} />
-          <div aria-hidden className="pointer-events-none absolute right-28 top-14 h-12 w-5 border border-white/8 bg-white/[0.015]" style={{ clipPath: "polygon(28% 0%,100% 0%,72% 100%,0% 100%)" }} />
-        </>
-      );
-  }
+function getResourceCardStyle(format) {
+  return RESOURCE_FORMAT_CARD_VARIANTS[format] || RESOURCE_FORMAT_CARD_VARIANTS.generic;
 }
 
 function MobileSidebarTabButton({ active, label, icon, onClick }) {
@@ -440,6 +418,9 @@ export default function ResourcesTablePageClient() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [error, setError] = useState("");
+  const [authPromptResourceHref, setAuthPromptResourceHref] = useState("");
+  const [authPromptVisible, setAuthPromptVisible] = useState(false);
+  const authPromptCloseTimeoutRef = useRef(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -606,6 +587,58 @@ export default function ResourcesTablePageClient() {
     if (filters.page <= 1) return;
     setFilters((prev) => ({ ...prev, page: Math.max(1, prev.page - 1) }));
   }
+
+  function handleResourceOpenIntent(event, href) {
+    if (signedIn) return;
+    event.preventDefault();
+    if (authPromptCloseTimeoutRef.current != null) {
+      window.clearTimeout(authPromptCloseTimeoutRef.current);
+      authPromptCloseTimeoutRef.current = null;
+    }
+    setAuthPromptResourceHref(href);
+  }
+
+  function closeAuthPrompt() {
+    setAuthPromptVisible(false);
+    if (authPromptCloseTimeoutRef.current != null) {
+      window.clearTimeout(authPromptCloseTimeoutRef.current);
+    }
+    authPromptCloseTimeoutRef.current = window.setTimeout(() => {
+      setAuthPromptResourceHref("");
+      authPromptCloseTimeoutRef.current = null;
+    }, 200);
+  }
+
+  useEffect(() => {
+    if (!authPromptResourceHref) {
+      setAuthPromptVisible(false);
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      setAuthPromptVisible(true);
+    });
+
+    function handleEscape(event) {
+      if (event.key === "Escape") {
+        closeAuthPrompt();
+      }
+    }
+
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [authPromptResourceHref]);
+
+  useEffect(() => {
+    return () => {
+      if (authPromptCloseTimeoutRef.current != null) {
+        window.clearTimeout(authPromptCloseTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <main className="w-full px-0 py-0 lg:min-h-[calc(100vh-8rem)]">
@@ -842,104 +875,82 @@ export default function ResourcesTablePageClient() {
             ) : (
               <div className="grid gap-3 sm:gap-4">
                 {resources.map((resource) => {
-                  const theme = categoryTheme(resource);
-                  const artwork = cardArtwork(resource, theme);
-                  const variant = cardVariantClasses(theme);
+                  const artwork = getResourceArtwork(resource);
+                  const cardStyle = getResourceCardStyle(resource.resourceFormat);
                   const summary = String(resource.summary || resource.description || "").trim();
-                  const resourceImages = Array.isArray(resource.resourceImages)
-                    ? resource.resourceImages.filter((image) => image?.url)
-                    : [];
-                  const leadImage = resourceImages[0] || null;
+                  const accessLabel = resource.resourceType === "external"
+                    ? (resource.sourceName || "External source")
+                    : "Resource file";
                   const detailHref = `/vault/${resource.id}`;
 
                   return (
                     <article
                       key={resource.id}
-                      className={classNames([
-                        "group relative h-[308px] overflow-hidden border bg-[linear-gradient(145deg,rgba(15,23,42,0.92),rgba(17,24,39,0.88)_45%,rgba(3,13,30,0.9))] p-[1px] shadow-[0_24px_68px_-44px_rgba(2,6,23,0.9)] transition hover:-translate-y-0.5 sm:h-[308px]",
-                        variant.outer,
-                      ])}
+                      className="group relative flex h-[304px] overflow-hidden rounded-[26px] border border-white/10 shadow-[0_24px_62px_-38px_rgba(0,0,0,0.9)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20"
+                      style={{ backgroundImage: artwork.cardBackground }}
                     >
-                      <div className="pointer-events-none absolute inset-0 opacity-58" style={{ backgroundImage: theme.accent }} />
-                      <div
-                        className={classNames([
-                          "relative h-full p-3.5 sm:p-5",
-                          "pb-28 pr-30 sm:pb-26 sm:pr-34",
-                          variant.inner,
-                        ])}
-                        style={{ backgroundImage: artwork.panel }}
-                      >
-                        <div
-                          aria-hidden
-                          className="pointer-events-none absolute inset-0 opacity-38"
-                          style={{
-                            backgroundImage: `linear-gradient(120deg,rgba(255,255,255,0.08),transparent 42%), ${artwork.strata}, ${artwork.contour}`,
-                          }}
-                        />
-                        <div
-                          aria-hidden
-                          className="pointer-events-none absolute inset-0 opacity-28"
-                          style={{ backgroundImage: artwork.motif }}
-                        />
-                        <CategoryDecor theme={theme} />
-                        <div
-                          aria-hidden
-                          className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full border border-white/8 blur-xl"
-                          style={{ backgroundColor: theme.glow }}
-                        />
-                        <div
-                          aria-hidden
-                          className="pointer-events-none absolute -left-8 bottom-[-52px] h-28 w-28 rounded-full border border-white/8 bg-white/[0.015] blur-xl"
-                        />
-
-                        <div className="relative z-10 h-full">
-                          <div className="min-w-0 pr-28 sm:pr-0">
-                            <h2 className="line-clamp-3 text-lg font-bold tracking-tight text-white sm:text-2xl">{resource.title || "Untitled resource"}</h2>
-                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                              <ResourceFormatChip format={resource.resourceFormat} compact />
-                              <span className="rounded-full border border-white/14 bg-white/[0.05] px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-slate-300">
-                                {resource.category?.name || "Uncategorized"}
-                              </span>
-                            </div>
-                            <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-300/85 sm:text-[13px]">
-                              {summary || "Open this resource to view full details, attachments, and usage guidance."}
-                            </p>
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_34%),linear-gradient(180deg,rgba(15,23,42,0.06),rgba(15,23,42,0.84)_76%)]" />
+                      <div className={["pointer-events-none absolute", cardStyle.orbClass].join(" ")} />
+                      <div className={["pointer-events-none absolute", cardStyle.blockClass].join(" ")} />
+                      <ResourceOwnerBadge
+                        resource={resource}
+                        className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center overflow-hidden rounded-[14px] border border-white/18 text-sm font-semibold text-slate-950 shadow-[0_14px_30px_-18px_rgba(255,255,255,0.8)]"
+                        style={{ backgroundImage: artwork.chipBackground }}
+                      />
+                      <div className="relative flex h-full w-full flex-col justify-between p-4">
+                        <div>
+                          <div className={cardStyle.titleRowClass}>
+                            <Link
+                              href={detailHref}
+                              onClick={(event) => handleResourceOpenIntent(event, detailHref)}
+                              className="block line-clamp-2 text-[1.12rem] font-semibold leading-tight text-white transition hover:text-sky-100 sm:text-[1.3rem]"
+                            >
+                              {resource.title || "Untitled resource"}
+                            </Link>
                           </div>
+                          <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-4">
+                            <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/25" />
+                            <span className="rounded-full border border-white/14 bg-white/[0.05] px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-slate-300">
+                              {resource.category?.name || "Uncategorized"}
+                            </span>
+                          </div>
+                          <p className={cardStyle.summaryClass}>
+                            {summary || "Open this resource to view full details, attachments, and usage guidance."}
+                          </p>
                         </div>
 
-                        {leadImage ? (
-                          <Link
-                            href={detailHref}
-                            aria-label={`Open ${resource.title || "resource"}`}
-                            className="absolute bottom-1 right-1 z-20 block"
-                          >
-                            <div className="relative h-[96px] w-[96px] sm:h-[104px] sm:w-[104px]">
-                              {resourceImages.length > 1 ? (
-                                <>
-                                  <div aria-hidden className="absolute left-2 top-2 h-full w-full rounded-[12px] border border-white/10 bg-slate-900/45" />
-                                  <div aria-hidden className="absolute left-1 top-1 h-full w-full rounded-[12px] border border-white/10 bg-slate-900/32" />
-                                </>
-                              ) : null}
-                              <div className="relative h-full w-full overflow-hidden rounded-[12px] border border-white/16 bg-slate-900/62">
-                                <img
-                                  src={leadImage.url}
-                                  alt={leadImage.alt || "Resource preview image"}
-                                  loading="lazy"
-                                  className="h-full w-full object-cover"
-                                />
-                                {resourceImages.length > 1 ? (
-                                  <div className="absolute right-1.5 top-1.5 rounded-[8px] bg-black/55 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-white">
-                                    +{resourceImages.length - 1}
-                                  </div>
-                                ) : null}
-                              </div>
+                        <div>
+                          <div className="min-h-[28px] text-[11px] text-slate-100/76">{resource.downloadCount || 0} downloads</div>
+                          <div className="mt-3.5 flex items-center justify-between gap-2.5 sm:mt-4 sm:gap-3">
+                            <div>
+                              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
+                              <div className="mt-1 line-clamp-1 max-w-[130px] text-[11px] text-slate-100/72 sm:max-w-[160px] sm:text-xs">{accessLabel}</div>
                             </div>
-                          </Link>
-                        ) : null}
+                            <Link
+                              href={detailHref}
+                              onClick={(event) => handleResourceOpenIntent(event, detailHref)}
+                              className="inline-flex items-center justify-center rounded-full border border-sky-200/45 bg-[linear-gradient(135deg,rgba(56,189,248,0.95),rgba(59,130,246,0.92)_46%,rgba(14,165,233,0.95))] px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-white shadow-[0_14px_30px_-14px_rgba(14,165,233,0.95)] ring-1 ring-white/30 transition hover:-translate-y-0.5 hover:border-sky-100/60 hover:shadow-[0_20px_38px_-16px_rgba(14,165,233,1)]"
+                            >
+                              Open resource
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
 
+                      <Link
+                        href={detailHref}
+                        onClick={(event) => handleResourceOpenIntent(event, detailHref)}
+                        className="absolute inset-0 z-0"
+                        aria-label={`Open ${resource.title || "resource"}`}
+                      >
+                        <span className="sr-only">Open resource</span>
+                      </Link>
+
+                      <div className="relative z-10">
                         <Link
                           href={detailHref}
-                          className="absolute right-3 top-3 z-30 inline-flex items-center rounded-[10px] border border-sky-300/65 bg-sky-400 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-950 transition hover:bg-sky-300"
+                          onClick={(event) => handleResourceOpenIntent(event, detailHref)}
+                          className="sr-only"
                         >
                           Open resource
                         </Link>
@@ -984,6 +995,45 @@ export default function ResourcesTablePageClient() {
       </div>
       </div>
       </div>
+
+      {authPromptResourceHref ? (
+        <div className="fixed inset-0 z-[140] flex items-center justify-center px-4 py-6">
+          <button
+            type="button"
+            onClick={closeAuthPrompt}
+            className={[
+              "absolute inset-0 bg-slate-950/70 backdrop-blur-[2px] transition-opacity duration-200",
+              authPromptVisible ? "opacity-100" : "opacity-0",
+            ].join(" ")}
+            aria-label="Close sign in prompt"
+          />
+          <section className={[
+            "relative w-full max-w-xl overflow-hidden rounded-[28px] border border-white/20 bg-[linear-gradient(155deg,rgba(56,189,248,0.18),rgba(15,23,42,0.9)_42%,rgba(2,6,23,0.94)_100%)] p-6 shadow-[0_42px_110px_-48px_rgba(0,0,0,0.95)] ring-1 ring-sky-200/35 backdrop-blur-2xl transition-all duration-200 sm:p-7",
+            authPromptVisible ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-[0.98] opacity-0",
+          ].join(" ")}>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-100/90">Account required</div>
+            <div className="mt-2 text-2xl font-semibold leading-tight text-white">Sign in or create an account to open this resource.</div>
+            <p className="mt-3 text-sm leading-7 text-slate-200/90">
+              You can browse all listings while signed out. Opening resource details requires an account.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link href={`/login?redirect=${encodeURIComponent(authPromptResourceHref)}`} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
+                Sign in
+              </Link>
+              <Link href={`/signup?redirect=${encodeURIComponent(authPromptResourceHref)}`} className="rounded-full border border-white/20 bg-white/[0.08] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.14]">
+                Create account
+              </Link>
+              <button
+                type="button"
+                onClick={closeAuthPrompt}
+                className="rounded-full border border-white/14 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/[0.1]"
+              >
+                Not now
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }

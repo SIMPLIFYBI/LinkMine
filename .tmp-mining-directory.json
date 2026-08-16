@@ -1,0 +1,621 @@
+﻿{
+    "ok":  true,
+    "market":  "mining",
+    "categories":  [
+                       {
+                           "id":  "2de98ebb-7744-4108-891c-f22504ed5536",
+                           "name":  "Exploration \u0026 Geology",
+                           "slug":  "exploration-geology",
+                           "services":  [
+                                            {
+                                                "id":  "a1f6b9f6-d850-4d19-908e-2e986a5e9b6c",
+                                                "name":  "Exploration Program Design \u0026 Management",
+                                                "slug":  "exploration-geology-exploration-program-design-management",
+                                                "category_id":  "2de98ebb-7744-4108-891c-f22504ed5536"
+                                            },
+                                            {
+                                                "id":  "335f896a-c025-468b-b644-babed8f24f2d",
+                                                "name":  "Geological Mapping \u0026 GIS",
+                                                "slug":  "exploration-geology-geological-mapping-target-generation",
+                                                "category_id":  "2de98ebb-7744-4108-891c-f22504ed5536"
+                                            },
+                                            {
+                                                "id":  "3913a28b-c274-4257-b1b2-bdd1fffcc729",
+                                                "name":  "Geological Logging \u0026 Sampling (RC / DD / AC)",
+                                                "slug":  "exploration-geology-geological-logging-sampling-rc-dd-ac",
+                                                "category_id":  "2de98ebb-7744-4108-891c-f22504ed5536"
+                                            },
+                                            {
+                                                "id":  "9d99db95-e4e4-499f-9bc3-0af3043d7865",
+                                                "name":  "Geophysical Survey Design \u0026 Interpretation",
+                                                "slug":  "exploration-geology-geophysical-survey-design-interpretation",
+                                                "category_id":  "2de98ebb-7744-4108-891c-f22504ed5536"
+                                            },
+                                            {
+                                                "id":  "a72f33b6-48f6-4ab7-af31-a29a75fe3cae",
+                                                "name":  "Geochemistry Analysis \u0026 Data Interpretation",
+                                                "slug":  "exploration-geology-geochemistry-analysis-data-interpretation",
+                                                "category_id":  "2de98ebb-7744-4108-891c-f22504ed5536"
+                                            },
+                                            {
+                                                "id":  "c1287ddb-c7a1-49c6-bc95-86eedeb8dbbc",
+                                                "name":  "Resource Modelling \u0026 Mineral Resource Estimation (MRE)",
+                                                "slug":  "exploration-geology-resource-modelling-mineral-resource-estimation-mre",
+                                                "category_id":  "2de98ebb-7744-4108-891c-f22504ed5536"
+                                            },
+                                            {
+                                                "id":  "1948c215-7b35-4e8a-96d7-c31fe1d0de4f",
+                                                "name":  "Geotechnical Site Characterisation \u0026 Rock Mass Logging",
+                                                "slug":  "exploration-geology-geotechnical-site-characterisation-rock-mass-logging",
+                                                "category_id":  "2de98ebb-7744-4108-891c-f22504ed5536"
+                                            },
+                                            {
+                                                "id":  "e39098b0-8b9f-414f-a433-272ab206eff8",
+                                                "name":  "Mine Geology \u0026 Grade Control",
+                                                "slug":  "exploration-geology-mine-geology-grade-control",
+                                                "category_id":  "2de98ebb-7744-4108-891c-f22504ed5536"
+                                            },
+                                            {
+                                                "id":  "b2951b45-5f91-4806-bfb5-fa7133c1cf22",
+                                                "name":  "Core Yard Management \u0026 Sample Logistics",
+                                                "slug":  "exploration-geology-core-yard-management-sample-logistics",
+                                                "category_id":  "2de98ebb-7744-4108-891c-f22504ed5536"
+                                            },
+                                            {
+                                                "id":  "91f8a096-3580-4457-ad2d-9f60628a680c",
+                                                "name":  "GIS \u0026 Exploration Data Management (MX Deposit / acQuire / Geobank)",
+                                                "slug":  "exploration-geology-gis-exploration-data-management-mx-deposit-acquire-geobank",
+                                                "category_id":  "2de98ebb-7744-4108-891c-f22504ed5536"
+                                            },
+                                            {
+                                                "id":  "1e92b87e-73bd-4941-83e9-197a1258ef6f",
+                                                "name":  "Ore Control \u0026 Blast Movement Mapping",
+                                                "slug":  "exploration-geology-ore-control-blast-movement-mapping",
+                                                "category_id":  "2de98ebb-7744-4108-891c-f22504ed5536"
+                                            },
+                                            {
+                                                "id":  "dae6f585-c431-4a15-9a7f-2f5b699edcd3",
+                                                "name":  "Geological equipment suppliers",
+                                                "slug":  "exploration-geology-reconciliation-model-to-mine-performance-analysis",
+                                                "category_id":  "2de98ebb-7744-4108-891c-f22504ed5536"
+                                            }
+                                        ]
+                       },
+                       {
+                           "id":  "8e628306-c66a-4f82-8f55-d99f449dbd5f",
+                           "name":  "Mining Engineering \u0026 Planning",
+                           "slug":  "mining-engineering-planning",
+                           "services":  [
+                                            {
+                                                "id":  "85f7d830-493d-4c51-9fb4-b1a15d191d1a",
+                                                "name":  "Life of Mine (LOM) Planning",
+                                                "slug":  "mine-planning-life-of-mine-planning",
+                                                "category_id":  "8e628306-c66a-4f82-8f55-d99f449dbd5f"
+                                            },
+                                            {
+                                                "id":  "3b1148b2-8a6a-4b94-a84c-e401be2d3bb7",
+                                                "name":  "Short-Term \u0026 Medium-Term Scheduling",
+                                                "slug":  "mine-planning-short-medium-term-scheduling",
+                                                "category_id":  "8e628306-c66a-4f82-8f55-d99f449dbd5f"
+                                            },
+                                            {
+                                                "id":  "b36a10ca-d4ec-4836-90cb-c22e5bf1b8f1",
+                                                "name":  "Open Pit Design \u0026 Cutback Planning",
+                                                "slug":  "mine-planning-open-pit-design-cutback-planning",
+                                                "category_id":  "8e628306-c66a-4f82-8f55-d99f449dbd5f"
+                                            },
+                                            {
+                                                "id":  "aec986a1-be70-4cdd-9a4d-f02b297c5b02",
+                                                "name":  "Underground Mine Design \u0026 Development Planning",
+                                                "slug":  "mine-planning-underground-design-development-planning",
+                                                "category_id":  "8e628306-c66a-4f82-8f55-d99f449dbd5f"
+                                            },
+                                            {
+                                                "id":  "297aa840-b97f-482a-96a8-9f33dacd78f5",
+                                                "name":  "Drill \u0026 Blast Engineering",
+                                                "slug":  "mine-planning-drill-blast-engineering",
+                                                "category_id":  "8e628306-c66a-4f82-8f55-d99f449dbd5f"
+                                            },
+                                            {
+                                                "id":  "573b99be-0d34-49e7-b76b-2f92fc5d0684",
+                                                "name":  "Load \u0026 Haul Fleet \u0026 Productivity Optimisation",
+                                                "slug":  "mine-planning-load-haul-fleet-productivity-optimisation",
+                                                "category_id":  "8e628306-c66a-4f82-8f55-d99f449dbd5f"
+                                            },
+                                            {
+                                                "id":  "f33f9313-2a0c-416c-b4ca-f0a059e9ec91",
+                                                "name":  "Geotechnical Inputs to Mine Design",
+                                                "slug":  "mine-planning-geotechnical-inputs-to-design",
+                                                "category_id":  "8e628306-c66a-4f82-8f55-d99f449dbd5f"
+                                            },
+                                            {
+                                                "id":  "36d475cf-ed93-471f-971e-26dfc82b629d",
+                                                "name":  "Mine Cost Modelling \u0026 Budget Forecasting",
+                                                "slug":  "mine-planning-mine-cost-modelling-budget-forecasting",
+                                                "category_id":  "8e628306-c66a-4f82-8f55-d99f449dbd5f"
+                                            },
+                                            {
+                                                "id":  "64e379eb-f7aa-41d5-8c54-bba1233e98ee",
+                                                "name":  "Ore Reserve Estimation \u0026 Compliance (JORC)",
+                                                "slug":  "mine-planning-ore-reserve-estimation-compliance-jorc",
+                                                "category_id":  "8e628306-c66a-4f82-8f55-d99f449dbd5f"
+                                            },
+                                            {
+                                                "id":  "c9e14500-abfa-4234-a652-86e9e4126f67",
+                                                "name":  "Mine Technical Governance \u0026 Readiness Reviews",
+                                                "slug":  "mine-planning-technical-governance-readiness-reviews",
+                                                "category_id":  "8e628306-c66a-4f82-8f55-d99f449dbd5f"
+                                            }
+                                        ]
+                       },
+                       {
+                           "id":  "543a2c99-d681-411d-b5f3-ff3677fbf51b",
+                           "name":  "Drilling \u0026 Earthworks",
+                           "slug":  "drilling-earthworks",
+                           "services":  [
+                                            {
+                                                "id":  "e45e141d-901d-471f-9d99-d4ca33b2af38",
+                                                "name":  "Reverse Circulation (RC) Drilling Services",
+                                                "slug":  "drilling-earthworks-reverse-circulation-drilling-services",
+                                                "category_id":  "543a2c99-d681-411d-b5f3-ff3677fbf51b"
+                                            },
+                                            {
+                                                "id":  "486ebd41-753a-4630-b206-c7ff72d2a8e2",
+                                                "name":  "Diamond Drilling (Core / HQ / NQ / PQ)",
+                                                "slug":  "drilling-earthworks-diamond-drilling-core-hq-nq-pq",
+                                                "category_id":  "543a2c99-d681-411d-b5f3-ff3677fbf51b"
+                                            },
+                                            {
+                                                "id":  "de407772-5196-43f5-88e9-25224e301498",
+                                                "name":  "Air Core \u0026 Auger Drilling",
+                                                "slug":  "drilling-earthworks-air-core-auger-drilling",
+                                                "category_id":  "543a2c99-d681-411d-b5f3-ff3677fbf51b"
+                                            },
+                                            {
+                                                "id":  "7a5015d7-618b-4cd8-8e21-1959eef6ae4a",
+                                                "name":  "Hydrogeological Drilling",
+                                                "slug":  "drilling-earthworks-geotechnical-hydrogeological-drilling",
+                                                "category_id":  "543a2c99-d681-411d-b5f3-ff3677fbf51b"
+                                            },
+                                            {
+                                                "id":  "1b364e0b-ce41-4ae8-95d5-7c81ce32bc3e",
+                                                "name":  "Production \u0026 Dewatering Bore Installation",
+                                                "slug":  "drilling-earthworks-production-dewatering-bore-installation",
+                                                "category_id":  "543a2c99-d681-411d-b5f3-ff3677fbf51b"
+                                            },
+                                            {
+                                                "id":  "c1a58fcb-b183-4a34-bb41-5a8aa2c3fd4d",
+                                                "name":  "Well Logging \u0026 Downhole Surveying",
+                                                "slug":  "drilling-earthworks-well-logging-downhole-surveying",
+                                                "category_id":  "543a2c99-d681-411d-b5f3-ff3677fbf51b"
+                                            },
+                                            {
+                                                "id":  "1f3f96a3-7f2c-44d2-b741-bc7a1e42b56c",
+                                                "name":  "Downhole Instrumentation Installation",
+                                                "slug":  "drilling-earthworks-camp-hse-remote-drilling-support",
+                                                "category_id":  "543a2c99-d681-411d-b5f3-ff3677fbf51b"
+                                            },
+                                            {
+                                                "id":  "edfab618-5cf7-4022-9692-fc5120b45025",
+                                                "name":  "Drill Pad Construction \u0026 Sump Excavation",
+                                                "slug":  "drilling-earthworks-drill-pad-construction-sump-excavation",
+                                                "category_id":  "543a2c99-d681-411d-b5f3-ff3677fbf51b"
+                                            },
+                                            {
+                                                "id":  "241d4b52-ea1a-480b-9cb1-c014d1bfd015",
+                                                "name":  "Access Track Construction \u0026 Maintenance",
+                                                "slug":  "drilling-earthworks-access-track-construction-maintenance",
+                                                "category_id":  "543a2c99-d681-411d-b5f3-ff3677fbf51b"
+                                            },
+                                            {
+                                                "id":  "cd160358-a176-4048-92ee-57714c03487d",
+                                                "name":  "Site Rehabilitation \u0026 Remediation Earthworks",
+                                                "slug":  "drilling-earthworks-site-rehabilitation-remediation-earthworks",
+                                                "category_id":  "543a2c99-d681-411d-b5f3-ff3677fbf51b"
+                                            }
+                                        ]
+                       },
+                       {
+                           "id":  "e5bf0702-0e78-4d49-b3be-b6362fb7afe7",
+                           "name":  "Environmental \u0026 Safety",
+                           "slug":  "environmental-safety",
+                           "services":  [
+                                            {
+                                                "id":  "271fb859-d5d9-4c1d-924a-635fe198b4c4",
+                                                "name":  "Environmental Impact Assessment (EIA) \u0026 Approvals",
+                                                "slug":  "environment-safety-environmental-impact-assessment-approvals",
+                                                "category_id":  "e5bf0702-0e78-4d49-b3be-b6362fb7afe7"
+                                            },
+                                            {
+                                                "id":  "40de87cf-3b78-4705-bf0c-da703dcda91b",
+                                                "name":  "Permitting, Compliance \u0026 Regulatory Reporting",
+                                                "slug":  "environment-safety-permitting-compliance-regulatory-reporting",
+                                                "category_id":  "e5bf0702-0e78-4d49-b3be-b6362fb7afe7"
+                                            },
+                                            {
+                                                "id":  "5c089c62-9734-4bbd-9e5f-c956d827a57e",
+                                                "name":  "Mine Closure Planning \u0026 Rehabilitation",
+                                                "slug":  "environment-safety-mine-closure-planning-rehabilitation",
+                                                "category_id":  "e5bf0702-0e78-4d49-b3be-b6362fb7afe7"
+                                            },
+                                            {
+                                                "id":  "9ca4ba91-5b00-47e7-9397-5a11fbc06f5a",
+                                                "name":  "Water Management \u0026 Hydrogeology",
+                                                "slug":  "environment-safety-water-management-hydrogeology",
+                                                "category_id":  "e5bf0702-0e78-4d49-b3be-b6362fb7afe7"
+                                            },
+                                            {
+                                                "id":  "127de131-6c53-41f4-9f7c-6210639ab02b",
+                                                "name":  "Tailings \u0026 Waste Management (ESG-aligned)",
+                                                "slug":  "environment-safety-tailings-waste-management-esg-aligned",
+                                                "category_id":  "e5bf0702-0e78-4d49-b3be-b6362fb7afe7"
+                                            },
+                                            {
+                                                "id":  "d7a9fe81-c497-4833-83b1-9c30e2b711ba",
+                                                "name":  "Biodiversity, Flora/Fauna \u0026 Offsets",
+                                                "slug":  "environment-safety-biodiversity-flora-fauna-offsets",
+                                                "category_id":  "e5bf0702-0e78-4d49-b3be-b6362fb7afe7"
+                                            },
+                                            {
+                                                "id":  "d1463c56-fe87-4d16-b8b0-00a14608cd75",
+                                                "name":  "Safety Leadership \u0026 Critical Risk Programs",
+                                                "slug":  "environment-safety-safety-leadership-critical-risk-programs",
+                                                "category_id":  "e5bf0702-0e78-4d49-b3be-b6362fb7afe7"
+                                            },
+                                            {
+                                                "id":  "5800be84-6565-4749-a159-5cc151311c89",
+                                                "name":  "Air, Noise \u0026 Dust Monitoring \u0026 Modelling",
+                                                "slug":  "environment-safety-air-noise-dust-monitoring-modelling",
+                                                "category_id":  "e5bf0702-0e78-4d49-b3be-b6362fb7afe7"
+                                            },
+                                            {
+                                                "id":  "f1b8a22a-b05a-4ddd-9549-9be0a2ea5bee",
+                                                "name":  "Health \u0026 Safety Management Systems (ISO 45001)",
+                                                "slug":  "environment-safety-health-safety-management-systems-iso-45001",
+                                                "category_id":  "e5bf0702-0e78-4d49-b3be-b6362fb7afe7"
+                                            },
+                                            {
+                                                "id":  "c856e837-a97a-41da-8ce2-3c0ee69660f9",
+                                                "name":  "Incident Investigation, ICAM \u0026 Critical Risk Control",
+                                                "slug":  "environment-safety-incident-investigation-icam-critical-risk-control",
+                                                "category_id":  "e5bf0702-0e78-4d49-b3be-b6362fb7afe7"
+                                            }
+                                        ]
+                       },
+                       {
+                           "id":  "ba8c37f9-4204-438d-9ef6-ffabae1ee1a5",
+                           "name":  "Processing \u0026 Metallurgy",
+                           "slug":  "processing-metallurgy",
+                           "services":  [
+                                            {
+                                                "id":  "4c6638a8-22eb-45c4-a41e-1ec9da094212",
+                                                "name":  "Metallurgical Testwork Programs",
+                                                "slug":  "processing-metallurgy-metallurgical-testwork-programs",
+                                                "category_id":  "ba8c37f9-4204-438d-9ef6-ffabae1ee1a5"
+                                            },
+                                            {
+                                                "id":  "2906663f-7abe-489f-b339-0953b6d277d6",
+                                                "name":  "Ore Characterisation \u0026 Variability Studies",
+                                                "slug":  "processing-metallurgy-ore-characterisation-variability-studies",
+                                                "category_id":  "ba8c37f9-4204-438d-9ef6-ffabae1ee1a5"
+                                            },
+                                            {
+                                                "id":  "ac314b85-cf50-495d-ad6f-50789fc65ecb",
+                                                "name":  "Process Flowsheet Design \u0026 Optimisation",
+                                                "slug":  "processing-metallurgy-process-flowsheet-design-optimisation",
+                                                "category_id":  "ba8c37f9-4204-438d-9ef6-ffabae1ee1a5"
+                                            },
+                                            {
+                                                "id":  "69dc583f-5ce6-4af1-94f2-225c2f8026d9",
+                                                "name":  "Comminution Circuit Optimisation",
+                                                "slug":  "processing-metallurgy-comminution-circuit-optimisation",
+                                                "category_id":  "ba8c37f9-4204-438d-9ef6-ffabae1ee1a5"
+                                            },
+                                            {
+                                                "id":  "36668b2c-c9ac-4adf-b522-34f8dbdfecc8",
+                                                "name":  "Flotation \u0026 Reagent Optimisation",
+                                                "slug":  "processing-metallurgy-flotation-reagent-optimisation",
+                                                "category_id":  "ba8c37f9-4204-438d-9ef6-ffabae1ee1a5"
+                                            },
+                                            {
+                                                "id":  "16da9eb4-93ec-4a41-9503-fd741a02fac5",
+                                                "name":  "Leaching \u0026 Hydrometallurgical Processes",
+                                                "slug":  "processing-metallurgy-leaching-hydrometallurgical-processes",
+                                                "category_id":  "ba8c37f9-4204-438d-9ef6-ffabae1ee1a5"
+                                            },
+                                            {
+                                                "id":  "edbbddb5-bba9-47a0-badc-92fee0bca284",
+                                                "name":  "Thickening \u0026 Dewatering Solutions",
+                                                "slug":  "processing-metallurgy-thickening-dewatering-solutions",
+                                                "category_id":  "ba8c37f9-4204-438d-9ef6-ffabae1ee1a5"
+                                            },
+                                            {
+                                                "id":  "97c06147-2a26-4c48-ba3a-2b88c3aa200d",
+                                                "name":  "Tailings Storage \u0026 Paste/Thickened Tails Integration",
+                                                "slug":  "processing-metallurgy-tailings-storage-paste-thickened-tails-integration",
+                                                "category_id":  "ba8c37f9-4204-438d-9ef6-ffabae1ee1a5"
+                                            },
+                                            {
+                                                "id":  "9209eef3-27ff-41f9-9fe0-c67260e59c2f",
+                                                "name":  "Metallurgical Accounting \u0026 Reconciliation",
+                                                "slug":  "processing-metallurgy-metallurgical-accounting-reconciliation",
+                                                "category_id":  "ba8c37f9-4204-438d-9ef6-ffabae1ee1a5"
+                                            },
+                                            {
+                                                "id":  "ae22d8e5-a950-45af-a7cf-64139a0ba713",
+                                                "name":  "Plant Commissioning, Ramp-Up \u0026 Operations Support",
+                                                "slug":  "processing-metallurgy-plant-commissioning-ramp-up-operations-support",
+                                                "category_id":  "ba8c37f9-4204-438d-9ef6-ffabae1ee1a5"
+                                            }
+                                        ]
+                       },
+                       {
+                           "id":  "d62a8d22-530b-4c38-987a-55d9418d1ccf",
+                           "name":  "Contract Mining \u0026 Civil Works",
+                           "slug":  "contract-mining-civil-works",
+                           "services":  [
+                                            {
+                                                "id":  "4ed3097c-c268-44c4-80bd-b70a1e44062e",
+                                                "name":  "Load \u0026 Haul Contract Mining",
+                                                "slug":  "contract-mining-civil-works-load-haul-contract-mining",
+                                                "category_id":  "d62a8d22-530b-4c38-987a-55d9418d1ccf"
+                                            },
+                                            {
+                                                "id":  "b574ee6d-100c-460a-bd72-b3ec15410bb4",
+                                                "name":  "Drill \u0026 Blast Contracting",
+                                                "slug":  "contract-mining-civil-works-drill-blast-contracting",
+                                                "category_id":  "d62a8d22-530b-4c38-987a-55d9418d1ccf"
+                                            },
+                                            {
+                                                "id":  "f1dfe6eb-9f2a-4752-b400-72e1cbe1e5c6",
+                                                "name":  "Grade Control Mining \u0026 Ore Movement",
+                                                "slug":  "contract-mining-civil-works-grade-control-mining-ore-movement",
+                                                "category_id":  "d62a8d22-530b-4c38-987a-55d9418d1ccf"
+                                            },
+                                            {
+                                                "id":  "c65c8bfe-da17-4aa4-b726-145b408db193",
+                                                "name":  "Haul Road Construction \u0026 Maintenance",
+                                                "slug":  "contract-mining-civil-works-haul-road-construction-maintenance",
+                                                "category_id":  "d62a8d22-530b-4c38-987a-55d9418d1ccf"
+                                            },
+                                            {
+                                                "id":  "eb9771b1-7d44-4299-904f-7d24a676859c",
+                                                "name":  "ROM Pad \u0026 Stockyard Construction",
+                                                "slug":  "contract-mining-civil-works-rom-pad-stockyard-construction",
+                                                "category_id":  "d62a8d22-530b-4c38-987a-55d9418d1ccf"
+                                            },
+                                            {
+                                                "id":  "424b0a48-9466-4386-b100-869466c74054",
+                                                "name":  "Tailings Storage Facility (TSF) Construction \u0026 Lifts",
+                                                "slug":  "contract-mining-civil-works-tailings-storage-facility-tsf-construction-lifts",
+                                                "category_id":  "d62a8d22-530b-4c38-987a-55d9418d1ccf"
+                                            },
+                                            {
+                                                "id":  "a7998838-37f6-40ff-95b0-4e400b222be9",
+                                                "name":  "Drainage, Culverts \u0026 Mine Civil Infrastructure",
+                                                "slug":  "contract-mining-civil-works-drainage-culverts-mine-civil-infrastructure",
+                                                "category_id":  "d62a8d22-530b-4c38-987a-55d9418d1ccf"
+                                            },
+                                            {
+                                                "id":  "2901999b-00ad-467e-85f6-3e80e96f111b",
+                                                "name":  "Bulk Earthworks \u0026 Site Development",
+                                                "slug":  "contract-mining-civil-works-bulk-earthworks-site-development",
+                                                "category_id":  "d62a8d22-530b-4c38-987a-55d9418d1ccf"
+                                            },
+                                            {
+                                                "id":  "55f52c4f-e538-4d59-8f01-1b61760857ff",
+                                                "name":  "Rehabilitation Earthworks \u0026 Closure Implementation",
+                                                "slug":  "contract-mining-civil-works-rehabilitation-earthworks-closure-implementation",
+                                                "category_id":  "d62a8d22-530b-4c38-987a-55d9418d1ccf"
+                                            },
+                                            {
+                                                "id":  "9cc9ac05-78c7-4d26-92aa-c4f82401a3fd",
+                                                "name":  "Wet/Dry Plant \u0026 Operator Hire (Dozer/Grader/Excavator/Truck)",
+                                                "slug":  "contract-mining-civil-works-wet-dry-plant-operator-hire-dozer-grader-excavator-truck",
+                                                "category_id":  "d62a8d22-530b-4c38-987a-55d9418d1ccf"
+                                            }
+                                        ]
+                       },
+                       {
+                           "id":  "46cccf9d-ccb1-4e68-b5ec-4fc86267424e",
+                           "name":  "Indigenous \u0026 Community",
+                           "slug":  "indigenous-community",
+                           "services":  [
+                                            {
+                                                "id":  "9a5a6614-07de-4322-a4fe-86265c284b70",
+                                                "name":  "Community \u0026 Indigenous Engagement Strategy",
+                                                "slug":  "indigenous-community-engagement-strategy",
+                                                "category_id":  "46cccf9d-ccb1-4e68-b5ec-4fc86267424e"
+                                            },
+                                            {
+                                                "id":  "5ca1ba8c-dd36-4d1a-a8de-2bcddf8501b3",
+                                                "name":  "Native Title \u0026 Land Access Facilitation",
+                                                "slug":  "indigenous-community-native-title-land-access-facilitation",
+                                                "category_id":  "46cccf9d-ccb1-4e68-b5ec-4fc86267424e"
+                                            },
+                                            {
+                                                "id":  "26e83743-b4c8-4300-a4fe-0cae60fb023f",
+                                                "name":  "Cultural Awareness Training \u0026 Induction Programs",
+                                                "slug":  "indigenous-community-cultural-awareness-training-induction-programs",
+                                                "category_id":  "46cccf9d-ccb1-4e68-b5ec-4fc86267424e"
+                                            },
+                                            {
+                                                "id":  "91a439cb-3cff-4658-b365-30040790e358",
+                                                "name":  "Indigenous Employment \u0026 Workforce Development",
+                                                "slug":  "indigenous-community-employment-workforce-development",
+                                                "category_id":  "46cccf9d-ccb1-4e68-b5ec-4fc86267424e"
+                                            },
+                                            {
+                                                "id":  "cc4240b8-390a-4689-bf53-df9f479175a7",
+                                                "name":  "Indigenous Business Procurement \u0026 Supplier Partnerships",
+                                                "slug":  "indigenous-community-procurement-supplier-partnerships",
+                                                "category_id":  "46cccf9d-ccb1-4e68-b5ec-4fc86267424e"
+                                            },
+                                            {
+                                                "id":  "63ca4d44-bd6c-4d21-8262-b296682b7a2d",
+                                                "name":  "Community Impact \u0026 Social Value Assessment",
+                                                "slug":  "indigenous-community-impact-social-value-assessment",
+                                                "category_id":  "46cccf9d-ccb1-4e68-b5ec-4fc86267424e"
+                                            },
+                                            {
+                                                "id":  "0ca3b60d-437e-474e-914f-457a3ac79255",
+                                                "name":  "Cultural Heritage Surveys \u0026 Site Monitoring",
+                                                "slug":  "indigenous-community-cultural-heritage-surveys-site-monitoring",
+                                                "category_id":  "46cccf9d-ccb1-4e68-b5ec-4fc86267424e"
+                                            },
+                                            {
+                                                "id":  "ce881ccb-dab5-49f6-90f9-eeef25a24775",
+                                                "name":  "Community Health \u0026 Wellbeing Programs",
+                                                "slug":  "indigenous-community-health-wellbeing-programs",
+                                                "category_id":  "46cccf9d-ccb1-4e68-b5ec-4fc86267424e"
+                                            },
+                                            {
+                                                "id":  "cdfd4627-ac92-4f42-a1bf-ba725d2582aa",
+                                                "name":  "Stakeholder \u0026 Traditional Owner Relationship Management",
+                                                "slug":  "indigenous-community-stakeholder-traditional-owner-relationship-management",
+                                                "category_id":  "46cccf9d-ccb1-4e68-b5ec-4fc86267424e"
+                                            },
+                                            {
+                                                "id":  "83de1612-4bf1-4082-8d0d-7663b724d1a3",
+                                                "name":  "Local Participation \u0026 Benefit-Sharing Frameworks",
+                                                "slug":  "indigenous-community-local-participation-benefit-sharing-frameworks",
+                                                "category_id":  "46cccf9d-ccb1-4e68-b5ec-4fc86267424e"
+                                            }
+                                        ]
+                       },
+                       {
+                           "id":  "76e9cd26-af67-499d-a591-2127df799b17",
+                           "name":  "Finance \u0026 Project Services",
+                           "slug":  "finance-project-services",
+                           "services":  [
+                                            {
+                                                "id":  "a9cf7681-4c9a-4e0c-86e1-cc4a8d158327",
+                                                "name":  "Cost Estimation \u0026 Budget Development",
+                                                "slug":  "finance-project-cost-estimation-budget",
+                                                "category_id":  "76e9cd26-af67-499d-a591-2127df799b17"
+                                            },
+                                            {
+                                                "id":  "f948aba4-e8e2-4cde-b402-47ec6d30da18",
+                                                "name":  "Financial Modelling \u0026 Investment Analysis",
+                                                "slug":  "finance-project-financial-modelling-investment-analysis",
+                                                "category_id":  "76e9cd26-af67-499d-a591-2127df799b17"
+                                            },
+                                            {
+                                                "id":  "3cbb0621-4074-4339-9ce4-3b0b73349a56",
+                                                "name":  "Project Controls (Cost, Schedule \u0026 Risk)",
+                                                "slug":  "finance-project-project-controls-cost-schedule-risk",
+                                                "category_id":  "76e9cd26-af67-499d-a591-2127df799b17"
+                                            },
+                                            {
+                                                "id":  "c3e9040e-2b0b-459e-a2d3-5886e8f8e473",
+                                                "name":  "Project Planning \u0026 Scheduling (P6/MSP)",
+                                                "slug":  "finance-project-project-planning-scheduling",
+                                                "category_id":  "76e9cd26-af67-499d-a591-2127df799b17"
+                                            },
+                                            {
+                                                "id":  "768aa0cd-abed-413a-947d-68461a254544",
+                                                "name":  "Commercial \u0026 Contract Management",
+                                                "slug":  "finance-project-commercial-contract-management",
+                                                "category_id":  "76e9cd26-af67-499d-a591-2127df799b17"
+                                            },
+                                            {
+                                                "id":  "f1cfcf39-f446-43fd-ba7e-66ba0e346ad1",
+                                                "name":  "Procurement \u0026 Supply Chain Advisory",
+                                                "slug":  "finance-project-procurement-supply-chain-advisory",
+                                                "category_id":  "76e9cd26-af67-499d-a591-2127df799b17"
+                                            },
+                                            {
+                                                "id":  "c8fe26ef-69ca-438c-8d03-bf47c8c3d92c",
+                                                "name":  "Portfolio \u0026 Capital Prioritisation",
+                                                "slug":  "finance-project-portfolio-capital-prioritisation",
+                                                "category_id":  "76e9cd26-af67-499d-a591-2127df799b17"
+                                            },
+                                            {
+                                                "id":  "5db23cbc-526d-40b5-91d3-259ac3218f59",
+                                                "name":  "Governance \u0026 Stage Gate Readiness",
+                                                "slug":  "finance-project-governance-stage-gate-readiness",
+                                                "category_id":  "76e9cd26-af67-499d-a591-2127df799b17"
+                                            },
+                                            {
+                                                "id":  "fc7ecb94-b7c9-44f0-b7a6-328b2f762d5c",
+                                                "name":  "Cost/Change Control System Setup",
+                                                "slug":  "finance-project-cost-change-control-system-setup",
+                                                "category_id":  "76e9cd26-af67-499d-a591-2127df799b17"
+                                            },
+                                            {
+                                                "id":  "53e8d638-c612-4a47-abf8-7a8143eb02cd",
+                                                "name":  "Earned Value \u0026 Performance Reporting",
+                                                "slug":  "finance-project-earned-value-performance-reporting",
+                                                "category_id":  "76e9cd26-af67-499d-a591-2127df799b17"
+                                            }
+                                        ]
+                       },
+                       {
+                           "id":  "9a410185-25df-4d73-a18d-6407c9e568df",
+                           "name":  "Data \u0026 Technology",
+                           "slug":  "data-technology",
+                           "services":  [
+                                            {
+                                                "id":  "e91ad802-d02e-41e6-80d0-eaa727aa57f3",
+                                                "name":  "Data Architecture \u0026 Integration",
+                                                "slug":  "data-technology-data-architecture-integration",
+                                                "category_id":  "9a410185-25df-4d73-a18d-6407c9e568df"
+                                            },
+                                            {
+                                                "id":  "6e856247-d031-4f80-954d-ee9c7a423d64",
+                                                "name":  "Business Intelligence \u0026 Reporting (Power BI / Tableau / Qlik)",
+                                                "slug":  "data-technology-business-intelligence-reporting",
+                                                "category_id":  "9a410185-25df-4d73-a18d-6407c9e568df"
+                                            },
+                                            {
+                                                "id":  "bc053ac1-9fb8-4e1f-8e60-c67347001a4e",
+                                                "name":  "Technology Hardware",
+                                                "slug":  "data-technology-database-cloud-platform-engineering",
+                                                "category_id":  "9a410185-25df-4d73-a18d-6407c9e568df"
+                                            },
+                                            {
+                                                "id":  "c2eb6a91-d4f6-4ea1-a81b-a26af106a89e",
+                                                "name":  "Digital Transformation Strategy",
+                                                "slug":  "data-technology-digital-transformation-strategy",
+                                                "category_id":  "9a410185-25df-4d73-a18d-6407c9e568df"
+                                            },
+                                            {
+                                                "id":  "15bcfdee-e94c-471d-9c21-3f32d7c5fafe",
+                                                "name":  "PowerApps / PowerAutomate / Power Pages",
+                                                "slug":  "data-technology-automation-workflow-optimisation",
+                                                "category_id":  "9a410185-25df-4d73-a18d-6407c9e568df"
+                                            },
+                                            {
+                                                "id":  "e6867e9f-f820-45f2-812d-d8eb4195a498",
+                                                "name":  "Mining Software and Training",
+                                                "slug":  "data-technology-mining-software-training",
+                                                "category_id":  "9a410185-25df-4d73-a18d-6407c9e568df"
+                                            },
+                                            {
+                                                "id":  "95a54a85-5ca9-4132-9631-1a58c6bc6955",
+                                                "name":  "Advanced Analytics \u0026 Statistical Modelling",
+                                                "slug":  "data-technology-advanced-analytics-statistical-modelling",
+                                                "category_id":  "9a410185-25df-4d73-a18d-6407c9e568df"
+                                            },
+                                            {
+                                                "id":  "d2818d1b-6914-4849-8f19-5f8e9f53e16f",
+                                                "name":  "AI \u0026 Machine Learning for Operations",
+                                                "slug":  "data-technology-machine-learning-ai-operations",
+                                                "category_id":  "9a410185-25df-4d73-a18d-6407c9e568df"
+                                            },
+                                            {
+                                                "id":  "27329455-4c9b-4659-bd9c-8c0482092b76",
+                                                "name":  "GIS \u0026 Spatial Data (Arc GIS/QGIS)",
+                                                "slug":  "data-technology-gis-spatial-data-engineering",
+                                                "category_id":  "9a410185-25df-4d73-a18d-6407c9e568df"
+                                            },
+                                            {
+                                                "id":  "dfb7baec-253b-4385-bce2-ed40029eed42",
+                                                "name":  "Cyber Security \u0026 Access Control Engineering",
+                                                "slug":  "data-technology-cyber-security-access-control-engineering",
+                                                "category_id":  "9a410185-25df-4d73-a18d-6407c9e568df"
+                                            }
+                                        ]
+                       }
+                   ]
+}

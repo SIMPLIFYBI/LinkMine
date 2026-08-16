@@ -1,0 +1,339 @@
+﻿{
+    "ok":  true,
+    "market":  "oil_gas",
+    "categories":  [
+                       {
+                           "id":  "0edf9e0c-c227-4e16-94b1-0f55155feff5",
+                           "name":  "Subsurface \u0026 Reservoir",
+                           "slug":  "subsurface-reservoir",
+                           "services":  [
+                                            {
+                                                "id":  "3d6b15d1-d767-4d12-b3ae-184c988dc1ff",
+                                                "name":  "Reservoir Characterisation \u0026 Modelling",
+                                                "slug":  "reservoir-characterisation-modelling",
+                                                "category_id":  "0edf9e0c-c227-4e16-94b1-0f55155feff5"
+                                            },
+                                            {
+                                                "id":  "d19c224f-59ce-416e-b6fd-d0dfe8f95ba3",
+                                                "name":  "Static \u0026 Dynamic Reservoir Studies",
+                                                "slug":  "static-dynamic-reservoir-studies",
+                                                "category_id":  "0edf9e0c-c227-4e16-94b1-0f55155feff5"
+                                            },
+                                            {
+                                                "id":  "44959ebf-d9db-49fe-99ae-ea22327c5380",
+                                                "name":  "Petrophysics \u0026 Formation Evaluation",
+                                                "slug":  "petrophysics-formation-evaluation",
+                                                "category_id":  "0edf9e0c-c227-4e16-94b1-0f55155feff5"
+                                            },
+                                            {
+                                                "id":  "9df905a9-3afb-44ec-babb-9b5ede48f6de",
+                                                "name":  "Reserve Certification \u0026 Audits",
+                                                "slug":  "reserve-certification-audits",
+                                                "category_id":  "0edf9e0c-c227-4e16-94b1-0f55155feff5"
+                                            },
+                                            {
+                                                "id":  "4788b91c-621e-4655-8617-d31717953407",
+                                                "name":  "Production Forecasting \u0026 Decline Analysis",
+                                                "slug":  "production-forecasting-decline-analysis",
+                                                "category_id":  "0edf9e0c-c227-4e16-94b1-0f55155feff5"
+                                            }
+                                        ]
+                       },
+                       {
+                           "id":  "eca8c094-a275-457e-aeb8-0cee8fa0bd13",
+                           "name":  "Field Development Planning",
+                           "slug":  "field-development-planning",
+                           "services":  [
+                                            {
+                                                "id":  "22aba6a3-c9fe-4aa2-969c-0ca0769fc198",
+                                                "name":  "Concept Select \u0026 Feasibility Studies",
+                                                "slug":  "concept-select-feasibility-studies",
+                                                "category_id":  "eca8c094-a275-457e-aeb8-0cee8fa0bd13"
+                                            },
+                                            {
+                                                "id":  "36b8cfe3-3a68-4621-ab5a-9077f607bfad",
+                                                "name":  "Field Development Plans (FDP)",
+                                                "slug":  "field-development-plans-fdp",
+                                                "category_id":  "eca8c094-a275-457e-aeb8-0cee8fa0bd13"
+                                            },
+                                            {
+                                                "id":  "dfbad81f-902d-4945-b9a3-06456cd10770",
+                                                "name":  "Well Spacing \u0026 Drainage Strategy",
+                                                "slug":  "well-spacing-drainage-strategy",
+                                                "category_id":  "eca8c094-a275-457e-aeb8-0cee8fa0bd13"
+                                            },
+                                            {
+                                                "id":  "ad10f19c-520b-4cd3-a20d-8c46531a925e",
+                                                "name":  "Surface and Subsurface Integration",
+                                                "slug":  "surface-subsurface-integration",
+                                                "category_id":  "eca8c094-a275-457e-aeb8-0cee8fa0bd13"
+                                            },
+                                            {
+                                                "id":  "2d7e6c8a-bff2-456e-b541-bb31be6f837e",
+                                                "name":  "Development Economics \u0026 Screening",
+                                                "slug":  "development-economics-screening",
+                                                "category_id":  "eca8c094-a275-457e-aeb8-0cee8fa0bd13"
+                                            }
+                                        ]
+                       },
+                       {
+                           "id":  "7e886569-69f2-4a95-aff1-7bf36722339c",
+                           "name":  "Geotechnical, Marine \u0026 Civil",
+                           "slug":  "geotechnical-marine-civil",
+                           "services":  [
+                                            {
+                                                "id":  "b2584d73-9adc-44fa-b0c1-205a3542596e",
+                                                "name":  "Site Investigations \u0026 Geotechnical Surveys",
+                                                "slug":  "site-investigations-geotechnical-surveys",
+                                                "category_id":  "7e886569-69f2-4a95-aff1-7bf36722339c"
+                                            },
+                                            {
+                                                "id":  "62d30b65-b894-4a0c-a6c2-42246b1e2af6",
+                                                "name":  "Marine Foundations \u0026 Nearshore Civil",
+                                                "slug":  "marine-foundations-nearshore-civil",
+                                                "category_id":  "7e886569-69f2-4a95-aff1-7bf36722339c"
+                                            },
+                                            {
+                                                "id":  "74495d2b-73aa-4709-8095-d4650f041c6e",
+                                                "name":  "Pipelines, Landfall \u0026 Crossing Design",
+                                                "slug":  "pipelines-landfall-crossing-design",
+                                                "category_id":  "7e886569-69f2-4a95-aff1-7bf36722339c"
+                                            },
+                                            {
+                                                "id":  "ae1eb4bd-13f9-49c4-aa9f-e6186c77d332",
+                                                "name":  "Offshore Geohazard Assessments",
+                                                "slug":  "offshore-geohazard-assessments",
+                                                "category_id":  "7e886569-69f2-4a95-aff1-7bf36722339c"
+                                            },
+                                            {
+                                                "id":  "e2b0ec23-084b-4a67-8e2c-f0e5433af3bc",
+                                                "name":  "Earthworks, Access \u0026 Civil Infrastructure",
+                                                "slug":  "earthworks-access-civil-infrastructure",
+                                                "category_id":  "7e886569-69f2-4a95-aff1-7bf36722339c"
+                                            }
+                                        ]
+                       },
+                       {
+                           "id":  "dc8d18c6-f687-4ad6-bea6-4afa3a87b3bf",
+                           "name":  "Drilling, Wells \u0026 Field Execution",
+                           "slug":  "drilling-wells-field-execution",
+                           "services":  [
+                                            {
+                                                "id":  "acb108cf-35f7-45b3-9ece-19ea60167784",
+                                                "name":  "Well Planning \u0026 Engineering",
+                                                "slug":  "well-planning-engineering",
+                                                "category_id":  "dc8d18c6-f687-4ad6-bea6-4afa3a87b3bf"
+                                            },
+                                            {
+                                                "id":  "ea6496bc-4eb9-44ed-b94b-11a8003bef23",
+                                                "name":  "Drilling Campaign Management",
+                                                "slug":  "drilling-campaign-management",
+                                                "category_id":  "dc8d18c6-f687-4ad6-bea6-4afa3a87b3bf"
+                                            },
+                                            {
+                                                "id":  "82156406-c0a7-40ee-a023-4974ce993ce7",
+                                                "name":  "Completion \u0026 Workover Design",
+                                                "slug":  "completion-workover-design",
+                                                "category_id":  "dc8d18c6-f687-4ad6-bea6-4afa3a87b3bf"
+                                            },
+                                            {
+                                                "id":  "dc50edc8-dbc4-44c6-9522-3ec9bb7c1e11",
+                                                "name":  "Rig Site Supervision \u0026 Wellsite Support",
+                                                "slug":  "rig-site-supervision-wellsite-support",
+                                                "category_id":  "dc8d18c6-f687-4ad6-bea6-4afa3a87b3bf"
+                                            },
+                                            {
+                                                "id":  "6ed0b9de-5837-4225-b85f-f64eb7359529",
+                                                "name":  "Intervention \u0026 Stimulation Programs",
+                                                "slug":  "intervention-stimulation-programs",
+                                                "category_id":  "dc8d18c6-f687-4ad6-bea6-4afa3a87b3bf"
+                                            }
+                                        ]
+                       },
+                       {
+                           "id":  "44f67d38-d372-48ca-af21-bb6e5b58a408",
+                           "name":  "Production \u0026 Facilities",
+                           "slug":  "production-facilities",
+                           "services":  [
+                                            {
+                                                "id":  "261626e6-1e2d-4415-a158-a1aeee9ec92e",
+                                                "name":  "Production Operations Support",
+                                                "slug":  "production-operations-support",
+                                                "category_id":  "44f67d38-d372-48ca-af21-bb6e5b58a408"
+                                            },
+                                            {
+                                                "id":  "c664ddee-b02c-41ae-881e-8ba8c713e829",
+                                                "name":  "Process \u0026 Facility Optimisation",
+                                                "slug":  "process-facility-optimisation",
+                                                "category_id":  "44f67d38-d372-48ca-af21-bb6e5b58a408"
+                                            },
+                                            {
+                                                "id":  "58a1adac-aa6b-48ee-a0ab-5a54fc73bb8a",
+                                                "name":  "Brownfield Modifications \u0026 Debottlenecking",
+                                                "slug":  "brownfield-modifications-debottlenecking",
+                                                "category_id":  "44f67d38-d372-48ca-af21-bb6e5b58a408"
+                                            },
+                                            {
+                                                "id":  "00615014-a354-482f-bbcf-0ec8be9c579e",
+                                                "name":  "Commissioning \u0026 Startup Readiness",
+                                                "slug":  "commissioning-startup-readiness",
+                                                "category_id":  "44f67d38-d372-48ca-af21-bb6e5b58a408"
+                                            },
+                                            {
+                                                "id":  "d9e7bdc2-c3b9-4182-9eda-b2ff56ef4602",
+                                                "name":  "Flow Assurance \u0026 Chemical Systems",
+                                                "slug":  "flow-assurance-chemical-systems",
+                                                "category_id":  "44f67d38-d372-48ca-af21-bb6e5b58a408"
+                                            }
+                                        ]
+                       },
+                       {
+                           "id":  "63ed0784-f564-4d78-9d98-adceda744fd1",
+                           "name":  "Asset Integrity, Maintenance \u0026 Reliability",
+                           "slug":  "asset-integrity-maintenance-reliability",
+                           "services":  [
+                                            {
+                                                "id":  "122171b1-bbd5-4cf8-b877-7258b333d071",
+                                                "name":  "Asset Integrity Management",
+                                                "slug":  "asset-integrity-management",
+                                                "category_id":  "63ed0784-f564-4d78-9d98-adceda744fd1"
+                                            },
+                                            {
+                                                "id":  "f6af3ac5-e5cd-4145-bd64-65911ef1e063",
+                                                "name":  "Inspection, NDT \u0026 Corrosion Programs",
+                                                "slug":  "inspection-ndt-corrosion-programs",
+                                                "category_id":  "63ed0784-f564-4d78-9d98-adceda744fd1"
+                                            },
+                                            {
+                                                "id":  "e9d8ae76-0c55-4fb5-a53a-d9052c0aaa45",
+                                                "name":  "Reliability Centred Maintenance",
+                                                "slug":  "reliability-centred-maintenance",
+                                                "category_id":  "63ed0784-f564-4d78-9d98-adceda744fd1"
+                                            },
+                                            {
+                                                "id":  "2299e8da-61c3-4941-8e9d-54ef918fa360",
+                                                "name":  "Shutdown \u0026 Turnaround Planning",
+                                                "slug":  "shutdown-turnaround-planning",
+                                                "category_id":  "63ed0784-f564-4d78-9d98-adceda744fd1"
+                                            },
+                                            {
+                                                "id":  "a8b95b9d-5b30-4dfd-b0d8-2928405d1a43",
+                                                "name":  "Critical Equipment Performance",
+                                                "slug":  "critical-equipment-performance",
+                                                "category_id":  "63ed0784-f564-4d78-9d98-adceda744fd1"
+                                            }
+                                        ]
+                       },
+                       {
+                           "id":  "bdb9e5f1-e7f7-4642-8a74-d9a188225304",
+                           "name":  "Digital, Automation \u0026 Operational Technology",
+                           "slug":  "digital-automation-operational-technology",
+                           "services":  [
+                                            {
+                                                "id":  "43d7e6ba-da21-4f29-b85c-5d783491db1c",
+                                                "name":  "SCADA, HMI \u0026 Industrial Systems",
+                                                "slug":  "scada-hmi-industrial-systems",
+                                                "category_id":  "bdb9e5f1-e7f7-4642-8a74-d9a188225304"
+                                            },
+                                            {
+                                                "id":  "b1f5b4b0-a404-4a4c-9dd1-48d15b7de1d7",
+                                                "name":  "Digital Oilfield \u0026 Data Platforms",
+                                                "slug":  "digital-oilfield-data-platforms",
+                                                "category_id":  "bdb9e5f1-e7f7-4642-8a74-d9a188225304"
+                                            },
+                                            {
+                                                "id":  "2c9563c9-b6d2-4a43-a7fa-febbd55ea281",
+                                                "name":  "Production Reporting \u0026 Analytics",
+                                                "slug":  "production-reporting-analytics",
+                                                "category_id":  "bdb9e5f1-e7f7-4642-8a74-d9a188225304"
+                                            },
+                                            {
+                                                "id":  "c65fe343-e696-4455-acc9-fe338ba866a6",
+                                                "name":  "Automation \u0026 Control System Upgrades",
+                                                "slug":  "automation-control-system-upgrades",
+                                                "category_id":  "bdb9e5f1-e7f7-4642-8a74-d9a188225304"
+                                            },
+                                            {
+                                                "id":  "e02362f2-292a-4220-a853-3c8b0b6b51a6",
+                                                "name":  "Operational Technology Cybersecurity",
+                                                "slug":  "operational-technology-cybersecurity",
+                                                "category_id":  "bdb9e5f1-e7f7-4642-8a74-d9a188225304"
+                                            }
+                                        ]
+                       },
+                       {
+                           "id":  "b7ce1262-c1f8-427c-b1b2-b78f7d353478",
+                           "name":  "Environment, Safety \u0026 Regulatory",
+                           "slug":  "environment-safety-regulatory",
+                           "services":  [
+                                            {
+                                                "id":  "4c57f8c2-dc1a-463d-9e82-0e27c29df09b",
+                                                "name":  "Environmental Approvals \u0026 Permitting",
+                                                "slug":  "environmental-approvals-permitting",
+                                                "category_id":  "b7ce1262-c1f8-427c-b1b2-b78f7d353478"
+                                            },
+                                            {
+                                                "id":  "25e1e1d3-b306-402b-9f00-1d58177ab38b",
+                                                "name":  "Process Safety \u0026 Risk Assessments",
+                                                "slug":  "process-safety-risk-assessments",
+                                                "category_id":  "b7ce1262-c1f8-427c-b1b2-b78f7d353478"
+                                            },
+                                            {
+                                                "id":  "0f7416ba-dfcd-4f8f-967f-7d68e11dee2f",
+                                                "name":  "HSE Management Systems \u0026 Assurance",
+                                                "slug":  "hse-management-systems-assurance",
+                                                "category_id":  "b7ce1262-c1f8-427c-b1b2-b78f7d353478"
+                                            },
+                                            {
+                                                "id":  "956022fe-4efa-4515-9a2e-63c0f9c56a69",
+                                                "name":  "Regulatory Compliance \u0026 Reporting",
+                                                "slug":  "regulatory-compliance-reporting",
+                                                "category_id":  "b7ce1262-c1f8-427c-b1b2-b78f7d353478"
+                                            },
+                                            {
+                                                "id":  "b0596788-c7e0-45ec-bbf6-79fdf652ca48",
+                                                "name":  "Decommissioning \u0026 Closure Support",
+                                                "slug":  "decommissioning-closure-support",
+                                                "category_id":  "b7ce1262-c1f8-427c-b1b2-b78f7d353478"
+                                            }
+                                        ]
+                       },
+                       {
+                           "id":  "0a878236-a6a6-4a94-a4d8-dd12fe9e6688",
+                           "name":  "Commercial, Project \u0026 Stakeholder Services",
+                           "slug":  "commercial-project-stakeholder-services",
+                           "services":  [
+                                            {
+                                                "id":  "094c2a89-6f64-43ed-bb3b-286af779b16d",
+                                                "name":  "Project Services, Planning \u0026 Controls",
+                                                "slug":  "project-services-planning-controls",
+                                                "category_id":  "0a878236-a6a6-4a94-a4d8-dd12fe9e6688"
+                                            },
+                                            {
+                                                "id":  "e06a024a-e119-4dfd-81cd-9a3bf40e683f",
+                                                "name":  "Commercial, Contracts \u0026 Procurement",
+                                                "slug":  "commercial-contracts-procurement",
+                                                "category_id":  "0a878236-a6a6-4a94-a4d8-dd12fe9e6688"
+                                            },
+                                            {
+                                                "id":  "c12de1b4-3532-42a5-8d8b-7d83923c7b8f",
+                                                "name":  "Supply Chain \u0026 Logistics Support",
+                                                "slug":  "supply-chain-logistics-support",
+                                                "category_id":  "0a878236-a6a6-4a94-a4d8-dd12fe9e6688"
+                                            },
+                                            {
+                                                "id":  "e667ff37-eecf-46f4-b512-ae32f96ded06",
+                                                "name":  "Stakeholder Engagement \u0026 Land Access",
+                                                "slug":  "stakeholder-engagement-land-access",
+                                                "category_id":  "0a878236-a6a6-4a94-a4d8-dd12fe9e6688"
+                                            },
+                                            {
+                                                "id":  "b1f7df5b-0db1-49ae-b983-34c1092dc040",
+                                                "name":  "Cost Estimating \u0026 Project Commercial Analysis",
+                                                "slug":  "cost-estimating-project-commercial-analysis",
+                                                "category_id":  "0a878236-a6a6-4a94-a4d8-dd12fe9e6688"
+                                            }
+                                        ]
+                       }
+                   ]
+}
