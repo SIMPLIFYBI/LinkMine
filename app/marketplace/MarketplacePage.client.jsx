@@ -2396,6 +2396,16 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
 
           <div className={`${activeTab === "discover" && coverCollapsed ? "mt-0" : "mt-3"} min-w-0 lg:mt-0`}>
           {activeTab === "discover" ? (
+            <>
+              <div
+                aria-hidden
+                className="pointer-events-none fixed inset-0 z-10 bg-slate-950/14 backdrop-blur-[4px] backdrop-saturate-150"
+                style={{
+                  opacity: Math.max(0, 1 - coverProgress),
+                  backgroundImage: "radial-gradient(circle at 12% 14%, rgba(125,211,252,0.12), transparent 34%), radial-gradient(circle at 82% 18%, rgba(165,243,252,0.08), transparent 30%), linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0))",
+                  transition: `opacity ${MARKETPLACE_COVER_TRANSITION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+                }}
+              />
             <section
               className={[
                 "sticky top-[calc(56px+env(safe-area-inset-top))] z-20 mb-6 overflow-hidden border border-white/15 shadow-[0_38px_120px_-68px_rgba(15,23,42,0.88)] ring-1 ring-white/10",
@@ -2514,7 +2524,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
               </div>
 
               <div
-                className="relative z-10 flex h-full flex-col px-5 pb-4 pt-12 sm:px-7 sm:pb-6 sm:pt-14"
+                className="relative z-10 flex h-full flex-col px-5 pb-0 pt-12 sm:px-7 sm:pb-0 sm:pt-14"
                 style={{
                   opacity: coverHeroOpacity,
                   transform: `translateY(${coverVisualProgress * -40}px)`,
@@ -2528,7 +2538,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                     Discover the Mining Industry&apos;s Digital Vault
                   </h1>
                   <p className="mt-3.5 max-w-2xl text-sm leading-6 text-slate-200/90 sm:text-base">
-                    Find practical templates, field-ready workflows, and specialist resources curated for mining teams across planning, geology, operations, and delivery.
+                    Find practical templates, apps, and specialist resources curated for mining teams across planning, geology, operations, and delivery.
                   </p>
 
                   <div className="mt-5 max-w-[66rem] rounded-[24px] border border-white/16 bg-white/[0.08] p-1.5 shadow-[0_24px_44px_-32px_rgba(56,189,248,0.5)] backdrop-blur-2xl">
@@ -2548,7 +2558,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                     </div>
                   </div>
 
-                  <div className="mt-4 flex justify-center">
+                  <div className="mb-4 mt-4 flex justify-center">
                     <button
                       type="button"
                       onClick={collapseMarketplaceCover}
@@ -2570,6 +2580,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                 </div>
               </div>
             </section>
+            </>
           ) : null}
 
           {error ? <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-5 py-4 text-sm text-red-100">{error}</div> : null}
