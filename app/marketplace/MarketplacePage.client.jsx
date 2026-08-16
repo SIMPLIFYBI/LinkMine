@@ -2690,15 +2690,6 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
             </ScrollShelf>
             </div>
 
-            <div>
-              <Link
-                href="/vault/resources"
-                className="flex w-full items-center justify-center rounded-2xl border border-sky-300/30 bg-[linear-gradient(135deg,rgba(14,165,233,0.24),rgba(6,182,212,0.18))] px-4 py-3 text-sm font-semibold text-sky-50 transition hover:bg-[linear-gradient(135deg,rgba(14,165,233,0.32),rgba(6,182,212,0.24))]"
-              >
-                Click here to view all Resources
-              </Link>
-            </div>
-
             <section className="grid gap-4 xl:grid-cols-[minmax(0,1.32fr),minmax(0,1fr)]">
               <ScrollShelf title="Trending resources" subtitle="High-activity items presented as a card rail for quick scanning." metaLabel="Top activity">
                 {trendingResources.length ? trendingResources.map((resource) => (
@@ -2728,6 +2719,26 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                 ))}
               </ScrollShelf>
             ) : null}
+
+            <section className="rounded-[28px] border border-white/12 bg-[linear-gradient(145deg,rgba(8,47,73,0.44),rgba(15,23,42,0.9)_48%,rgba(2,6,23,0.95))] p-5 shadow-[0_26px_62px_-42px_rgba(14,165,233,0.6)] ring-1 ring-white/10 sm:p-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-100/90">Finished exploring highlights?</div>
+                  <h3 className="mt-2 text-lg font-semibold text-white sm:text-xl">Browse the full vault library</h3>
+                  <p className="mt-1.5 text-sm text-slate-200/85">Continue into the complete resource index with filters, sorting, and full coverage.</p>
+                </div>
+                <Link
+                  href="/vault/resources"
+                  className="group inline-flex items-center justify-center gap-2 rounded-full border border-sky-200/45 bg-[linear-gradient(135deg,rgba(56,189,248,0.92),rgba(14,165,233,0.9)_52%,rgba(2,132,199,0.96))] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_18px_36px_-18px_rgba(14,165,233,0.95)] ring-1 ring-white/30 transition hover:-translate-y-0.5 hover:border-sky-100/60 hover:shadow-[0_24px_44px_-20px_rgba(14,165,233,1)]"
+                >
+                  <span>Browse all resources</span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 transition group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14" />
+                    <path d="m13 6 6 6-6 6" />
+                  </svg>
+                </Link>
+              </div>
+            </section>
 
           </>
         ) : null}
