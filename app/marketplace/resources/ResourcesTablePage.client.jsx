@@ -878,6 +878,7 @@ export default function ResourcesTablePageClient() {
                   const artwork = getResourceArtwork(resource);
                   const cardStyle = getResourceCardStyle(resource.resourceFormat);
                   const summary = String(resource.summary || resource.description || "").trim();
+                  const actionLabel = resource.resourceType === "hosted" ? "Download resource" : "Open resource";
                   const accessLabel = resource.resourceType === "external"
                     ? (resource.sourceName || "External source")
                     : "Resource file";
@@ -929,9 +930,11 @@ export default function ResourcesTablePageClient() {
                             <Link
                               href={detailHref}
                               onClick={(event) => handleResourceOpenIntent(event, detailHref)}
-                              className="inline-flex items-center justify-center rounded-full border border-sky-200/45 bg-[linear-gradient(135deg,rgba(56,189,248,0.95),rgba(59,130,246,0.92)_46%,rgba(14,165,233,0.95))] px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-white shadow-[0_14px_30px_-14px_rgba(14,165,233,0.95)] ring-1 ring-white/30 transition hover:-translate-y-0.5 hover:border-sky-100/60 hover:shadow-[0_20px_38px_-16px_rgba(14,165,233,1)]"
+                              className="group relative inline-flex items-center justify-center gap-1.5 rounded-full border border-sky-200/45 bg-[linear-gradient(135deg,rgba(56,189,248,0.95),rgba(59,130,246,0.92)_46%,rgba(14,165,233,0.95))] px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-white shadow-[0_14px_30px_-14px_rgba(14,165,233,0.95)] ring-1 ring-white/30 transition duration-200 hover:-translate-y-0.5 hover:border-sky-100/60 hover:brightness-105 hover:shadow-[0_20px_38px_-16px_rgba(14,165,233,1)]"
                             >
-                              Open resource
+                              <span className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_18%_12%,rgba(255,255,255,0.24),transparent_48%)]" aria-hidden="true" />
+                              <span className="relative">{actionLabel}</span>
+                              <span className="relative text-sm leading-none transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true">↗</span>
                             </Link>
                           </div>
                         </div>
@@ -941,9 +944,9 @@ export default function ResourcesTablePageClient() {
                         href={detailHref}
                         onClick={(event) => handleResourceOpenIntent(event, detailHref)}
                         className="absolute inset-0 z-0"
-                        aria-label={`Open ${resource.title || "resource"}`}
+                        aria-label={`${actionLabel} ${resource.title || "resource"}`}
                       >
-                        <span className="sr-only">Open resource</span>
+                        <span className="sr-only">{actionLabel}</span>
                       </Link>
 
                       <div className="relative z-10">
@@ -952,7 +955,7 @@ export default function ResourcesTablePageClient() {
                           onClick={(event) => handleResourceOpenIntent(event, detailHref)}
                           className="sr-only"
                         >
-                          Open resource
+                          {actionLabel}
                         </Link>
                       </div>
                     </article>

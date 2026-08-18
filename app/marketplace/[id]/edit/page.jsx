@@ -105,6 +105,7 @@ export default async function MarketplaceResourceEditPage({ params }) {
       tags={tagsRows || []}
       consultantOptions={consultantOptions}
       initialImages={initialImages}
+      isAdmin={isAdmin}
     />
   );
 }

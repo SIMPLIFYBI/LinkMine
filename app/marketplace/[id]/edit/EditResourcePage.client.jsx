@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatResourceBytes } from "@/lib/resourceHub";
 import { RESOURCE_LAUNCH_LIMITS } from "@/lib/resourceHub";
+import MarketplaceRouteShell from "@/app/marketplace/MarketplaceRouteShell.client.jsx";
 
 const MAX_PREVIEW_IMAGES = RESOURCE_LAUNCH_LIMITS.maxPreviewImages;
 const MAX_PREVIEW_IMAGE_BYTES = RESOURCE_LAUNCH_LIMITS.maxPreviewImageBytes;
@@ -19,6 +20,21 @@ const RESOURCE_FORMAT_OPTIONS = [
   { value: "app", label: "Application" },
   { value: "pdf", label: "PDF" },
   { value: "generic", label: "Generic resource" },
+];
+
+const RESOURCE_TYPE_OPTIONS = [
+  {
+    value: "hosted",
+    title: "Hosted pack",
+    description: "Keep your resource file in vault storage for direct in-platform access.",
+    hint: "Use when this listing should deliver a downloadable pack.",
+  },
+  {
+    value: "external",
+    title: "External source",
+    description: "Send users to a trusted URL hosted outside the platform.",
+    hint: "Use for websites, repos, or datasets maintained elsewhere.",
+  },
 ];
 
 function formatDate(value) {
@@ -82,7 +98,7 @@ async function readJson(response) {
     }
   }
   if (!response.ok) {
-    throw new Error(parsedBody?.error || parsedBody?.message || raw || "Request failed.");
+    throw new Error(parsedBody?.error || parsedBody?.message || raw || `Request failed (${response.status}).`);
   }
   return parsedBody;
 }
@@ -100,14 +116,12 @@ function buildForm(resource) {
   return {
     id: resource.id,
     title: resource.title || "",
-    slug: resource.slug || "",
     categoryId: resource.categoryId || "",
     consultantId: resource.consultantId || "",
     resourceType: resource.resourceType || "hosted",
     resourceFormat: resource.resourceFormat || "generic",
     summary: resource.summary || "",
     description: resource.description || "",
-    sourceName: resource.sourceName || "",
     sourceUrl: resource.sourceUrl || "",
     licenseName: resource.licenseName || "",
     licenseUrl: resource.licenseUrl || "",
@@ -116,7 +130,7 @@ function buildForm(resource) {
   };
 }
 
-export default function EditResourcePageClient({ initialResource, categories, consultantOptions = [], initialImages = [] }) {
+export default function EditResourcePageClient({ initialResource, categories, consultantOptions = [], initialImages = [], isAdmin = false }) {
   const router = useRouter();
   const [busy, startBusy] = useTransition();
   const [error, setError] = useState("");
@@ -137,9 +151,6 @@ export default function EditResourcePageClient({ initialResource, categories, co
     if (!form.title.trim()) {
       throw new Error("Title is required.");
     }
-    if (!form.slug.trim()) {
-      throw new Error("Slug is required.");
-    }
     if (!form.resourceFormat) {
       throw new Error("Resource format is required.");
     }
@@ -148,33 +159,68 @@ export default function EditResourcePageClient({ initialResource, categories, co
     }
   }
 
-  function saveResource({ submitForReview = false } = {}) {
+  function handleResourceTypeSelect(nextType) {
+    const switchingToHosted = nextType === "hosted";
+    const hasExternalValues = Boolean(form.sourceUrl.trim());
+    const hasHostedValues = Boolean(replacementFile);
+
+    if (switchingToHosted && hasExternalValues) {
+      const confirmed = window.confirm("Switching to Hosted will clear Source URL. Continue?");
+      if (!confirmed) return;
+    }
+
+    if (!switchingToHosted && hasHostedValues) {
+      const confirmed = window.confirm("Switching to External will clear the staged hosted replacement upload. Continue?");
+      if (!confirmed) return;
+    }
+
+    setForm((prev) => {
+      if (prev.resourceType === nextType) {
+        return prev;
+      }
+
+      if (nextType === "hosted") {
+        return {
+          ...prev,
+          resourceType: "hosted",
+          sourceUrl: "",
+        };
+      }
+
+      return {
+        ...prev,
+        resourceType: "external",
+      };
+    });
+
+    if (nextType === "external") {
+      setReplacementFile(null);
+    }
+  }
+
+  function saveResource() {
     resetMessages();
 
     startBusy(async () => {
       try {
         validate();
 
-        const nextStatus = submitForReview
+        const nextStatus = form.status === "pending"
           ? "pending"
-          : form.status === "pending"
-            ? "pending"
-            : form.status === "draft"
-              ? "draft"
-              : undefined;
+          : form.status === "draft"
+            ? "draft"
+            : undefined;
 
         const updateBody = {
           resource: {
             title: form.title,
-            slug: form.slug,
             categoryId: form.categoryId || null,
             consultantId: form.consultantId || null,
             resourceType: form.resourceType,
             resourceFormat: form.resourceFormat,
             summary: form.summary,
             description: form.description,
-            sourceName: form.sourceName,
-            sourceUrl: form.sourceUrl,
+            sourceUrl: form.resourceType === "external" ? form.sourceUrl : null,
             licenseName: form.licenseName,
             licenseUrl: form.licenseUrl,
             tagIds: form.tagIds,
@@ -194,7 +240,7 @@ export default function EditResourcePageClient({ initialResource, categories, co
         setResource(updated);
         setForm(buildForm(updated));
         setReplacementFile(null);
-        setSuccess(submitForReview ? "Resource updated and submitted for review." : "Resource changes saved.");
+        setSuccess("Resource changes saved.");
         router.refresh();
       } catch (nextError) {
         setError(nextError.message || "Unable to save resource changes.");
@@ -388,7 +434,7 @@ export default function EditResourcePageClient({ initialResource, categories, co
   }
 
   return (
-    <main className="w-full px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
+    <MarketplaceRouteShell signedIn isAdmin={isAdmin} activeKey="account">
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link href="/vault" className="inline-flex items-center text-sm text-slate-400 transition hover:text-white">
@@ -420,15 +466,42 @@ export default function EditResourcePageClient({ initialResource, categories, co
                 className="space-y-4 rounded-[26px] border border-white/10 bg-slate-950/35 p-5 ring-1 ring-white/10"
                 onSubmit={(event) => {
                   event.preventDefault();
-                  saveResource({ submitForReview: false });
+                  saveResource();
                 }}
               >
                 <Field label="Title">
                   <TextInput value={form.title} onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))} />
                 </Field>
 
-                <Field label="Slug" hint="Used in URLs and internal indexing.">
-                  <TextInput value={form.slug} onChange={(event) => setForm((prev) => ({ ...prev, slug: event.target.value }))} />
+                <Field
+                  label="Resource delivery"
+                  hint={form.resourceType === "hosted"
+                    ? "Hosted mode selected. External source details are cleared and hidden."
+                    : "External mode selected. Any staged hosted replacement upload is cleared and hidden."}
+                >
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {RESOURCE_TYPE_OPTIONS.map((option) => {
+                      const active = form.resourceType === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => handleResourceTypeSelect(option.value)}
+                          className={[
+                            "rounded-2xl border px-4 py-3 text-left transition",
+                            active
+                              ? "border-sky-300/50 bg-[linear-gradient(160deg,rgba(56,189,248,0.2),rgba(14,116,144,0.18))] ring-1 ring-sky-300/30"
+                              : "border-white/12 bg-slate-950/40 hover:border-white/25 hover:bg-white/[0.06]",
+                          ].join(" ")}
+                          aria-pressed={active}
+                        >
+                          <div className="text-sm font-semibold text-white">{option.title}</div>
+                          <div className="mt-1 text-xs leading-5 text-slate-300">{option.description}</div>
+                          <div className="mt-2 text-[11px] leading-5 text-slate-400">{option.hint}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </Field>
 
                 <div className="grid gap-4 md:grid-cols-2">
@@ -438,13 +511,6 @@ export default function EditResourcePageClient({ initialResource, categories, co
                       {categories.map((category) => (
                         <option key={category.id} value={category.id}>{category.name}</option>
                       ))}
-                    </Select>
-                  </Field>
-
-                  <Field label="Resource type">
-                    <Select value={form.resourceType} onChange={(event) => setForm((prev) => ({ ...prev, resourceType: event.target.value }))}>
-                      <option value="hosted">Resource file</option>
-                      <option value="external">External source</option>
                     </Select>
                   </Field>
                 </div>
@@ -476,11 +542,14 @@ export default function EditResourcePageClient({ initialResource, categories, co
                   <TextArea rows={6} value={form.description} onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))} />
                 </Field>
 
+                <div className="rounded-2xl border border-white/12 bg-slate-950/35 px-4 py-3 text-xs text-slate-300">
+                  {form.resourceType === "hosted"
+                    ? "Hosted resources use vault file storage. Replace pack file below if needed."
+                    : "External resources require a valid source URL. Hosted replacement upload is hidden in this mode."}
+                </div>
+
                 {form.resourceType === "external" ? (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="Source name">
-                      <TextInput value={form.sourceName} onChange={(event) => setForm((prev) => ({ ...prev, sourceName: event.target.value }))} />
-                    </Field>
+                  <div className="grid gap-4 md:grid-cols-1">
                     <Field label="Source URL">
                       <TextInput value={form.sourceUrl} onChange={(event) => setForm((prev) => ({ ...prev, sourceUrl: event.target.value }))} />
                     </Field>
@@ -598,37 +667,34 @@ export default function EditResourcePageClient({ initialResource, categories, co
                   </Field>
                 </div>
 
-                <div className="flex flex-wrap gap-2 pt-2">
-                  <button type="submit" disabled={busy} className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60">
-                    {busy ? "Saving..." : "Save changes"}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => saveResource({ submitForReview: true })}
-                    className="rounded-full border border-sky-300/25 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-100 transition hover:bg-sky-500/15 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Save and submit
-                  </button>
-                  <Link href="/vault" className="rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
-                    Exit editor
-                  </Link>
-                  <button
-                    type="button"
-                    disabled={busy || form.status === "archived"}
-                    onClick={archiveResource}
-                    className="rounded-full border border-amber-300/25 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-100 transition hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {form.status === "archived" ? "Already archived" : "Archive resource"}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={deleteResource}
-                    className="rounded-full border border-red-300/25 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-100 transition hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Delete permanently
-                  </button>
+                <div className="sticky bottom-3 z-20 -mx-2 mt-4 rounded-2xl border border-white/15 bg-slate-950/90 px-3 py-3 shadow-[0_18px_40px_-20px_rgba(0,0,0,0.85)] backdrop-blur">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="inline-flex items-center rounded-full border border-sky-300/30 bg-sky-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-sky-100">
+                      Current mode: {form.resourceType === "hosted" ? "Hosted pack" : "External source"}
+                    </div>
+                    <button type="submit" disabled={busy} className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60">
+                      {busy ? "Saving..." : "Save changes"}
+                    </button>
+                    <Link href="/vault" className="rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
+                      Exit editor
+                    </Link>
+                    <button
+                      type="button"
+                      disabled={busy || form.status === "archived"}
+                      onClick={archiveResource}
+                      className="rounded-full border border-amber-300/25 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-100 transition hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {form.status === "archived" ? "Already archived" : "Archive resource"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={deleteResource}
+                      className="rounded-full border border-red-300/25 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-100 transition hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Delete permanently
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
@@ -643,7 +709,7 @@ export default function EditResourcePageClient({ initialResource, categories, co
               <div className="rounded-[28px] border border-white/10 bg-slate-950/35 p-5 ring-1 ring-white/10">
                 <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Access</div>
                 <div className="mt-3 text-sm text-slate-200">
-                  {form.resourceType === "external" ? (form.sourceName || "External source") : "Resource file"}
+                  {form.resourceType === "external" ? "External source" : "Resource file"}
                 </div>
                 {form.resourceType === "external" && form.sourceUrl ? <div className="mt-2 break-all text-xs text-slate-400">{form.sourceUrl}</div> : null}
               </div>
@@ -660,6 +726,6 @@ export default function EditResourcePageClient({ initialResource, categories, co
           </div>
         </section>
       </div>
-    </main>
+    </MarketplaceRouteShell>
   );
 }

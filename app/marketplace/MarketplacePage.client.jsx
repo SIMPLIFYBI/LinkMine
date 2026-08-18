@@ -24,7 +24,6 @@ const DEFAULT_RESOURCE_FORM = {
   resourceFormat: "generic",
   summary: "",
   description: "",
-  sourceName: "",
   sourceUrl: "",
   tagIds: [],
   submitForReview: false,
@@ -59,6 +58,21 @@ const RESOURCE_FORMAT_OPTIONS = [
   { value: "app", label: "Application" },
   { value: "pdf", label: "PDF" },
   { value: "generic", label: "Generic resource" },
+];
+
+const RESOURCE_TYPE_OPTIONS = [
+  {
+    value: "hosted",
+    title: "Hosted pack",
+    description: "Upload a file to vault storage so people access the pack directly in the platform.",
+    hint: "Best for templates, docs, code packs, and downloadable bundles.",
+  },
+  {
+    value: "external",
+    title: "External source",
+    description: "Share a trusted URL for content hosted on another platform.",
+    hint: "Best for websites, repositories, and public data portals.",
+  },
 ];
 
 async function readJson(response) {
@@ -2010,6 +2024,45 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
     setResourcePreviewImages(files);
   }
 
+  function handleResourceTypeSelect(nextType) {
+    const switchingToHosted = nextType === "hosted";
+    const hasExternalValues = Boolean(resourceForm.sourceUrl.trim());
+    const hasHostedValues = Boolean(resourceFile);
+
+    if (switchingToHosted && hasExternalValues) {
+      const confirmed = window.confirm("Switching to Hosted will clear Source URL. Continue?");
+      if (!confirmed) return;
+    }
+
+    if (!switchingToHosted && hasHostedValues) {
+      const confirmed = window.confirm("Switching to External will clear the staged hosted upload. Continue?");
+      if (!confirmed) return;
+    }
+
+    setResourceForm((prev) => {
+      if (prev.resourceType === nextType) {
+        return prev;
+      }
+
+      if (nextType === "hosted") {
+        return {
+          ...prev,
+          resourceType: "hosted",
+          sourceUrl: "",
+        };
+      }
+
+      return {
+        ...prev,
+        resourceType: "external",
+      };
+    });
+
+    if (nextType === "external") {
+      setResourceFile(null);
+    }
+  }
+
   async function handleResourceSubmit(event) {
     event.preventDefault();
     resetMessages();
@@ -2049,8 +2102,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
             resourceFormat: resourceForm.resourceFormat,
             summary: resourceForm.summary,
             description: resourceForm.description,
-            sourceName: resourceForm.sourceName,
-            sourceUrl: resourceForm.sourceUrl,
+            sourceUrl: resourceForm.resourceType === "external" ? resourceForm.sourceUrl : null,
             tagIds: resourceForm.tagIds,
             status: resourceForm.submitForReview ? "pending" : "draft",
           },
@@ -2741,11 +2793,49 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
 
                     <CreateFlowSection
                       step="2"
-                      title="Where does this fit in the vault?"
-                      subtitle="Classify the asset so buyers can discover it quickly."
+                      title="Choose delivery type and classification"
+                      subtitle="Pick one delivery mode so the form only asks for relevant source details."
                       completed={createSectionCompletion.classify}
                       onToggleComplete={(nextValue) => setCreateSectionCompletion((prev) => ({ ...prev, classify: nextValue }))}
                     >
+                          <Field
+                            label={(
+                              <span className="inline-flex items-center gap-2">
+                                <span>Resource delivery</span>
+                                <InlineHelpTip label="Resource delivery help">
+                                  Hosted pack means your file lives in vault storage. External source means users are redirected to a URL hosted elsewhere.
+                                </InlineHelpTip>
+                              </span>
+                            )}
+                            hint={resourceForm.resourceType === "hosted"
+                              ? "Hosted mode selected. External source details are cleared and hidden."
+                              : "External mode selected. Any staged hosted upload is cleared and hidden."}
+                          >
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              {RESOURCE_TYPE_OPTIONS.map((option) => {
+                                const active = resourceForm.resourceType === option.value;
+                                return (
+                                  <button
+                                    key={option.value}
+                                    type="button"
+                                    onClick={() => handleResourceTypeSelect(option.value)}
+                                    className={[
+                                      "rounded-2xl border px-4 py-3 text-left transition",
+                                      active
+                                        ? "border-sky-300/50 bg-[linear-gradient(160deg,rgba(56,189,248,0.2),rgba(14,116,144,0.18))] ring-1 ring-sky-300/30"
+                                        : "border-white/12 bg-slate-950/40 hover:border-white/25 hover:bg-white/[0.06]",
+                                    ].join(" ")}
+                                    aria-pressed={active}
+                                  >
+                                    <div className="text-sm font-semibold text-white">{option.title}</div>
+                                    <div className="mt-1 text-xs leading-5 text-slate-300">{option.description}</div>
+                                    <div className="mt-2 text-[11px] leading-5 text-slate-400">{option.hint}</div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </Field>
+
                           <div className="grid gap-5 md:grid-cols-2">
                             <Field label="Category">
                               <Select value={resourceForm.categoryId} onChange={(event) => setResourceForm((prev) => ({ ...prev, categoryId: event.target.value }))}>
@@ -2753,21 +2843,6 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                                 {categories.map((category) => (
                                   <option key={category.id} value={category.id}>{category.name}</option>
                                 ))}
-                              </Select>
-                            </Field>
-                            <Field
-                              label={(
-                                <span className="inline-flex items-center gap-2">
-                                  <span>Resource type</span>
-                                  <InlineHelpTip label="Resource type help">
-                                    Hosted pack: you upload files directly to vault storage so users access them inside the platform. External source: you list a link/reference to content hosted elsewhere.
-                                  </InlineHelpTip>
-                                </span>
-                              )}
-                            >
-                              <Select value={resourceForm.resourceType} onChange={(event) => setResourceForm((prev) => ({ ...prev, resourceType: event.target.value }))}>
-                                <option value="hosted">Hosted pack</option>
-                                <option value="external">External source</option>
                               </Select>
                             </Field>
                           </div>
@@ -2782,16 +2857,20 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
 
                     <CreateFlowSection
                       step="3"
-                      title="Add the source file or external link"
-                      subtitle="Hosted resources need an upload. External resources need source details."
+                      title="Add delivery details"
+                      subtitle={resourceForm.resourceType === "hosted"
+                        ? "Upload the hosted pack that vault users will access."
+                        : "Add the external source details users will open."}
                       completed={createSectionCompletion.source}
                       onToggleComplete={(nextValue) => setCreateSectionCompletion((prev) => ({ ...prev, source: nextValue }))}
                     >
+                          <div className="rounded-2xl border border-white/12 bg-slate-950/35 px-4 py-3 text-xs text-slate-300">
+                            {resourceForm.resourceType === "hosted"
+                              ? "Hosted resources: upload one pack file. Source name and URL are hidden for this mode."
+                              : "External resources: add source name and a valid https URL. Pack upload is hidden for this mode."}
+                          </div>
                           {resourceForm.resourceType === "external" ? (
-                            <div className="grid gap-5 md:grid-cols-2">
-                              <Field label="Source name">
-                                <TextInput value={resourceForm.sourceName} onChange={(event) => setResourceForm((prev) => ({ ...prev, sourceName: event.target.value }))} placeholder="Queensland Government open data" />
-                              </Field>
+                            <div className="grid gap-5 md:grid-cols-1">
                               <Field label="Source URL">
                                 <TextInput value={resourceForm.sourceUrl} onChange={(event) => setResourceForm((prev) => ({ ...prev, sourceUrl: event.target.value }))} placeholder="https://..." />
                               </Field>
@@ -2846,6 +2925,9 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                           <div className="rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(56,189,248,0.08),rgba(15,23,42,0.58))] p-4 text-sm text-slate-300">
                             <div className="font-semibold text-white">Launch limits currently applied</div>
                             <div className="mt-2">10 active hosted resources, 25 MB max hosted pack size, up to 3 preview images (5 MB each), and 250 MB total hosted storage per user.</div>
+                          </div>
+                          <div className="inline-flex items-center rounded-full border border-sky-300/30 bg-sky-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-sky-100">
+                            Current mode: {resourceForm.resourceType === "hosted" ? "Hosted pack" : "External source"}
                           </div>
                           <button
                             type="submit"

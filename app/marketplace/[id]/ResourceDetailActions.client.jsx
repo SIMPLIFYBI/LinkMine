@@ -32,6 +32,8 @@ export default function ResourceDetailActions({ resource, requiresAuth = false }
   const [busy, startBusy] = useTransition();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const isHosted = resource?.resourceType === "hosted";
+  const primaryLabel = isHosted ? "Download resource" : "Open resource";
 
   if (requiresAuth) {
     return (
@@ -71,9 +73,11 @@ export default function ResourceDetailActions({ resource, requiresAuth = false }
           type="button"
           onClick={handlePrimary}
           disabled={busy}
-          className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+          className="group relative inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full border border-sky-200/45 bg-[linear-gradient(135deg,rgba(56,189,248,0.95),rgba(59,130,246,0.92)_46%,rgba(14,165,233,0.95))] px-6 py-3 text-sm font-semibold tracking-[0.02em] text-white shadow-[0_16px_34px_-16px_rgba(14,165,233,0.95)] ring-1 ring-white/30 transition duration-200 hover:-translate-y-0.5 hover:border-sky-100/60 hover:brightness-105 hover:shadow-[0_20px_42px_-16px_rgba(14,165,233,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200/50 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {busy ? "Working..." : "Open resource"}
+          <span className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_18%_12%,rgba(255,255,255,0.24),transparent_48%)]" aria-hidden="true" />
+          <span className="relative">{busy ? "Working..." : primaryLabel}</span>
+          {busy ? null : <span className="relative text-base leading-none transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true">↗</span>}
         </button>
       </div>
       {error ? <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}

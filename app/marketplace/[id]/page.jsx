@@ -12,8 +12,15 @@ import {
   TableSimple24Regular,
 } from "@fluentui/react-icons";
 import { formatResourceBytes } from "@/lib/resourceHub";
-import { buildResourceRoutePayload, DEFAULT_RESOURCE_SELECT, getResourceAuthContext } from "@/lib/resourceHubServer";
+import {
+  buildResourceRoutePayload,
+  DEFAULT_RESOURCE_SELECT,
+  getResourceAuthContext,
+  resolveConsultantIconUrl,
+} from "@/lib/resourceHubServer";
+import { supabaseAdminClient } from "@/lib/supabaseAdminClient";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
+import MarketplaceRouteShell from "@/app/marketplace/MarketplaceRouteShell.client.jsx";
 import ResourceDetailActions from "./ResourceDetailActions.client.jsx";
 import ResourceImageCarousel from "./ResourceImageCarousel.client.jsx";
 
@@ -87,6 +94,35 @@ function ResourceFormatChip({ format }) {
   );
 }
 
+function ConsultantBadge({ consultant }) {
+  if (!consultant?.id) return null;
+
+  const initials = String(consultant.displayName || "Consultant")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase() || "C";
+
+  return (
+    <Link
+      href={`/consultants/${consultant.id}`}
+      className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:border-white/25 hover:bg-white/[0.08]"
+      aria-label={`View consultant profile for ${consultant.displayName}`}
+    >
+      <span className="inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-slate-900/45 text-[10px] font-bold text-white">
+        {consultant.iconUrl ? (
+          <img src={consultant.iconUrl} alt={consultant.displayName} className="h-full w-full object-cover" />
+        ) : (
+          initials
+        )}
+      </span>
+      <span className="whitespace-nowrap">Added by {consultant.displayName}</span>
+    </Link>
+  );
+}
+
 export async function generateMetadata({ params }) {
   const { id } = await params;
   return {
@@ -111,6 +147,44 @@ export default async function MarketplaceResourcePage({ params }) {
 
   const resource = buildResourceRoutePayload(data, data.resource_tag_links || []);
   const canEditResource = Boolean(userId && (resource.ownerUserId === userId || isAdmin));
+
+  let consultantProfile = null;
+  const selectedConsultantId = resource.consultantId || null;
+
+  if (selectedConsultantId) {
+    const { data: consultantRow } = await sb
+      .from("consultants")
+      .select("id, display_name, name, logo_url, thumbnail_url, avatar_url, photo_url, image_url, metadata")
+      .eq("id", selectedConsultantId)
+      .maybeSingle();
+
+    if (consultantRow?.id) {
+      consultantProfile = {
+        id: consultantRow.id,
+        displayName: consultantRow.display_name || consultantRow.name || "Consultant",
+        iconUrl: resource.consultantIconUrl || resolveConsultantIconUrl(consultantRow),
+      };
+    }
+  }
+
+  if (!consultantProfile && resource.ownerUserId) {
+    const { data: ownerConsultantRow } = await sb
+      .from("consultants")
+      .select("id, display_name, name, logo_url, thumbnail_url, avatar_url, photo_url, image_url, metadata")
+      .eq("user_id", resource.ownerUserId)
+      .eq("visibility", "public")
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (ownerConsultantRow?.id) {
+      consultantProfile = {
+        id: ownerConsultantRow.id,
+        displayName: ownerConsultantRow.display_name || ownerConsultantRow.name || "Consultant",
+        iconUrl: resource.consultantIconUrl || resolveConsultantIconUrl(ownerConsultantRow),
+      };
+    }
+  }
 
   const { data: resourceImageRows } = await sb
     .from("resource_images")
@@ -149,16 +223,6 @@ export default async function MarketplaceResourcePage({ params }) {
     }
   }
 
-  const { data: relatedRows } = await sb
-    .from("resources")
-    .select("id, title, summary")
-    .eq("status", "approved")
-    .neq("id", id)
-    .eq("category_id", resource.categoryId || "00000000-0000-0000-0000-000000000000")
-    .limit(3);
-
-  const related = relatedRows || [];
-
   let uniqueOpeners30d = null;
   try {
     const { data: uniqueOpeners } = await sb.rpc("resource_unique_openers_30d", {
@@ -172,7 +236,7 @@ export default async function MarketplaceResourcePage({ params }) {
   const totalOpenCount = Number(resource.openCount ?? resource.downloadCount ?? 0);
 
   return (
-    <main className="w-full px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
+    <MarketplaceRouteShell signedIn={Boolean(user)} isAdmin={isAdmin} activeKey="account">
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link href="/vault" className="inline-flex items-center text-sm text-slate-400 transition hover:text-white">
@@ -192,6 +256,7 @@ export default async function MarketplaceResourcePage({ params }) {
                 <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
                 <ResourceFormatChip format={resource.resourceFormat} />
                 {resource.category?.name ? <Badge tone="border-white/10 bg-white/[0.04] text-slate-300">{resource.category.name}</Badge> : null}
+                <ConsultantBadge consultant={consultantProfile} />
               </div>
 
               <h1 className="mt-5 text-3xl font-semibold tracking-tight text-white sm:text-4xl">{resource.title}</h1>
@@ -219,12 +284,6 @@ export default async function MarketplaceResourcePage({ params }) {
             </div>
 
             <div className="space-y-4">
-              <div className="rounded-[28px] border border-white/10 bg-slate-950/35 p-5 ring-1 ring-white/10">
-                <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Access</div>
-                <div className="mt-3 text-3xl font-semibold text-white">Included</div>
-                <div className="mt-2 text-sm text-slate-400">Use Open resource to access this pack or source.</div>
-              </div>
-
               <div className="rounded-[28px] border border-white/10 bg-slate-950/35 p-5 ring-1 ring-white/10">
                 <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Click-through</div>
                 <div className="mt-3 text-3xl font-semibold text-white">{totalOpenCount}</div>
@@ -258,8 +317,8 @@ export default async function MarketplaceResourcePage({ params }) {
           </div>
         </section>
 
-        {(resource.licenseName || resource.licenseUrl || related.length) ? (
-          <section className="grid gap-6 lg:grid-cols-[0.9fr,1.1fr]">
+        {(resource.licenseName || resource.licenseUrl) ? (
+          <section className="grid gap-6 lg:grid-cols-1">
             <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 ring-1 ring-white/10">
               <div className="text-lg font-semibold text-white">Resource details</div>
               <dl className="mt-4 space-y-4 text-sm text-slate-300">
@@ -287,21 +346,9 @@ export default async function MarketplaceResourcePage({ params }) {
                 ) : null}
               </dl>
             </div>
-
-            <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 ring-1 ring-white/10">
-              <div className="text-lg font-semibold text-white">Related resources</div>
-              <div className="mt-4 space-y-3">
-                {related.length ? related.map((item) => (
-                  <Link key={item.id} href={`/vault/${item.id}`} className="block rounded-[22px] border border-white/10 bg-slate-950/35 px-4 py-4 transition hover:border-white/20 hover:bg-white/[0.08]">
-                    <div className="text-sm font-semibold text-white">{item.title}</div>
-                    <div className="mt-1 text-sm text-slate-400">{item.summary || "View full details for this resource."}</div>
-                  </Link>
-                )) : <div className="text-sm text-slate-400">No related resources available yet.</div>}
-              </div>
-            </div>
           </section>
         ) : null}
       </div>
-    </main>
+    </MarketplaceRouteShell>
   );
 }

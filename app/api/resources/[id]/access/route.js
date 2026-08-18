@@ -1,7 +1,6 @@
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
-import { supabaseAdminClient } from "@/lib/supabaseAdminClient";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import { getResourceAuthContext, RESOURCE_STORAGE_BUCKET } from "@/lib/resourceHubServer";
 
@@ -108,17 +107,6 @@ export async function POST(req, { params }) {
     });
   }
 
-  let adminSb;
-  try {
-    adminSb = supabaseAdminClient();
-  } catch (error) {
-    console.error("[resources.access] Missing admin client configuration for hosted resource access", {
-      resourceId: id,
-      error: error?.message || String(error),
-    });
-    return NextResponse.json({ ok: false, error: "Hosted resource access is temporarily unavailable." }, { status: 503 });
-  }
-
   await sb.rpc("ensure_resource_user_quota_row", { p_user_id: userId });
 
   const { data: quota, error: quotaError } = await sb
@@ -143,7 +131,7 @@ export async function POST(req, { params }) {
     return NextResponse.json({ ok: false, error: recentError.message }, { status: 400 });
   }
 
-  const { data: asset, error: assetError } = await adminSb
+  const { data: currentAsset, error: assetError } = await sb
     .from("resource_assets")
     .select("id, bucket_name, object_path, size_bytes")
     .eq("resource_id", id)
@@ -151,11 +139,39 @@ export async function POST(req, { params }) {
     .maybeSingle();
 
   if (assetError) {
+    console.error("[resources.access] Hosted asset lookup failed", {
+      resourceId: id,
+      userId,
+      error: assetError.message,
+    });
     return NextResponse.json({ ok: false, error: assetError.message }, { status: 400 });
   }
 
+  let asset = currentAsset;
   if (!asset) {
-    return NextResponse.json({ ok: false, error: "No current asset available for this resource." }, { status: 404 });
+    const { data: latestAsset, error: latestAssetError } = await sb
+      .from("resource_assets")
+      .select("id, bucket_name, object_path, size_bytes")
+      .eq("resource_id", id)
+      .order("version_no", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (latestAssetError) {
+      console.error("[resources.access] Hosted fallback asset lookup failed", {
+        resourceId: id,
+        userId,
+        error: latestAssetError.message,
+      });
+      return NextResponse.json({ ok: false, error: latestAssetError.message }, { status: 400 });
+    }
+
+    asset = latestAsset;
+  }
+
+  if (!asset) {
+    return NextResponse.json({ ok: false, error: "No hosted asset is available for this resource." }, { status: 404 });
   }
 
   const recentCount = Array.isArray(recentEvents) ? recentEvents.length : 0;
@@ -170,12 +186,20 @@ export async function POST(req, { params }) {
     return NextResponse.json({ ok: false, error: "Daily hosted download bandwidth limit reached." }, { status: 429 });
   }
 
-  const { data: signed, error: signedError } = await adminSb.storage
+  const { data: signed, error: signedError } = await sb.storage
     .from(asset.bucket_name || RESOURCE_STORAGE_BUCKET)
     .createSignedUrl(asset.object_path, 60);
 
   if (signedError || !signed?.signedUrl) {
-    return NextResponse.json({ ok: false, error: signedError?.message || "Could not create access URL." }, { status: 400 });
+    console.error("[resources.access] Hosted URL signing failed", {
+      resourceId: id,
+      userId,
+      error: signedError?.message || "No signed URL returned",
+    });
+    return NextResponse.json({
+      ok: false,
+      error: "Hosted resource access is blocked for this account. Storage permissions need to allow signed-in users to read hosted files.",
+    }, { status: 403 });
   }
 
   const { error: logError } = await sb.from("resource_download_events").insert({

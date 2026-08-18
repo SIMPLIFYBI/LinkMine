@@ -7,6 +7,7 @@
     "dev": "next dev -p 3004",
     "build": "next build",
     "start": "next start -p 3004",
+    "remotion": "remotion studio remotion/index.jsx",
     "assets:android-icons": "node scripts/export-android-icons.mjs",
     "cap:doctor": "npx cap doctor",
     "cap:copy": "npx cap copy",
@@ -35,12 +36,14 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.3.4",
+    "@remotion/cli": "^4.0.512",
     "@tailwindcss/postcss": "^4.1.13",
     "autoprefixer": "^10.4.21",
     "dotenv": "^17.2.3",
     "eslint": "^9.36.0",
     "eslint-config-next": "^15.5.4",
     "postcss": "^8.5.6",
+    "remotion": "^4.0.512",
     "sharp": "^0.34.5",
     "tailwindcss": "^4.1.13"
   }

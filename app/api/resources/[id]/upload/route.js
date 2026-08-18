@@ -20,7 +20,11 @@ export async function POST(req, { params }) {
   }
 
   const sb = await supabaseServerClient();
-  const adminSb = supabaseAdminClient();
+  let adminSb = null;
+  try {
+    adminSb = supabaseAdminClient();
+  } catch {}
+  const storageClient = adminSb || sb;
   const { userId, isAdmin } = await getResourceAuthContext(sb);
   if (!userId) {
     return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
@@ -80,12 +84,20 @@ export async function POST(req, { params }) {
 
   const nextVersion = (currentAsset?.version_no || 0) + 1;
 
-  const { error: uploadError } = await adminSb.storage
+  const { error: uploadError } = await storageClient.storage
     .from(RESOURCE_STORAGE_BUCKET)
     .upload(objectPath, file, { contentType, upsert: false });
 
   if (uploadError) {
-    return NextResponse.json({ ok: false, error: uploadError.message || "Upload failed." }, { status: 400 });
+    const message = uploadError.message || "Upload failed.";
+    const looksLikePermissionIssue = /(permission|not allowed|forbidden|row-level security|rls)/i.test(message);
+    if (looksLikePermissionIssue) {
+      return NextResponse.json({
+        ok: false,
+        error: "Hosted upload is blocked for this account. Storage permissions need to allow signed-in users to upload files.",
+      }, { status: 403 });
+    }
+    return NextResponse.json({ ok: false, error: message }, { status: 400 });
   }
 
   if (currentAsset?.id) {
