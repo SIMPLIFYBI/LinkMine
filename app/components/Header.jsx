@@ -56,12 +56,18 @@ export default function Header({ currentMarket = "mining" }) {
                   href={t.href}
                   aria-current={active ? "page" : undefined}
                   className={[
-                    "relative text-sm font-medium tracking-tight transition-colors",
-                    isLight ? "text-slate-600 hover:text-slate-950" : "text-slate-300 hover:text-white",
-                    active ? (isLight ? "text-slate-950" : "text-white") : "",
+                    "relative rounded-md px-2.5 py-1 text-sm font-medium tracking-tight transition",
+                    isLight ? "text-slate-600 hover:text-slate-950 hover:bg-slate-100/80" : "text-slate-300 hover:text-white",
+                    active
+                      ? (isLight
+                          ? "nav-active-pill border"
+                          : "text-white")
+                      : "",
                     // underline accent
                     active
-                      ? "after:absolute after:left-0 after:right-0 after:-bottom-2 after:h-px after:bg-gradient-to-r after:from-sky-400 after:to-indigo-400 after:opacity-100"
+                      ? (isLight
+                          ? "after:hidden"
+                          : "after:absolute after:left-0 after:right-0 after:-bottom-2 after:h-px after:bg-gradient-to-r after:from-sky-400 after:to-indigo-400 after:opacity-100")
                       : "after:absolute after:left-0 after:right-0 after:-bottom-2 after:h-px after:bg-white/0 after:opacity-0 hover:after:bg-white/20 hover:after:opacity-100",
                   ].join(" ")}
                 >

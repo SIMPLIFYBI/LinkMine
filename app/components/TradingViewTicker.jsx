@@ -5,15 +5,15 @@ import { useTheme } from "@/app/components/ThemeProvider";
 
 function TradingViewTicker() {
   const widgetRef = useRef(null);
-  const initializedRef = useRef(false);
   const { theme } = useTheme();
   const isLight = theme === "light";
 
   useEffect(() => {
     const widget = widgetRef.current;
-    if (!widget || initializedRef.current) return;
+    if (!widget) return;
 
-    initializedRef.current = true;
+    // Rebuild the widget when theme changes so light mode can use high-contrast colors.
+    widget.replaceChildren();
     const script = document.createElement("script");
     script.src =
       "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
@@ -54,14 +54,18 @@ function TradingViewTicker() {
           { "proName": "ASX:PDN", "title": "Paladin Energy" },
           { "proName": "ASX:DYL", "title": "Deep Yellow" }
         ],
-        "colorTheme": "${isLight ? "light" : "dark"}",
-        "isTransparent": true,
+        "colorTheme": "dark",
+        "isTransparent": ${isLight ? "false" : "true"},
         "displayMode": "adaptive",
         "showSymbolLogo": true,
         "locale": "en"
       }`;
     widget.replaceChildren(script);
-  }, []);
+
+    return () => {
+      widget.replaceChildren();
+    };
+  }, [isLight]);
 
   return (
     <div

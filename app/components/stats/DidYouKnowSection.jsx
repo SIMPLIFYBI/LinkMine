@@ -1,5 +1,6 @@
 "use client";
 import { useCountUp } from "../kpi/useCountUp";
+import { useTheme } from "@/app/components/ThemeProvider";
 
 function StatCard({
   target,
@@ -8,7 +9,8 @@ function StatCard({
   suffix = "",
   icon,
   gradient = "from-sky-500 via-indigo-500 to-violet-500",
-  duration = 1800
+  duration = 1800,
+  isLight = false,
 }) {
   const { ref, formatted, done } = useCountUp(target, {
     duration,
@@ -19,13 +21,12 @@ function StatCard({
   return (
     <div
       ref={ref}
-      className="
-        group relative overflow-hidden rounded-2xl
-        border border-white/10 bg-white/[0.04] p-4 sm:p-5
-        ring-1 ring-white/10 backdrop-blur-md
-        shadow-[0_4px_20px_-6px_rgba(0,0,0,0.45)]
-        transition hover:border-sky-400/40 hover:shadow-[0_8px_28px_-8px_rgba(0,0,0,0.55)]
-      "
+      className={[
+        "group relative overflow-hidden rounded-2xl p-4 sm:p-5 transition",
+        isLight
+          ? "border border-sky-200/70 bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(241,249,255,0.96)_48%,rgba(232,243,255,0.95))] ring-1 ring-sky-200/60 shadow-[0_10px_28px_-16px_rgba(14,116,144,0.35)] hover:border-sky-300/80 hover:shadow-[0_14px_32px_-16px_rgba(56,189,248,0.42)]"
+          : "border border-white/10 bg-white/[0.04] ring-1 ring-white/10 backdrop-blur-md shadow-[0_4px_20px_-6px_rgba(0,0,0,0.45)] hover:border-sky-400/40 hover:shadow-[0_8px_28px_-8px_rgba(0,0,0,0.55)]",
+      ].join(" ")}
     >
       {/* Glow */}
       <div
@@ -33,7 +34,9 @@ function StatCard({
         className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         style={{
           background:
-            "radial-gradient(circle at 30% 25%, rgba(56,189,248,0.25), transparent 65%)"
+            isLight
+              ? "radial-gradient(circle at 30% 25%, rgba(14,165,233,0.22), rgba(99,102,241,0.08) 42%, transparent 70%)"
+              : "radial-gradient(circle at 30% 25%, rgba(56,189,248,0.25), transparent 65%)"
         }}
       />
       <div className="flex items-start gap-3">
@@ -51,14 +54,14 @@ function StatCard({
             className="
               text-2xl sm:text-3xl font-bold tabular-nums tracking-tight
               bg-clip-text text-transparent
-              bg-[linear-gradient(90deg,#38bdf8,#6366f1,#8b5cf6,#6366f1,#38bdf8)]
+              bg-[linear-gradient(90deg,#0ea5e9,#4f46e5,#7c3aed,#4f46e5,#0ea5e9)]
               bg-[length:280%_100%] animate-[kpiPan_6s_linear_infinite]
             "
           >
             {formatted}
           </div>
-          <p className="mt-1 text-sm font-medium text-slate-200">{label}</p>
-          <p className="mt-0.5 text-[11px] leading-tight text-slate-400">{sub}</p>
+          <p className={isLight ? "mt-1 text-sm font-medium text-slate-800" : "mt-1 text-sm font-medium text-slate-200"}>{label}</p>
+          <p className={isLight ? "mt-0.5 text-[11px] leading-tight text-slate-600" : "mt-0.5 text-[11px] leading-tight text-slate-400"}>{sub}</p>
         </div>
       </div>
     </div>
@@ -79,7 +82,8 @@ function TrendChart({
     { m: "2024", v: 1980 },
     { m: "2025", v: 2120 }
   ],
-  height = 140
+  height = 140,
+  isLight = false,
 }) {
   const step = 28;
 
@@ -134,13 +138,14 @@ function TrendChart({
 
   return (
     <div
-      className="
-        relative rounded-2xl border border-white/10 bg-white/[0.04]
-        p-4 pt-6 ring-1 ring-white/10 backdrop-blur-md
-        shadow-[0_4px_20px_-6px_rgba(0,0,0,0.45)]
-      "
+      className={[
+        "relative rounded-2xl p-4 pt-6",
+        isLight
+          ? "border border-sky-200/70 bg-[linear-gradient(165deg,rgba(255,255,255,0.98),rgba(244,250,255,0.96)_46%,rgba(234,244,255,0.95))] ring-1 ring-sky-200/60 shadow-[0_10px_28px_-16px_rgba(14,116,144,0.35)]"
+          : "border border-white/10 bg-white/[0.04] ring-1 ring-white/10 backdrop-blur-md shadow-[0_4px_20px_-6px_rgba(0,0,0,0.45)]",
+      ].join(" ")}
     >
-      <p className="text-sm font-semibold tracking-wide text-slate-200 mb-2">
+      <p className={isLight ? "mb-2 text-sm font-semibold tracking-wide text-slate-800" : "mb-2 text-sm font-semibold tracking-wide text-slate-200"}>
         Annual spend on mining consultants (A$ millions) — Australia
       </p>
 
@@ -205,7 +210,7 @@ function TrendChart({
           x={minCoord.x}
           y={labelY(minCoord.y)}
           fontSize={fontSize}
-          fill="#94a3b8"
+          fill={isLight ? "#475569" : "#94a3b8"}
           textAnchor="middle"
           style={{ fontWeight: 500 }}
         >
@@ -217,7 +222,7 @@ function TrendChart({
           x={maxCoord.x}
           y={labelY(maxCoord.y)}
           fontSize={fontSize}
-          fill="#94a3b8"
+          fill={isLight ? "#475569" : "#94a3b8"}
           textAnchor="middle"
           style={{ fontWeight: 500 }}
         >
@@ -227,7 +232,7 @@ function TrendChart({
 
       <div className="mt-2 sm:overflow-visible overflow-x-auto no-scrollbar">
         <div
-          className="grid text-[10px] tracking-wide text-slate-400"
+          className={isLight ? "grid text-[10px] tracking-wide text-slate-500" : "grid text-[10px] tracking-wide text-slate-400"}
           style={{
             gridTemplateColumns: `repeat(${points.length}, minmax(24px, 1fr))`,
             minWidth: `${points.length * 28}px`,
@@ -251,7 +256,9 @@ function TrendChart({
         className="pointer-events-none absolute inset-0 mix-blend-plus-lighter opacity-30"
         style={{
           background:
-            "radial-gradient(circle at 22% 28%, rgba(56,189,248,0.25), transparent 60%)"
+            isLight
+              ? "radial-gradient(circle at 22% 28%, rgba(14,165,233,0.22), rgba(99,102,241,0.08) 42%, transparent 68%)"
+              : "radial-gradient(circle at 22% 28%, rgba(56,189,248,0.25), transparent 60%)"
         }}
       />
     </div>
@@ -259,27 +266,32 @@ function TrendChart({
 }
 
 export default function DidYouKnowSection() {
+  const { theme } = useTheme();
+  const isLight = theme === "light";
+
   return (
     <section
       id="did-you-know"
-      className="
-        mt-12 rounded-3xl border border-white/10 bg-white/[0.02]
-        px-4 py-8 sm:px-6
-        backdrop-blur-md
-        relative overflow-hidden
-      "
+      className={[
+        "relative mt-12 overflow-hidden rounded-3xl px-4 py-8 sm:px-6",
+        isLight
+          ? "border border-sky-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.98)_0%,rgba(238,247,255,0.96)_42%,rgba(231,242,255,0.95)_100%)] ring-1 ring-sky-200/70 shadow-[0_24px_60px_-36px_rgba(14,116,144,0.35)]"
+          : "border border-white/10 bg-white/[0.02] backdrop-blur-md",
+      ].join(" ")}
     >
       <div
         aria-hidden="true"
-        className="absolute inset-0 -z-10 opacity-70"
+        className={isLight ? "absolute inset-0 -z-10 opacity-95" : "absolute inset-0 -z-10 opacity-70"}
         style={{
           background:
-            "linear-gradient(130deg, rgba(15,23,42,0.85) 0%, rgba(30,41,59,0.82) 55%, rgba(15,23,42,0.9) 100%)"
+            isLight
+              ? "radial-gradient(circle at 18% 16%, rgba(14,165,233,0.20), transparent 36%), radial-gradient(circle at 82% 18%, rgba(99,102,241,0.16), transparent 34%), radial-gradient(circle at 62% 88%, rgba(45,212,191,0.14), transparent 38%), linear-gradient(150deg, rgba(255,255,255,0.92) 0%, rgba(241,249,255,0.9) 48%, rgba(232,242,255,0.9) 100%)"
+              : "linear-gradient(130deg, rgba(15,23,42,0.85) 0%, rgba(30,41,59,0.82) 55%, rgba(15,23,42,0.9) 100%)"
         }}
       />
-      <div className="absolute inset-0 -z-10 mix-blend-plus-lighter opacity-40 bg-radial-fade" />
+      <div className={isLight ? "absolute inset-0 -z-10 opacity-55 bg-radial-fade" : "absolute inset-0 -z-10 mix-blend-plus-lighter opacity-40 bg-radial-fade"} />
       <p className="section-label mb-2">Did you know</p>
-      <h2 className="text-xl sm:text-2xl font-semibold text-white tracking-tight">
+      <h2 className={isLight ? "text-xl sm:text-2xl font-semibold tracking-tight text-slate-900" : "text-xl sm:text-2xl font-semibold text-white tracking-tight"}>
         Industry insights at a glance
       </h2>
 
@@ -289,6 +301,7 @@ export default function DidYouKnowSection() {
           label="Estimated independent mining consultants"
           sub="Potential expert profiles across Australia"
           suffix="+"
+          isLight={isLight}
           gradient="from-sky-500 via-cyan-500 to-sky-600"
           icon={
             <svg
@@ -314,6 +327,7 @@ export default function DidYouKnowSection() {
           label="Estimated active mining clients"
           sub="Organizations regularly engaging specialist services"
           suffix="+"
+          isLight={isLight}
           gradient="from-indigo-500 via-violet-500 to-fuchsia-500"
           duration={2000}
           icon={
@@ -334,10 +348,10 @@ export default function DidYouKnowSection() {
             </svg>
           }
         />
-        <TrendChart />
+        <TrendChart isLight={isLight} />
       </div>
 
-      <p className="mt-5 text-[11px] text-slate-500">
+      <p className={isLight ? "mt-5 text-[11px] text-slate-600" : "mt-5 text-[11px] text-slate-500"}>
         </p>
     </section>
   );

@@ -353,15 +353,15 @@ export default async function HomePage() {
           sizes="100vw"
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/25 via-slate-900/45 to-slate-950/85" />
-        <div className="relative z-10 flex h-full flex-col items-center justify-center gap-5 px-6 py-10 text-center sm:px-12 md:py-14">
-          <h1 className="max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl leading-tight">
-            {copy.heroTitle}
-          </h1>
-          <p className="max-w-2xl text-base text-slate-200 sm:text-lg">
-            {copy.heroDescription}
-          </p>
-          <div className="mt-4 flex gap-2">
+        <div className="relative z-10 flex h-full items-center justify-center px-6 py-10 sm:px-12 md:py-14">
+          <div className="w-full max-w-3xl rounded-2xl bg-black/28 p-5 text-center shadow-[0_18px_48px_-26px_rgba(0,0,0,0.8)] backdrop-blur-[1px] sm:p-7">
+            <h1 className="text-3xl font-bold tracking-tight leading-tight text-[rgb(248,250,252)] sm:text-4xl lg:text-5xl">
+              {copy.heroTitle}
+            </h1>
+            <p className="mx-auto mt-3 max-w-2xl text-base text-[rgba(241,245,249,0.95)] sm:text-lg">
+              {copy.heroDescription}
+            </p>
+            <div className="mt-4 flex gap-2">
             <Link href="/signup" className="flex-1">
               <button
                 className="
@@ -406,6 +406,7 @@ export default async function HomePage() {
                 Explore consultants
               </button>
             </Link>
+            </div>
           </div>
         </div>
 
@@ -432,6 +433,7 @@ export default async function HomePage() {
               <Link href="/jobs" className="inline-flex flex-1 sm:flex-none">
                 <button
                   className="
+                    explore-jobs-cta
                     group relative flex w-full items-center justify-center
                     rounded-xl px-3 py-2
                     font-semibold tracking-tight leading-none
@@ -681,11 +683,11 @@ export default async function HomePage() {
       <div aria-hidden="true" className="my-6 divider-gradient" />
 
       {/* Testimonials */}
-      <section id="testimonials" className="relative mx-auto w-full max-w-screen-lg px-4 fade-in-up bg-panel-alt rounded-3xl py-8">
-        <p className="section-label mb-3 px-1">Testimonials</p>
+      <section id="testimonials" className="testimonials-strip relative mx-auto w-full max-w-screen-lg rounded-3xl px-4 py-8 fade-in-up bg-panel-alt">
+        <p className="testimonials-kicker section-label mb-3 px-1">Testimonials</p>
         <div className="mb-3 flex items-center justify-between px-1">
-          <h3 className="text-base font-semibold text-white">What clients say</h3>
-          <span className="text-xs text-slate-400">Real feedback from teams using YouMine</span>
+          <h3 className="testimonials-title text-base font-semibold text-white">What clients say</h3>
+          <span className="testimonials-meta text-xs text-slate-400">Real feedback from teams using YouMine</span>
         </div>
 
         <div className="-mx-4 overflow-hidden px-4">
@@ -696,20 +698,20 @@ export default async function HomePage() {
             {testimonials.map((t, i) => (
               <figure
                 key={i}
-                className="min-w-[280px] max-w-[360px] snap-start rounded-2xl border border-white/10 bg-white/[0.04] p-4 ring-1 ring-white/10"
+                className="testimonials-card min-w-[280px] max-w-[360px] snap-start rounded-2xl border border-white/10 bg-white/[0.04] p-4 ring-1 ring-white/10"
               >
-                <blockquote className="text-sm leading-6 text-slate-200">
-                  <span aria-hidden="true" className="mr-1 text-slate-400">“</span>
+                <blockquote className="testimonials-quote text-sm leading-6 text-slate-200">
+                  <span aria-hidden="true" className="testimonials-quote-mark mr-1 text-slate-400">“</span>
                   {t.quote}
-                  <span aria-hidden="true" className="ml-1 text-slate-400">”</span>
+                  <span aria-hidden="true" className="testimonials-quote-mark ml-1 text-slate-400">”</span>
                 </blockquote>
                 <figcaption className="mt-3 flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-500/15 text-xs font-semibold text-sky-100 ring-1 ring-inset ring-sky-400/30">
+                  <div className="testimonials-avatar flex h-9 w-9 items-center justify-center rounded-full bg-sky-500/15 text-xs font-semibold text-sky-100 ring-1 ring-inset ring-sky-400/30">
                     {t.name.split(" ").slice(0, 2).map(s => s[0]).join("").toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-white">{t.name}</div>
-                    <div className="truncate text-xs text-slate-400">{t.role}</div>
+                    <div className="testimonials-name truncate text-sm font-semibold text-white">{t.name}</div>
+                    <div className="testimonials-role truncate text-xs text-slate-400">{t.role}</div>
                   </div>
                 </figcaption>
               </figure>
@@ -717,7 +719,7 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-3xl bg-radial-fade opacity-50 mix-blend-plus-lighter" />
+        <div aria-hidden="true" className="testimonials-glow pointer-events-none absolute inset-0 rounded-3xl bg-radial-fade opacity-50 mix-blend-plus-lighter" />
       </section>
 
       {showPreview && (

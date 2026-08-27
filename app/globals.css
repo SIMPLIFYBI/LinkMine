@@ -145,8 +145,41 @@ html[data-theme="light"] :is(.text-white, .text-slate-100, .text-slate-200, .tex
   color: #0f172a !important;
 }
 
+html[data-theme="light"] :is(
+  [class*="text-white/"],
+  [class*="text-slate-100/"],
+  [class*="text-slate-200/"],
+  [class*="text-slate-300/"]
+) {
+  color: #1e293b !important;
+}
+
 html[data-theme="light"] :is(.text-slate-400, .text-slate-500) {
   color: #475569 !important;
+}
+
+html[data-theme="light"] :is(
+  [class*="text-slate-400/"],
+  [class*="text-slate-500/"],
+  [class*="text-slate-600/"]
+) {
+  color: #475569 !important;
+}
+
+html[data-theme="light"] :is(.text-sky-100, .text-sky-200, .text-sky-300) {
+  color: #0369a1 !important;
+}
+
+html[data-theme="light"] :is(.text-emerald-100, .text-cyan-100) {
+  color: #065f46 !important;
+}
+
+html[data-theme="light"] :is(.text-amber-100) {
+  color: #92400e !important;
+}
+
+html[data-theme="light"] :is(.text-red-100, .text-rose-100) {
+  color: #9f1239 !important;
 }
 
 html[data-theme="light"] :is([class*="border-white/"], [class*="ring-white/"]) {
@@ -177,12 +210,12 @@ html[data-theme="light"] :is(
 }
 
 html[data-theme="light"] :is(
-  button[class*="from-sky-"],
-  button[class*="from-indigo-"],
-  button[class*="from-cyan-"],
-  a[class*="from-sky-"],
-  a[class*="from-indigo-"],
-  a[class*="from-cyan-"]
+  button[class*="bg-gradient-to-"][class*="from-sky-"],
+  button[class*="bg-gradient-to-"][class*="from-indigo-"],
+  button[class*="bg-gradient-to-"][class*="from-cyan-"],
+  a[class*="bg-gradient-to-"][class*="from-sky-"],
+  a[class*="bg-gradient-to-"][class*="from-indigo-"],
+  a[class*="bg-gradient-to-"][class*="from-cyan-"]
 ) {
   color: #ffffff !important;
 }
@@ -418,6 +451,258 @@ html[data-theme="light"] :is(input, textarea)::placeholder {
   /* Section header tiny label */
   .section-label {
     @apply text-[10px] uppercase tracking-[0.25em] font-semibold text-sky-300/90;
+  }
+
+  html[data-theme="light"] .section-label {
+    color: #0f2f57 !important;
+  }
+
+  html[data-theme="light"] .testimonials-strip {
+    border: 1px solid rgba(125, 211, 252, 0.45);
+    background:
+      radial-gradient(circle at 12% 20%, rgba(14, 165, 233, 0.18), transparent 34%),
+      radial-gradient(circle at 86% 16%, rgba(99, 102, 241, 0.14), transparent 30%),
+      radial-gradient(circle at 62% 84%, rgba(45, 212, 191, 0.14), transparent 38%),
+      linear-gradient(150deg, rgba(255, 255, 255, 0.98) 0%, rgba(242, 249, 255, 0.97) 46%, rgba(232, 244, 255, 0.95) 100%);
+    box-shadow:
+      0 28px 58px -40px rgba(14, 116, 144, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 0 0 1px rgba(186, 230, 253, 0.52);
+  }
+
+  html[data-theme="light"] .testimonials-kicker {
+    color: #0c4a6e !important;
+  }
+
+  html[data-theme="light"] .testimonials-title {
+    color: #0f172a !important;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+  }
+
+  html[data-theme="light"] .testimonials-meta {
+    color: #475569 !important;
+  }
+
+  html[data-theme="light"] .testimonials-card {
+    border-color: rgba(125, 211, 252, 0.52) !important;
+    background:
+      linear-gradient(165deg, rgba(255, 255, 255, 0.98), rgba(243, 250, 255, 0.96) 56%, rgba(234, 244, 255, 0.95)) !important;
+    box-shadow:
+      0 14px 32px -24px rgba(14, 116, 144, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  html[data-theme="light"] .testimonials-quote {
+    color: #1e293b !important;
+  }
+
+  html[data-theme="light"] .testimonials-quote-mark {
+    color: #6366f1 !important;
+  }
+
+  html[data-theme="light"] .testimonials-avatar {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(99, 102, 241, 0.22));
+    color: #0f172a !important;
+    border-color: rgba(14, 165, 233, 0.42) !important;
+    box-shadow: 0 6px 16px -10px rgba(79, 70, 229, 0.6);
+  }
+
+  html[data-theme="light"] .testimonials-name {
+    color: #0f172a !important;
+  }
+
+  html[data-theme="light"] .testimonials-role {
+    color: #475569 !important;
+  }
+
+  html[data-theme="light"] .testimonials-glow {
+    mix-blend-mode: normal;
+    opacity: 0.72 !important;
+  }
+
+  html[data-theme="light"] .explore-jobs-cta {
+    border-color: rgba(14, 165, 233, 0.7) !important;
+    color: #ffffff !important;
+    background-image: linear-gradient(120deg, rgba(2, 132, 199, 0.96) 0%, rgba(67, 56, 202, 0.95) 52%, rgba(14, 165, 233, 0.96) 100%) !important;
+    box-shadow:
+      0 12px 28px -14px rgba(14, 116, 144, 0.75),
+      0 0 0 1px rgba(125, 211, 252, 0.45),
+      0 0 22px -10px rgba(56, 189, 248, 0.8) !important;
+  }
+
+  html[data-theme="light"] .nav-active-pill {
+    border-color: rgba(14, 165, 233, 0.7) !important;
+    color: #ffffff !important;
+    background-image: linear-gradient(120deg, rgba(2, 132, 199, 0.96) 0%, rgba(67, 56, 202, 0.95) 52%, rgba(14, 165, 233, 0.96) 100%) !important;
+    box-shadow:
+      0 12px 28px -14px rgba(14, 116, 144, 0.75),
+      0 0 0 1px rgba(125, 211, 252, 0.45),
+      0 0 22px -10px rgba(56, 189, 248, 0.8) !important;
+  }
+
+  html[data-theme="light"] .explore-jobs-cta:hover {
+    border-color: rgba(2, 132, 199, 0.9) !important;
+    background-image: linear-gradient(120deg, rgba(3, 105, 161, 1) 0%, rgba(67, 56, 202, 0.98) 52%, rgba(2, 132, 199, 1) 100%) !important;
+    box-shadow:
+      0 16px 32px -14px rgba(14, 116, 144, 0.82),
+      0 0 0 1px rgba(56, 189, 248, 0.5),
+      0 0 26px -10px rgba(56, 189, 248, 0.92) !important;
+  }
+
+  html[data-theme="light"] .nav-active-pill:hover {
+    border-color: rgba(2, 132, 199, 0.9) !important;
+    background-image: linear-gradient(120deg, rgba(3, 105, 161, 1) 0%, rgba(67, 56, 202, 0.98) 52%, rgba(2, 132, 199, 1) 100%) !important;
+    box-shadow:
+      0 16px 32px -14px rgba(14, 116, 144, 0.82),
+      0 0 0 1px rgba(56, 189, 248, 0.5),
+      0 0 26px -10px rgba(56, 189, 248, 0.92) !important;
+  }
+
+  html[data-theme="light"] .jobs-page {
+    color: #0f172a;
+  }
+
+  html[data-theme="light"] .jobs-hero-panel {
+    border-color: rgba(125, 211, 252, 0.4) !important;
+    background:
+      radial-gradient(circle at 14% 16%, rgba(56, 189, 248, 0.2), transparent 34%),
+      linear-gradient(150deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.86) 54%, rgba(15, 23, 42, 0.9) 100%) !important;
+    box-shadow: 0 20px 40px -20px rgba(2, 6, 23, 0.72), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(186, 230, 253, 0.18);
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-hero-panel h1,
+  html[data-theme="light"] .jobs-page .jobs-hero-panel p {
+    color: #f8fafc !important;
+    text-shadow: 0 1px 2px rgba(2, 6, 23, 0.45);
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-hero-panel .section-label {
+    color: #bae6fd !important;
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-pill {
+    border-color: rgba(148, 163, 184, 0.5) !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #e2e8f0 !important;
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-tab-nav {
+    border-color: rgba(148, 163, 184, 0.35) !important;
+    background: rgba(255, 255, 255, 0.84) !important;
+    color: #1e293b !important;
+    box-shadow: 0 14px 30px -22px rgba(14, 116, 144, 0.4);
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-tab-button[data-active="true"] {
+    color: #ffffff !important;
+    border: 1px solid rgba(14, 165, 233, 0.7);
+    background-image: linear-gradient(120deg, rgba(2, 132, 199, 0.96) 0%, rgba(67, 56, 202, 0.95) 52%, rgba(14, 165, 233, 0.96));
+    box-shadow: 0 10px 24px -14px rgba(14, 116, 144, 0.78), 0 0 0 1px rgba(125, 211, 252, 0.45), 0 0 20px -10px rgba(56, 189, 248, 0.86);
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-tab-button[data-active="false"] {
+    color: #334155 !important;
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-tab-button[data-active="false"]:hover {
+    background: rgba(226, 232, 240, 0.75) !important;
+    color: #0f172a !important;
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-card,
+  html[data-theme="light"] .jobs-page .jobs-empty,
+  html[data-theme="light"] .jobs-page .jobs-surface,
+  html[data-theme="light"] .jobs-page .jobs-form-shell {
+    border-color: rgba(148, 163, 184, 0.35) !important;
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.95) 0%, rgba(246, 251, 255, 0.92) 50%, rgba(236, 244, 255, 0.9) 100%) !important;
+    box-shadow: 0 16px 34px -24px rgba(14, 116, 144, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-card h2,
+  html[data-theme="light"] .jobs-page .jobs-card .jobs-card-meta,
+  html[data-theme="light"] .jobs-page .jobs-card p,
+  html[data-theme="light"] .jobs-page .jobs-card span,
+  html[data-theme="light"] .jobs-page .jobs-form-shell,
+  html[data-theme="light"] .jobs-page .jobs-form-shell h1,
+  html[data-theme="light"] .jobs-page .jobs-form-shell h3,
+  html[data-theme="light"] .jobs-page .jobs-form-shell p,
+  html[data-theme="light"] .jobs-page .jobs-form-shell label,
+  html[data-theme="light"] .jobs-page .jobs-empty {
+    color: #1e293b !important;
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-card-meta {
+    color: #475569 !important;
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-card-cta,
+  html[data-theme="light"] .jobs-page .jobs-form-shell button:not([type="submit"]) {
+    border-color: rgba(125, 211, 252, 0.58) !important;
+    background: rgba(241, 245, 249, 0.88) !important;
+    color: #0f172a !important;
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-card-cta:hover,
+  html[data-theme="light"] .jobs-page .jobs-form-shell button:not([type="submit"]):hover {
+    border-color: rgba(56, 189, 248, 0.75) !important;
+    background: rgba(224, 242, 254, 0.9) !important;
+    color: #0c4a6e !important;
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-form-shell [type="submit"] {
+    color: #ffffff !important;
+    border: 1px solid rgba(14, 165, 233, 0.7);
+    background-image: linear-gradient(120deg, rgba(2, 132, 199, 0.96) 0%, rgba(67, 56, 202, 0.95) 52%, rgba(14, 165, 233, 0.96)) !important;
+    box-shadow: 0 10px 24px -14px rgba(14, 116, 144, 0.78), 0 0 0 1px rgba(125, 211, 252, 0.45), 0 0 20px -10px rgba(56, 189, 248, 0.86);
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-surface table,
+  html[data-theme="light"] .jobs-page .jobs-surface tbody,
+  html[data-theme="light"] .jobs-page .jobs-surface td {
+    color: #1e293b !important;
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-surface thead {
+    background: rgba(226, 232, 240, 0.78) !important;
+    color: #475569 !important;
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-surface tr:hover {
+    background: rgba(186, 230, 253, 0.28) !important;
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-pagination-link {
+    border-color: rgba(148, 163, 184, 0.4) !important;
+    background: rgba(255, 255, 255, 0.85) !important;
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-pagination-link[aria-disabled="false"] {
+    color: #0f172a !important;
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-pagination-link[aria-disabled="false"]:hover {
+    background: rgba(224, 242, 254, 0.88) !important;
+    border-color: rgba(56, 189, 248, 0.75) !important;
+    color: #0c4a6e !important;
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-modal-shell,
+  html[data-theme="light"] .jobs-page .jobs-service-picker-shell {
+    border-color: rgba(125, 211, 252, 0.48) !important;
+    background: linear-gradient(150deg, rgba(255, 255, 255, 0.98) 0%, rgba(243, 250, 255, 0.96) 54%, rgba(233, 244, 255, 0.94) 100%) !important;
+    color: #0f172a !important;
+    box-shadow: 0 26px 54px -28px rgba(14, 116, 144, 0.58), 0 0 0 1px rgba(186, 230, 253, 0.55);
+  }
+
+  html[data-theme="light"] .jobs-page .jobs-modal-shell h2,
+  html[data-theme="light"] .jobs-page .jobs-service-picker-shell h2,
+  html[data-theme="light"] .jobs-page .jobs-modal-shell p,
+  html[data-theme="light"] .jobs-page .jobs-service-picker-shell p,
+  html[data-theme="light"] .jobs-page .jobs-service-picker-shell button,
+  html[data-theme="light"] .jobs-page .jobs-service-picker-shell li,
+  html[data-theme="light"] .jobs-page .jobs-service-picker-shell .text-slate-200,
+  html[data-theme="light"] .jobs-page .jobs-service-picker-shell .text-slate-400 {
+    color: #1e293b !important;
   }
 
   /* Fade-in animation for entering sections (prefers-reduced-motion safe) */

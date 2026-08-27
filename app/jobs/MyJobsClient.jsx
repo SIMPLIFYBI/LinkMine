@@ -483,7 +483,7 @@ export default function MyJobsClient() {
 
         {servicePickerOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6">
-            <div className="relative w-full max-w-5xl overflow-hidden rounded-2xl border border-white/10 bg-slate-900/95 ring-1 ring-white/10 shadow-2xl">
+            <div className="jobs-service-picker-shell relative w-full max-w-5xl overflow-hidden rounded-2xl border border-white/10 bg-slate-900/95 ring-1 ring-white/10 shadow-2xl">
               <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
                 <h2 className="text-lg font-semibold">
                   Select a service

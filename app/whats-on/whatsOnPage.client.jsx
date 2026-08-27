@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
+import { useTheme } from "@/app/components/ThemeProvider";
 import WhatsOnDrawer from "./whatsOnDrawer.client.jsx";
 import SubmitEventModal from "./SubmitEventModal.client.jsx";
 import styles from "./whatsOn.module.css";
@@ -203,6 +204,7 @@ function MobileMonthCalendar({
   countsByDayKey, // Map(dayKey -> { eventCount, trainingCount, total })
   selectedDayKey,
   setSelectedDayKey,
+  isLight = false,
 }) {
   const monthTitle = fmtMonthTitle(month);
 
@@ -255,6 +257,7 @@ function MobileMonthCalendar({
             const shownDots =
               (counts.eventCount > 0 ? 1 : 0) + (counts.trainingCount > 0 ? 1 : 0);
             const overflow = Math.max(0, counts.total - shownDots);
+            const hasItems = counts.total > 0;
 
             const selected = selectedDayKey === localKey;
 
@@ -266,8 +269,18 @@ function MobileMonthCalendar({
                 className={[
                   "mx-auto flex h-10 w-10 flex-col items-center justify-center rounded-xl",
                   "transition-colors",
-                  selected ? "bg-white/12 ring-1 ring-white/15" : "hover:bg-white/8",
-                  inMonth ? "text-white" : "text-slate-500",
+                  selected
+                    ? (isLight
+                        ? "bg-sky-600 ring-2 ring-sky-400 text-white shadow-[0_8px_18px_-10px_rgba(2,132,199,0.9)]"
+                        : "bg-white/12 ring-1 ring-white/15")
+                    : hasItems
+                      ? (isLight
+                          ? "bg-sky-100/95 ring-1 ring-sky-300 hover:bg-sky-200/90"
+                          : "bg-white/10 ring-1 ring-sky-300/35 hover:bg-white/14")
+                      : (isLight ? "hover:bg-slate-200/80" : "hover:bg-white/8"),
+                  inMonth
+                    ? (isLight ? "text-[rgb(15,23,42)]" : "text-white")
+                    : (isLight ? "text-[rgb(100,116,139)]" : "text-slate-500"),
                 ].join(" ")}
                 aria-pressed={selected}
                 aria-label={d.toLocaleDateString(DATE_LABEL_LOCALE, {
@@ -282,7 +295,7 @@ function MobileMonthCalendar({
                   {counts.eventCount > 0 ? <Dot className="bg-orange-400" /> : null}
                   {counts.trainingCount > 0 ? <Dot className="bg-sky-400" /> : null}
                   {overflow > 0 ? (
-                    <span className="text-[10px] font-semibold text-slate-300">
+                    <span className={isLight ? "text-[10px] font-semibold text-[rgb(15,23,42)]" : "text-[10px] font-semibold text-slate-300"}>
                       +{overflow}
                     </span>
                   ) : null}
@@ -366,6 +379,8 @@ function FiltersPanel({
 
 export default function WhatsOnPage() {
   const router = useRouter();
+  const { theme } = useTheme();
+  const isLight = theme === "light";
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -638,7 +653,7 @@ export default function WhatsOnPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-white">
+    <div className={isLight ? "min-h-screen bg-gradient-to-b from-slate-50 via-sky-50/40 to-slate-100 text-[rgb(15,23,42)]" : "min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-white"}>
       {/* Top bar */}
       <div className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/70 backdrop-blur">
         <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3">
@@ -726,6 +741,7 @@ export default function WhatsOnPage() {
           countsByDayKey={countsByDayKey}
           selectedDayKey={selectedDayKey}
           setSelectedDayKey={setSelectedDayKey}
+          isLight={isLight}
         />
 
         {/* Agenda list */}
@@ -796,7 +812,15 @@ export default function WhatsOnPage() {
                             </div>
                           </div>
 
-                          <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wider text-slate-200">
+                          <span
+                            className={it.type === "training"
+                              ? (isLight
+                                  ? "shrink-0 inline-flex rounded-full border border-sky-400/40 bg-sky-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[rgb(12,74,110)]"
+                                  : "shrink-0 inline-flex rounded-full border border-sky-300/35 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-sky-100")
+                              : (isLight
+                                  ? "shrink-0 inline-flex rounded-full border border-emerald-400/40 bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[rgb(6,95,70)]"
+                                  : "shrink-0 inline-flex rounded-full border border-emerald-300/35 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-100")}
+                          >
                             {it.type === "training" ? "Training" : "Event"}
                           </span>
                         </button>
@@ -901,7 +925,7 @@ export default function WhatsOnPage() {
                 ‹
               </button>
 
-              <div className="text-sm font-semibold text-white">{fmtMonthTitle(month)}</div>
+              <div className={isLight ? "text-sm font-semibold text-[rgb(15,23,42)]" : "text-sm font-semibold text-white"}>{fmtMonthTitle(month)}</div>
 
               <button
                 type="button"
@@ -914,7 +938,7 @@ export default function WhatsOnPage() {
             </div>
 
             {/* Legend */}
-            <div className="flex items-center gap-3 text-xs text-slate-200">
+            <div className={isLight ? "flex items-center gap-3 text-xs text-slate-700" : "flex items-center gap-3 text-xs text-slate-200"}>
               <div className="flex items-center gap-2">
                 <span className="inline-block h-2.5 w-2.5 rounded-full bg-sky-400" />
                 <span>Training</span>
@@ -924,11 +948,11 @@ export default function WhatsOnPage() {
                 <span>Event</span>
               </div>
 
-              <div className="hidden sm:block text-xs text-slate-300/80">Month view</div>
+              <div className={isLight ? "hidden text-xs text-slate-500 sm:block" : "hidden sm:block text-xs text-slate-300/80"}>Month view</div>
             </div>
           </div>
 
-          <div className="grid grid-cols-7 border-b border-white/10 bg-white/[0.04] text-[11px] font-semibold text-slate-200/90">
+          <div className={isLight ? "grid grid-cols-7 border-b border-slate-300/60 bg-slate-100/80 text-[11px] font-semibold text-slate-700" : "grid grid-cols-7 border-b border-white/10 bg-white/[0.04] text-[11px] font-semibold text-slate-200/90"}>
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
               <div key={d} className="px-3 py-2">
                 {d}
@@ -951,7 +975,13 @@ export default function WhatsOnPage() {
 
                     "min-h-[128px] border-b border-r border-white/10 p-2 sm:min-h-[148px]",
                     "transition-colors",
-                    inMonth ? "bg-white/[0.03] hover:bg-white/[0.05]" : "bg-slate-950/35",
+                    dayItems.length > 0
+                      ? (isLight
+                          ? "bg-sky-50/90 ring-1 ring-inset ring-sky-200/80 hover:bg-sky-100/80"
+                          : "bg-white/[0.05] hover:bg-white/[0.08]")
+                      : inMonth
+                        ? (isLight ? "bg-white/80 hover:bg-slate-100/80" : "bg-white/[0.03] hover:bg-white/[0.05]")
+                        : (isLight ? "bg-slate-100/90" : "bg-slate-950/35"),
                   ].join(" ")}
                 >
                   <div className="mb-2 flex items-center justify-between">
@@ -959,14 +989,20 @@ export default function WhatsOnPage() {
                       className={[
 
                         "inline-flex h-6 w-6 items-center justify-center rounded-lg text-xs font-bold",
-                        inMonth ? "bg-white/10 text-white ring-1 ring-white/10" : "bg-white/5 text-slate-400",
+                        dayItems.length > 0
+                          ? (isLight
+                              ? "bg-sky-600 text-white ring-1 ring-sky-500/70"
+                              : "bg-sky-500/20 text-sky-100 ring-1 ring-sky-400/30")
+                          : inMonth
+                            ? (isLight ? "bg-slate-200/80 text-[rgb(15,23,42)] ring-1 ring-slate-300/70" : "bg-white/10 text-white ring-1 ring-white/10")
+                            : (isLight ? "bg-slate-200/60 text-slate-500" : "bg-white/5 text-slate-400"),
                       ].join(" ")}
                     >
                       {d.getDate()}
                     </div>
 
                     {dayItems.length ? (
-                      <div className="text-[11px] font-semibold text-slate-200/70">{dayItems.length}</div>
+                      <div className={isLight ? "text-[11px] font-semibold text-[rgb(12,74,110)]" : "text-[11px] font-semibold text-slate-200/70"}>{dayItems.length}</div>
                     ) : null}
                   </div>
 
@@ -980,10 +1016,14 @@ export default function WhatsOnPage() {
 
                           "group flex w-full items-center gap-2 rounded-lg border px-2 py-1.5 text-left text-xs",
                           "backdrop-blur transition",
-                          "hover:bg-white/10",
+                          isLight ? "hover:bg-slate-100/95" : "hover:bg-white/10",
                           it.type === "training"
-                            ? "border-sky-400/20 bg-sky-400/10 text-slate-50"
-                            : "border-emerald-400/20 bg-emerald-400/10 text-slate-50",
+                            ? (isLight
+                                ? "border-sky-300/50 bg-sky-100/95 text-[rgb(15,23,42)]"
+                                : "border-sky-400/20 bg-sky-400/10 text-slate-50")
+                            : (isLight
+                                ? "border-emerald-300/50 bg-emerald-100/95 text-[rgb(15,23,42)]"
+                                : "border-emerald-400/20 bg-emerald-400/10 text-slate-50"),
                         ].join(" ")}
                         title={it.title}
                       >
@@ -1002,7 +1042,9 @@ export default function WhatsOnPage() {
                       <button
                         type="button"
                         onClick={() => scrollSidebarToDay(dayKey)}
-                        className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-2 py-1.5 text-left text-xs font-semibold text-slate-100 hover:bg-white/[0.08]"
+                        className={isLight
+                          ? "w-full rounded-lg border border-slate-300/70 bg-white/90 px-2 py-1.5 text-left text-xs font-semibold text-[rgb(30,41,59)] hover:bg-slate-100"
+                          : "w-full rounded-lg border border-white/10 bg-white/[0.04] px-2 py-1.5 text-left text-xs font-semibold text-slate-100 hover:bg-white/[0.08]"}
                       >
                         +{extra} more
                       </button>
