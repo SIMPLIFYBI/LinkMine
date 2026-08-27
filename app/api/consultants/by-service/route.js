@@ -24,9 +24,10 @@ export async function GET(req) {
 
   const { data: consultants, error: cErr } = await sb
     .from("consultants")
-    .select("id, display_name, company, headline, location, contact_email, slug, visibility")
+    .select("id, display_name, company, headline, location, contact_email, slug, visibility, profile_type")
     .in("id", ids)
     .eq("visibility", "public")
+    .in("profile_type", ["consultant", "both"])
     .order("display_name", { ascending: true });
 
   if (cErr) return NextResponse.json({ ok: false, error: cErr.message }, { status: 500 });

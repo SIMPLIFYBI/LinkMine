@@ -39,6 +39,7 @@ export default async function EditConsultantPage({ params }) {
       place_id,
       status,
       provider_kind,
+      profile_type,
       abn,
       acn,
       abn_verified,
@@ -124,15 +125,21 @@ export default async function EditConsultantPage({ params }) {
         }}
       />
 
-      <section className="mt-10 space-y-3">
-        <h2 className="text-lg font-semibold text-slate-100">Services</h2>
-        <p className="text-sm text-slate-400">
-          Add or remove services offered by this consultancy.
-        </p>
-        <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4">
-          <ConsultantServicesManager consultantId={consultant.id} canEdit={true} />
-        </div>
-      </section>
+      {["consultant", "both"].includes(String(consultant.profile_type || "consultant")) ? (
+        <section className="mt-10 space-y-3">
+          <h2 className="text-lg font-semibold text-slate-100">Services</h2>
+          <p className="text-sm text-slate-400">
+            Add or remove services offered by this consultancy.
+          </p>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4">
+            <ConsultantServicesManager consultantId={consultant.id} canEdit={true} />
+          </div>
+        </section>
+      ) : (
+        <section className="mt-10 rounded-2xl border border-sky-300/20 bg-sky-500/10 p-4 text-sm text-sky-100">
+          This profile is currently in creator mode, so services are hidden.
+        </section>
+      )}
     </main>
   );
 }

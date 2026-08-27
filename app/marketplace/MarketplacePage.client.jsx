@@ -1915,6 +1915,14 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
     setAuthPromptResourceHref(href);
   }
 
+  function handleBecomeCreatorClick(event) {
+    if (signedIn) return;
+    event.preventDefault();
+    resetMessages();
+    setError("You need to be logged in to become a creator. Create your account to continue.");
+    router.push(`/signup?redirect=${encodeURIComponent("/consultants/new?profileType=creator")}`);
+  }
+
   function closeAuthPrompt() {
     setAuthPromptVisible(false);
     if (authPromptCloseTimeoutRef.current != null) {
@@ -2068,7 +2076,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
     resetMessages();
 
     if (!canCreateResources) {
-      setError(createResourceRequirementMessage || "You need an approved consultant or service provider profile before you can publish vault resources.");
+      setError(createResourceRequirementMessage || "You need an approved consultant or creator profile before you can publish vault resources.");
       return;
     }
 
@@ -2576,7 +2584,18 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                     </div>
                   </div>
 
-                  <div className="mb-4 mt-4 flex justify-center">
+                  <div className="mb-4 mt-4 flex flex-wrap items-center justify-center gap-3">
+                    <Link
+                      href="/consultants/new?profileType=creator"
+                      onClick={handleBecomeCreatorClick}
+                      className="group inline-flex items-center gap-2 rounded-full border border-emerald-200/35 bg-[linear-gradient(135deg,rgba(16,185,129,0.26),rgba(5,150,105,0.35))] px-4 py-2 text-white shadow-[0_14px_34px_-18px_rgba(16,185,129,0.8)] ring-1 ring-white/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-emerald-100/45 hover:shadow-[0_20px_44px_-20px_rgba(16,185,129,0.95)]"
+                    >
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/95">Become a Creator</span>
+                      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14" />
+                        <path d="m13 6 6 6-6 6" />
+                      </svg>
+                    </Link>
                     <button
                       type="button"
                       onClick={collapseMarketplaceCover}
@@ -2940,13 +2959,16 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                 </form>
               ) : (
                 <div className="rounded-[28px] border border-amber-400/20 bg-[linear-gradient(180deg,rgba(245,158,11,0.12),rgba(15,23,42,0.6))] p-6 text-sm text-slate-300 ring-1 ring-amber-300/10">
-                  <div className="text-lg font-semibold text-white">Vault publishing is currently limited to approved service providers</div>
+                  <div className="text-lg font-semibold text-white">Vault publishing is currently limited to approved consultants and creators</div>
                   <p className="mt-3 max-w-2xl leading-7 text-slate-300">
-                    {createResourceRequirementMessage || "You need an approved consultant or service provider profile before you can publish vault resources."}
+                    {createResourceRequirementMessage || "You need an approved consultant or creator profile before you can publish vault resources."}
                   </p>
-                  <div className="mt-5">
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <Link href="/consultants/new?profileType=creator" className="inline-flex rounded-full border border-sky-300/30 bg-sky-500/20 px-4 py-2 text-sm font-semibold text-sky-100 transition hover:bg-sky-500/30">
+                      Add a Digital Product
+                    </Link>
                     <Link href="/account?tab=consultants" className="inline-flex rounded-full border border-white/10 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
-                      Open consultant settings
+                      Open profile settings
                     </Link>
                   </div>
                 </div>

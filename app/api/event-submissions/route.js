@@ -29,13 +29,14 @@ export async function POST(req) {
       return NextResponse.json({ error: "Login required." }, { status: 401 });
     }
 
-    // ✅ Step 1: require an approved consultant claimed by this user
+    // Require an approved consultant/creator profile claimed by this user.
     // Avoid ordering by a column that may not exist; pick any approved claimed consultant for now.
     const { data: consultant, error: cErr } = await sb
       .from("consultants")
       .select("id")
       .eq("claimed_by", userId)
       .eq("status", "approved")
+      .in("profile_type", ["consultant", "creator", "both"])
       .limit(1)
       .maybeSingle();
 
@@ -45,7 +46,7 @@ export async function POST(req) {
 
     if (!consultant?.id) {
       return NextResponse.json(
-        { error: "You need an approved consultancy profile to submit events." },
+        { error: "You need an approved consultant or creator profile to submit events." },
         { status: 403 }
       );
     }

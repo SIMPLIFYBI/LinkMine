@@ -12,11 +12,13 @@ export default async function ConsultantPortfolioPage({ params }) {
   // Fetch more fields so TopSection matches the Profile page
   const { data: consultant } = await sb
     .from("consultants")
-    .select("id, display_name, metadata, view_count, headline, abn_verified, linkedin_url, facebook_url, twitter_url, instagram_url")
+    .select("id, display_name, metadata, view_count, headline, abn_verified, linkedin_url, facebook_url, twitter_url, instagram_url, visibility, status, profile_type")
     .eq("id", id)
     .maybeSingle();
 
-  if (!consultant || consultant.visibility === "private") return notFound();
+  if (!consultant) return notFound();
+  if (consultant.visibility !== "public" || consultant.status !== "approved") return notFound();
+  if (!["consultant", "both"].includes(String(consultant.profile_type || "consultant"))) return notFound();
 
   const { data: portfolio } = await sb
     .from("consultant_portfolio")

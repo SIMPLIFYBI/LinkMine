@@ -48,6 +48,7 @@ export async function POST(req) {
     contact_email: payload.contact_email?.trim() || null,
     visibility: payload.visibility || "public",
     status: "pending",
+    profile_type: "consultant",
   };
 
   const { data, error } = await sb

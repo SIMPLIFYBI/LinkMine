@@ -9,6 +9,9 @@ export default function ConsultantClaimButton({
   isClaimed,
   canEdit,
   contactEmail,
+  title = "Claim this profile",
+  description = "Secure ownership and unlock editing by sending a claim link to",
+  buttonLabel = "Start claim process",
 }) {
   const [status, setStatus] = useState("idle");
   const [showModal, setShowModal] = useState(false);
@@ -50,9 +53,9 @@ export default function ConsultantClaimButton({
   // Card with button to open modal
   return (
     <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-slate-200">
-      <div className="font-semibold text-slate-100">Claim this profile</div>
+      <div className="font-semibold text-slate-100">{title}</div>
       <p className="mt-1 text-slate-300">
-        Secure ownership and unlock editing by sending a claim link to{" "}
+        {description}{" "}
         <span className="text-sky-300">{contactEmail || "the stored email"}</span>.
       </p>
       {!contactEmail && (
@@ -66,7 +69,7 @@ export default function ConsultantClaimButton({
         disabled={status === "sending" || !contactEmail || !hasSession}
         className="mt-3 inline-flex items-center rounded-full border border-sky-400/50 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-100 transition hover:border-sky-300 hover:bg-sky-500/20 disabled:opacity-60"
       >
-        {status === "sending" ? "Preparing…" : "Start claim process"}
+        {status === "sending" ? "Preparing..." : buttonLabel}
       </button>
 
       {showModal && (

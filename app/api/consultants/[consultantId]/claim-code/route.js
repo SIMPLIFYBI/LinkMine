@@ -45,7 +45,7 @@ export async function POST(req, ctx) {
 
   const { data: c, error } = await sb
     .from("consultants")
-    .select("id, claim_token, claimed_by, claimed_at")
+    .select("id, claim_token, claimed_by, claimed_at, contact_email")
     .eq("id", consultantId)
     .maybeSingle();
 
@@ -61,5 +61,22 @@ export async function POST(req, ctx) {
     .eq("id", consultantId);
 
   if (upd) return NextResponse.json({ error: upd.message || "Claim failed" }, { status: 400 });
+
+  const claimEmail = String(c.contact_email || "").trim().toLowerCase();
+  if (claimEmail) {
+    // Claim all resources that were pre-seeded against this official contact email.
+    await sb
+      .from("resources")
+      .update({ owner_user_id: user.id })
+      .eq("claim_contact_email", claimEmail);
+
+    // Preserve/attach creator badge where the resource has no explicit linked profile yet.
+    await sb
+      .from("resources")
+      .update({ consultant_id: consultantId })
+      .eq("claim_contact_email", claimEmail)
+      .is("consultant_id", null);
+  }
+
   return NextResponse.json({ ok: true });
 }

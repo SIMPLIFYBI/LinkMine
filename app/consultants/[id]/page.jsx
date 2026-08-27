@@ -66,6 +66,7 @@ async function getConsultant(id) {
     .maybeSingle();
 
   if (!data || data.visibility !== "public") return null;
+  if (!["consultant", "both"].includes(String(data.profile_type || "consultant"))) return null;
 
   const { data: svc } = await sb
     .from("consultant_services")

@@ -7,12 +7,29 @@ import { COUNTRY_OPTIONS, GLOBAL_REGION_OPTIONS } from "@/lib/geoOptions";
 
 const MAX_HEADLINE = 120;
 const MAX_SERVICES = 15; // safety cap
+const PROFILE_TYPES = [
+  {
+    value: "consultant",
+    label: "Consultant / Service Provider",
+    description: "Offer field or professional services and appear in consultant search.",
+  },
+  {
+    value: "creator",
+    label: "Digital Creator",
+    description: "Publish and manage digital resources in Vault.",
+  },
+  {
+    value: "both",
+    label: "Both",
+    description: "Run consulting services and publish digital resources.",
+  },
+];
 
 function marketLabel(value) {
   return value === "oil_gas" ? "Oil & Gas" : "Mining";
 }
 
-export default function ProfileSetupBasic({ services = [] }) {
+export default function ProfileSetupBasic({ services = [], initialProfileType = "" }) {
   const router = useRouter();
 
   const [displayName, setDisplayName] = useState("");
@@ -21,6 +38,7 @@ export default function ProfileSetupBasic({ services = [] }) {
   const [countryCode, setCountryCode] = useState("");
   const [globalRegion, setGlobalRegion] = useState("");
   const [contactEmail, setContactEmail] = useState("");
+  const [profileType, setProfileType] = useState(initialProfileType || "");
 
   // Services state
   const [selected, setSelected] = useState(new Set()); // service ids
@@ -29,6 +47,7 @@ export default function ProfileSetupBasic({ services = [] }) {
 
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
+  const requiresServices = profileType === "consultant" || profileType === "both";
 
   const groupedByMarket = useMemo(() => {
     const byMarket = new Map();
@@ -80,6 +99,7 @@ export default function ProfileSetupBasic({ services = [] }) {
     const loc = location.trim();
     const email = contactEmail.trim();
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!profileType) return setMsg({ ok: false, text: "Choose a profile type to continue." });
     if (!name) return setMsg({ ok: false, text: "Display name is required." });
     if (!head) return setMsg({ ok: false, text: "Headline is required." });
     if (head.length > MAX_HEADLINE) return setMsg({ ok: false, text: `Headline must be ${MAX_HEADLINE} characters or fewer.` });
@@ -88,7 +108,7 @@ export default function ProfileSetupBasic({ services = [] }) {
     if (!globalRegion) return setMsg({ ok: false, text: "Global region is required." });
     if (!email) return setMsg({ ok: false, text: "Contact email is required." });
     if (!emailOk) return setMsg({ ok: false, text: "Enter a valid email address." });
-    if (selected.size < 1) return setMsg({ ok: false, text: "Select at least one service you offer." });
+    if (requiresServices && selected.size < 1) return setMsg({ ok: false, text: "Select at least one service you offer." });
 
     setSaving(true);
     setMsg(null);
@@ -105,6 +125,7 @@ export default function ProfileSetupBasic({ services = [] }) {
         method: "POST",
         headers: { "content-type": "application/json", ...authHeader },
         body: JSON.stringify({
+          profile_type: profileType,
           display_name: name,
           headline: head,
           location: loc,
@@ -131,6 +152,33 @@ export default function ProfileSetupBasic({ services = [] }) {
   return (
     <>
       <form onSubmit={onSubmit} className="space-y-6">
+        <div className="space-y-2">
+          <p className="text-sm font-semibold text-slate-200">
+            Profile type <span className="text-rose-300">*</span>
+          </p>
+          <div className="grid gap-2 md:grid-cols-3">
+            {PROFILE_TYPES.map((option) => {
+              const active = option.value === profileType;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setProfileType(option.value)}
+                  className={[
+                    "rounded-2xl border px-3 py-3 text-left transition",
+                    active
+                      ? "border-sky-400/70 bg-sky-500/10 text-white"
+                      : "border-white/10 bg-white/[0.04] text-slate-200 hover:border-white/20 hover:bg-white/[0.08]",
+                  ].join(" ")}
+                >
+                  <div className="text-sm font-semibold">{option.label}</div>
+                  <div className="mt-1 text-xs text-slate-300">{option.description}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="grid gap-4 md:grid-cols-2">
           <Field
             label="Display name"
@@ -180,36 +228,41 @@ export default function ProfileSetupBasic({ services = [] }) {
           />
         </div>
 
-        {/* Services launcher */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-slate-200">
-              Services you offer <span className="text-rose-300">*</span>
+        {requiresServices ? (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-slate-200">
+                Services you offer <span className="text-rose-300">*</span>
+              </p>
+              <span className="text-xs text-slate-400">
+                {selectedCount > 0 ? `${selectedCount} selected` : "None selected"}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setServicesOpen(true)}
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/15"
+              aria-haspopup="dialog"
+              aria-expanded={servicesOpen}
+            >
+              {selectedCount > 0 ? "Edit services" : "Add services"}
+            </button>
+            <p className="text-xs text-slate-400">
+              Pick at least one. You can add mining services, Oil & Gas services, or both.
             </p>
-            <span className="text-xs text-slate-400">
-              {selectedCount > 0 ? `${selectedCount} selected` : "None selected"}
-            </span>
+            {selectedCount > 0 ? (
+              <p className="text-xs text-slate-500">
+                {selectedByMarket.mining > 0 ? `${selectedByMarket.mining} Mining` : null}
+                {selectedByMarket.mining > 0 && selectedByMarket.oil_gas > 0 ? " • " : null}
+                {selectedByMarket.oil_gas > 0 ? `${selectedByMarket.oil_gas} Oil & Gas` : null}
+              </p>
+            ) : null}
           </div>
-          <button
-            type="button"
-            onClick={() => setServicesOpen(true)}
-            className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/15"
-            aria-haspopup="dialog"
-            aria-expanded={servicesOpen}
-          >
-            {selectedCount > 0 ? "Edit services" : "Add services"}
-          </button>
-          <p className="text-xs text-slate-400">
-            Pick at least one. You can add mining services, Oil & Gas services, or both.
-          </p>
-          {selectedCount > 0 ? (
-            <p className="text-xs text-slate-500">
-              {selectedByMarket.mining > 0 ? `${selectedByMarket.mining} Mining` : null}
-              {selectedByMarket.mining > 0 && selectedByMarket.oil_gas > 0 ? " • " : null}
-              {selectedByMarket.oil_gas > 0 ? `${selectedByMarket.oil_gas} Oil & Gas` : null}
-            </p>
-          ) : null}
-        </div>
+        ) : (
+          <div className="rounded-2xl border border-sky-300/20 bg-sky-500/10 px-4 py-3 text-xs text-sky-100">
+            Services are optional for creator profiles and can be added later if you switch to consultant or both.
+          </div>
+        )}
 
         {msg && (
           <div
@@ -235,7 +288,7 @@ export default function ProfileSetupBasic({ services = [] }) {
       </form>
 
       {/* Services picker overlay */}
-      {servicesOpen && (
+      {requiresServices && servicesOpen && (
         <ServicesPicker
           activeMarket={activeMarket}
           groupedByMarket={groupedByMarket}
@@ -260,7 +313,7 @@ function Field({ label, value, onChange, type = "text", required = false, placeh
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.07] px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:border-sky-400/60 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
+        className="mt-1 w-full rounded-xl border border-slate-500/40 bg-slate-900/80 px-3 py-2.5 text-sm text-white placeholder:text-slate-300/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-400/35"
       />
       {hint ? <p className="mt-1 text-xs text-slate-400">{hint}</p> : null}
     </label>
@@ -271,19 +324,33 @@ function SelectField({ label, value, onChange, required = false, options, placeh
   return (
     <label className="block text-sm text-slate-300">
       {label} {required ? "*" : ""}
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        required={required}
-        className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.07] px-3 py-2 text-sm text-slate-100 focus:border-sky-400/60 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
-      >
-        <option value="">{placeholder}</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      <div className="relative mt-1">
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          required={required}
+          className="w-full appearance-none rounded-xl border border-slate-500/40 bg-slate-900/80 px-3 py-2.5 pr-10 text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-400/35"
+        >
+          <option value="" className="bg-slate-900 text-slate-200">{placeholder}</option>
+          {options.map((option) => (
+            <option key={option.value} value={option.value} className="bg-slate-900 text-white">
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <svg
+          viewBox="0 0 20 20"
+          aria-hidden="true"
+          className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-200"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="m5.5 7.5 4.5 5 4.5-5" />
+        </svg>
+      </div>
     </label>
   );
 }

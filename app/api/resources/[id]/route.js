@@ -111,6 +111,9 @@ export async function PATCH(req, { params }) {
   const requestedType = resource.resourceType !== undefined ? cleanText(resource.resourceType) : undefined;
   const requestedFormat = resource.resourceFormat !== undefined ? cleanText(resource.resourceFormat) : undefined;
   const requestedConsultantId = resource.consultantId !== undefined ? cleanNullableText(resource.consultantId) : undefined;
+  const requestedClaimContactEmail = resource.claimContactEmail !== undefined
+    ? cleanNullableText(resource.claimContactEmail)
+    : undefined;
   const requestedStatus = resource.status !== undefined ? cleanText(resource.status) : undefined;
   const tagIds = resource.tagIds !== undefined ? normaliseTagIds(resource.tagIds) : null;
 
@@ -169,6 +172,16 @@ export async function PATCH(req, { params }) {
       }
       update.consultant_id = requestedConsultantId;
     }
+  }
+
+  if (requestedClaimContactEmail !== undefined) {
+    if (!isAdmin) {
+      return NextResponse.json({ ok: false, error: "Only admins can set claim contact email." }, { status: 403 });
+    }
+    if (requestedClaimContactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(requestedClaimContactEmail)) {
+      return NextResponse.json({ ok: false, error: "Claim contact email must be a valid email." }, { status: 400 });
+    }
+    update.claim_contact_email = requestedClaimContactEmail ? requestedClaimContactEmail.toLowerCase() : null;
   }
 
   if (sourceName !== undefined) update.source_name = nextType === "external" ? sourceName : null;

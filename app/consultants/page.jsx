@@ -110,6 +110,7 @@ async function getConsultantsDirectoryPageViaRpc(
       p_seed_bucket: String(seed),
       p_country_code: countryCode || null,
       p_global_region: globalRegion || null,
+      p_profile_surface: "consultant",
     };
 
     const [miningResult, oilGasResult] = await Promise.all([
@@ -170,6 +171,7 @@ async function getConsultantsDirectoryPageViaRpc(
     p_market: normaliseMarketParam(market),
     p_country_code: countryCode || null,
     p_global_region: globalRegion || null,
+    p_profile_surface: "consultant",
   });
 
   if (error) {

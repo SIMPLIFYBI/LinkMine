@@ -50,7 +50,7 @@ export async function POST(req, { params }) {
     // Validate consultant contactability
     const { data: consultant, error: cErr } = await sb
       .from("consultants")
-      .select("id, display_name, contact_email, visibility, status")
+      .select("id, display_name, contact_email, visibility, status, profile_type")
       .eq("id", consultantId)
       .maybeSingle();
 
@@ -58,6 +58,9 @@ export async function POST(req, { params }) {
       return NextResponse.json({ error: "Consultant not found" }, { status: 404 });
     }
     if (consultant.visibility !== "public" || consultant.status !== "approved") {
+      return NextResponse.json({ error: "Consultant is not publicly contactable" }, { status: 403 });
+    }
+    if (!["consultant", "both"].includes(String(consultant.profile_type || "consultant"))) {
       return NextResponse.json({ error: "Consultant is not publicly contactable" }, { status: 403 });
     }
 

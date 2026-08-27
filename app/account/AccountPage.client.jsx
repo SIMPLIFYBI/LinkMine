@@ -17,6 +17,7 @@ const TABS = [
   { key: "account", label: "Account" },
   { key: "notifications", label: "Notifications" },
   { key: "consultants", label: "My Consultancy" },
+  { key: "creators", label: "My Creators" },
 ];
 
 const userTypes = [
@@ -90,7 +91,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
         sb.from("app_admins").select("user_id").eq("user_id", userId).maybeSingle(),
         sb
           .from("consultants")
-          .select("id, display_name, claimed_by")
+          .select("id, display_name, claimed_by, profile_type")
           .eq("claimed_by", userId)
           .order("display_name"),
         sb
@@ -156,7 +157,20 @@ export default function AccountPageClient({ initialTab = "account" }) {
 
   const ownedConsultants = useMemo(() => {
     if (!userId) return [];
-    return consultants.map((row) => ({
+    return consultants
+      .filter((row) => ["consultant", "both"].includes(String(row.profile_type || "consultant")))
+      .map((row) => ({
+        id: row.id,
+        name: row.display_name,
+        isOwner: row.claimed_by === userId,
+      }));
+  }, [consultants, userId]);
+
+  const ownedCreators = useMemo(() => {
+    if (!userId) return [];
+    return consultants
+      .filter((row) => ["creator", "both"].includes(String(row.profile_type || "consultant")))
+      .map((row) => ({
       id: row.id,
       name: row.display_name,
       isOwner: row.claimed_by === userId,
@@ -575,6 +589,40 @@ export default function AccountPageClient({ initialTab = "account" }) {
                     href={`/consultants/${item.id}`}
                     className="block text-slate-100 no-underline"
                     aria-label={`Open consultant profile: ${item.name}`}
+                  >
+                    <strong className="font-semibold">{item.name}</strong>
+                    <div className="mt-1 text-xs text-slate-400">
+                      {item.isOwner ? "Owner (claimed by you)" : "—"}
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
+      {activeTab === "creators" && (
+        <section className="mb-12 space-y-6">
+          <header>
+            <h2 className="text-2xl font-semibold tracking-tight">Creator Ownership</h2>
+            <p className="mt-1 text-sm text-slate-300">Creator pages you’ve claimed or manage.</p>
+          </header>
+          {profileError ? (
+            <p className="text-sm text-red-400">{profileError}</p>
+          ) : ownedCreators.length === 0 ? (
+            <p className="text-sm text-slate-300">You don’t own or manage any creator pages yet.</p>
+          ) : (
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {ownedCreators.map((item) => (
+                <li
+                  key={item.id}
+                  className="group rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-sky-400/50 hover:bg-sky-500/10"
+                >
+                  <Link
+                    href={`/creators/${item.id}`}
+                    className="block text-slate-100 no-underline"
+                    aria-label={`Open creator profile: ${item.name}`}
                   >
                     <strong className="font-semibold">{item.name}</strong>
                     <div className="mt-1 text-xs text-slate-400">

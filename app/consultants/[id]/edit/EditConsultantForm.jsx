@@ -59,6 +59,12 @@ const MARKET_FOCUS_OPTIONS = [
   { value: "both", label: "Both" },
 ];
 
+const PROFILE_TYPE_OPTIONS = [
+  { value: "consultant", label: "Consultant" },
+  { value: "creator", label: "Creator" },
+  { value: "both", label: "Both" },
+];
+
 function normaliseMarketFocus(value) {
   const v = String(value || "").toLowerCase();
   if (v === "oil_gas" || v === "oil-gas") return "oil_gas";
@@ -104,6 +110,9 @@ export default function EditConsultantForm({ consultant }) {
     instagram_url: consultant.instagram_url ?? "",
     place_id: consultant.place_id ?? "",
     provider_kind: fromDbProviderKind(consultant.provider_kind ?? "both"),
+    profile_type: ["consultant", "creator", "both"].includes(String(consultant.profile_type || "consultant"))
+      ? String(consultant.profile_type || "consultant")
+      : "consultant",
     market_focus: marketFocusFromMetadata(consultant.metadata),
   });
 
@@ -266,6 +275,9 @@ export default function EditConsultantForm({ consultant }) {
       instagram_url: form.instagram_url.trim() || null,
       place_id: placeId || null,
       provider_kind: TO_DB_PROVIDER_KIND[form.provider_kind] || "both",
+      profile_type: ["consultant", "creator", "both"].includes(form.profile_type)
+        ? form.profile_type
+        : "consultant",
       metadata: {
         ...(consultant.metadata || {}),
         market_focus: form.market_focus || "mining",
@@ -302,6 +314,16 @@ export default function EditConsultantForm({ consultant }) {
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Display name" value={form.display_name} onChange={handleChange("display_name")} required />
           <Field label="Headline" value={form.headline} onChange={handleChange("headline")} />
+          <div className="md:col-span-1">
+            <SelectField
+              label="Profile mode"
+              value={form.profile_type}
+              onChange={handleChange("profile_type")}
+              options={PROFILE_TYPE_OPTIONS}
+              placeholder="Select profile mode"
+              hint="Consultant appears in consultant discovery. Creator appears in creator discovery. Both appears in both."
+            />
+          </div>
           <div className="md:col-span-1">
             <label className="block text-sm text-slate-300">
               Provider type

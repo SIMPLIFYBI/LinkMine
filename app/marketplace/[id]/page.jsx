@@ -21,6 +21,7 @@ import {
 import { supabaseAdminClient } from "@/lib/supabaseAdminClient";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import MarketplaceRouteShell from "@/app/marketplace/MarketplaceRouteShell.client.jsx";
+import ConsultantClaimButton from "@/app/components/ConsultantClaimButton";
 import ResourceDetailActions from "./ResourceDetailActions.client.jsx";
 import ResourceImageCarousel from "./ResourceImageCarousel.client.jsx";
 
@@ -150,11 +151,12 @@ export default async function MarketplaceResourcePage({ params }) {
 
   let consultantProfile = null;
   const selectedConsultantId = resource.consultantId || null;
+  let claimTarget = null;
 
   if (selectedConsultantId) {
     const { data: consultantRow } = await sb
       .from("consultants")
-      .select("id, display_name, name, logo_url, thumbnail_url, avatar_url, photo_url, image_url, metadata")
+      .select("id, display_name, name, logo_url, thumbnail_url, avatar_url, photo_url, image_url, metadata, contact_email, claimed_by")
       .eq("id", selectedConsultantId)
       .maybeSingle();
 
@@ -164,8 +166,41 @@ export default async function MarketplaceResourcePage({ params }) {
         displayName: consultantRow.display_name || consultantRow.name || "Consultant",
         iconUrl: resource.consultantIconUrl || resolveConsultantIconUrl(consultantRow),
       };
+
+      claimTarget = {
+        consultantId: consultantRow.id,
+        contactEmail: consultantRow.contact_email || null,
+        claimedBy: consultantRow.claimed_by || null,
+      };
     }
   }
+
+  if (!claimTarget?.consultantId && resource.claimContactEmail) {
+    const claimEmail = String(resource.claimContactEmail || "").trim().toLowerCase();
+    if (claimEmail) {
+      const { data: fallbackClaimRow } = await sb
+        .from("consultants")
+        .select("id, contact_email, claimed_by, claimed_at")
+        .ilike("contact_email", claimEmail)
+        .order("claimed_at", { ascending: true, nullsFirst: true })
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (fallbackClaimRow?.id) {
+        claimTarget = {
+          consultantId: fallbackClaimRow.id,
+          contactEmail: fallbackClaimRow.contact_email || null,
+          claimedBy: fallbackClaimRow.claimed_by || null,
+        };
+      }
+    }
+  }
+
+  const isClaimed = Boolean(claimTarget?.claimedBy);
+  const canEditClaimProfile = Boolean(
+    userId && claimTarget?.claimedBy && (claimTarget.claimedBy === userId || isAdmin)
+  );
 
   if (!consultantProfile && resource.ownerUserId) {
     const { data: ownerConsultantRow } = await sb
@@ -173,7 +208,7 @@ export default async function MarketplaceResourcePage({ params }) {
       .select("id, display_name, name, logo_url, thumbnail_url, avatar_url, photo_url, image_url, metadata")
       .eq("user_id", resource.ownerUserId)
       .eq("visibility", "public")
-      .order("updated_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
@@ -347,6 +382,18 @@ export default async function MarketplaceResourcePage({ params }) {
               </dl>
             </div>
           </section>
+        ) : null}
+
+        {claimTarget?.consultantId ? (
+          <ConsultantClaimButton
+            consultantId={claimTarget.consultantId}
+            isClaimed={isClaimed}
+            canEdit={canEditClaimProfile}
+            contactEmail={claimTarget.contactEmail}
+            title="Claim this resource profile"
+            description="Secure ownership of this resource and unlock editing by sending a claim link to"
+            buttonLabel="Start resource claim"
+          />
         ) : null}
       </div>
     </MarketplaceRouteShell>

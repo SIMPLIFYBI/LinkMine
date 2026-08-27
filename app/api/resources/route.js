@@ -148,7 +148,7 @@ export async function GET(req) {
       canCreateResources,
       createResourceRequirementMessage: canCreateResources
         ? ""
-        : "You need an approved consultant or service provider profile before you can publish marketplace resources.",
+        : "You need an approved consultant or creator profile before you can publish marketplace resources.",
       resources: slicedRows.map((row) => ({
         ...buildResourceRoutePayload({
           ...row,
@@ -167,7 +167,7 @@ export async function GET(req) {
 
 export async function POST(req) {
   const sb = await supabaseServerClient();
-  const { user, userId } = await getResourceAuthContext(sb);
+  const { user, userId, isAdmin } = await getResourceAuthContext(sb);
   if (!user) {
     return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
   }
@@ -177,7 +177,7 @@ export async function POST(req) {
     return NextResponse.json(
       {
         ok: false,
-        error: "You need an approved consultant or service provider profile before you can publish marketplace resources.",
+        error: "You need an approved consultant or creator profile before you can publish marketplace resources.",
       },
       { status: 403 }
     );
@@ -199,6 +199,7 @@ export async function POST(req) {
   const licenseUrl = cleanNullableText(resource.licenseUrl);
   const estimatedSizeBytes = asNullablePositiveInteger(resource.estimatedSizeBytes);
   const consultantId = cleanNullableText(resource.consultantId);
+  const claimContactEmail = cleanNullableText(resource.claimContactEmail)?.toLowerCase() || null;
   const tagIds = normaliseTagIds(resource.tagIds);
 
   if (!title) {
@@ -229,6 +230,10 @@ export async function POST(req) {
     return NextResponse.json({ ok: false, error: "License URL must be http or https." }, { status: 400 });
   }
 
+  if (claimContactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(claimContactEmail)) {
+    return NextResponse.json({ ok: false, error: "Claim contact email must be a valid email." }, { status: 400 });
+  }
+
   let selectedConsultantId = null;
   if (consultantId) {
     const availableConsultants = await listSelectableConsultantsForUser(sb, userId);
@@ -257,6 +262,7 @@ export async function POST(req) {
     estimated_size_bytes: estimatedSizeBytes,
     price_cents: 0,
     currency_code: "AUD",
+    claim_contact_email: isAdmin ? claimContactEmail : null,
     submitted_at: requestedStatus === "pending" ? new Date().toISOString() : null,
   };
 

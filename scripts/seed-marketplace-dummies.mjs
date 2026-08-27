@@ -95,6 +95,7 @@ async function main() {
       estimated_size_bytes: null,
       price_cents: 0,
       currency_code: "AUD",
+      claim_contact_email: owner.email ? String(owner.email).trim().toLowerCase() : null,
       is_featured: false,
       submitted_at: now,
       approved_at: now,
