@@ -1374,6 +1374,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
   const [resources, setResources] = useState([]);
+  const [homeBannerResourceId, setHomeBannerResourceId] = useState(null);
   const [myResources, setMyResources] = useState([]);
   const [library, setLibrary] = useState([]);
   const [requests, setRequests] = useState([]);
@@ -1445,6 +1446,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
       const initialResources = resourcesRes.resources || [];
       setCategories(categoriesRes.categories || []);
       setResources(initialResources);
+      setHomeBannerResourceId(resourcesRes.homeBannerResourceId || null);
       setCanCreateResources(Boolean(resourcesRes.canCreateResources));
       setCreateResourceRequirementMessage(resourcesRes.createResourceRequirementMessage || "");
 
@@ -1545,6 +1547,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
       setIsAdmin(false);
       setCanCreateResources(false);
       setCreateResourceRequirementMessage("");
+      setHomeBannerResourceId(null);
       setMyResources([]);
       setLibrary([]);
       setRequests([]);
@@ -1670,8 +1673,18 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
     });
   }, [discoverFilter, resources]);
 
-  const featuredResources = useMemo(() => discoverResources.slice(0, 3), [discoverResources]);
-  const mobileHeroResources = useMemo(() => discoverResources.slice(0, 5), [discoverResources]);
+  const featuredResources = useMemo(() => {
+    const explicitFeatured = discoverResources.filter((resource) => resource.isFeatured);
+    if (explicitFeatured.length) {
+      return explicitFeatured.slice(0, 3);
+    }
+    return discoverResources.slice(0, 3);
+  }, [discoverResources]);
+
+  const adminSelectedHero = useMemo(() => {
+    if (!homeBannerResourceId) return null;
+    return discoverResources.find((resource) => resource.id === homeBannerResourceId) || null;
+  }, [discoverResources, homeBannerResourceId]);
 
   const trendingResources = useMemo(() => {
     return [...discoverResources]
@@ -1679,7 +1692,17 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
       .slice(0, 4);
   }, [discoverResources]);
 
-  const heroResource = useMemo(() => featuredResources[0] || discoverResources[0] || null, [discoverResources, featuredResources]);
+  const heroResource = useMemo(() => {
+    return adminSelectedHero || featuredResources[0] || discoverResources[0] || null;
+  }, [adminSelectedHero, discoverResources, featuredResources]);
+
+  const mobileHeroResources = useMemo(() => {
+    if (!discoverResources.length) return [];
+    if (!heroResource?.id) return discoverResources.slice(0, 5);
+
+    const remaining = discoverResources.filter((resource) => resource.id !== heroResource.id);
+    return [heroResource, ...remaining].slice(0, 5);
+  }, [discoverResources, heroResource]);
 
   const spotlightResource = useMemo(() => {
     const spotlightPool = [...featuredResources.slice(1), ...trendingResources, ...discoverResources];
@@ -1847,7 +1870,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
     const baseTabs = [
       { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary", href: "/vault" },
       { key: "all-resources", label: "All Resources", hint: "Browse the full vault resource index.", icon: "orders", group: "primary", href: "/vault/resources" },
-      { key: "submit", label: "Submit", hint: "Create hosted or external listings and send them for review.", icon: "submit", group: "primary", href: "/vault/submit" },
+      { key: "submit", label: "Create", hint: "Create hosted or external listings and send them for review.", icon: "submit", group: "primary", href: "/vault/submit" },
       { key: "requests", label: "Requests", hint: "Track industry requests and completion workflows.", icon: "requests", group: "primary", href: "/vault/requests" },
       { key: "account", label: "My Vault", hint: "Manage your library and created vault resources.", icon: "library", group: "secondary", href: "/vault/account" },
     ];
@@ -2668,12 +2691,12 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                     <div className={["pointer-events-none absolute", heroCardVariant.blockClass].join(" ")} />
                     <ResourceOwnerBadge
                       resource={heroResource}
-                      className="absolute left-7 top-7 flex h-14 w-14 items-center justify-center overflow-hidden rounded-[18px] border border-white/20 text-base font-semibold text-slate-950 shadow-[0_10px_26px_-12px_rgba(255,255,255,0.7)]"
+                      className="absolute right-7 top-7 flex h-14 w-14 items-center justify-center overflow-hidden rounded-[18px] border border-white/20 text-base font-semibold text-slate-950 shadow-[0_10px_26px_-12px_rgba(255,255,255,0.7)]"
                       style={{ backgroundImage: heroArtwork?.chipBackground }}
                     />
                     <div className="relative z-10 flex h-full flex-col justify-between gap-6 pt-6 sm:pt-7">
                       <div>
-                        <div className="mt-6 max-w-[34rem]">
+                        <div className="mt-6 max-w-[34rem] pr-20 sm:pr-24">
                           <div className="text-[11px] uppercase tracking-[0.28em] text-slate-200">{heroCardVariant.heroLabel}</div>
                           <div className={heroCardVariant.heroTitleClass}>{heroResource.title}</div>
                           <p className={heroCardVariant.heroSummaryClass}>{heroResource.summary || heroResource.description || "Open the resource to review the full pack details."}</p>

@@ -547,7 +547,7 @@ export default function ResourcesTablePageClient() {
     const baseTabs = [
       { key: "discover", label: "Home", icon: "discover", group: "primary", href: "/vault?tab=discover" },
       { key: "all-resources", label: "All Resources", icon: "orders", group: "primary", href: "/vault/resources", active: true },
-      { key: "submit", label: "Submit", icon: "submit", group: "primary", href: "/vault?tab=submit" },
+      { key: "submit", label: "Create", icon: "submit", group: "primary", href: "/vault?tab=submit" },
       { key: "requests", label: "Requests", icon: "requests", group: "primary", href: "/vault?tab=requests" },
       { key: "account", label: "My Vault", icon: "library", group: "secondary", href: "/vault?tab=account" },
     ];

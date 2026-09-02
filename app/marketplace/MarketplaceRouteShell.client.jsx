@@ -136,7 +136,7 @@ export default function MarketplaceRouteShell({ children, signedIn = false, isAd
     const baseTabs = [
       { key: "discover", label: "Home", icon: "discover", group: "primary", href: "/vault" },
       { key: "all-resources", label: "All Resources", icon: "orders", group: "primary", href: "/vault/resources" },
-      { key: "submit", label: "Submit", icon: "submit", group: "primary", href: "/vault/submit" },
+      { key: "submit", label: "Create", icon: "submit", group: "primary", href: "/vault/submit" },
       { key: "requests", label: "Requests", icon: "requests", group: "primary", href: "/vault/requests" },
       { key: "account", label: "My Vault", icon: "library", group: "secondary", href: "/vault/account" },
     ];

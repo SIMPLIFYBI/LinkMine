@@ -143,12 +143,23 @@ export async function GET(req) {
       } catch {}
     }
 
+    let homeBannerResourceId = null;
+    try {
+      const { data: placementRow } = await dataSb
+        .from("resource_homepage_placements")
+        .select("hero_resource_id")
+        .eq("placement_key", "vault_home")
+        .maybeSingle();
+      homeBannerResourceId = placementRow?.hero_resource_id || null;
+    } catch {}
+
     return NextResponse.json({
       ok: true,
       canCreateResources,
       createResourceRequirementMessage: canCreateResources
         ? ""
         : "You need an approved consultant or creator profile before you can publish marketplace resources.",
+      homeBannerResourceId,
       resources: slicedRows.map((row) => ({
         ...buildResourceRoutePayload({
           ...row,

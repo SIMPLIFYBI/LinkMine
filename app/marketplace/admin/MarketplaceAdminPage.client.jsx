@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import {
   Apps24Regular,
   BranchFork24Regular,
@@ -37,6 +37,8 @@ const RESOURCE_FORMAT_ICONS = {
   pdf: DocumentPdf24Regular,
   generic: Document24Regular,
 };
+
+const MAX_FEATURED_RESOURCES = 3;
 
 function ResourceFormatGlyph({ format, className = "h-3.5 w-3.5" }) {
   const Icon = RESOURCE_FORMAT_ICONS[format] || RESOURCE_FORMAT_ICONS.generic;
@@ -116,6 +118,15 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
     },
     leaderboard: [],
   });
+  const [adminSection, setAdminSection] = useState("review");
+  const [placementResources, setPlacementResources] = useState([]);
+  const [placementSearch, setPlacementSearch] = useState("");
+  const [selectedFeaturedIds, setSelectedFeaturedIds] = useState([]);
+  const [selectedHomeBannerId, setSelectedHomeBannerId] = useState("");
+  const [draggedResourceId, setDraggedResourceId] = useState("");
+  const [dropTarget, setDropTarget] = useState("");
+  const [loadingPlacements, setLoadingPlacements] = useState(false);
+  const [savingPlacements, setSavingPlacements] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -171,8 +182,144 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
     }
   }
 
+  async function refreshPlacements({ silent = false } = {}) {
+    if (!silent) {
+      resetMessages();
+    }
+    setLoadingPlacements(true);
+
+    try {
+      const placementRes = await apiSend("/api/resources/admin/placements");
+      const resources = Array.isArray(placementRes.resources) ? placementRes.resources : [];
+      setPlacementResources(resources);
+      setSelectedFeaturedIds(resources.filter((resource) => resource.isFeatured).map((resource) => resource.id));
+      setSelectedHomeBannerId(placementRes.homeBannerResourceId || "");
+      if (!silent) {
+        setSuccess("Placement settings refreshed.");
+      }
+    } catch (nextError) {
+      if (!silent) {
+        setError(nextError.message || "Unable to refresh placement settings.");
+      }
+    } finally {
+      setLoadingPlacements(false);
+    }
+  }
+
+  function toggleFeaturedResource(resourceId) {
+    resetMessages();
+    setSelectedFeaturedIds((prev) => {
+      if (prev.includes(resourceId)) {
+        return prev.filter((id) => id !== resourceId);
+      }
+      if (prev.length >= MAX_FEATURED_RESOURCES) {
+        setError(`Choose up to ${MAX_FEATURED_RESOURCES} featured resources.`);
+        return prev;
+      }
+      return [...prev, resourceId];
+    });
+  }
+
+  function assignDraggedResourceToBanner() {
+    if (!draggedResourceId) return;
+    resetMessages();
+    setSelectedHomeBannerId(draggedResourceId);
+  }
+
+  function assignDraggedResourceToFeaturedSlot(slotIndex) {
+    if (!draggedResourceId) return;
+
+    resetMessages();
+    setSelectedFeaturedIds((prev) => {
+      const next = [...prev];
+      const existingIndex = next.indexOf(draggedResourceId);
+
+      if (existingIndex >= 0) {
+        next.splice(existingIndex, 1);
+      }
+
+      const boundedSlotIndex = Math.max(0, Math.min(slotIndex, MAX_FEATURED_RESOURCES - 1));
+      next.splice(boundedSlotIndex, 0, draggedResourceId);
+
+      return next.slice(0, MAX_FEATURED_RESOURCES);
+    });
+  }
+
+  function clearFeaturedSlot(slotIndex) {
+    resetMessages();
+    setSelectedFeaturedIds((prev) => prev.filter((_, index) => index !== slotIndex));
+  }
+
+  function handleResourceDragStart(resourceId) {
+    setDraggedResourceId(resourceId);
+  }
+
+  function handleResourceDragEnd() {
+    setDraggedResourceId("");
+    setDropTarget("");
+  }
+
+  function handleDropTargetEnter(targetKey) {
+    setDropTarget(targetKey);
+  }
+
+  function handleDropTargetLeave(targetKey) {
+    setDropTarget((current) => (current === targetKey ? "" : current));
+  }
+
+  async function savePlacements() {
+    resetMessages();
+
+    if (selectedFeaturedIds.length > MAX_FEATURED_RESOURCES) {
+      setError(`Choose up to ${MAX_FEATURED_RESOURCES} featured resources.`);
+      return;
+    }
+
+    setSavingPlacements(true);
+    try {
+      const placementRes = await apiSend("/api/resources/admin/placements", "PUT", {
+        featuredResourceIds: selectedFeaturedIds,
+        homeBannerResourceId: selectedHomeBannerId || null,
+      });
+
+      const resources = Array.isArray(placementRes.resources) ? placementRes.resources : [];
+      setPlacementResources(resources);
+      setSelectedFeaturedIds(resources.filter((resource) => resource.isFeatured).map((resource) => resource.id));
+      setSelectedHomeBannerId(placementRes.homeBannerResourceId || "");
+      setSuccess("Placement settings saved.");
+    } catch (nextError) {
+      setError(nextError.message || "Unable to save placement settings.");
+    } finally {
+      setSavingPlacements(false);
+    }
+  }
+
+  const placementResourcesById = useMemo(() => {
+    return new Map(placementResources.map((resource) => [resource.id, resource]));
+  }, [placementResources]);
+
+  const featuredSelection = useMemo(() => {
+    return selectedFeaturedIds
+      .map((id) => placementResourcesById.get(id))
+      .filter(Boolean);
+  }, [placementResourcesById, selectedFeaturedIds]);
+
+  const filteredPlacementResources = useMemo(() => {
+    const searchTerm = placementSearch.trim().toLowerCase();
+    if (!searchTerm) return placementResources;
+
+    return placementResources.filter((resource) => {
+      const source = [resource.title, resource.summary, resource.slug]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return source.includes(searchTerm);
+    });
+  }, [placementResources, placementSearch]);
+
   useEffect(() => {
     void refreshAnalytics({ silent: true });
+    void refreshPlacements({ silent: true });
   }, []);
 
   function handleReview(resource, status) {
@@ -212,26 +359,73 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
             <Link href="/vault" className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.08]">
               Back to vault
             </Link>
-            <button
-              type="button"
-              onClick={refreshQueue}
-              disabled={loadingQueue || isPending}
-              className="rounded-full border border-sky-300/25 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-100 transition hover:bg-sky-500/15 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {loadingQueue ? "Refreshing..." : "Refresh queue"}
-            </button>
-            <button
-              type="button"
-              onClick={() => refreshAnalytics()}
-              disabled={loadingAnalytics || isPending}
-              className="rounded-full border border-cyan-300/25 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/15 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {loadingAnalytics ? "Refreshing analytics..." : "Refresh analytics"}
-            </button>
+            {adminSection === "review" ? (
+              <>
+                <button
+                  type="button"
+                  onClick={refreshQueue}
+                  disabled={loadingQueue || isPending}
+                  className="rounded-full border border-sky-300/25 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-100 transition hover:bg-sky-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {loadingQueue ? "Refreshing..." : "Refresh queue"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => refreshAnalytics()}
+                  disabled={loadingAnalytics || isPending}
+                  className="rounded-full border border-cyan-300/25 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {loadingAnalytics ? "Refreshing analytics..." : "Refresh analytics"}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => refreshPlacements()}
+                  disabled={loadingPlacements || savingPlacements || isPending}
+                  className="rounded-full border border-cyan-300/25 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {loadingPlacements ? "Refreshing placements..." : "Refresh placements"}
+                </button>
+                <button
+                  type="button"
+                  onClick={savePlacements}
+                  disabled={loadingPlacements || savingPlacements || isPending}
+                  className="rounded-full border border-emerald-300/25 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {savingPlacements ? "Saving..." : "Save placements"}
+                </button>
+              </>
+            )}
           </div>
         </div>
 
-        <section className="grid gap-4 md:grid-cols-3">
+        <section className="rounded-[20px] border border-white/10 bg-white/[0.03] p-2 ring-1 ring-white/10">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setAdminSection("review")}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${adminSection === "review" ? "bg-white text-slate-900" : "border border-white/10 bg-white/[0.04] text-slate-200 hover:bg-white/[0.08]"}`}
+            >
+              Review
+            </button>
+            <button
+              type="button"
+              onClick={() => setAdminSection("placements")}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${adminSection === "placements" ? "bg-white text-slate-900" : "border border-white/10 bg-white/[0.04] text-slate-200 hover:bg-white/[0.08]"}`}
+            >
+              Placements
+            </button>
+          </div>
+        </section>
+
+        {error ? <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-5 py-4 text-sm text-red-100">{error}</div> : null}
+        {success ? <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-5 py-4 text-sm text-emerald-100">{success}</div> : null}
+
+        {adminSection === "review" ? (
+          <>
+            <section className="grid gap-4 md:grid-cols-3">
           <div className="rounded-[24px] border border-amber-300/25 bg-amber-500/10 p-5 ring-1 ring-amber-300/20">
             <div className="text-xs uppercase tracking-[0.18em] text-amber-200/85">Pending</div>
             <div className="mt-2 text-3xl font-semibold text-amber-50">{counts.pending}</div>
@@ -247,9 +441,9 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
             <div className="mt-2 text-3xl font-semibold text-red-50">{counts.rejected}</div>
             <div className="mt-1 text-sm text-red-100/90">Needs fixes before approval</div>
           </div>
-        </section>
+            </section>
 
-        <section className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10 sm:p-6">
+            <section className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-semibold text-white">Click-through analytics</h2>
@@ -299,12 +493,9 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
               </div>
             )}
           </div>
-        </section>
+            </section>
 
-        {error ? <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-5 py-4 text-sm text-red-100">{error}</div> : null}
-        {success ? <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-5 py-4 text-sm text-emerald-100">{success}</div> : null}
-
-        <section className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10 sm:p-6">
+            <section className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-semibold text-white">Submission Queue</h2>
@@ -360,9 +551,9 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
               </div>
             )}
           </div>
-        </section>
+            </section>
 
-        <section className="grid gap-4 lg:grid-cols-2">
+            <section className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10">
             <h2 className="text-base font-semibold text-white">Moderator Checklist</h2>
             <ul className="mt-3 space-y-2 text-sm text-slate-300">
@@ -382,7 +573,162 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
               Use the vault sidebar to jump into Submit, Requests, or My Vault flows while keeping this moderation queue open in a separate tab.
             </p>
           </div>
-        </section>
+            </section>
+          </>
+        ) : null}
+
+        {adminSection === "placements" ? (
+          <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10 sm:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-xl font-semibold text-white">All resources</h2>
+                  <p className="mt-1 text-sm text-slate-300">Drag a resource from this list into the drop zones on the right.</p>
+                </div>
+                <div className="text-xs uppercase tracking-[0.18em] text-slate-400">{placementResources.length} approved resources</div>
+              </div>
+
+              <div className="mt-4">
+                <label htmlFor="placements-search" className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                  Search resources
+                </label>
+                <input
+                  id="placements-search"
+                  value={placementSearch}
+                  onChange={(event) => setPlacementSearch(event.target.value)}
+                  placeholder="Search title, summary, or slug"
+                  className="mt-2 w-full rounded-2xl border border-white/12 bg-slate-950/35 px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-sky-300/45"
+                />
+              </div>
+
+              <div className="mt-4 max-h-[560px] space-y-3 overflow-y-auto pr-1">
+                {filteredPlacementResources.length ? (
+                  filteredPlacementResources.map((resource) => {
+                    const isFeatured = selectedFeaturedIds.includes(resource.id);
+                    const isHomeBanner = selectedHomeBannerId === resource.id;
+                    const isDragging = draggedResourceId === resource.id;
+
+                    return (
+                      <article
+                        key={resource.id}
+                        draggable
+                        onDragStart={() => handleResourceDragStart(resource.id)}
+                        onDragEnd={handleResourceDragEnd}
+                        className={`cursor-grab rounded-[20px] border bg-slate-950/30 p-4 active:cursor-grabbing ${isDragging ? "border-sky-300/45 ring-1 ring-sky-300/25" : "border-white/10"}`}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="max-w-2xl">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="text-sm font-semibold text-white">{resource.title}</div>
+                              <ResourceFormatChip format={resource.resourceFormat} />
+                            </div>
+                            {resource.summary ? <p className="mt-2 text-sm text-slate-300">{resource.summary}</p> : null}
+                            <div className="mt-2 text-xs text-slate-500">{resource.slug}</div>
+                          </div>
+                          <Link href={`/vault/${resource.id}`} className="rounded-full border border-white/15 bg-white/[0.05] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/[0.12]">
+                            Open
+                          </Link>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-300">
+                          {isHomeBanner ? <span className="rounded-full border border-sky-300/35 bg-sky-500/15 px-2.5 py-1 font-semibold text-sky-100">Top banner</span> : null}
+                          {isFeatured ? <span className="rounded-full border border-emerald-300/35 bg-emerald-500/15 px-2.5 py-1 font-semibold text-emerald-100">Featured lane</span> : null}
+                          {!isHomeBanner && !isFeatured ? <span className="text-slate-400">Unassigned</span> : null}
+                        </div>
+                      </article>
+                    );
+                  })
+                ) : (
+                  <div className="rounded-[20px] border border-white/10 bg-slate-950/25 px-5 py-8 text-center text-sm text-slate-300">
+                    No approved resources match your search.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <section className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10">
+                <h3 className="text-base font-semibold text-white">Top banner resource</h3>
+                <p className="mt-1 text-sm text-slate-300">Drop one resource here to appear in the large banner on Vault Home.</p>
+                <div
+                  onDragOver={(event) => event.preventDefault()}
+                  onDragEnter={() => handleDropTargetEnter("banner")}
+                  onDragLeave={() => handleDropTargetLeave("banner")}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    assignDraggedResourceToBanner();
+                    handleResourceDragEnd();
+                  }}
+                  className={`mt-4 rounded-2xl border px-4 py-4 text-sm transition ${dropTarget === "banner" ? "border-sky-300/45 bg-sky-500/10 text-sky-100" : "border-white/10 bg-slate-950/25 text-slate-200"}`}
+                >
+                  {selectedHomeBannerId
+                    ? (placementResourcesById.get(selectedHomeBannerId)?.title || "Selected resource")
+                    : "Drop resource here"}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={savePlacements}
+                    disabled={loadingPlacements || savingPlacements || isPending}
+                    className="rounded-full border border-emerald-300/25 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {savingPlacements ? "Saving..." : "Save placements"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedHomeBannerId("")}
+                    className="rounded-full border border-white/15 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/[0.08]"
+                  >
+                    Clear top banner
+                  </button>
+                </div>
+              </section>
+
+              <section className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10">
+                <h3 className="text-base font-semibold text-white">Featured lane slots</h3>
+                <p className="mt-1 text-sm text-slate-300">Drop resources into slots 1-{MAX_FEATURED_RESOURCES} for the featured lane.</p>
+                <div className="mt-3 text-xs uppercase tracking-[0.16em] text-slate-400">{featuredSelection.length} / {MAX_FEATURED_RESOURCES} assigned</div>
+
+                <div className="mt-4 space-y-2">
+                  {Array.from({ length: MAX_FEATURED_RESOURCES }).map((_, index) => {
+                    const resource = featuredSelection[index] || null;
+                    const targetKey = `featured-${index}`;
+
+                    return (
+                      <div
+                        key={targetKey}
+                        onDragOver={(event) => event.preventDefault()}
+                        onDragEnter={() => handleDropTargetEnter(targetKey)}
+                        onDragLeave={() => handleDropTargetLeave(targetKey)}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          assignDraggedResourceToFeaturedSlot(index);
+                          handleResourceDragEnd();
+                        }}
+                        className={`flex items-center justify-between gap-3 rounded-2xl border px-3 py-3 transition ${dropTarget === targetKey ? "border-emerald-300/45 bg-emerald-500/10" : "border-white/10 bg-slate-950/25"}`}
+                      >
+                        <div>
+                          <div className="text-xs uppercase tracking-[0.14em] text-slate-400">Slot {index + 1}</div>
+                          <div className="mt-1 text-sm font-semibold text-white">{resource ? resource.title : "Drop resource here"}</div>
+                          {resource ? <div className="text-xs text-slate-400">{resource.slug}</div> : null}
+                        </div>
+                        {resource ? (
+                          <button
+                            type="button"
+                            onClick={() => clearFeaturedSlot(index)}
+                            className="rounded-full border border-red-300/25 bg-red-500/10 px-2.5 py-1 text-xs font-semibold text-red-100 transition hover:bg-red-500/15"
+                          >
+                            Clear
+                          </button>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            </div>
+          </section>
+        ) : null}
       </div>
     </main>
   );
