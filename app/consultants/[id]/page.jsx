@@ -55,8 +55,28 @@ function formatAcn(acn) {
   return `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}`;
 }
 
-async function getConsultant(id) {
+async function getViewerContext() {
   const sb = await supabaseServerClient();
+  const { data: auth } = await sb.auth.getUser();
+  const userId = auth?.user?.id || null;
+
+  let isAdmin = false;
+  if (userId) {
+    const { data: adminRow } = await sb
+      .from("app_admins")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    isAdmin = Boolean(adminRow);
+  }
+
+  return { userId, isAdmin };
+}
+
+async function getConsultant(id, viewer = {}) {
+  const sb = await supabaseServerClient();
+  const viewerUserId = viewer?.userId || null;
+  const viewerIsAdmin = Boolean(viewer?.isAdmin);
 
   const { data } = await sb
     .from("consultants")
@@ -65,8 +85,20 @@ async function getConsultant(id) {
     .eq("id", id)
     .maybeSingle();
 
-  if (!data || data.visibility !== "public") return null;
-  if (!["consultant", "both"].includes(String(data.profile_type || "consultant"))) return null;
+  if (!data) return null;
+
+  const canViewAsOwnerOrAdmin = Boolean(
+    viewerIsAdmin ||
+    (viewerUserId && (data.user_id === viewerUserId || data.claimed_by === viewerUserId))
+  );
+
+  if (data.visibility !== "public" && !canViewAsOwnerOrAdmin) return null;
+  if (
+    !["consultant", "both"].includes(String(data.profile_type || "consultant")) &&
+    !canViewAsOwnerOrAdmin
+  ) {
+    return null;
+  }
 
   const { data: svc } = await sb
     .from("consultant_services")
@@ -143,7 +175,8 @@ async function getConsultant(id) {
 
 export async function generateMetadata(props) {
   const { id: consultantId } = await props.params;
-  const data = await getConsultant(consultantId);
+  const viewer = await getViewerContext();
+  const data = await getConsultant(consultantId, viewer);
 
   if (!data) {
     return {
@@ -199,7 +232,8 @@ export async function generateMetadata(props) {
 
 export default async function ConsultantPage(props) {
   const { id: consultantId } = await props.params;
-  const data = await getConsultant(consultantId);
+  const viewer = await getViewerContext();
+  const data = await getConsultant(consultantId, viewer);
   if (!data) return notFound();
 
   const { consultant, services, ports, viewsCount, trainingCourses } = data;

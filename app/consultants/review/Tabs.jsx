@@ -20,6 +20,7 @@ export default function Tabs() {
     { key: "jobs", label: "Jobs" },
     { key: "in-progress", label: "Consultants" }, // renamed
     { key: "landing-pages", label: "Landing Pages" },
+    { key: "dev-tools", label: "Dev Tools" },
   ];
 
   return (
