@@ -164,12 +164,32 @@ async function getConsultant(id, viewer = {}) {
     }))
     .sort((a, b) => String(a.title || "").localeCompare(String(b.title || "")));
 
+  let resourcesQuery = sb
+    .from("resources")
+    .select("id, title, summary, resource_type, resource_format, status")
+    .order("updated_at", { ascending: false })
+    .limit(12);
+
+  if (!canViewAsOwnerOrAdmin) {
+    resourcesQuery = resourcesQuery.eq("status", "approved");
+  }
+
+  if (data.claimed_by) {
+    resourcesQuery = resourcesQuery.or(`consultant_id.eq.${id},owner_user_id.eq.${data.claimed_by}`);
+  } else {
+    resourcesQuery = resourcesQuery.eq("consultant_id", id);
+  }
+
+  const { data: resources = [] } = await resourcesQuery;
+
   return {
     consultant: data,
     services: (svc || []).map((r) => r.service).filter(Boolean),
     ports: ports || [],
     viewsCount: viewsCount || 0,
     trainingCourses: normalizedTrainingCourses,
+    resources,
+    canViewAsOwnerOrAdmin,
   };
 }
 
@@ -236,7 +256,15 @@ export default async function ConsultantPage(props) {
   const data = await getConsultant(consultantId, viewer);
   if (!data) return notFound();
 
-  const { consultant, services, ports, viewsCount, trainingCourses } = data;
+  const {
+    consultant,
+    services,
+    ports,
+    viewsCount,
+    trainingCourses,
+    resources,
+    canViewAsOwnerOrAdmin,
+  } = data;
 
   const place = consultant.place_id
     ? await fetchPlaceDetails(consultant.place_id)
@@ -352,6 +380,66 @@ export default async function ConsultantPage(props) {
             consultantName={consultant.display_name}
             initialCourses={trainingCourses}
           />
+
+          {[
+            "creator",
+            "both",
+          ].includes(String(consultant.profile_type || "consultant")) || resources.length > 0 ? (
+            <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-slate-100 shadow-sm ring-1 ring-white/5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-lg font-semibold text-white">Digital resources</h2>
+                {canViewAsOwnerOrAdmin ? (
+                  <Link
+                    href="/vault/submit"
+                    className="rounded-full border border-white/15 bg-white/[0.06] px-3 py-1.5 text-xs font-semibold text-slate-100 hover:bg-white/[0.12]"
+                  >
+                    Create resource
+                  </Link>
+                ) : null}
+              </div>
+
+              {resources.length === 0 ? (
+                <p className="mt-3 text-sm text-slate-400">
+                  No digital resources are linked yet.
+                </p>
+              ) : (
+                <ul className="mt-4 space-y-3">
+                  {resources.map((resource) => (
+                    <li
+                      key={resource.id}
+                      className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <Link
+                          href={`/vault/${resource.id}`}
+                          className="text-white font-semibold hover:text-sky-200"
+                        >
+                          {resource.title}
+                        </Link>
+                        {canViewAsOwnerOrAdmin ? (
+                          <Link
+                            href={`/vault/${resource.id}/edit`}
+                            className="rounded-full border border-white/15 bg-white/[0.05] px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:bg-white/[0.1]"
+                          >
+                            Edit
+                          </Link>
+                        ) : null}
+                      </div>
+                      {resource.summary ? (
+                        <p className="mt-1 text-sm text-slate-300 line-clamp-2">
+                          {resource.summary}
+                        </p>
+                      ) : null}
+                      <div className="mt-2 text-xs uppercase tracking-[0.14em] text-slate-400">
+                        {resource.resource_type} • {resource.resource_format}
+                        {canViewAsOwnerOrAdmin ? ` • ${resource.status}` : ""}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </article>
+          ) : null}
 
           {ports.length ? (
             <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-slate-100 shadow-sm ring-1 ring-white/5">

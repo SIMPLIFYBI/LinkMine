@@ -37,11 +37,22 @@ function SignupForm() {
     }
 
     const sb = supabaseBrowser();
+    const emailRedirectBase =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : process.env.NEXT_PUBLIC_SITE_URL;
+
+    if (!emailRedirectBase) {
+      setSubmitting(false);
+      setError("Missing app URL for email confirmation redirect.");
+      return;
+    }
+
     const { data, error } = await sb.auth.signUp({
       email: email.trim(),
       password,
       options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/onboarding`,
+        emailRedirectTo: `${emailRedirectBase}/onboarding`,
       },
     });
     setSubmitting(false);

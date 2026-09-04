@@ -26,7 +26,6 @@ const DEFAULT_RESOURCE_FORM = {
   description: "",
   sourceUrl: "",
   tagIds: [],
-  submitForReview: false,
 };
 
 const DEFAULT_REQUEST_FORM = {
@@ -390,14 +389,14 @@ function AccountTopTab({ active, label, meta, onClick }) {
       type="button"
       onClick={onClick}
       className={[
-        "group min-w-[132px] rounded-[20px] border px-4 py-3 text-left transition",
+        "group relative min-w-[132px] border-b-2 px-2 pb-3 pt-2 text-left transition",
         active
-          ? "border-white/20 bg-white text-slate-950 shadow-[0_20px_50px_-34px_rgba(255,255,255,0.8)]"
-          : "border-white/10 bg-white/[0.04] text-slate-200 hover:border-white/20 hover:bg-white/[0.08]",
+          ? "border-cyan-300 text-white"
+          : "border-transparent text-slate-300 hover:border-white/30 hover:text-white",
       ].join(" ")}
     >
-      <div className={active ? "text-[11px] uppercase tracking-[0.2em] text-slate-600" : "text-[11px] uppercase tracking-[0.2em] text-slate-400"}>{meta}</div>
-      <div className={active ? "mt-2 text-sm font-semibold text-slate-950" : "mt-2 text-sm font-semibold text-white"}>{label}</div>
+      <div className={active ? "text-[11px] uppercase tracking-[0.2em] text-cyan-200" : "text-[11px] uppercase tracking-[0.2em] text-slate-500 group-hover:text-slate-400"}>{meta}</div>
+      <div className={active ? "mt-2 text-sm font-semibold text-white" : "mt-2 text-sm font-semibold text-slate-200 group-hover:text-white"}>{label}</div>
     </button>
   );
 }
@@ -737,7 +736,11 @@ function CreateFlowSection({ step, title, subtitle, completed = false, onToggleC
                     : "border-emerald-300/35 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/18",
                 ].join(" ")}
               >
-                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-emerald-200/60 bg-emerald-400/25 text-[11px] leading-none">âœ“</span>
+                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-emerald-200/60 bg-emerald-400/25" aria-hidden="true">
+                  <svg viewBox="0 0 16 16" className="h-2.5 w-2.5 text-emerald-100" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3.5 8.5 6.5 11.5 12.5 5.5" />
+                  </svg>
+                </span>
                 {completed ? "Completed" : "Mark section complete"}
               </button>
             </div>
@@ -2118,7 +2121,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
       return;
     }
 
-    if (resourceForm.resourceType === "hosted" && resourceForm.submitForReview && !resourceFile) {
+    if (resourceForm.resourceType === "hosted" && !resourceFile) {
       setError("Hosted resources need a pack upload before they can be sent for review.");
       return;
     }
@@ -2135,7 +2138,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
             description: resourceForm.description,
             sourceUrl: resourceForm.resourceType === "external" ? resourceForm.sourceUrl : null,
             tagIds: resourceForm.tagIds,
-            status: resourceForm.submitForReview ? "pending" : "draft",
+            status: "pending",
           },
         });
 
@@ -2949,21 +2952,13 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                       <CreateFlowSection
                         step="4"
                         title="Finalize discovery and publish settings"
-                        subtitle="Choose your submission preference and publish settings."
+                        subtitle="Review launch limits and submit for final approval."
                         showCompleteToggle={false}
                       >
-                          <label className="flex items-start gap-3 rounded-[20px] border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-300">
-                            <input
-                              type="checkbox"
-                              checked={resourceForm.submitForReview}
-                              onChange={(event) => setResourceForm((prev) => ({ ...prev, submitForReview: event.target.checked }))}
-                              className="mt-1 h-4 w-4 rounded border-white/20 bg-slate-950/70 text-sky-500"
-                            />
-                            <span>
-                              <span className="block font-semibold text-white">Send this resource for review immediately</span>
-                              <span className="mt-1 block text-slate-400">Hosted resources need a file upload before they can move into review.</span>
-                            </span>
-                          </label>
+                          <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-300">
+                            <span className="block font-semibold text-white">This resource will be sent for review immediately on submit.</span>
+                            <span className="mt-1 block text-slate-400">Hosted resources still require a file upload before submission.</span>
+                          </div>
                           <div className="rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(56,189,248,0.08),rgba(15,23,42,0.58))] p-4 text-sm text-slate-300">
                             <div className="font-semibold text-white">Launch limits currently applied</div>
                             <div className="mt-2">10 active hosted resources, 25 MB max hosted pack size, up to 3 preview images (5 MB each), and 250 MB total hosted storage per user.</div>
@@ -2976,7 +2971,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                             disabled={busyAction}
                             className="w-full rounded-full bg-gradient-to-r from-sky-500 to-cyan-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:from-sky-400 hover:to-cyan-400 disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            {busyAction ? "Saving resource..." : "Create resource"}
+                            {busyAction ? "Saving resource..." : "Sumbit resource for Final Approval"}
                           </button>
                     </CreateFlowSection>
                 </form>
@@ -3004,8 +2999,8 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
           <div className="space-y-6">
             <SectionCard title="My Vault" subtitle="Move between your library and created listings with a single account workspace.">
               <div className="space-y-6">
-                <div className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  <div className="flex min-w-max gap-3">
+                <div className="overflow-x-auto border-b border-white/10 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <div className="flex min-w-max items-end gap-5">
                     {accountAreas.map((area) => (
                       <AccountTopTab
                         key={area.key}

@@ -4,6 +4,12 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
+import {
+  USER_TYPE_OPTIONS,
+  decodeStoredUserTypes,
+  encodeSelectedUserTypes,
+  formatSelectedUserTypes,
+} from "@/lib/userTypeSelections";
 import NotificationsPreferences from "./NotificationsPreferences.client.jsx";
 import AccountTabs from "./AccountTabs.jsx";
 import { useTheme } from "@/app/components/ThemeProvider";
@@ -18,12 +24,6 @@ const TABS = [
   { key: "notifications", label: "Notifications" },
   { key: "consultants", label: "My Consultancy" },
   { key: "creators", label: "My Creators" },
-];
-
-const userTypes = [
-  { value: "consultant", label: "Consultant / Contractor" },
-  { value: "client", label: "Client" },
-  { value: "both", label: "Both" },
 ];
 
 const organisationSizes = [
@@ -51,7 +51,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
 
   // NEW: profile form state for the Account tab
   const [profileForm, setProfileForm] = useState({
-    userType: "",
+    userTypes: [],
     organisationSize: "",
     organisationName: "",
     profession: "",
@@ -121,7 +121,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
       } else if (profileRow) {
         setProfileForm((prev) => ({
           ...prev,
-          userType: profileRow.user_type ?? "",
+          userTypes: decodeStoredUserTypes(profileRow.user_type),
           organisationSize: profileRow.organisation_size ?? "",
           organisationName: profileRow.organisation_name ?? "",
           profession: profileRow.profession ?? "",
@@ -181,6 +181,18 @@ export default function AccountPageClient({ initialTab = "account" }) {
     setProfileForm((prev) => ({ ...prev, [field]: value }));
   }
 
+  function toggleProfileUserType(value) {
+    setProfileForm((prev) => {
+      const exists = prev.userTypes.includes(value);
+      return {
+        ...prev,
+        userTypes: exists
+          ? prev.userTypes.filter((item) => item !== value)
+          : [...prev.userTypes, value],
+      };
+    });
+  }
+
   async function handleProfileSave(e) {
     e.preventDefault();
     if (!session?.access_token) return;
@@ -197,7 +209,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
             Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            userType: profileForm.userType,
+            userType: encodeSelectedUserTypes(profileForm.userTypes),
             organisationSize: profileForm.organisationSize,
             organisationName: profileForm.organisationName?.trim() || null,
             profession: profileForm.profession.trim(),
@@ -219,7 +231,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
   }
 
   const isProfileSubmitDisabled =
-    !profileForm.userType ||
+    profileForm.userTypes.length === 0 ||
     !profileForm.organisationSize ||
     !profileForm.profession ||
     isSavingProfile;
@@ -360,24 +372,24 @@ export default function AccountPageClient({ initialTab = "account" }) {
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="block text-xs font-medium text-slate-300">
-                    I’m here as a…
+                    I’m here as (select all that apply)
                   </label>
                   <div className="mt-2 grid gap-2">
-                    {userTypes.map((option) => (
+                    {USER_TYPE_OPTIONS.map((option) => (
                       <button
                         key={option.value}
                         type="button"
-                        onClick={() => updateProfileField("userType", option.value)}
+                        onClick={() => toggleProfileUserType(option.value)}
                         className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-xs sm:text-sm transition ${
-                          profileForm.userType === option.value
+                          profileForm.userTypes.includes(option.value)
                             ? "border-sky-400/70 bg-sky-500/10 text-white"
                             : "border-white/10 bg-white/[0.02] text-slate-200 hover:border-white/25"
                         }`}
                       >
                         <span>{option.label}</span>
                         <span
-                          className={`h-4 w-4 rounded-full border ${
-                            profileForm.userType === option.value
+                          className={`h-4 w-4 rounded border ${
+                            profileForm.userTypes.includes(option.value)
                               ? "border-sky-400 bg-sky-500/60"
                               : "border-slate-500"
                           }`}
@@ -480,10 +492,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
                   <div className="flex items-center justify-between gap-3">
                     <dt className="text-slate-400">User type</dt>
                     <dd className="text-right text-slate-100">
-                      {
-                        (userTypes.find((u) => u.value === profileForm.userType) || {})
-                          .label || "Not set"
-                      }
+                      {formatSelectedUserTypes(profileForm.userTypes)}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-3">

@@ -22,6 +22,7 @@ import {
   normaliseTagIds,
   sanitizeSlug,
 } from "@/lib/resourceHubServer";
+import { sendNewResourceNotification } from "@/lib/emails/sendNewResource";
 import { timedRoute } from "@/lib/apiTiming";
 
 function asNullablePositiveInteger(value) {
@@ -313,6 +314,14 @@ export async function POST(req) {
   if (reloadError) {
     return NextResponse.json({ ok: false, error: reloadError.message }, { status: 400 });
   }
+
+  // Notify admin inbox when a new resource is created (fire-and-forget).
+  sendNewResourceNotification({
+    resource: hydrated,
+    createdBy: { email: user?.email || "", name: user?.user_metadata?.full_name || "" },
+  })
+    .then(() => console.log("[resources.create] admin notified for resource:", hydrated?.id))
+    .catch((err) => console.error("[resources.create] notify error:", err));
 
   return NextResponse.json({
     ok: true,

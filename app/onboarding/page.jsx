@@ -3,12 +3,11 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
-
-const userTypes = [
-  { value: "consultant", label: "Consultant / Contractor" },
-  { value: "client", label: "Client" },
-  { value: "both", label: "Both" },
-];
+import {
+  USER_TYPE_OPTIONS,
+  decodeStoredUserTypes,
+  encodeSelectedUserTypes,
+} from "@/lib/userTypeSelections";
 
 const organisationSizes = [
   { value: "individual", label: "Individual" },
@@ -22,7 +21,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [sessionChecked, setSessionChecked] = useState(false);
   const [form, setForm] = useState({
-    userType: "",
+    userTypes: [],
     organisationSize: "",
     organisationName: "",
     profession: "",
@@ -60,7 +59,7 @@ export default function OnboardingPage() {
         setError(error.message);
       } else if (profile) {
         setForm({
-          userType: profile.user_type ?? "",
+          userTypes: decodeStoredUserTypes(profile.user_type),
           organisationSize: profile.organisation_size ?? "",
           organisationName: profile.organisation_name ?? "",
           profession: profile.profession ?? "",
@@ -78,7 +77,7 @@ export default function OnboardingPage() {
 
   const isSubmitDisabled = useMemo(() => {
     return (
-      !form.userType ||
+      form.userTypes.length === 0 ||
       !form.organisationSize ||
       !form.profession ||
       isPending
@@ -87,6 +86,18 @@ export default function OnboardingPage() {
 
   function updateField(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function toggleUserType(value) {
+    setForm((prev) => {
+      const exists = prev.userTypes.includes(value);
+      return {
+        ...prev,
+        userTypes: exists
+          ? prev.userTypes.filter((item) => item !== value)
+          : [...prev.userTypes, value],
+      };
+    });
   }
 
   async function handleSubmit(e) {
@@ -103,7 +114,7 @@ export default function OnboardingPage() {
 
         // Build payload with only non-empty fields
         const payload = {};
-        if (form.userType) payload.userType = form.userType;
+        if (form.userTypes.length > 0) payload.userType = encodeSelectedUserTypes(form.userTypes);
         if (form.organisationSize) payload.organisationSize = form.organisationSize;
         if (form.organisationName?.trim()) payload.organisationName = form.organisationName.trim();
         if (form.profession?.trim()) payload.profession = form.profession.trim();
@@ -186,25 +197,25 @@ export default function OnboardingPage() {
         <form className="space-y-5" onSubmit={handleSubmit}>
           <fieldset>
             <legend className="text-sm font-medium text-white">
-              I’m here as a…
+              I’m here as (select all that apply)
             </legend>
             <div className="mt-3 grid gap-2">
-              {userTypes.map((option) => (
+              {USER_TYPE_OPTIONS.map((option) => (
                 <label
                   key={option.value}
                   className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm transition ${
-                    form.userType === option.value
+                    form.userTypes.includes(option.value)
                       ? "border-sky-400/70 bg-sky-500/10 text-white"
                       : "border-white/10 bg-white/[0.02] text-slate-200 hover:border-white/20"
                   }`}
                 >
                   <span>{option.label}</span>
                   <input
-                    type="radio"
-                    name="userType"
+                    type="checkbox"
+                    name="userTypes"
                     value={option.value}
-                    checked={form.userType === option.value}
-                    onChange={() => updateField("userType", option.value)}
+                    checked={form.userTypes.includes(option.value)}
+                    onChange={() => toggleUserType(option.value)}
                   />
                 </label>
               ))}

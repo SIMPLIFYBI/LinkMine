@@ -133,7 +133,7 @@ export async function POST(req, { params }) {
 
   const { data: currentAsset, error: assetError } = await sb
     .from("resource_assets")
-    .select("id, bucket_name, object_path, size_bytes")
+    .select("id, bucket_name, object_path, original_filename, size_bytes")
     .eq("resource_id", id)
     .eq("is_current", true)
     .maybeSingle();
@@ -151,7 +151,7 @@ export async function POST(req, { params }) {
   if (!asset) {
     const { data: latestAsset, error: latestAssetError } = await sb
       .from("resource_assets")
-      .select("id, bucket_name, object_path, size_bytes")
+      .select("id, bucket_name, object_path, original_filename, size_bytes")
       .eq("resource_id", id)
       .order("version_no", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
@@ -188,7 +188,9 @@ export async function POST(req, { params }) {
 
   const { data: signed, error: signedError } = await sb.storage
     .from(asset.bucket_name || RESOURCE_STORAGE_BUCKET)
-    .createSignedUrl(asset.object_path, 60);
+    .createSignedUrl(asset.object_path, 60, {
+      download: asset.original_filename || `resource-${id}`,
+    });
 
   if (signedError || !signed?.signedUrl) {
     console.error("[resources.access] Hosted URL signing failed", {

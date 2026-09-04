@@ -260,10 +260,40 @@ export default async function MarketplaceResourcePage({ params }) {
 
   let uniqueOpeners30d = null;
   try {
-    const { data: uniqueOpeners } = await sb.rpc("resource_unique_openers_30d", {
-      p_resource_id: id,
-    });
-    uniqueOpeners30d = Number(uniqueOpeners ?? 0);
+    if (canEditResource) {
+      const sinceIso = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      let metricsSb = sb;
+      try {
+        metricsSb = supabaseAdminClient();
+      } catch {
+        metricsSb = sb;
+      }
+
+      const [{ data: openRows = [] }, { data: downloadRows = [] }] = await Promise.all([
+        metricsSb
+          .from("resource_open_events")
+          .select("user_id")
+          .eq("resource_id", id)
+          .gte("opened_at", sinceIso),
+        metricsSb
+          .from("resource_download_events")
+          .select("user_id")
+          .eq("resource_id", id)
+          .gte("created_at", sinceIso),
+      ]);
+
+      const uniqueUserIds = new Set(
+        [...openRows, ...downloadRows]
+          .map((row) => row?.user_id)
+          .filter(Boolean)
+      );
+      uniqueOpeners30d = uniqueUserIds.size;
+    } else {
+      const { data: uniqueOpeners } = await sb.rpc("resource_unique_openers_30d", {
+        p_resource_id: id,
+      });
+      uniqueOpeners30d = Number(uniqueOpeners ?? 0);
+    }
   } catch {
     uniqueOpeners30d = null;
   }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { isValidStoredUserType } from "@/lib/userTypeSelections";
 
-const USER_TYPES = new Set(["consultant", "client", "both"]);
 const ORG_SIZES = new Set(["individual", "1-8", "8-25", "26-100", "101+"]);
 const NAME_MAX = 60;
 
@@ -52,7 +52,7 @@ export async function PATCH(req) {
     lastName        // NEW
   } = payload;
 
-  if (!USER_TYPES.has(userType)) {
+  if (!isValidStoredUserType(userType)) {
     return NextResponse.json({ error: "Invalid user type." }, { status: 400 });
   }
 

@@ -103,7 +103,7 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
     if (!name) return setMsg({ ok: false, text: "Display name is required." });
     if (!head) return setMsg({ ok: false, text: "Headline is required." });
     if (head.length > MAX_HEADLINE) return setMsg({ ok: false, text: `Headline must be ${MAX_HEADLINE} characters or fewer.` });
-    if (!loc) return setMsg({ ok: false, text: "Location is required." });
+    if (!loc) return setMsg({ ok: false, text: "City is required." });
     if (!countryCode) return setMsg({ ok: false, text: "Country is required." });
     if (!globalRegion) return setMsg({ ok: false, text: "Global region is required." });
     if (!email) return setMsg({ ok: false, text: "Contact email is required." });
@@ -196,11 +196,11 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
             hint={`${headline.length}/${MAX_HEADLINE}`}
           />
           <Field
-            label="Location"
+            label="City"
             value={location}
             onChange={setLocation}
             required
-            placeholder="City, Country"
+            placeholder="e.g. Perth"
           />
           <SelectField
             label="Country"
