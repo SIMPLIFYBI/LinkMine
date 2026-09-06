@@ -11,9 +11,11 @@ function cleanEmail(value) {
 
 function parseAllowlist() {
   const raw = process.env.DEV_RESET_EMAIL_ALLOWLIST || "";
+
+  // Accept comma, semicolon, and newline-separated values from env tooling.
   return raw
-    .split(",")
-    .map((value) => cleanEmail(value))
+    .split(/[;,\n\r]+/)
+    .map((value) => cleanEmail(value.replace(/^['\"]|['\"]$/g, "")))
     .filter(Boolean)
     .slice(0, MAX_ALLOWLIST);
 }
