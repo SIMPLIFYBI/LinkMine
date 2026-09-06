@@ -15,7 +15,7 @@ const PROFILE_TYPES = [
   },
   {
     value: "creator",
-    label: "Digital Creator",
+    label: "Digital product creator",
     description: "Publish and manage digital resources in Vault.",
   },
   {
@@ -28,6 +28,33 @@ const PROFILE_TYPES = [
 function marketLabel(value) {
   return value === "oil_gas" ? "Oil & Gas" : "Mining";
 }
+
+const PROFILE_FIELD_HELP = {
+  generic: {
+    displayName: "This is the public profile name people will see in listings and on your profile page.",
+    headline: "A one-line summary that helps people quickly understand what you offer.",
+    city: "Your primary base city so clients can understand local context and timezone.",
+    contactEmail: "Public enquiries go here. Use an inbox you actively monitor.",
+  },
+  consultant: {
+    displayName: "Use your personal or business trading name that clients would recognize.",
+    headline: "Summarize your consulting specialty and outcomes in one line.",
+    city: "Your primary service location or operating base.",
+    contactEmail: "Client enquiry email for consulting opportunities.",
+  },
+  creator: {
+    displayName: "Use your creator or brand name that should appear on your digital products.",
+    headline: "Describe the kind of digital products you create and who they help.",
+    city: "Your base location for credibility and timezone context.",
+    contactEmail: "Customer and collaboration enquiries for your digital products.",
+  },
+  both: {
+    displayName: "Use the name that best represents both your consulting and digital product brand.",
+    headline: "Blend your service capability and digital product focus in one clear line.",
+    city: "Your main operating location and timezone.",
+    contactEmail: "Primary inbox for consulting and product enquiries.",
+  },
+};
 
 export default function ProfileSetupBasic({ services = [], initialProfileType = "" }) {
   const router = useRouter();
@@ -79,6 +106,8 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
     }
     return { mining, oil_gas };
   }, [selected, services]);
+
+  const fieldHelp = PROFILE_FIELD_HELP[profileType] || PROFILE_FIELD_HELP.generic;
 
   function toggleService(id) {
     setSelected((prev) => {
@@ -185,15 +214,29 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
             value={displayName}
             onChange={setDisplayName}
             required
-            placeholder="e.g. Jane Doe"
+            placeholder={
+              profileType === "creator"
+                ? "e.g. MineFlow Studio"
+                : profileType === "both"
+                ? "e.g. Jane Doe | MineFlow Studio"
+                : "e.g. Jane Doe"
+            }
+            infoText={fieldHelp.displayName}
           />
           <Field
             label={`Headline (max ${MAX_HEADLINE})`}
             value={headline}
             onChange={(v) => setHeadline(v.slice(0, MAX_HEADLINE))}
             required
-            placeholder="Short summary, e.g. Mining engineer (LOM planning)"
+            placeholder={
+              profileType === "creator"
+                ? "e.g. Build drill-and-blast templates for open pit teams"
+                : profileType === "both"
+                ? "e.g. Mine planning consultant + digital workflow creator"
+                : "Short summary, e.g. Mining engineer (LOM planning)"
+            }
             hint={`${headline.length}/${MAX_HEADLINE}`}
+            infoText={fieldHelp.headline}
           />
           <Field
             label="City"
@@ -201,6 +244,7 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
             onChange={setLocation}
             required
             placeholder="e.g. Perth"
+            infoText={fieldHelp.city}
           />
           <SelectField
             label="Country"
@@ -225,8 +269,15 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
             onChange={setContactEmail}
             required
             placeholder="name@example.com"
+            infoText={fieldHelp.contactEmail}
           />
         </div>
+
+        {profileType ? (
+          <p className="-mt-1 text-xs text-slate-400">
+            Hints are tailored to your selected profile type: {PROFILE_TYPES.find((p) => p.value === profileType)?.label || "Profile"}.
+          </p>
+        ) : null}
 
         {requiresServices ? (
           <div className="space-y-2">
@@ -303,10 +354,31 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
   );
 }
 
-function Field({ label, value, onChange, type = "text", required = false, placeholder, hint }) {
+function Field({ label, value, onChange, type = "text", required = false, placeholder, hint, infoText }) {
   return (
     <label className="block text-sm text-slate-300">
-      {label} {required ? "*" : ""}
+      <span className="flex items-center gap-2">
+        <span>
+          {label} {required ? "*" : ""}
+        </span>
+        {infoText ? (
+          <span className="group relative inline-flex">
+            <button
+              type="button"
+              aria-label={`About ${label}`}
+              className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/30 text-[11px] font-semibold text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+              onClick={(event) => {
+                event.preventDefault();
+              }}
+            >
+              i
+            </button>
+            <span className="pointer-events-none absolute left-1/2 top-7 z-20 hidden w-64 -translate-x-1/2 rounded-lg border border-white/15 bg-slate-900/95 px-3 py-2 text-xs leading-relaxed text-slate-100 shadow-xl group-hover:block group-focus-within:block">
+              {infoText}
+            </span>
+          </span>
+        ) : null}
+      </span>
       <input
         type={type}
         value={value}

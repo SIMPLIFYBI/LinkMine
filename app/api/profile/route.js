@@ -52,6 +52,10 @@ export async function PATCH(req) {
     lastName        // NEW
   } = payload;
 
+  const organisationNameTrimmed =
+    typeof organisationName === "string" ? organisationName.trim() : "";
+  const professionTrimmed = typeof profession === "string" ? profession.trim() : "";
+
   if (!isValidStoredUserType(userType)) {
     return NextResponse.json({ error: "Invalid user type." }, { status: 400 });
   }
@@ -60,8 +64,19 @@ export async function PATCH(req) {
     return NextResponse.json({ error: "Invalid organisation size." }, { status: 400 });
   }
 
-  if (typeof profession !== "string" || !profession.trim()) {
-    return NextResponse.json({ error: "Profession is required." }, { status: 400 });
+  if (organisationName != null && typeof organisationName !== "string") {
+    return NextResponse.json({ error: "Organisation name must be a string." }, { status: 400 });
+  }
+
+  if (profession != null && typeof profession !== "string") {
+    return NextResponse.json({ error: "Profession must be a string." }, { status: 400 });
+  }
+
+  if (!organisationNameTrimmed && !professionTrimmed) {
+    return NextResponse.json(
+      { error: "Please provide either an organisation name or profession." },
+      { status: 400 }
+    );
   }
 
   // Validate names only if provided
@@ -74,8 +89,8 @@ export async function PATCH(req) {
     id: user.id,
     user_type: userType,
     organisation_size: organisationSize,
-    organisation_name: organisationName || null,
-    profession: profession.trim(),
+    organisation_name: organisationNameTrimmed || null,
+    profession: professionTrimmed || "unspecified",
     ...(firstName ? { first_name: firstName.trim() } : {}),
     ...(lastName ? { last_name: lastName.trim() } : {}),
   };
@@ -91,8 +106,8 @@ export async function PATCH(req) {
     saved: {
       userType,
       organisationSize,
-      organisationName: organisationName || null,
-      profession: profession.trim(),
+      organisationName: organisationNameTrimmed || null,
+      profession: professionTrimmed || "unspecified",
       firstName: firstName ? firstName.trim() : null,
       lastName: lastName ? lastName.trim() : null
     }

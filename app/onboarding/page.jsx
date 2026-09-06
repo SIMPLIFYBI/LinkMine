@@ -76,10 +76,13 @@ export default function OnboardingPage() {
   }, [router]);
 
   const isSubmitDisabled = useMemo(() => {
+    const hasOrganisationOrProfession =
+      Boolean(form.organisationName?.trim()) || Boolean(form.profession?.trim());
+
     return (
       form.userTypes.length === 0 ||
       !form.organisationSize ||
-      !form.profession ||
+      !hasOrganisationOrProfession ||
       isPending
     );
   }, [form, isPending]);
@@ -104,6 +107,13 @@ export default function OnboardingPage() {
     e.preventDefault();
     setError("");
     setMessage("");
+
+    const hasOrganisationOrProfession =
+      Boolean(form.organisationName?.trim()) || Boolean(form.profession?.trim());
+    if (!hasOrganisationOrProfession) {
+      setError("Please add either an organisation name or your profession.");
+      return;
+    }
 
     startTransition(async () => {
       try {
@@ -209,7 +219,25 @@ export default function OnboardingPage() {
                       : "border-white/10 bg-white/[0.02] text-slate-200 hover:border-white/20"
                   }`}
                 >
-                  <span>{option.label}</span>
+                  <span className="flex items-center gap-2">
+                    <span>{option.label}</span>
+                    <span className="group relative inline-flex">
+                      <button
+                        type="button"
+                        aria-label={`About ${option.label}`}
+                        className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/30 text-[11px] font-semibold text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                        }}
+                      >
+                        i
+                      </button>
+                      <span className="pointer-events-none absolute left-1/2 top-7 z-20 hidden w-64 -translate-x-1/2 rounded-lg border border-white/15 bg-slate-900/95 px-3 py-2 text-xs leading-relaxed text-slate-100 shadow-xl group-hover:block group-focus-within:block">
+                        {option.helpText}
+                      </span>
+                    </span>
+                  </span>
                   <input
                     type="checkbox"
                     name="userTypes"
@@ -253,9 +281,27 @@ export default function OnboardingPage() {
           </fieldset>
 
           <div>
-            <label className="block text-sm text-slate-300">
-              Organisation name{" "}
-              <span className="text-slate-500">(optional)</span>
+            <label className="flex items-center gap-2 text-sm text-slate-300">
+              <span>
+                Organisation name{" "}
+                <span className="text-slate-500">(or profession)</span>
+              </span>
+              <span className="group relative inline-flex">
+                <button
+                  type="button"
+                  aria-label="Organisation name guidance"
+                  className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/30 text-[11px] font-semibold text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                >
+                  i
+                </button>
+                <span className="pointer-events-none absolute left-1/2 top-7 z-20 hidden w-64 -translate-x-1/2 rounded-lg border border-white/15 bg-slate-900/95 px-3 py-2 text-xs leading-relaxed text-slate-100 shadow-xl group-hover:block group-focus-within:block">
+                  Fill out either organisation name or profession. You can provide both if you want.
+                </span>
+              </span>
             </label>
             <input
               type="text"
@@ -267,8 +313,24 @@ export default function OnboardingPage() {
           </div>
 
           <div>
-            <label className="block text-sm text-slate-300">
-              Profession / role
+            <label className="flex items-center gap-2 text-sm text-slate-300">
+              <span>Profession / role <span className="text-slate-500">(or organisation name)</span></span>
+              <span className="group relative inline-flex">
+                <button
+                  type="button"
+                  aria-label="Profession guidance"
+                  className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/30 text-[11px] font-semibold text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                >
+                  i
+                </button>
+                <span className="pointer-events-none absolute left-1/2 top-7 z-20 hidden w-64 -translate-x-1/2 rounded-lg border border-white/15 bg-slate-900/95 px-3 py-2 text-xs leading-relaxed text-slate-100 shadow-xl group-hover:block group-focus-within:block">
+                  Fill out either profession or organisation name. One of these fields is required.
+                </span>
+              </span>
             </label>
             <input
               type="text"
@@ -277,6 +339,9 @@ export default function OnboardingPage() {
               className="mt-2 w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"
               placeholder="e.g. Principal Mining Engineer"
             />
+            <p className="mt-2 text-xs text-slate-400">
+              Add either organisation name or profession. At least one is required.
+            </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">

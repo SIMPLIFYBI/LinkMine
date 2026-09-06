@@ -20,6 +20,56 @@ export default function DeveloperToolsClient() {
   const [resetting, setResetting] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [sandbox, setSandbox] = useState(null);
+  const [sandboxBusy, setSandboxBusy] = useState(false);
+
+  async function callSandboxApi(mode) {
+    const sb = supabaseBrowser();
+    const {
+      data: { session },
+      error: sessionError,
+    } = await sb.auth.getSession();
+
+    if (sessionError) {
+      throw new Error(sessionError.message || "Unable to read session.");
+    }
+
+    const response = await fetch("/api/admin/dev-tools/resource-claim-sandbox", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      },
+      credentials: "include",
+      body: JSON.stringify({ mode }),
+    });
+
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok || body?.ok === false) {
+      throw new Error(body?.error || `Request failed (${response.status}).`);
+    }
+
+    return body;
+  }
+
+  async function handleSandbox(mode) {
+    setError("");
+    setMessage("");
+    setSandboxBusy(true);
+    try {
+      const body = await callSandboxApi(mode);
+      setSandbox(body);
+      setMessage(
+        mode === "reset"
+          ? "Sandbox resource reset and ready for claim-flow testing."
+          : "Loaded current sandbox state."
+      );
+    } catch (err) {
+      setError(err.message || "Sandbox request failed.");
+    } finally {
+      setSandboxBusy(false);
+    }
+  }
 
   const trimmedEmail = email.trim().toLowerCase();
   const requiredPhrase = useMemo(() => (trimmedEmail ? `RESET ${trimmedEmail}` : ""), [trimmedEmail]);
@@ -137,9 +187,81 @@ export default function DeveloperToolsClient() {
         >
           Email triggers
         </button>
+        <button
+          type="button"
+          onClick={() => setActiveTool("claim-sandbox")}
+          className={[
+            "rounded-full px-4 py-2 text-sm font-semibold transition",
+            activeTool === "claim-sandbox"
+              ? "bg-sky-500/20 text-sky-100 border border-sky-300/50"
+              : "bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10",
+          ].join(" ")}
+        >
+          Claim sandbox
+        </button>
       </div>
 
       {activeTool === "email-templates" ? <DeveloperEmailTemplatesClient /> : null}
+
+      {activeTool === "claim-sandbox" ? (
+        <article className="rounded-3xl border border-white/10 bg-white/5 p-6 space-y-4">
+          <div>
+            <h2 className="text-xl font-semibold text-white">Resource claim sandbox</h2>
+            <p className="mt-1 text-sm text-slate-400">
+              One reusable dev-only unclaimed resource tied to a sandbox claim email. Use reset before each test run.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => handleSandbox("preview")}
+              disabled={sandboxBusy}
+              className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/15 disabled:opacity-60"
+            >
+              {sandboxBusy ? "Working..." : "Preview sandbox"}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSandbox("reset")}
+              disabled={sandboxBusy}
+              className="rounded-full border border-sky-300/40 bg-sky-500/15 px-4 py-2 text-sm font-semibold text-sky-100 hover:bg-sky-500/25 disabled:opacity-60"
+            >
+              {sandboxBusy ? "Working..." : "Reset sandbox"}
+            </button>
+          </div>
+
+          {message ? (
+            <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-3 text-sm text-emerald-100">
+              {message}
+            </div>
+          ) : null}
+          {error ? (
+            <div className="rounded-lg border border-rose-400/30 bg-rose-500/10 p-3 text-sm text-rose-100">
+              {error}
+            </div>
+          ) : null}
+
+          {sandbox?.sandbox ? (
+            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-sm text-slate-200 space-y-2">
+              <div>Claim email: <span className="text-sky-300">{sandbox.sandbox.claimEmail || "-"}</span></div>
+              <div>Consultant ID: {sandbox.sandbox.consultantId || "-"}</div>
+              <div>Resource ID: {sandbox.sandbox.resourceId || "-"}</div>
+              <div>Currently claimed: {sandbox.sandbox.consultantClaimed ? "Yes" : "No"}</div>
+              {sandbox?.links?.resource ? (
+                <div>
+                  Resource link: <a href={sandbox.links.resource} className="text-sky-300 hover:underline">{sandbox.links.resource}</a>
+                </div>
+              ) : null}
+              {sandbox?.links?.claim ? (
+                <div>
+                  Claim page link: <a href={sandbox.links.claim} className="text-sky-300 hover:underline">{sandbox.links.claim}</a>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </article>
+      ) : null}
 
       {activeTool === "reset-user" ? (
         <>

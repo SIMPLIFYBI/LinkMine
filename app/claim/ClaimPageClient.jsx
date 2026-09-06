@@ -9,9 +9,14 @@ function formatDisplay(code) {
   return c.replace(/(.{4})(.{4})(.{0,4})/, (_, a, b, d) => [a, b, d].filter(Boolean).join("-"));
 }
 
-export default function ClaimPageClient({ consultantIdInitial = "" }) {
+export default function ClaimPageClient({
+  consultantIdInitial = "",
+  consultantNameInitial = "",
+  claimRecipientEmail = "",
+}) {
   const router = useRouter();
   const [consultantId, setConsultantId] = useState(consultantIdInitial);
+  const [consultantName] = useState(consultantNameInitial);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
@@ -71,20 +76,22 @@ export default function ClaimPageClient({ consultantIdInitial = "" }) {
         <header className="text-center">
           <h1 className="text-2xl font-semibold text-white">Claim your profile</h1>
           <p className="mt-2 text-sm text-slate-300">
-            Enter your account credentials and the claim code from the email.
+            Enter your YouMine login details and the claim code from the email.
           </p>
         </header>
 
         <div className="mt-5 space-y-4">
-          <label className="grid gap-1 text-sm">
-            <span className="text-slate-300">Consultant ID</span>
-            <input
-              value={consultantId}
-              onChange={(e) => setConsultantId(e.target.value.trim())}
-              placeholder="0c37816d-...."
-              className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-slate-100 placeholder:text-slate-400 outline-none focus:border-sky-400/60 focus:ring-2 focus:ring-sky-400/30"
-            />
-          </label>
+          <div className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm">
+            <div className="text-xs uppercase tracking-wide text-slate-400">Profile to claim</div>
+            <div className="mt-1 font-medium text-slate-100">
+              {consultantName || "Selected consultant profile"}
+            </div>
+            {claimRecipientEmail ? (
+              <p className="mt-1 text-xs text-slate-300">
+                Claim code email is sent to: <span className="text-sky-300">{claimRecipientEmail}</span>
+              </p>
+            ) : null}
+          </div>
 
             <label className="grid gap-1 text-sm">
               <span className="text-slate-300">Email</span>
@@ -95,6 +102,9 @@ export default function ClaimPageClient({ consultantIdInitial = "" }) {
                 placeholder="you@example.com"
                 className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-slate-100 placeholder:text-slate-400 outline-none focus:border-sky-400/60 focus:ring-2 focus:ring-sky-400/30"
               />
+              <span className="text-[11px] text-slate-400">
+                Use your YouMine account email (the account that will become the profile owner).
+              </span>
             </label>
             <label className="grid gap-1 text-sm">
               <span className="text-slate-300">Password</span>
@@ -105,6 +115,9 @@ export default function ClaimPageClient({ consultantIdInitial = "" }) {
                 placeholder="••••••••"
                 className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-slate-100 placeholder:text-slate-400 outline-none focus:border-sky-400/60 focus:ring-2 focus:ring-sky-400/30"
               />
+              <span className="text-[11px] text-slate-400">
+                Enter your YouMine login password, not the password for the inbox that receives claim emails.
+              </span>
             </label>
 
           <label className="grid gap-1 text-sm">
@@ -128,7 +141,7 @@ export default function ClaimPageClient({ consultantIdInitial = "" }) {
           {msg && <div className="text-xs text-slate-200">{msg}</div>}
 
           <p className="text-[11px] text-slate-400">
-            Your login and code are validated together to confirm ownership.
+            Your login and claim code are validated together to confirm ownership.
           </p>
         </div>
       </section>

@@ -64,7 +64,11 @@ export default async function EditConsultantPage({ params }) {
     isAdmin = Boolean(adminRow);
   }
 
-  if (!userId || (consultant.claimed_by !== userId && !isAdmin)) {
+  if (!userId) {
+    redirect(`/login?redirect=${encodeURIComponent(`/consultants/${id}/edit`)}`);
+  }
+
+  if (consultant.claimed_by !== userId && !isAdmin) {
     redirect(`/consultants/${id}`);
   }
 
@@ -127,7 +131,7 @@ export default async function EditConsultantPage({ params }) {
 
       {["consultant", "both"].includes(String(consultant.profile_type || "consultant")) ? (
         <section className="mt-10 space-y-3">
-          <h2 className="text-lg font-semibold text-slate-100">Services</h2>
+          <h2 className="text-lg font-semibold text-slate-100">Services offered</h2>
           <p className="text-sm text-slate-400">
             Add or remove services offered by this consultancy.
           </p>

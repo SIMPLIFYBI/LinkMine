@@ -135,7 +135,7 @@ export async function PATCH(req, { params }) {
 
   if (data.status === "approved" && data.contact_email) {
     const site = process.env.NEXT_PUBLIC_SITE_URL || "";
-    const profileUrl = `${site}/consultants/${consultantId}`;
+    const profileUrl = `${site}/consultants/${consultantId}/edit`;
     await sendApprovalEmail({
       to: data.contact_email,
       consultantName: data.display_name,

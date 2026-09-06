@@ -200,6 +200,13 @@ export default function AccountPageClient({ initialTab = "account" }) {
     setProfileSaveError("");
     setProfileSaveMessage("");
 
+    const hasOrganisationOrProfession =
+      Boolean(profileForm.organisationName?.trim()) || Boolean(profileForm.profession?.trim());
+    if (!hasOrganisationOrProfession) {
+      setProfileSaveError("Please add either an organisation name or your profession.");
+      return;
+    }
+
     startSavingProfile(async () => {
       try {
         const res = await fetch("/api/profile", {
@@ -212,7 +219,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
             userType: encodeSelectedUserTypes(profileForm.userTypes),
             organisationSize: profileForm.organisationSize,
             organisationName: profileForm.organisationName?.trim() || null,
-            profession: profileForm.profession.trim(),
+            profession: profileForm.profession?.trim() || undefined,
             firstName: profileForm.firstName?.trim() || undefined,
             lastName: profileForm.lastName?.trim() || undefined,
           }),
@@ -233,7 +240,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
   const isProfileSubmitDisabled =
     profileForm.userTypes.length === 0 ||
     !profileForm.organisationSize ||
-    !profileForm.profession ||
+    (!profileForm.organisationName?.trim() && !profileForm.profession?.trim()) ||
     isSavingProfile;
 
   const appearanceOptions = [
@@ -386,7 +393,28 @@ export default function AccountPageClient({ initialTab = "account" }) {
                             : "border-white/10 bg-white/[0.02] text-slate-200 hover:border-white/25"
                         }`}
                       >
-                        <span>{option.label}</span>
+                        <span className="flex items-center gap-2">
+                          <span>{option.label}</span>
+                          <span className="group relative inline-flex" onClick={(event) => event.stopPropagation()}>
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              aria-label={`About ${option.label}`}
+                              className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/30 text-[11px] font-semibold text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter" || event.key === " ") {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                }
+                              }}
+                            >
+                              i
+                            </span>
+                            <span className="pointer-events-none absolute left-1/2 top-7 z-20 hidden w-64 -translate-x-1/2 rounded-lg border border-white/15 bg-slate-900/95 px-3 py-2 text-left text-xs leading-relaxed text-slate-100 shadow-xl group-hover:block group-focus-within:block">
+                              {option.helpText}
+                            </span>
+                          </span>
+                        </span>
                         <span
                           className={`h-4 w-4 rounded border ${
                             profileForm.userTypes.includes(option.value)
@@ -425,8 +453,24 @@ export default function AccountPageClient({ initialTab = "account" }) {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300">
-                  Organisation name <span className="text-slate-500">(optional)</span>
+                <label className="flex items-center gap-2 text-xs font-medium text-slate-300">
+                  <span>Organisation name <span className="text-slate-500">(or profession)</span></span>
+                  <span className="group relative inline-flex">
+                    <button
+                      type="button"
+                      aria-label="Organisation name guidance"
+                      className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/30 text-[11px] font-semibold text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                      }}
+                    >
+                      i
+                    </button>
+                    <span className="pointer-events-none absolute left-1/2 top-7 z-20 hidden w-64 -translate-x-1/2 rounded-lg border border-white/15 bg-slate-900/95 px-3 py-2 text-left text-xs leading-relaxed text-slate-100 shadow-xl group-hover:block group-focus-within:block">
+                      Fill out either organisation name or profession. You can include both.
+                    </span>
+                  </span>
                 </label>
                 <input
                   type="text"
@@ -440,17 +484,35 @@ export default function AccountPageClient({ initialTab = "account" }) {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300">
-                  Profession / role
+                <label className="flex items-center gap-2 text-xs font-medium text-slate-300">
+                  <span>Profession / role <span className="text-slate-500">(or organisation name)</span></span>
+                  <span className="group relative inline-flex">
+                    <button
+                      type="button"
+                      aria-label="Profession guidance"
+                      className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/30 text-[11px] font-semibold text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                      }}
+                    >
+                      i
+                    </button>
+                    <span className="pointer-events-none absolute left-1/2 top-7 z-20 hidden w-64 -translate-x-1/2 rounded-lg border border-white/15 bg-slate-900/95 px-3 py-2 text-left text-xs leading-relaxed text-slate-100 shadow-xl group-hover:block group-focus-within:block">
+                      Fill out either profession or organisation name. One of these fields is required.
+                    </span>
+                  </span>
                 </label>
                 <input
                   type="text"
                   value={profileForm.profession}
                   onChange={(e) => updateProfileField("profession", e.target.value)}
-                  required
                   className="mt-1 w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/40"
                   placeholder="e.g. Principal Mining Engineer"
                 />
+                <p className="mt-2 text-xs text-slate-400">
+                  Add either organisation name or profession. At least one is required.
+                </p>
               </div>
 
               {profileSaveError && (

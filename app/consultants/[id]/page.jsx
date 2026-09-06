@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 export const revalidate = 180; // 3 minutes
 
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import { fetchPlaceDetails } from "@/lib/googlePlaces";
 import ConsultantClaimButton from "@/app/components/ConsultantClaimButton";
@@ -92,12 +92,15 @@ async function getConsultant(id, viewer = {}) {
     (viewerUserId && (data.user_id === viewerUserId || data.claimed_by === viewerUserId))
   );
 
-  if (data.visibility !== "public" && !canViewAsOwnerOrAdmin) return null;
-  if (
+  const hiddenByVisibility = data.visibility !== "public" && !canViewAsOwnerOrAdmin;
+  const hiddenByProfileType =
     !["consultant", "both"].includes(String(data.profile_type || "consultant")) &&
-    !canViewAsOwnerOrAdmin
-  ) {
-    return null;
+    !canViewAsOwnerOrAdmin;
+  if (hiddenByVisibility || hiddenByProfileType) {
+    return {
+      restricted: true,
+      requiresAuth: !viewerUserId,
+    };
   }
 
   const { data: svc } = await sb
@@ -198,7 +201,7 @@ export async function generateMetadata(props) {
   const viewer = await getViewerContext();
   const data = await getConsultant(consultantId, viewer);
 
-  if (!data) {
+  if (!data || data.restricted) {
     return {
       title: "Consultant not found · YouMine",
       description: "This consultant profile is no longer available on YouMine.",
@@ -254,7 +257,11 @@ export default async function ConsultantPage(props) {
   const { id: consultantId } = await props.params;
   const viewer = await getViewerContext();
   const data = await getConsultant(consultantId, viewer);
+  if (data?.restricted && data.requiresAuth) {
+    redirect(`/login?redirect=${encodeURIComponent(`/consultants/${consultantId}`)}`);
+  }
   if (!data) return notFound();
+  if (data.restricted) return notFound();
 
   const {
     consultant,

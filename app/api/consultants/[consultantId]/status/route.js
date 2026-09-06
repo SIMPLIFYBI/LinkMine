@@ -88,7 +88,7 @@ export async function PATCH(req, context) {
       const client = new Postmark(POSTMARK_TOKEN);
 
       if (nextStatus === "approved" && prevStatus !== "approved") {
-        const profileUrl = siteUrl(`/consultants/${consultantId}`, req);
+        const profileUrl = siteUrl(`/consultants/${consultantId}/edit`, req);
         const { Subject, HtmlBody, TextBody } = buildConsultantApprovedEmail({
           consultantName: existing.display_name,
           profileUrl,
