@@ -89,6 +89,7 @@ const ALLOWED_LOGO_TYPES = ["image/png", "image/jpeg", "image/webp"];
 export default function EditConsultantForm({ consultant }) {
   const router = useRouter();
   const sb = supabaseBrowser();
+  const redirectTimerRef = useRef(null);
 
   const originalCompany = useRef(consultant.company?.trim() || "");
 
@@ -131,6 +132,15 @@ export default function EditConsultantForm({ consultant }) {
   const [busyLogo, setBusyLogo] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) {
+        window.clearTimeout(redirectTimerRef.current);
+        redirectTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const handleChange = (field) => (event) =>
     setForm((prev) => ({ ...prev, [field]: event.target.value }));
@@ -293,10 +303,9 @@ export default function EditConsultantForm({ consultant }) {
       return;
     }
 
-    setMessage({ type: "success", text: "Profile updated. Redirecting…" });
-    setTimeout(() => {
+    setMessage({ type: "success", text: "Profile updated. Redirecting..." });
+    redirectTimerRef.current = window.setTimeout(() => {
       router.replace(`/consultants/${consultant.id}`);
-      router.refresh();
     }, 900);
   };
 

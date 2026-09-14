@@ -339,6 +339,15 @@ function MarketplaceNavIcon({ name, active }) {
     );
   }
 
+  if (name === "creators") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="8" r="3.25" />
+        <path d="M5 19c1.6-2.7 4.1-4 7-4s5.4 1.3 7 4" />
+      </svg>
+    );
+  }
+
   return null;
 }
 
@@ -1867,12 +1876,14 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
       return [
         { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary", href: "/vault" },
         { key: "all-resources", label: "All Resources", hint: "Browse the full vault resource index.", icon: "orders", group: "primary", href: "/vault/resources" },
+        { key: "creators", label: "Creators", hint: "Browse creators publishing digital resources.", icon: "creators", group: "primary", href: "/vault/creators" },
       ];
     }
 
     const baseTabs = [
       { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary", href: "/vault" },
       { key: "all-resources", label: "All Resources", hint: "Browse the full vault resource index.", icon: "orders", group: "primary", href: "/vault/resources" },
+      { key: "creators", label: "Creators", hint: "Browse creators publishing digital resources.", icon: "creators", group: "primary", href: "/vault/creators" },
       { key: "submit", label: "Create", hint: "Create hosted or external listings and send them for review.", icon: "submit", group: "primary", href: "/vault/submit" },
       { key: "requests", label: "Requests", hint: "Track industry requests and completion workflows.", icon: "requests", group: "primary", href: "/vault/requests" },
       { key: "account", label: "My Vault", hint: "Manage your library and created vault resources.", icon: "library", group: "secondary", href: "/vault/account" },
@@ -2694,7 +2705,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                     <div className={["pointer-events-none absolute", heroCardVariant.blockClass].join(" ")} />
                     <ResourceOwnerBadge
                       resource={heroResource}
-                      className="absolute right-7 top-7 flex h-14 w-14 items-center justify-center overflow-hidden rounded-[18px] border border-white/20 text-base font-semibold text-slate-950 shadow-[0_10px_26px_-12px_rgba(255,255,255,0.7)]"
+                      className="absolute right-7 top-7 flex h-28 w-28 items-center justify-center overflow-hidden rounded-[18px] border border-white/20 text-base font-semibold text-slate-950 shadow-[0_10px_26px_-12px_rgba(255,255,255,0.7)]"
                       style={{ backgroundImage: heroArtwork?.chipBackground }}
                     />
                     <div className="relative z-10 flex h-full flex-col justify-between gap-6 pt-6 sm:pt-7">

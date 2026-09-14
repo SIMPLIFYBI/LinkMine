@@ -214,7 +214,7 @@ export default function SubmitEventModal({ open, onClose }) {
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-300">Summary (optional)</label>
+              <label className="mb-1 block text-xs font-semibold text-slate-300">Summary</label>
               <input
                 value={summary}
                 onChange={(e) => setSummary(e.target.value)}

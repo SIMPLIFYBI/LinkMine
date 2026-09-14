@@ -37,7 +37,7 @@ export default async function CreatorsPage() {
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {creators.map((creator) => (
             <li key={creator.id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 hover:border-sky-400/40">
-              <Link href={`/creators/${creator.id}`} className="block">
+              <Link href={`/consultants/${creator.id}`} className="block">
                 <div className="text-lg font-semibold text-white">{creator.display_name}</div>
                 {creator.headline ? <p className="mt-1 text-sm text-slate-300 line-clamp-2">{creator.headline}</p> : null}
                 {creator.location ? <p className="mt-2 text-xs uppercase tracking-[0.14em] text-slate-400">{creator.location}</p> : null}

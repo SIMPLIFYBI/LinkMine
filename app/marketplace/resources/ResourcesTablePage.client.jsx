@@ -364,6 +364,15 @@ function MarketplaceNavIcon({ name, active }) {
     );
   }
 
+  if (name === "creators") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="8" r="3.25" />
+        <path d="M5 19c1.6-2.7 4.1-4 7-4s5.4 1.3 7 4" />
+      </svg>
+    );
+  }
+
   return null;
 }
 
@@ -541,12 +550,14 @@ export default function ResourcesTablePageClient() {
       return [
         { key: "discover", label: "Home", icon: "discover", group: "primary", href: "/vault?tab=discover" },
         { key: "all-resources", label: "All Resources", icon: "orders", group: "primary", href: "/vault/resources", active: true },
+        { key: "creators", label: "Creators", icon: "creators", group: "primary", href: "/vault/creators" },
       ];
     }
 
     const baseTabs = [
       { key: "discover", label: "Home", icon: "discover", group: "primary", href: "/vault?tab=discover" },
       { key: "all-resources", label: "All Resources", icon: "orders", group: "primary", href: "/vault/resources", active: true },
+      { key: "creators", label: "Creators", icon: "creators", group: "primary", href: "/vault/creators" },
       { key: "submit", label: "Create", icon: "submit", group: "primary", href: "/vault?tab=submit" },
       { key: "requests", label: "Requests", icon: "requests", group: "primary", href: "/vault?tab=requests" },
       { key: "account", label: "My Vault", icon: "library", group: "secondary", href: "/vault?tab=account" },

@@ -691,7 +691,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
                   className="group rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-sky-400/50 hover:bg-sky-500/10"
                 >
                   <Link
-                    href={`/creators/${item.id}`}
+                    href={`/consultants/${item.id}`}
                     className="block text-slate-100 no-underline"
                     aria-label={`Open creator profile: ${item.name}`}
                   >
