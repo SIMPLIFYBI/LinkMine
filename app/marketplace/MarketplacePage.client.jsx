@@ -2625,7 +2625,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                     <Link
                       href="/consultants/new?profileType=creator"
                       onClick={handleBecomeCreatorClick}
-                      className="group inline-flex items-center gap-2 rounded-full border border-emerald-200/35 bg-[linear-gradient(135deg,rgba(16,185,129,0.26),rgba(5,150,105,0.35))] px-4 py-2 text-white shadow-[0_14px_34px_-18px_rgba(16,185,129,0.8)] ring-1 ring-white/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-emerald-100/45 hover:shadow-[0_20px_44px_-20px_rgba(16,185,129,0.95)]"
+                      className="group inline-flex min-w-[178px] items-center justify-center gap-2 rounded-full border border-emerald-200/35 bg-[linear-gradient(135deg,rgba(16,185,129,0.26),rgba(5,150,105,0.35))] px-4 py-2 text-white shadow-[0_14px_34px_-18px_rgba(16,185,129,0.8)] ring-1 ring-white/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-emerald-100/45 hover:shadow-[0_20px_44px_-20px_rgba(16,185,129,0.95)]"
                     >
                       <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/95">Become a Creator</span>
                       <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -2636,18 +2636,13 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                     <button
                       type="button"
                       onClick={collapseMarketplaceCover}
-                      className="group inline-flex items-center gap-2 rounded-full border border-sky-200/30 bg-[linear-gradient(135deg,rgba(56,189,248,0.26),rgba(14,116,144,0.35))] px-3.5 py-2 text-white shadow-[0_14px_34px_-18px_rgba(56,189,248,0.75)] ring-1 ring-white/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-sky-100/40 hover:shadow-[0_20px_44px_-20px_rgba(56,189,248,0.9)]"
+                      className="group inline-flex min-w-[178px] items-center justify-center gap-2 rounded-full border border-sky-200/30 bg-[linear-gradient(135deg,rgba(56,189,248,0.26),rgba(14,116,144,0.35))] px-4 py-2 text-white shadow-[0_14px_34px_-18px_rgba(56,189,248,0.75)] ring-1 ring-white/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-sky-100/40 hover:shadow-[0_20px_44px_-20px_rgba(56,189,248,0.9)]"
                       aria-label="Collapse vault banner"
                     >
                       <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/95">Collapse</span>
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/25 bg-white/15">
-                        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5 transition group-hover:translate-y-0.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="m6 9 6 6 6-6" />
-                        </svg>
-                      </span>
-                      <span className="h-1.5 w-6 rounded-full bg-white/70" />
-                      <span className="h-1.5 w-6 rounded-full bg-white/50" />
-                      <span className="h-1.5 w-6 rounded-full bg-white/35" />
+                      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5 transition group-hover:translate-y-0.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="m6 9 6 6 6-6" />
+                      </svg>
                       <span className="sr-only">Collapse header to compact search bar</span>
                     </button>
                   </div>
@@ -2764,21 +2759,11 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
             </ScrollShelf>
             </div>
 
-            <section className="grid gap-4 xl:grid-cols-[minmax(0,1.32fr),minmax(0,1fr)]">
+            <section className="space-y-4">
               <ScrollShelf title="Trending resources" subtitle="High-activity items presented as a card rail for quick scanning." metaLabel="Top activity">
                 {trendingResources.length ? trendingResources.map((resource) => (
                   <MarketplaceShelfCard key={resource.id} resource={resource} onResourceClick={handleResourceOpenIntent} />
                 )) : <div className="py-2 text-sm text-slate-400">Trending resources will appear once usage data builds up.</div>}
-              </ScrollShelf>
-
-              <ScrollShelf title="Browse categories" subtitle="Jump into the strongest parts of the catalogue with one tap." metaLabel="Quick filters">
-                {categoryHighlights.length ? categoryHighlights.map((category) => (
-                  <CategoryShelfCard
-                    key={category.id}
-                    category={category}
-                    onSelect={() => setDiscoverFilter((prev) => ({ ...prev, categoryId: category.id }))}
-                  />
-                )) : <div className="py-2 text-sm text-slate-400">Categories will populate here once resources are approved.</div>}
               </ScrollShelf>
             </section>
 
