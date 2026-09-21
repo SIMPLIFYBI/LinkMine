@@ -14,5 +14,5 @@ export async function generateMetadata({ params }) {
 
 export default async function CreatorPage({ params }) {
   const { id } = await params;
-  redirect(`/consultants/${id}`);
+  redirect(`/consultants/${id}?backTo=${encodeURIComponent("/vault/creators")}`);
 }

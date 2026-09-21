@@ -255,6 +255,7 @@ export async function generateMetadata(props) {
 
 export default async function ConsultantPage(props) {
   const { id: consultantId } = await props.params;
+  const searchParams = await props.searchParams;
   const viewer = await getViewerContext();
   const data = await getConsultant(consultantId, viewer);
   if (data?.restricted && data.requiresAuth) {
@@ -273,6 +274,16 @@ export default async function ConsultantPage(props) {
     canViewAsOwnerOrAdmin,
   } = data;
 
+  const requestedBackHref = Array.isArray(searchParams?.backTo)
+    ? searchParams.backTo[0]
+    : searchParams?.backTo;
+  const defaultBackHref = ["creator", "both"].includes(String(consultant.profile_type || "consultant"))
+    ? "/vault/creators"
+    : "/consultants";
+  const backHref = typeof requestedBackHref === "string" && requestedBackHref.startsWith("/") && !requestedBackHref.startsWith("//")
+    ? requestedBackHref
+    : defaultBackHref;
+
   const place = consultant.place_id
     ? await fetchPlaceDetails(consultant.place_id)
     : null;
@@ -288,7 +299,7 @@ export default async function ConsultantPage(props) {
       <TrackView consultantId={consultantId} source="consultant_profile" />
 
       <div className="flex items-start justify-between">
-        <Link href="/consultants" className="text-sky-300 hover:underline">
+        <Link href={backHref} className="text-sky-300 hover:underline">
           ← Back
         </Link>
         <PermissionsGate
