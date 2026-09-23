@@ -57,7 +57,7 @@ function getHomeCopy(market) {
     description:
       "YouMine connects mining clients with trusted consultants and contractors. Browse services, view portfolios, and contact experts directly.",
     heroAlt: "YouMine — consultants and contractors in mining",
-    heroTitle: "Match with the right mining expert today.",
+    heroTitle: "Everything mining. One platform.",
     heroDescription:
       "Discover trusted consultants and contractors, review portfolios, and contact directly.",
     overviewTitle: "Connect mining clients with trusted contractors & consultants",
