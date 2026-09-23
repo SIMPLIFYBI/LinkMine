@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import { sendEmail } from "@/lib/emailPostmark";
+import { buildEmailLayout, emailButton, emailDetails, emailPanel, escapeHtml } from "@/lib/emails/emailLayout";
 
 function checkSecret(req) {
   const secret = process.env.CRON_SECRET || process.env.NOTIFY_CRON_SECRET;
@@ -10,10 +11,6 @@ function checkSecret(req) {
   const bearer = (req.headers.get("authorization") || "").match(/^Bearer\s+(.+)$/i)?.[1];
   const header = req.headers.get("x-cron-secret") || "";
   return bearer === secret || header === secret ? { ok: true } : { ok: false, error: "Unauthorized" };
-}
-
-function escapeHtml(s) {
-  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function renderEmail(row) {
@@ -34,31 +31,12 @@ function renderEmail(row) {
     .filter(Boolean)
     .join("\n");
 
-  const html = `<!doctype html>
-<html>
-  <body style="font-family:Segoe UI,Helvetica,Arial,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:24px">
-    <div style="max-width:640px;margin:0 auto;background:#0b1220;border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden">
-      <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08)">
-        <div style="font-weight:700;font-size:18px;background:linear-gradient(90deg,#38bdf8,#818cf8);-webkit-background-clip:text;color:transparent">YouMine</div>
-        <h1 style="margin:8px 0 0;font-size:18px;color:#f8fafc">New job in ${escapeHtml(row.category_name)}</h1>
-      </div>
-      <div style="padding:20px">
-        <div style="font-size:16px;font-weight:600;color:#f1f5f9">${escapeHtml(row.job_title || "Untitled")}</div>
-        ${row.job_location ? `<div style="opacity:.9">Location: ${escapeHtml(row.job_location)}</div>` : ""}
-        ${row.listing_type ? `<div style="opacity:.9">Visibility: ${escapeHtml(row.listing_type)}</div>` : ""}
-        ${
-          row.description_preview
-            ? `<p style="margin-top:12px;white-space:pre-wrap">${escapeHtml(row.description_preview)}</p>`
-            : ""
-        }
-        <div style="margin-top:14px">
-          <a href="${jobUrl}" style="display:inline-block;background:#38bdf8;color:#0f172a;text-decoration:none;padding:10px 16px;border-radius:9999px;font-weight:600">View job</a>
-        </div>
-      </div>
-      <div style="padding:12px 20px;background:#0a1020;font-size:12px;opacity:.7;text-align:center">© ${new Date().getFullYear()} YouMine</div>
-    </div>
-  </body>
-</html>`;
+  const html = buildEmailLayout({
+    eyebrow: "Job opportunity",
+    title: `New job in ${row.category_name}`,
+    preheader: row.job_title || "A new job opportunity is available.",
+    content: `<div style="font-size:19px;font-weight:700;color:#ffffff;margin-bottom:14px;">${escapeHtml(row.job_title || "Untitled")}</div>${emailDetails([{ label: "Location", value: row.job_location }, { label: "Visibility", value: row.listing_type }])}${row.description_preview ? emailPanel(`<div style="white-space:pre-wrap;color:#e5f1fb;font-size:14px;line-height:1.65;">${escapeHtml(row.description_preview)}</div>`) : ""}${emailButton({ href: jobUrl, label: "View job" })}`,
+  });
   return { subject, text, html };
 }
 

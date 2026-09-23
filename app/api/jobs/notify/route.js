@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { supabaseFromRequest } from "@/lib/supabaseRequestClient";
 import { sendEmail } from "@/lib/emailPostmark";
+import { buildEmailLayout, emailDetails, emailPanel, escapeHtml } from "@/lib/emails/emailLayout";
 
 function getBearer(req) {
   const m = (req.headers.get("authorization") || "").match(/^Bearer\s+(.+)$/i);
@@ -10,19 +11,13 @@ function getBearer(req) {
 }
 
 function renderJobHtml(job) {
-  return `
-    <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial">
-      <h2>New job: ${job.title || "Untitled"}</h2>
-      ${job.company ? `<div><b>Company:</b> ${job.company}</div>` : ""}
-      ${job.location ? `<div><b>Location:</b> ${job.location}</div>` : ""}
-      ${job.budget ? `<div><b>Budget:</b> ${job.budget}</div>` : ""}
-      ${job.close_date ? `<div><b>Closes:</b> ${job.close_date}</div>` : ""}
-      <hr />
-      <div>${(job.description || "").replace(/\n/g, "<br/>")}</div>
-      <hr />
-      <div><b>Contact:</b> ${job.contact_name || ""} ${job.contact_email ? `&lt;${job.contact_email}&gt;` : ""}</div>
-    </div>
-  `;
+  const title = job.title || "Untitled";
+  return buildEmailLayout({
+    eyebrow: "Job opportunity",
+    title: `New job: ${title}`,
+    preheader: "A new job opportunity has been shared with you.",
+    content: `${emailDetails([{ label: "Company", value: job.company }, { label: "Location", value: job.location }, { label: "Budget", value: job.budget }, { label: "Closes", value: job.close_date }, { label: "Contact", value: [job.contact_name, job.contact_email].filter(Boolean).join(" ") }])}${job.description ? emailPanel(`<div style="white-space:pre-wrap;color:#e5f1fb;font-size:14px;line-height:1.65;">${escapeHtml(job.description)}</div>`) : ""}`,
+  });
 }
 
 export async function POST(req) {

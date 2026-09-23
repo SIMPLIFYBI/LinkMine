@@ -25,6 +25,14 @@ function Icon({ name, active }) {
           <path d="M4 10h16v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8Z" />
         </svg>
       );
+    case "vault":
+      return (
+        <svg {...common} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 10.5 12 4l9 6.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8.5Z" />
+          <circle cx="12" cy="13" r="2.4" />
+          <path d="M12 10.6v4.8" />
+        </svg>
+      );
     case "users":
       return (
         <svg {...common} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -79,6 +87,7 @@ function pickIconForTab(tab) {
   const label = String(tab?.label || "").toLowerCase();
 
   if (href === "/" || label.includes("home")) return "home";
+  if (href.includes("vault") || label.includes("vault")) return "vault";
   if (href.includes("jobs") || label.includes("job")) return "briefcase";
   if (href.includes("consultant") || label.includes("consultant")) return "users";
   if (href.includes("whats-on") || href.includes("what") || label.includes("what")) return "calendar";
