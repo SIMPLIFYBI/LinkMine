@@ -136,14 +136,14 @@ export default function WelcomeAccountModal() {
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6">
       <div
-        className="absolute inset-0 bg-slate-950/75 backdrop-blur-[3px]"
+        className="welcome-modal-backdrop absolute inset-0 bg-slate-950/75 backdrop-blur-[3px]"
         onClick={closeModal}
         aria-hidden="true"
       />
 
-      <section className="relative w-full max-w-3xl overflow-hidden rounded-[28px] border border-cyan-200/30 bg-[radial-gradient(circle_at_18%_0%,rgba(34,211,238,0.25),transparent_40%),radial-gradient(circle_at_90%_12%,rgba(20,184,166,0.22),transparent_42%),linear-gradient(155deg,#081528_0%,#0a2036_55%,#0b2840_100%)] p-6 text-slate-100 shadow-[0_30px_100px_-30px_rgba(2,12,27,0.95)] ring-1 ring-white/20 sm:p-8">
-        <div className="pointer-events-none absolute -top-24 -right-20 h-56 w-56 rounded-full border border-cyan-300/25 bg-cyan-300/10 blur-sm" aria-hidden="true" />
-        <div className="pointer-events-none absolute -bottom-20 -left-16 h-48 w-48 rounded-full border border-sky-200/25 bg-sky-300/10 blur-sm" aria-hidden="true" />
+      <section className="welcome-modal-sheet relative w-full max-w-3xl overflow-hidden rounded-[28px] border border-cyan-200/30 bg-[radial-gradient(circle_at_18%_0%,rgba(34,211,238,0.25),transparent_40%),radial-gradient(circle_at_90%_12%,rgba(20,184,166,0.22),transparent_42%),linear-gradient(155deg,#081528_0%,#0a2036_55%,#0b2840_100%)] p-6 text-slate-100 shadow-[0_30px_100px_-30px_rgba(2,12,27,0.95)] ring-1 ring-white/20 sm:p-8">
+        <div className="welcome-modal-glow-one pointer-events-none absolute -top-24 -right-20 h-56 w-56 rounded-full border border-cyan-300/25 bg-cyan-300/10 blur-sm" aria-hidden="true" />
+        <div className="welcome-modal-glow-two pointer-events-none absolute -bottom-20 -left-16 h-48 w-48 rounded-full border border-sky-200/25 bg-sky-300/10 blur-sm" aria-hidden="true" />
 
         <button
           type="button"
@@ -155,20 +155,20 @@ export default function WelcomeAccountModal() {
         </button>
 
         <div className="relative">
-          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/30 bg-cyan-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
+          <div className="welcome-modal-item welcome-modal-item-1 inline-flex items-center gap-2 rounded-full border border-cyan-200/30 bg-cyan-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
             <SparkIcon className="h-4 w-4" />
             Welcome to YouMine
           </div>
 
-          <h2 className="mt-4 text-2xl font-black tracking-tight text-white sm:text-3xl">
+          <h2 className="welcome-modal-item welcome-modal-item-2 mt-4 text-2xl font-black tracking-tight text-white sm:text-3xl">
             Your account is live. Here is what that means.
           </h2>
 
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-200 sm:text-[15px]">
+          <p className="welcome-modal-item welcome-modal-item-3 mt-3 max-w-2xl text-sm leading-7 text-slate-200 sm:text-[15px]">
             A YouMine account lets you sign in, browse every area of the platform, open vault resources, contact consultants, and engage with other users. This is your secure login identity.
           </p>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="welcome-modal-item welcome-modal-item-4 mt-5 grid gap-3 sm:grid-cols-2">
             <article className="rounded-2xl border border-emerald-200/25 bg-emerald-400/10 p-4">
               <div className="flex items-center gap-2 text-emerald-100">
                 <VaultIcon className="h-5 w-5" />
@@ -192,7 +192,7 @@ export default function WelcomeAccountModal() {
             </article>
           </div>
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="welcome-modal-item welcome-modal-item-5 mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link
               href={canCreateProfile ? "/consultants/new" : "/account"}
               onClick={() => {
@@ -216,7 +216,7 @@ export default function WelcomeAccountModal() {
             </Link>
           </div>
 
-          <p className="mt-3 text-xs text-slate-300/90">
+          <p className="welcome-modal-item welcome-modal-item-6 mt-3 text-xs text-slate-300/90">
             You can create your public profile now or anytime later from your account area.
           </p>
         </div>

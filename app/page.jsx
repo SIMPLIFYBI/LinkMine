@@ -3,8 +3,10 @@ export const revalidate = 300; // 5 minutes
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { ArrowUpRight, BriefcaseBusiness, CalendarDays, Code2, FileSpreadsheet, FileText, FolderOpen, Globe2, PackageOpen, UsersRound } from "lucide-react";
 import ServiceFinder from "@/app/components/ServiceFinder";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
+import { resolveResourceConsultantIcons } from "@/lib/resourceHubServer";
 import AddProfileSmartCTA from "@/app/components/consultants/AddProfileSmartCTA.client.jsx";
 import WelcomeAccountModal from "@/app/components/WelcomeAccountModal.client.jsx";
 import DidYouKnowSection from "./components/stats/DidYouKnowSection.jsx";
@@ -39,9 +41,9 @@ function getHomeCopy(market) {
       description:
         "YouMine connects mining and oil & gas teams with trusted consultants and contractors. Browse services, view portfolios, and contact experts directly.",
       heroAlt: "YouMine — consultants and contractors across mining and oil and gas",
-      heroTitle: "Match with the right industry expert today.",
+      heroTitle: "Everything mining. One platform.",
       heroDescription:
-        "Discover trusted consultants and contractors across mining, oil & gas, operations, project delivery, and specialist technical services.",
+        "Connect with industry experts, discover new opportunities, find talent, explore events and training, and access the digital tools shaping the future of mining. All in one place.",
       overviewTitle: "Connect industry teams with trusted contractors & consultants",
       overviewDescription:
         "YouMine helps mining and oil & gas teams find qualified contractors and consultants fast — with portfolios, verified business details, service categories, and Google-linked profiles.",
@@ -124,12 +126,14 @@ async function getStatsAndFeatured(market) {
           p_page_size: 24,
           p_seed_bucket: "home-featured",
           p_market: "mining",
+          p_profile_surface: "consultant",
         }),
         sb.rpc("get_consultants_directory_page", {
           p_page: 1,
           p_page_size: 24,
           p_seed_bucket: "home-featured",
           p_market: "oil_gas",
+          p_profile_surface: "consultant",
         }),
         sb
           .from("service_categories")
@@ -170,6 +174,7 @@ async function getStatsAndFeatured(market) {
       p_page_size: 24,
       p_seed_bucket: "home-featured",
       p_market: market,
+      p_profile_surface: "consultant",
     });
 
     const featured = (featuredRows || []).map(({ has_next, ...consultant }) => consultant);
@@ -216,28 +221,46 @@ async function getStatsAndFeatured(market) {
   }
 }
 
-// Lightweight icon set mapped by slug keywords (fallback to generic)
-function CategoryIcon({ slug }) {
-  const s = (slug || "").toLowerCase();
+async function getFeaturedResources() {
+  try {
+    const sb = supabasePublicServer();
+    const { data, error } = await sb
+      .from("resources")
+      .select("id, owner_user_id, consultant_id, title, slug, summary, resource_format, resource_type, download_count, open_count, is_featured, resource_categories ( name )")
+      .eq("status", "approved")
+      .order("is_featured", { ascending: false })
+      .order("updated_at", { ascending: false })
+      .limit(3);
 
-  // Pick an icon by simple heuristics; fallback is a grid icon
-  const path = (() => {
-    if (/(drill|rig)/.test(s)) return "M3 12l18-6-6 18-3-7-7-3z"; // paper plane/drill-ish
-    if (/(geo|survey|map)/.test(s)) return "M3 6l6-3 6 3 6-3v12l-6 3-6-3-6 3z"; // layered terrain
-    if (/(plan|manage|project)/.test(s)) return "M4 6h16v4H4V6zm0 6h10v4H4v-4z"; // panels
-    if (/(sample|lab|assay|core)/.test(s)) return "M7 4h10l-1 12a4 4 0 01-8 0L7 4z M9 4v12"; // flask-ish
-    if (/(safety|hse)/.test(s)) return "M12 2l7 4v6c0 4-3 7-7 9-4-2-7-5-7-9V6l7-4z"; // shield
-    if (/(mine|haul|truck)/.test(s)) return "M3 9h14l4 5v3h-3a3 3 0 11-6 0H9a3 3 0 11-6 0H3V9z"; // truck
-    if (/(env|water|rehab)/.test(s)) return "M12 2c4 4 6 7 6 10a6 6 0 11-12 0c0-3 2-6 6-10z"; // leaf
-    if (/(it|data|ai|software)/.test(s)) return "M4 6h16v8H4V6zm3 10h10v2H7v-2z"; // monitor
-    return "M4 5h16v4H4V5zm0 6h10v4H4v-4zm12 0h4v4h-4v-4z"; // grid
-  })();
+    if (error) throw error;
+    const resources = data || [];
+    const iconByResourceId = await resolveResourceConsultantIcons(sb, resources);
+    return resources.map((resource) => ({
+      ...resource,
+      consultantIconUrl: iconByResourceId.get(resource.id) || null,
+    }));
+  } catch {
+    return [];
+  }
+}
 
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
-      <path d={path} />
-    </svg>
-  );
+const RESOURCE_FORMAT_META = {
+  website: { label: "Website", Icon: Globe2, chip: "border-cyan-300/30 bg-gradient-to-r from-cyan-500/25 to-sky-500/20 text-cyan-50", icon: "border-cyan-200/40 bg-cyan-300/20 text-cyan-100", orb: "-right-10 top-3 h-24 w-24 rounded-full border border-cyan-100/35 bg-cyan-200/18", block: "bottom-[-10%] right-[14%] h-20 w-20 rotate-[16deg] rounded-[22px] border border-cyan-100/30 bg-cyan-950/24", hues: [191, 204, 188] },
+  repository: { label: "Repository", Icon: Code2, chip: "border-emerald-300/30 bg-gradient-to-r from-emerald-500/25 to-teal-500/20 text-emerald-50", icon: "border-emerald-200/40 bg-emerald-300/20 text-emerald-100", orb: "-right-11 top-2 h-24 w-24 rounded-[28px] border border-emerald-100/30 bg-emerald-200/16", block: "bottom-[-12%] right-[20%] h-16 w-24 -rotate-[11deg] rounded-[16px] border border-emerald-100/25 bg-emerald-950/26", hues: [156, 173, 148] },
+  excel: { label: "Spreadsheet", Icon: FileSpreadsheet, chip: "border-green-300/30 bg-gradient-to-r from-green-500/25 to-lime-500/20 text-green-50", icon: "border-green-200/40 bg-green-300/20 text-green-100", orb: "-right-9 top-3 h-20 w-20 rounded-[20px] border border-green-100/32 bg-green-200/16", block: "bottom-[-14%] right-[16%] h-20 w-20 rotate-[4deg] rounded-[12px] border border-green-100/24 bg-green-950/28", hues: [128, 96, 112] },
+  word: { label: "Document", Icon: FileText, chip: "border-blue-300/30 bg-gradient-to-r from-blue-500/25 to-indigo-500/20 text-blue-50", icon: "border-blue-200/40 bg-blue-300/20 text-blue-100", orb: "-right-10 top-3 h-24 w-24 rounded-full border border-blue-100/35 bg-blue-200/16", block: "bottom-[-12%] right-[16%] h-16 w-24 rotate-[8deg] rounded-[20px] border border-blue-100/26 bg-blue-950/24", hues: [216, 236, 206] },
+  powerpoint: { label: "Slide deck", Icon: FileText, chip: "border-orange-300/30 bg-gradient-to-r from-orange-500/25 to-amber-500/20 text-orange-50", icon: "border-orange-200/40 bg-orange-300/20 text-orange-100", orb: "-right-8 top-3 h-20 w-20 rounded-full border border-orange-100/35 bg-orange-200/16", block: "bottom-[-10%] right-[14%] h-[4.5rem] w-[5.5rem] -rotate-[14deg] rounded-[16px] border border-orange-100/26 bg-orange-950/26", hues: [24, 40, 32] },
+  script: { label: "Script", Icon: Code2, chip: "border-violet-300/30 bg-gradient-to-r from-violet-500/25 to-fuchsia-500/20 text-violet-50", icon: "border-violet-200/40 bg-violet-300/20 text-violet-100", orb: "-right-10 top-2 h-24 w-24 rounded-[24px] border border-violet-100/34 bg-violet-200/16", block: "bottom-[-14%] right-[18%] h-[4.5rem] w-20 rotate-[24deg] rounded-[12px] border border-violet-100/24 bg-violet-950/30", hues: [268, 304, 286] },
+  app: { label: "App", Icon: PackageOpen, chip: "border-pink-300/30 bg-gradient-to-r from-pink-500/25 to-rose-500/20 text-pink-50", icon: "border-pink-200/40 bg-pink-300/20 text-pink-100", orb: "-right-10 top-3 h-[5.5rem] w-[5.5rem] rounded-[26px] border border-pink-100/32 bg-pink-200/16", block: "bottom-[-12%] right-[17%] h-20 w-16 -rotate-[18deg] rounded-[20px] border border-pink-100/25 bg-pink-950/26", hues: [336, 351, 324] },
+  pdf: { label: "PDF", Icon: FileText, chip: "border-red-300/30 bg-gradient-to-r from-red-500/25 to-rose-500/20 text-red-50", icon: "border-red-200/40 bg-red-300/20 text-red-100", orb: "-right-9 top-3 h-[5.5rem] w-[5.5rem] rounded-full border border-red-100/34 bg-red-200/16", block: "bottom-[-12%] right-[15%] h-20 w-[4.5rem] rotate-[10deg] rounded-[14px] border border-red-100/26 bg-red-950/28", hues: [5, 350, 14] },
+  generic: { label: "Resource", Icon: FolderOpen, chip: "border-slate-300/30 bg-gradient-to-r from-slate-600/35 to-slate-500/20 text-slate-100", icon: "border-slate-200/35 bg-slate-300/20 text-slate-100", orb: "-right-9 top-4 h-24 w-24 rounded-full border border-white/12 bg-white/10", block: "bottom-[-10%] right-[16%] h-20 w-20 rotate-12 rounded-[22px] border border-white/12 bg-slate-950/16", hues: [210, 222, 198] },
+};
+
+function getResourceArtwork(resource, format) {
+  const [base, accent, glow] = format.hues;
+  const seed = String(resource.resource_categories?.name || resource.title || "resource");
+  const drift = Array.from(seed).reduce((hash, character) => (hash * 31 + character.charCodeAt(0)) % 28, 0) - 14;
+  return `radial-gradient(circle at 20% 16%, hsla(${(glow + drift + 360) % 360},90%,72%,0.28), transparent 28%), linear-gradient(145deg, hsla(${(base + drift + 360) % 360},58%,44%,0.94), hsla(${(accent + drift + 360) % 360},64%,26%,0.84))`;
 }
 
 export default async function HomePage() {
@@ -245,7 +268,10 @@ export default async function HomePage() {
   const { market } = await getResolvedSiteMarket();
   const marketName = siteMarketLabel(market);
   const copy = getHomeCopy(market);
-  const { featured, categories, searchCategories } = await getStatsAndFeatured(market);
+  const [{ featured, searchCategories }, featuredResources] = await Promise.all([
+    getStatsAndFeatured(market),
+    getFeaturedResources(),
+  ]);
 
   // Deterministic daily rotation (UTC) for featured
   const tzOffsetMinutes = 0;
@@ -342,6 +368,45 @@ export default async function HomePage() {
     ],
   };
 
+  const discoveryPillars = [
+    {
+      title: "Experts and talent",
+      description: "Find specialist capability, compare profiles, and connect directly with the people who can move your work forward.",
+      href: "/consultants",
+      action: "Find experts",
+      Icon: UsersRound,
+      accent: "cyan",
+      graphic: "Capability map",
+    },
+    {
+      title: "Jobs and opportunities",
+      description: "Discover contract and freelance work, or put the right opportunity in front of the mining community.",
+      href: "/jobs",
+      action: "Explore jobs",
+      Icon: BriefcaseBusiness,
+      accent: "amber",
+      graphic: "Opportunity board",
+    },
+    {
+      title: "Training and events",
+      description: "Keep pace with industry learning, upcoming events, and the training that keeps teams ready for site.",
+      href: "/whats-on",
+      action: "See what's on",
+      Icon: CalendarDays,
+      accent: "violet",
+      graphic: "Industry calendar",
+    },
+    {
+      title: "Vault digital products",
+      description: "Explore practical digital tools, resources, and downloads created for the realities of modern mining.",
+      href: "/vault",
+      action: "Open the Vault",
+      Icon: FolderOpen,
+      accent: "emerald",
+      graphic: "Tool collection",
+    },
+  ];
+
   return (
     <main className="site-market-shell mx-auto flex max-w-6xl flex-col gap-10 px-4 pb-10" data-market={market}>
       <WelcomeAccountModal />
@@ -419,131 +484,38 @@ export default async function HomePage() {
         />
       </section>
 
-      {/* Value prop + 3x3 category grid side-by-side */}
+      {/* Platform discovery */}
       <section id="overview" className="-mt-7 mx-auto w-full max-w-6xl px-2 md:px-4 fade-in-up">
-        <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start">
-          {/* Left: existing value prop (desktop). Mobile: second */}
-          <div className="space-y-4 order-2 md:order-1">
-            <p className="section-label">Overview</p>
-            <h2 className="text-2xl font-semibold md:text-[32px]">
-              {copy.overviewTitle}
-            </h2>
-            <p className="text-slate-300">
-              {copy.overviewDescription}
-            </p>
-            <div className="mt-4 flex gap-2">
-              <Link href="/jobs" className="inline-flex flex-1 sm:flex-none">
-                <button
-                  className="
-                    explore-jobs-cta
-                    group relative flex w-full items-center justify-center
-                    rounded-xl px-3 py-2
-                    font-semibold tracking-tight leading-none
-                    text-[12px] sm:text-[13px]
-                    whitespace-nowrap min-w-[150px]
-                    backdrop-blur-md
-                    border border-sky-300/30 ring-1 ring-white/10
-                    bg-gradient-to-r from-sky-500/35 via-indigo-500/35 to-sky-500/35
-                    text-white
-                    shadow-[0_4px_14px_-4px_rgba(0,0,0,0.6)]
-                    transition
-                    hover:from-sky-500/45 hover:via-indigo-500/45 hover:to-sky-500/45
-                    hover:border-sky-300/50 hover:shadow-[0_6px_18px_-6px_rgba(0,0,0,0.65)]
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60
-                  "
-                  aria-label="Explore jobs board"
-                >
-                  Explore Jobs
-                </button>
-              </Link>
-              <Link href="/about" className="inline-flex flex-1 sm:flex-none">
-                <button
-                  className="
-                    group relative flex w-full items-center justify-center
-                    rounded-xl px-3 py-2
-                    font-semibold tracking-tight leading-none
-                    text-[12px] sm:text-[13px]
-                    whitespace-nowrap min-w-[150px]
-                    backdrop-blur-md
-                    border border-white/15 ring-1 ring-white/10
-                    bg-white/10 text-slate-100
-                    shadow-[0_4px_14px_-4px_rgba(0,0,0,0.6)]
-                    transition
-                    hover:bg-white/15 hover:border-white/25 hover:shadow-[0_6px_18px_-6px_rgba(0,0,0,0.65)]
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300/40
-                  "
-                  aria-label="Learn About YouMine"
-                >
-                  Learn About YouMine
-                </button>
-              </Link>
-            </div>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-400 text-sm">
-              <li>ABN/ACN validation linked directly to ASIC</li>
-              <li>Consultant profiles with portfolio galleries</li>
-              <li>Google-linked ratings & location profiles</li>
-              <li>View metrics like profile view count and favourites</li>
-            </ul>
-          </div>
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="section-label">Discover YouMine</p>
+          <h2 className="mt-3 text-2xl font-semibold text-white md:text-[32px]">Four ways to move mining forward</h2>
+          <p className="mt-3 text-sm leading-6 text-slate-300 sm:text-base">
+            One connected platform for people, opportunities, industry learning, and the tools that make better work possible.
+          </p>
+        </div>
 
-          {/* Right: categories */}
-          <div className="space-y-3 order-1 md:order-2">
-            <p className="section-label">Categories</p>
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-white tracking-wide">Browse by category</h3>
-              <Link
-                href="/consultants"
-                className="text-xs font-medium text-sky-300 hover:text-sky-200 hover:underline underline-offset-2"
-              >
-                View all
-              </Link>
-            </div>
+        <div className="mt-7 grid gap-4 sm:grid-cols-2">
+          {discoveryPillars.map(({ title, description, href, action, Icon, accent, graphic }) => (
+            <article key={title} className={`discovery-pillar discovery-pillar-${accent} group relative isolate min-h-[270px] overflow-hidden rounded-2xl border p-5 sm:p-6`}>
+              <div className="discovery-pillar-grid pointer-events-none absolute inset-0 opacity-50" aria-hidden="true" />
+              <div className="discovery-pillar-orbit pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full border" aria-hidden="true" />
 
-            {categories.length === 0 ? (
-              <p className="text-xs text-slate-400">Categories are coming soon.</p>
-            ) : (
-              <div className="grid grid-cols-3 gap-3">
-                {categories.map((c) => (
-                  <Link
-                    key={c.id}
-                    href={`/consultants?category=${encodeURIComponent(c.slug)}`}
-                    prefetch
-                    className="
-                      group relative flex flex-col gap-2 rounded-xl
-                      border border-white/10 bg-white/[0.06] p-3
-                      text-left shadow-sm ring-1 ring-white/10 transition
-                      hover:-translate-y-[2px] hover:border-sky-300/40 hover:bg-white/[0.1]
-                      focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50
-                    "
-                    aria-label={`Browse ${c.name}`}
-                  >
-                    <div className="pointer-events-none absolute inset-x-0 top-0 h-1 rounded-t-xl bg-gradient-to-r from-sky-500/60 via-cyan-300/60 to-sky-500/60 opacity-70 group-hover:opacity-90" />
-
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg
-                                 bg-sky-500/15 text-sky-200 ring-1 ring-inset ring-sky-400/30
-                                 transition-colors group-hover:bg-sky-500/25">
-                      <CategoryIcon slug={c.slug} />
-                    </span>
-                    <span className="line-clamp-2 text-[11px] font-medium leading-tight text-slate-100">
-                      {c.name}
-                    </span>
-
-                    {/* Subtle glow */}
-                    <div
-                      className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-20"
-                      style={{
-                        background:
-                          "radial-gradient(circle at 30% 25%, rgba(56,189,248,0.35), transparent 70%)",
-                      }}
-                    />
-                  </Link>
-                ))}
+              <div className="relative flex h-full flex-col items-start">
+                <div className="flex w-full items-start justify-between gap-4">
+                  <span className="discovery-pillar-icon inline-flex h-11 w-11 items-center justify-center rounded-xl border">
+                    <Icon className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-300/75">{graphic}</span>
+                </div>
+                <h3 className="mt-7 text-xl font-semibold tracking-tight text-white">{title}</h3>
+                <p className="mt-3 max-w-sm text-sm leading-6 text-slate-200/90">{description}</p>
+                <Link href={href} className="discovery-pillar-action mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold" aria-label={action}>
+                  {action}
+                  <ArrowUpRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
+                </Link>
               </div>
-            )}
-            <p className="text-[10px] text-slate-500">
-              Choose a category to filter {copy.industryLabel} consultants by their offered services.
-            </p>
-          </div>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -675,6 +647,88 @@ export default async function HomePage() {
                 </Link>
               );
             })}
+          </div>
+        )}
+      </section>
+
+      {/* Vault resource rail */}
+      <section id="vault-picks" className="vault-picks mx-auto w-full max-w-screen-lg px-4 fade-in-up">
+        <div className="mb-4 flex items-end justify-between gap-4">
+          <div>
+            <p className="section-label mb-2">From the Vault</p>
+            <h3 className="text-base font-semibold text-white">Digital Resources built for Mining</h3>
+          </div>
+          <Link href="/vault" className="shrink-0 text-xs font-semibold text-amber-200 underline-offset-2 hover:text-amber-100 hover:underline">
+            Explore the Vault
+          </Link>
+        </div>
+
+        {featuredResources.length === 0 ? (
+          <p className="text-sm text-slate-300">New Vault resources are being curated now.</p>
+        ) : (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-label="Featured Vault resources">
+              {featuredResources.map((resource) => {
+                const format = RESOURCE_FORMAT_META[resource.resource_format] || RESOURCE_FORMAT_META.generic;
+                const FormatIcon = format.Icon;
+
+                return (
+                  <article
+                    key={resource.id}
+                    className="group relative flex h-[236px] w-full overflow-hidden rounded-[26px] border border-white/10 shadow-[0_24px_62px_-38px_rgba(0,0,0,0.9)] ring-1 ring-white/10 transition duration-300 hover:-translate-y-1 hover:border-white/20 sm:h-[248px]"
+                    style={{ backgroundImage: getResourceArtwork(resource, format) }}
+                  >
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_34%),linear-gradient(180deg,rgba(15,23,42,0.06),rgba(15,23,42,0.84)_76%)]" />
+                    <div className={`pointer-events-none absolute ${format.orb}`} aria-hidden="true" />
+                    <div className={`pointer-events-none absolute ${format.block}`} aria-hidden="true" />
+                    <div className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center overflow-hidden rounded-[14px] border border-white/18 text-sm font-semibold text-slate-950 shadow-[0_14px_30px_-18px_rgba(255,255,255,0.8)]" style={{ backgroundImage: `linear-gradient(135deg,hsla(${format.hues[2]},90%,86%,0.95),hsla(${format.hues[0]},86%,70%,0.88))` }} aria-label="Resource creator">
+                      <span aria-hidden={Boolean(resource.consultantIconUrl)}>
+                        {resource.title.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "R"}
+                      </span>
+                      {resource.consultantIconUrl ? (
+                        <img
+                          src={resource.consultantIconUrl}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          className="absolute inset-0 h-full w-full object-cover"
+                        />
+                      ) : null}
+                    </div>
+
+                    <div className="relative flex h-full flex-1 flex-col p-4">
+                      <div>
+                        <div className="min-h-[3.4rem] pr-14 sm:min-h-[3.75rem]">
+                          <Link href={`/vault/${resource.id}`} className="block line-clamp-2 text-lg font-semibold tracking-tight text-white transition hover:text-sky-100">
+                            {resource.title}
+                          </Link>
+                        </div>
+                        <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-4">
+                          <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${format.chip}`}>
+                            <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full border ${format.icon}`}>
+                              <FormatIcon className="h-3.5 w-3.5" strokeWidth={1.8} aria-hidden="true" />
+                            </span>
+                            {format.label}
+                          </span>
+                          <div className="text-xs text-slate-400">Vault pick</div>
+                        </div>
+                        <p className="mt-2 line-clamp-2 text-sm text-slate-300">
+                          {resource.summary || "Open the resource to review the pack or linked source details."}
+                        </p>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between gap-2.5 sm:gap-3">
+                          <div>
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
+                            <div className="mt-1 line-clamp-1 max-w-[130px] text-[11px] text-slate-100/72 sm:max-w-[160px] sm:text-xs">{resource.resource_type === "external" ? "External source" : "Resource file"}</div>
+                          </div>
+                          <Link href={`/vault/${resource.id}`} className="inline-flex items-center justify-center rounded-full border border-sky-200/45 bg-[linear-gradient(135deg,rgba(56,189,248,0.95),rgba(59,130,246,0.92)_46%,rgba(14,165,233,0.95))] px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-white shadow-[0_14px_30px_-14px_rgba(14,165,233,0.95)] ring-1 ring-white/30 transition hover:-translate-y-0.5 hover:border-sky-100/60 hover:shadow-[0_20px_38px_-16px_rgba(14,165,233,1)]">
+                            View resource
+                          </Link>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
           </div>
         )}
       </section>
