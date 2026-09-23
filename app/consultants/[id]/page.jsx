@@ -436,7 +436,7 @@ export default async function ConsultantPage(props) {
                         </Link>
                         {canViewAsOwnerOrAdmin ? (
                           <Link
-                            href={`/vault/${resource.id}/edit`}
+                            href={`/consultants/${consultant.id}/workspace/edit?resourceId=${resource.id}&resourceTab=library`}
                             className="rounded-full border border-white/15 bg-white/[0.05] px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:bg-white/[0.1]"
                           >
                             Edit

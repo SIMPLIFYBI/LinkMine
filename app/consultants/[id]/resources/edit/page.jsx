@@ -108,7 +108,7 @@ export default async function EditConsultantResourcesPage({ params }) {
                     </p>
                   </div>
                   <Link
-                    href={`/vault/${resource.id}/edit`}
+                    href={`/consultants/${consultant.id}/workspace/edit?resourceId=${resource.id}&resourceTab=library`}
                     className="rounded-full border border-white/15 bg-white/[0.05] px-3 py-1.5 text-xs font-semibold text-slate-100 hover:bg-white/[0.1]"
                   >
                     Edit resource

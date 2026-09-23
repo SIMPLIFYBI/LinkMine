@@ -148,6 +148,8 @@ export default async function MarketplaceResourcePage({ params }) {
 
   const resource = buildResourceRoutePayload(data, data.resource_tag_links || []);
   const canEditResource = Boolean(userId && (resource.ownerUserId === userId || isAdmin));
+  const canViewDirectSourceUrl = Boolean(userId);
+  const resourceForActions = canViewDirectSourceUrl ? resource : { ...resource, sourceUrl: null };
 
   let consultantProfile = null;
   const selectedConsultantId = resource.consultantId || null;
@@ -299,6 +301,10 @@ export default async function MarketplaceResourcePage({ params }) {
   }
 
   const totalOpenCount = Number(resource.openCount ?? resource.downloadCount ?? 0);
+  const workspaceConsultantId = selectedConsultantId || consultantProfile?.id || null;
+  const editResourceHref = workspaceConsultantId
+    ? `/consultants/${workspaceConsultantId}/workspace/edit?resourceId=${resource.id}&resourceTab=library`
+    : `/vault/${resource.id}/edit`;
 
   return (
     <MarketplaceRouteShell signedIn={Boolean(user)} isAdmin={isAdmin} activeKey="account">
@@ -308,7 +314,7 @@ export default async function MarketplaceResourcePage({ params }) {
             Back to vault
           </Link>
           {canEditResource ? (
-            <Link href={`/vault/${resource.id}/edit`} className="rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
+            <Link href={editResourceHref} className="rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
               Edit resource
             </Link>
           ) : null}
@@ -359,7 +365,7 @@ export default async function MarketplaceResourcePage({ params }) {
               </div>
 
               <div className="rounded-[28px] border border-white/10 bg-slate-950/35 p-5 ring-1 ring-white/10">
-                <ResourceDetailActions resource={resource} requiresAuth={!user} />
+                <ResourceDetailActions resource={resourceForActions} requiresAuth={!user} />
               </div>
             </div>
           </div>
@@ -370,7 +376,7 @@ export default async function MarketplaceResourcePage({ params }) {
             <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Access</div>
             <div className="mt-3 text-sm text-slate-200">{resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file"}</div>
             <div className="mt-3"><ResourceFormatChip format={resource.resourceFormat} /></div>
-            {resource.sourceUrl ? <div className="mt-2 break-all text-xs text-slate-400">{resource.sourceUrl}</div> : null}
+            {resource.sourceUrl && canViewDirectSourceUrl ? <div className="mt-2 break-all text-xs text-slate-400">{resource.sourceUrl}</div> : null}
           </div>
           <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5 ring-1 ring-white/10">
             <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Size</div>

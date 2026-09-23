@@ -1,44 +1,38 @@
 import { getResolvedSiteMarket } from "@/lib/siteMarketServer";
 
-function getAboutContent(market) {
-  if (market === "oil_gas") {
-    return {
-      description: "Learn how YouMine connects oil and gas teams with trusted consultants and contractors.",
-      badge: "Built for Oil & Gas teams",
-      heroTitle: "How YouMine helps specialist contractors and operators move faster",
-      heroBody:
-        "A focused marketplace where technical specialists showcase their capabilities and asset teams find the right expertise across subsurface, wells, facilities, integrity, and delivery.",
-      consultantsIntro:
-        "YouMine gives consultants and service providers a focused storefront so operators can discover the exact technical capability they need.",
-      clientsIntro:
-        "Find the right specialist faster across development, execution, production, integrity, HSE, and project delivery.",
-      consultantVisualTitle: "A profile built for technical credibility",
-      consultantVisualBody:
-        "Show delivery capability, operating regions, and the specific disciplines you support. Clients contact you directly and conversations stay outside a closed platform.",
-      clientVisualTitle: "Filters tuned to real project needs",
-      clientVisualBody:
-        "Shortlist specialists by discipline, market segment, and service focus so your team can move from search to scope definition quickly.",
-      ctaBody:
-        "Whether you are a consultant supporting upstream, offshore, infrastructure, or operations teams, or a client building a shortlist, YouMine helps you move faster.",
-      stepsConsultants: [
-        { title: "Create your profile", text: "Add your company details, service lines, operating regions, and social proof. Make it easy for asset teams to understand exactly where you fit." },
-        { title: "Get discovered", text: "Show up in searches by discipline, service category, and market focus. The platform surfaces the right expertise for the right project phase." },
-        { title: "Receive enquiries", text: "Operators contact you directly via a simple form. You reply from your inbox with no platform lock-in." },
-      ],
-      stepsClients: [
-        { title: "Search the directory", text: "Start with a goal such as reservoir work, wells, facilities, integrity, HSE, or project services. Browse specialists who match the brief." },
-        { title: "Filter by what matters", text: "Narrow by service category, discipline, and location to find a sharper fit instead of a broad generalist list." },
-        { title: "Contact and engage", text: "Send a concise brief from the profile page. The consultant replies directly so your team can engage and move quickly." },
-      ],
-    };
-  }
-
+function getAboutContent(_market) {
   return {
-    description: "Learn how YouMine connects mining clients with trusted consultants and contractors.",
-    badge: "Built for the mining industry",
-    heroTitle: "How YouMine helps Consultants and Clients work smarter",
+    description: "Learn what YouMine is and how our core pillars help mining teams and specialists work smarter.",
+    badge: "Unified About and How-To",
+    heroTitle: "What Is YouMine?",
     heroBody:
-      "A focused marketplace where specialists showcase their capabilities and clients find the exact expertise they need, fast, transparent, and direct.",
+      "YouMine is a central hub for the mining industry: connect consultants with clients, run training and events with booking, share digital products in Vault, and post freelance or contract work opportunities.",
+    pillars: [
+      {
+        title: "Consultants and Clients",
+        text: "Discover specialist capability, shortlist quickly, and connect directly without platform lock-in.",
+        href: "/consultants",
+        cta: "Browse consultants",
+      },
+      {
+        title: "Training and Events",
+        text: "Host and promote training sessions or events with a built-in booking flow for attendees.",
+        href: "/training/schedule",
+        cta: "Open training and events",
+      },
+      {
+        title: "Vault Digital Products",
+        text: "Creators can publish products, users can link to or download resources, and teams can request new tools publicly.",
+        href: "/vault",
+        cta: "Open Vault",
+      },
+      {
+        title: "Freelance and Contract Jobs",
+        text: "Post and discover contract or freelance opportunities, separate from payg-style job workflows.",
+        href: "/jobs",
+        cta: "View jobs",
+      },
+    ],
     consultantsIntro:
       "YouMine is your lightweight storefront: be discoverable for what you do best and make it effortless for the right clients to get in touch.",
     clientsIntro:
@@ -105,6 +99,15 @@ export default async function AboutPage() {
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <a
+              href="#pillars"
+              className="group inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/15"
+            >
+              Platform Pillars
+              <svg viewBox="0 0 24 24" className="h-4 w-4 fill-white transition -rotate-90 group-hover:translate-y-0.5">
+                <path d="M12 20 4 8h16Z" />
+              </svg>
+            </a>
+            <a
               href="#consultants"
               className="group inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/15"
             >
@@ -122,6 +125,38 @@ export default async function AboutPage() {
                 <path d="M12 20 4 8h16Z" />
               </svg>
             </a>
+          </div>
+        </section>
+
+        <section id="pillars" className="scroll-mt-20">
+          <header className="flex items-center gap-3">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-sky-600 ring-1 ring-white/20">
+              <svg viewBox="0 0 24 24" className="h-4 w-4 fill-white">
+                <path d="M4 5h16v2H4Zm0 6h16v2H4Zm0 6h16v2H4Z" />
+              </svg>
+            </span>
+            <h2 className="text-xl font-bold text-white">YouMine Platform Pillars</h2>
+          </header>
+          <p className="mt-2 max-w-3xl text-slate-300">
+            One platform, four connected outcomes for mining teams, consultants, and creators.
+          </p>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            {content.pillars.map((pillar) => (
+              <article
+                key={pillar.title}
+                className="site-market-card rounded-2xl border p-5 ring-1 ring-white/10 transition hover:bg-white/[0.06]"
+              >
+                <h3 className="text-base font-semibold text-white">{pillar.title}</h3>
+                <p className="mt-2 text-sm text-slate-300">{pillar.text}</p>
+                <a
+                  href={pillar.href}
+                  className="mt-4 inline-flex items-center gap-2 rounded-full border border-cyan-300/35 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-100 hover:bg-cyan-500/20"
+                >
+                  {pillar.cta}
+                </a>
+              </article>
+            ))}
           </div>
         </section>
 
@@ -267,10 +302,22 @@ export default async function AboutPage() {
                 Browse consultants
               </a>
               <a
+                href="/training/schedule"
+                className="inline-flex items-center gap-2 rounded-full border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-100 hover:border-cyan-300 hover:bg-cyan-500/20"
+              >
+                Training and events
+              </a>
+              <a
+                href="/vault"
+                className="inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-100 hover:border-emerald-300 hover:bg-emerald-500/20"
+              >
+                Open Vault
+              </a>
+              <a
                 href="/jobs"
                 className="inline-flex items-center gap-2 rounded-full border border-indigo-400/40 bg-indigo-500/10 px-4 py-2 text-sm font-semibold text-indigo-100 hover:border-indigo-300 hover:bg-indigo-500/20"
               >
-                View jobs
+                View freelance and contract jobs
               </a>
             </div>
           </div>

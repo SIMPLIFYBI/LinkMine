@@ -61,7 +61,7 @@ export default function OnboardingPage() {
         setForm({
           userTypes: decodeStoredUserTypes(profile.user_type),
           organisationSize: profile.organisation_size ?? "",
-          organisationName: profile.organisation_name ?? "",
+          organisationName: profile.organisation_name ?? profile.profession ?? "",
           profession: profile.profession ?? "",
         });
       }
@@ -76,8 +76,7 @@ export default function OnboardingPage() {
   }, [router]);
 
   const isSubmitDisabled = useMemo(() => {
-    const hasOrganisationOrProfession =
-      Boolean(form.organisationName?.trim()) || Boolean(form.profession?.trim());
+    const hasOrganisationOrProfession = Boolean(form.organisationName?.trim());
 
     return (
       form.userTypes.length === 0 ||
@@ -108,10 +107,9 @@ export default function OnboardingPage() {
     setError("");
     setMessage("");
 
-    const hasOrganisationOrProfession =
-      Boolean(form.organisationName?.trim()) || Boolean(form.profession?.trim());
+    const hasOrganisationOrProfession = Boolean(form.organisationName?.trim());
     if (!hasOrganisationOrProfession) {
-      setError("Please add either an organisation name or your profession.");
+      setError("Please add your organisation name or profession.");
       return;
     }
 
@@ -127,7 +125,6 @@ export default function OnboardingPage() {
         if (form.userTypes.length > 0) payload.userType = encodeSelectedUserTypes(form.userTypes);
         if (form.organisationSize) payload.organisationSize = form.organisationSize;
         if (form.organisationName?.trim()) payload.organisationName = form.organisationName.trim();
-        if (form.profession?.trim()) payload.profession = form.profession.trim();
         if (form.firstName?.trim()) payload.firstName = form.firstName.trim();
         if (form.lastName?.trim()) payload.lastName = form.lastName.trim();
 
@@ -146,7 +143,7 @@ export default function OnboardingPage() {
         }
 
         setMessage("Profile saved! Redirecting…");
-        setTimeout(() => router.replace("/"), 900);
+        setTimeout(() => router.replace("/?welcome=1"), 900);
       } catch (err) {
         setError(err.message || "Unable to save your profile.");
       }
@@ -177,7 +174,7 @@ export default function OnboardingPage() {
           );
 
         if (error) throw error;
-        router.replace("/");
+        router.replace("/?welcome=1");
       } catch (err) {
         setError(err.message || "Unable to skip.");
       }
@@ -283,13 +280,12 @@ export default function OnboardingPage() {
           <div>
             <label className="flex items-center gap-2 text-sm text-slate-300">
               <span>
-                Organisation name{" "}
-                <span className="text-slate-500">(or profession)</span>
+                Organisation name or profession
               </span>
               <span className="group relative inline-flex">
                 <button
                   type="button"
-                  aria-label="Organisation name guidance"
+                  aria-label="Organisation or profession guidance"
                   className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/30 text-[11px] font-semibold text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
                   onClick={(event) => {
                     event.preventDefault();
@@ -299,7 +295,7 @@ export default function OnboardingPage() {
                   i
                 </button>
                 <span className="pointer-events-none absolute left-1/2 top-7 z-20 hidden w-64 -translate-x-1/2 rounded-lg border border-white/15 bg-slate-900/95 px-3 py-2 text-xs leading-relaxed text-slate-100 shadow-xl group-hover:block group-focus-within:block">
-                  Fill out either organisation name or profession. You can provide both if you want.
+                  Add either your organisation name or your profession/role.
                 </span>
               </span>
             </label>
@@ -308,40 +304,8 @@ export default function OnboardingPage() {
               value={form.organisationName}
               onChange={(e) => updateField("organisationName", e.target.value)}
               className="mt-2 w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"
-              placeholder="YouMine Pty Ltd"
+              placeholder="YouMine Pty Ltd or Principal Mining Engineer"
             />
-          </div>
-
-          <div>
-            <label className="flex items-center gap-2 text-sm text-slate-300">
-              <span>Profession / role <span className="text-slate-500">(or organisation name)</span></span>
-              <span className="group relative inline-flex">
-                <button
-                  type="button"
-                  aria-label="Profession guidance"
-                  className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/30 text-[11px] font-semibold text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                  }}
-                >
-                  i
-                </button>
-                <span className="pointer-events-none absolute left-1/2 top-7 z-20 hidden w-64 -translate-x-1/2 rounded-lg border border-white/15 bg-slate-900/95 px-3 py-2 text-xs leading-relaxed text-slate-100 shadow-xl group-hover:block group-focus-within:block">
-                  Fill out either profession or organisation name. One of these fields is required.
-                </span>
-              </span>
-            </label>
-            <input
-              type="text"
-              value={form.profession}
-              onChange={(e) => updateField("profession", e.target.value)}
-              className="mt-2 w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"
-              placeholder="e.g. Principal Mining Engineer"
-            />
-            <p className="mt-2 text-xs text-slate-400">
-              Add either organisation name or profession. At least one is required.
-            </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">

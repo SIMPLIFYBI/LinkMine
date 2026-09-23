@@ -66,6 +66,150 @@ function renderJobNotificationEmail(row) {
   return { subject, text, html };
 }
 
+function buildVaultCompanyClaimOutreachEmail({ companyName, profileUrl, signupUrl, loginUrl }) {
+  const safeCompanyName = companyName || "your company";
+  const subject = `Action required: Claim your YouMine profile for ${safeCompanyName}`;
+
+  const text = [
+    `Hi ${safeCompanyName} team,`,
+    "",
+    "We have created your company profile in the YouMine Vault.",
+    "",
+    `Your profile link: ${profileUrl}`,
+    "",
+    "How to claim ownership:",
+    "1. Open your profile link above.",
+    `2. If you do not have an account yet, create a free account here: ${signupUrl}`,
+    `3. If you already have an account, log in here: ${loginUrl}`,
+    "4. Once logged in, return to your profile page and click the 'Claim Profile' button at the bottom of the screen.",
+    "5. We will send a verification email to your registered email address.",
+    "6. Open that email and follow the instructions to complete ownership.",
+    "",
+    "After verification, you will have full control of your company profile.",
+    "",
+    "If you need help, reply to this email and our team will assist.",
+  ].join("\n");
+
+  const html = `<!doctype html>
+<html>
+  <body style="margin:0;padding:0;background:#07111f;color:#dbe7f7;font-family:'Trebuchet MS','Segoe UI',Helvetica,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:radial-gradient(circle at top right,#133a64 0,#07111f 45%);padding:24px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="640" cellspacing="0" cellpadding="0" style="width:100%;max-width:640px;border-collapse:collapse;background:#08182b;border:1px solid #1f3b58;border-radius:20px;overflow:hidden;box-shadow:0 20px 45px rgba(3,10,20,.45);">
+            <tr>
+              <td style="padding:0;background:linear-gradient(115deg,#18b6ff,#67e8f9 55%,#d0f5ff 110%);">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td style="padding:20px 22px 10px;color:#06253f;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;">YouMine Vault</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:0 22px 20px;color:#04233b;">
+                      <h1 style="margin:0;font-size:28px;line-height:1.15;font-weight:800;">Claim your company profile</h1>
+                      <p style="margin:10px 0 0;font-size:14px;line-height:1.5;font-weight:600;color:#073a60;">A profile has been prepared for ${escapeHtml(safeCompanyName)}.</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:22px 22px 6px;">
+                <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#d9e6f6;">Hi ${escapeHtml(safeCompanyName)} team,</p>
+                <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:#d9e6f6;">Your company listing is now live in the YouMine Vault. Follow the steps below to take ownership and manage it directly.</p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:0 22px 18px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:separate;border-spacing:0;background:#061320;border:1px solid #1b3148;border-radius:14px;">
+                  <tr>
+                    <td style="padding:14px 14px 8px;font-size:11px;color:#83a7cc;letter-spacing:.08em;text-transform:uppercase;font-weight:700;">Company profile link</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:0 14px 14px;word-break:break-word;">
+                      <a href="${profileUrl}" style="color:#63ddff;text-decoration:none;font-size:14px;font-weight:700;">${escapeHtml(profileUrl)}</a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:0 22px 8px;">
+                <p style="margin:0 0 12px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#8db2d6;font-weight:700;">How to claim ownership</p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:0 22px 8px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:separate;border-spacing:0 10px;">
+                  <tr>
+                    <td style="width:34px;vertical-align:top;padding-top:2px;"><span style="display:inline-block;min-width:26px;height:26px;line-height:26px;text-align:center;border-radius:999px;background:#173958;color:#8ce5ff;font-size:12px;font-weight:700;">1</span></td>
+                    <td style="font-size:14px;line-height:1.6;color:#d7e5f6;">Open your profile link.</td>
+                  </tr>
+                  <tr>
+                    <td style="width:34px;vertical-align:top;padding-top:2px;"><span style="display:inline-block;min-width:26px;height:26px;line-height:26px;text-align:center;border-radius:999px;background:#173958;color:#8ce5ff;font-size:12px;font-weight:700;">2</span></td>
+                    <td style="font-size:14px;line-height:1.6;color:#d7e5f6;">No account yet? Create a free account using the button below.</td>
+                  </tr>
+                  <tr>
+                    <td style="width:34px;vertical-align:top;padding-top:2px;"><span style="display:inline-block;min-width:26px;height:26px;line-height:26px;text-align:center;border-radius:999px;background:#173958;color:#8ce5ff;font-size:12px;font-weight:700;">3</span></td>
+                    <td style="font-size:14px;line-height:1.6;color:#d7e5f6;">Already have an account? Log in, then return to your profile page.</td>
+                  </tr>
+                  <tr>
+                    <td style="width:34px;vertical-align:top;padding-top:2px;"><span style="display:inline-block;min-width:26px;height:26px;line-height:26px;text-align:center;border-radius:999px;background:#173958;color:#8ce5ff;font-size:12px;font-weight:700;">4</span></td>
+                    <td style="font-size:14px;line-height:1.6;color:#d7e5f6;">Scroll to the bottom of the profile and click <strong style="color:#ffffff;">Claim Profile</strong>.</td>
+                  </tr>
+                  <tr>
+                    <td style="width:34px;vertical-align:top;padding-top:2px;"><span style="display:inline-block;min-width:26px;height:26px;line-height:26px;text-align:center;border-radius:999px;background:#173958;color:#8ce5ff;font-size:12px;font-weight:700;">5</span></td>
+                    <td style="font-size:14px;line-height:1.6;color:#d7e5f6;">A verification email is sent to your registered email address.</td>
+                  </tr>
+                  <tr>
+                    <td style="width:34px;vertical-align:top;padding-top:2px;"><span style="display:inline-block;min-width:26px;height:26px;line-height:26px;text-align:center;border-radius:999px;background:#173958;color:#8ce5ff;font-size:12px;font-weight:700;">6</span></td>
+                    <td style="font-size:14px;line-height:1.6;color:#d7e5f6;">Open that email and follow the instructions to complete ownership.</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:14px 22px 20px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td style="padding:0 0 10px;">
+                      <a href="${signupUrl}" style="display:block;text-align:center;background:#20c6ff;color:#03253e;text-decoration:none;padding:12px 14px;border-radius:10px;font-size:14px;font-weight:800;">Create free account</a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <a href="${loginUrl}" style="display:block;text-align:center;background:#0f253a;color:#8fdfff;text-decoration:none;padding:11px 14px;border-radius:10px;border:1px solid #2a4d72;font-size:14px;font-weight:700;">Log in to existing account</a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:0 22px 22px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#071521;border:1px solid #1a2d41;border-radius:12px;">
+                  <tr>
+                    <td style="padding:12px 14px;font-size:13px;line-height:1.6;color:#c9dbef;">
+                      After verification, your team will have full control of this profile. Need help? Reply to this email and we will assist.
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+
+  return { subject, text, html };
+}
+
 async function getAdminContext(req) {
   const sb = await supabaseServerClient();
 
@@ -122,6 +266,8 @@ export async function GET(req) {
     const editUrl = `${base}/consultants/${consultantId}/edit`;
     const claimUrl = `${base}/claim?consultant=${consultantId}`;
     const claimToken = "11111111-2222-4333-8444-555555555555";
+    const signupUrl = `${base}/signup`;
+    const loginUrl = `${base}/login`;
 
     const approved = buildConsultantApprovedEmail({ consultantName, profileUrl });
     const rejected = buildConsultantRejectedEmail({
@@ -131,6 +277,12 @@ export async function GET(req) {
     });
     const claimHtml = buildClaimProfileHtml(consultantName, claimUrl, claimToken);
     const claimText = buildClaimProfileText(consultantName, claimUrl, claimToken);
+    const vaultClaimOutreach = buildVaultCompanyClaimOutreachEmail({
+      companyName: consultantName,
+      profileUrl,
+      signupUrl,
+      loginUrl,
+    });
 
     const welcomeHtml = buildWelcomeEmailHtml({ firstName: "Sam" });
     const welcomeText = buildWelcomeEmailText({ firstName: "Sam" });
@@ -273,6 +425,16 @@ export async function GET(req) {
         subject: `Confirm ownership of ${consultantName}`,
         html: claimHtml,
         text: claimText,
+      },
+      {
+        id: "vault-company-claim-outreach",
+        label: "Vault Company Claim Outreach",
+        trigger: "Manual outreach campaign to companies already listed in the Vault",
+        source: "app/api/admin/dev-tools/email-templates/route.js",
+        recipient: "Company contact email",
+        subject: vaultClaimOutreach.subject,
+        html: vaultClaimOutreach.html,
+        text: vaultClaimOutreach.text,
       },
       {
         id: "consultant-contact",

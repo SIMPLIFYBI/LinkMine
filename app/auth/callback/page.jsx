@@ -11,9 +11,21 @@ export default function AuthCallbackPage() {
     (async () => {
       // This triggers Supabase to parse the URL and store the session (detectSessionInUrl:true)
       await supabase.auth.getSession();
-      // Optional: you can also call supabase.auth.getUser() to force-load user
-      await supabase.auth.getUser();
-      router.replace("/"); // go home (or /account)
+
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id || null;
+      if (!userId) {
+        router.replace("/");
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("id")
+        .eq("id", userId)
+        .maybeSingle();
+
+      router.replace(profile?.id ? "/?welcome=1" : "/onboarding");
     })();
   }, [router]);
 

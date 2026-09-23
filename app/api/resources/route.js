@@ -161,13 +161,22 @@ export async function GET(req) {
         ? ""
         : "You need an approved consultant or creator profile before you can publish marketplace resources.",
       homeBannerResourceId,
-      resources: slicedRows.map((row) => ({
-        ...buildResourceRoutePayload({
+      resources: slicedRows.map((row) => {
+        const payload = buildResourceRoutePayload({
           ...row,
           consultant_icon_url: consultantIconByResourceId.get(row.id) || null,
-        }, row.resource_tag_links || []),
-        resourceImages: resourceImagesByResourceId.get(row.id) || [],
-      })),
+        }, row.resource_tag_links || []);
+
+        // Keep discover pages public, but avoid exposing direct external URLs to anonymous viewers.
+        if (!user) {
+          payload.sourceUrl = null;
+        }
+
+        return {
+          ...payload,
+          resourceImages: resourceImagesByResourceId.get(row.id) || [],
+        };
+      }),
       paging: {
         page,
         limit,

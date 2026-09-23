@@ -6,6 +6,7 @@ import Image from "next/image";
 import ServiceFinder from "@/app/components/ServiceFinder";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
 import AddProfileSmartCTA from "@/app/components/consultants/AddProfileSmartCTA.client.jsx";
+import WelcomeAccountModal from "@/app/components/WelcomeAccountModal.client.jsx";
 import DidYouKnowSection from "./components/stats/DidYouKnowSection.jsx";
 import {
   siteMarketLabel,
@@ -343,6 +344,7 @@ export default async function HomePage() {
 
   return (
     <main className="site-market-shell mx-auto flex max-w-6xl flex-col gap-10 px-4 pb-10" data-market={market}>
+      <WelcomeAccountModal />
       {/* Hero */}
       <section className="relative left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw] min-h-[240px] md:min-h-[300px] overflow-hidden">
         <Image

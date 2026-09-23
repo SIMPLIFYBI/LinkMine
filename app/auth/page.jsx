@@ -40,7 +40,8 @@ function AuthInner() {
         if (error) toast.error(error.message);
         else {
           supabase.auth.getUser().then(async ({ data }) => {
-            const signedInEmail = data?.user?.email || null;
+            const signedInUser = data?.user || null;
+            const signedInEmail = signedInUser?.email || null;
             if (isBlockedEmail(signedInEmail)) {
               await supabase.auth.signOut();
               toast.error(getBlockedUserMessage());
@@ -48,8 +49,18 @@ function AuthInner() {
               return;
             }
 
+            let hasProfile = false;
+            if (signedInUser?.id) {
+              const { data: profile } = await supabase
+                .from("user_profiles")
+                .select("id")
+                .eq("id", signedInUser.id)
+                .maybeSingle();
+              hasProfile = Boolean(profile?.id);
+            }
+
             toast.success("Signed in");
-            router.replace("/account");
+            router.replace(hasProfile ? "/?welcome=1" : "/onboarding");
           });
         }
       });
