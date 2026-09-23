@@ -79,6 +79,8 @@ export default function InProgressClient() {
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [busyLogo, setBusyLogo] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [visibilityFilter, setVisibilityFilter] = useState("all"); // new
@@ -302,6 +304,30 @@ export default function InProgressClient() {
     }
   }
 
+  async function deleteConsultant() {
+    if (!deleteTarget) return;
+
+    setDeleting(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/consultants/${deleteTarget.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirm: true }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.error || "Consultant deletion failed.");
+
+      setDeleteTarget(null);
+      setMessage("Consultant deleted.");
+      await loadList();
+    } catch (e) {
+      setError(e.message || "Consultant deletion failed.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <main className="mx-auto w-full max-w-6xl space-y-8 py-12">
       <header className="flex items-center justify-between">
@@ -337,6 +363,11 @@ export default function InProgressClient() {
       {error && (
         <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">
           {error}
+        </div>
+      )}
+      {message && (
+        <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm text-emerald-200">
+          {message}
         </div>
       )}
       {!user && (
@@ -420,7 +451,7 @@ export default function InProgressClient() {
                       {new Date(it.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-3 py-2">
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <a
                           href={`/consultants/${it.id}`}
                           target="_blank"
@@ -444,6 +475,17 @@ export default function InProgressClient() {
                           onClick={() => toggleVisibility(it)}
                         >
                           {it.visibility === "public" ? "Make private" : "Make public"}
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded border border-red-400/40 bg-red-500/10 px-3 py-1 text-xs text-red-200 hover:bg-red-500/20"
+                          onClick={() => {
+                            setDeleteTarget(it);
+                            setMessage("");
+                            setError("");
+                          }}
+                        >
+                          Delete
                         </button>
                       </div>
                     </td>
@@ -606,6 +648,46 @@ export default function InProgressClient() {
                   Reset
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4"
+          aria-modal="true"
+          role="dialog"
+          aria-labelledby="delete-consultant-title"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-red-400/30 bg-slate-900 p-5 shadow-xl">
+            <h2 id="delete-consultant-title" className="text-lg font-semibold text-white">
+              Delete consultant?
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              You are about to permanently delete {deleteTarget.company || deleteTarget.display_name || "this consultant"}.
+              This cannot be undone.
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-400">
+              Deletion will be blocked if the consultant still has related records, so no associated data is removed accidentally.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setDeleteTarget(null)}
+                className="rounded bg-slate-700/60 px-4 py-2 text-sm text-slate-100 hover:bg-slate-700 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={deleteConsultant}
+                className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500 disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Yes, delete consultant"}
+              </button>
             </div>
           </div>
         </div>
