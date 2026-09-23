@@ -73,19 +73,33 @@ export default async function EditConsultantPage({ params }) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-8">
-      {/* New back button */}
-      <div className="mb-4">
+    <main className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-10">
+      <section className="relative overflow-hidden rounded-[28px] border border-sky-200/20 bg-[radial-gradient(circle_at_88%_12%,rgba(34,211,238,0.2),transparent_28%),radial-gradient(circle_at_12%_100%,rgba(59,130,246,0.16),transparent_34%),linear-gradient(145deg,rgba(8,24,43,0.96),rgba(10,32,54,0.9))] p-5 shadow-[0_28px_70px_-46px_rgba(0,0,0,0.95)] ring-1 ring-white/10 sm:p-7">
+        <div className="pointer-events-none absolute -right-8 -top-10 h-36 w-36 rounded-full border border-cyan-200/20 bg-cyan-300/10" aria-hidden="true" />
+        <div className="relative">
+          <div className="mb-4">
         <Link
           href={`/consultants/${consultant.id}`}
-          className="inline-flex items-center gap-1 text-sm font-medium text-sky-300 hover:text-sky-200 hover:underline"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-cyan-100 transition hover:text-white"
         >
           <span aria-hidden className="text-lg leading-none">←</span>
           <span>Back to profile</span>
         </Link>
-      </div>
+          </div>
 
-      <h1 className="mb-4 text-2xl font-semibold text-white">Edit profile</h1>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-100/80">Profile workspace</p>
+              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Edit profile</h1>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-200">Keep your public presence current so the right people can find and contact you.</p>
+            </div>
+            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/[0.07] px-3 py-1.5 text-xs font-semibold text-slate-100">
+              <span className={`h-2 w-2 rounded-full ${consultant.status === "approved" ? "bg-emerald-300" : "bg-amber-300"}`} />
+              {consultant.status === "approved" ? "Profile live" : "In review"}
+            </div>
+          </div>
+        </div>
+      </section>
 
       <EditTabs consultantId={consultant.id} active="profile" />
 
@@ -130,12 +144,13 @@ export default async function EditConsultantPage({ params }) {
       />
 
       {["consultant", "both"].includes(String(consultant.profile_type || "consultant")) ? (
-        <section className="mt-10 space-y-3">
-          <h2 className="text-lg font-semibold text-slate-100">Services offered</h2>
-          <p className="text-sm text-slate-400">
+        <section className="mt-10 rounded-[24px] border border-white/10 bg-white/[0.04] p-5 shadow-[0_22px_54px_-42px_rgba(0,0,0,0.9)] ring-1 ring-white/10 sm:p-6">
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sky-200">Capability</p>
+          <h2 className="mt-2 text-xl font-semibold text-white">Services offered</h2>
+          <p className="mt-2 text-sm text-slate-400">
             Add or remove services offered by this consultancy.
           </p>
-          <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4">
+          <div className="mt-5 rounded-2xl border border-white/10 bg-slate-950/20 p-4">
             <ConsultantServicesManager consultantId={consultant.id} canEdit={true} />
           </div>
         </section>

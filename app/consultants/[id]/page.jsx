@@ -94,7 +94,7 @@ async function getConsultant(id, viewer = {}) {
 
   const hiddenByVisibility = data.visibility !== "public" && !canViewAsOwnerOrAdmin;
   const hiddenByProfileType =
-    !["consultant", "both"].includes(String(data.profile_type || "consultant")) &&
+    !["consultant", "creator", "both"].includes(String(data.profile_type || "consultant")) &&
     !canViewAsOwnerOrAdmin;
   if (hiddenByVisibility || hiddenByProfileType) {
     return {

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 import DeveloperEmailTemplatesClient from "./DeveloperEmailTemplatesClient";
+import VaultCreatorClaimOutreach from "./VaultCreatorClaimOutreach.client";
 
 function formatCount(value) {
   if (value == null) return "-";
@@ -22,6 +23,9 @@ export default function DeveloperToolsClient() {
   const [message, setMessage] = useState("");
   const [sandbox, setSandbox] = useState(null);
   const [sandboxBusy, setSandboxBusy] = useState(false);
+  const [consultantSandbox, setConsultantSandbox] = useState(null);
+  const [consultantSandboxBusy, setConsultantSandboxBusy] = useState(false);
+  const [consultantDeleteText, setConsultantDeleteText] = useState("");
 
   async function callSandboxApi(mode) {
     const sb = supabaseBrowser();
@@ -68,6 +72,55 @@ export default function DeveloperToolsClient() {
       setError(err.message || "Sandbox request failed.");
     } finally {
       setSandboxBusy(false);
+    }
+  }
+
+  async function callConsultantSandboxApi(mode, confirmText) {
+    const sb = supabaseBrowser();
+    const {
+      data: { session },
+      error: sessionError,
+    } = await sb.auth.getSession();
+    if (sessionError) throw new Error(sessionError.message || "Unable to read session.");
+
+    const response = await fetch("/api/admin/dev-tools/consultant-profile-sandbox", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      },
+      credentials: "include",
+      body: JSON.stringify({ mode, ...(confirmText ? { confirmText } : {}) }),
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok || body?.ok === false) {
+      throw new Error(body?.error || `Request failed (${response.status}).`);
+    }
+    return body;
+  }
+
+  async function handleConsultantSandbox(mode) {
+    setError("");
+    setMessage("");
+    setConsultantSandboxBusy(true);
+    try {
+      const body = await callConsultantSandboxApi(
+        mode,
+        mode === "delete" ? consultantDeleteText.trim() : undefined
+      );
+      setConsultantSandbox(body);
+      if (mode === "delete") {
+        setConsultantDeleteText("");
+        setMessage("Test consultant profile deleted.");
+      } else if (mode === "create") {
+        setMessage("Test consultant profile created and assigned to jaymeblue@gmail.com.");
+      } else {
+        setMessage("Loaded test consultant profile state.");
+      }
+    } catch (err) {
+      setError(err.message || "Consultant sandbox request failed.");
+    } finally {
+      setConsultantSandboxBusy(false);
     }
   }
 
@@ -189,6 +242,18 @@ export default function DeveloperToolsClient() {
         </button>
         <button
           type="button"
+          onClick={() => setActiveTool("creator-claims")}
+          className={[
+            "rounded-full px-4 py-2 text-sm font-semibold transition",
+            activeTool === "creator-claims"
+              ? "bg-sky-500/20 text-sky-100 border border-sky-300/50"
+              : "bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10",
+          ].join(" ")}
+        >
+          Creator claim outreach
+        </button>
+        <button
+          type="button"
           onClick={() => setActiveTool("claim-sandbox")}
           className={[
             "rounded-full px-4 py-2 text-sm font-semibold transition",
@@ -199,9 +264,22 @@ export default function DeveloperToolsClient() {
         >
           Claim sandbox
         </button>
+        <button
+          type="button"
+          onClick={() => setActiveTool("consultant-sandbox")}
+          className={[
+            "rounded-full px-4 py-2 text-sm font-semibold transition",
+            activeTool === "consultant-sandbox"
+              ? "bg-sky-500/20 text-sky-100 border border-sky-300/50"
+              : "bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10",
+          ].join(" ")}
+        >
+          Consultant sandbox
+        </button>
       </div>
 
       {activeTool === "email-templates" ? <DeveloperEmailTemplatesClient /> : null}
+      {activeTool === "creator-claims" ? <VaultCreatorClaimOutreach /> : null}
 
       {activeTool === "claim-sandbox" ? (
         <article className="rounded-3xl border border-white/10 bg-white/5 p-6 space-y-4">
@@ -259,6 +337,78 @@ export default function DeveloperToolsClient() {
                 </div>
               ) : null}
             </div>
+          ) : null}
+        </article>
+      ) : null}
+
+      {activeTool === "consultant-sandbox" ? (
+        <article className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-6">
+          <div>
+            <h2 className="text-xl font-semibold text-white">Consultant profile sandbox</h2>
+            <p className="mt-1 text-sm text-slate-400">
+              Creates one private, DevTools-marked consultant profile for jaymeblue@gmail.com. This tool cannot modify or delete any other consultant.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => handleConsultantSandbox("preview")}
+              disabled={consultantSandboxBusy}
+              className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/15 disabled:opacity-60"
+            >
+              {consultantSandboxBusy ? "Working..." : "Preview profile"}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleConsultantSandbox("create")}
+              disabled={consultantSandboxBusy}
+              className="rounded-full border border-sky-300/40 bg-sky-500/15 px-4 py-2 text-sm font-semibold text-sky-100 hover:bg-sky-500/25 disabled:opacity-60"
+            >
+              {consultantSandboxBusy ? "Working..." : "Create or reset profile"}
+            </button>
+          </div>
+
+          {consultantSandbox ? (
+            <div className="space-y-2 rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-sm text-slate-200">
+              <div>Test account: <span className="text-sky-300">{consultantSandbox.testEmail || "jaymeblue@gmail.com"}</span></div>
+              <div>Auth account exists: {consultantSandbox.testAccountExists ? "Yes" : "No"}</div>
+              <div>Profile exists: {consultantSandbox.sandbox?.id ? "Yes" : "No"}</div>
+              {consultantSandbox.profileUrl ? (
+                <div>
+                  Profile link: <a href={consultantSandbox.profileUrl} className="text-sky-300 hover:underline">{consultantSandbox.profileUrl}</a>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 p-4">
+            <label className="block text-xs uppercase tracking-[0.18em] text-rose-100">
+              Confirmation phrase
+              <input
+                type="text"
+                value={consultantDeleteText}
+                onChange={(event) => setConsultantDeleteText(event.target.value)}
+                placeholder="DELETE TEST PROFILE"
+                className="mt-2 w-full rounded-xl border border-rose-300/30 bg-slate-950/80 px-3 py-2 text-sm text-white outline-none transition focus:border-rose-300/60"
+              />
+            </label>
+            <p className="mt-2 text-xs text-rose-100/90">Type exactly: <span className="font-semibold">DELETE TEST PROFILE</span></p>
+            <button
+              type="button"
+              onClick={() => handleConsultantSandbox("delete")}
+              disabled={consultantSandboxBusy || consultantDeleteText.trim() !== "DELETE TEST PROFILE"}
+              className="mt-3 rounded-full border border-rose-300/40 bg-rose-500/20 px-4 py-2 text-sm font-semibold text-rose-100 hover:bg-rose-500/30 disabled:opacity-50"
+            >
+              {consultantSandboxBusy ? "Working..." : "Delete test profile"}
+            </button>
+          </div>
+
+          {message ? (
+            <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-3 text-sm text-emerald-100">{message}</div>
+          ) : null}
+          {error ? (
+            <div className="rounded-lg border border-rose-400/30 bg-rose-500/10 p-3 text-sm text-rose-100">{error}</div>
           ) : null}
         </article>
       ) : null}

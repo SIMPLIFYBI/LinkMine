@@ -9,12 +9,12 @@ export default function EditTabs({ consultantId, active = "profile" }) {
   ];
 
   return (
-    <div className="mb-6 overflow-x-auto">
+    <div className="my-5 overflow-x-auto sm:my-6">
       <nav
         aria-label="Edit profile sections"
-        className="min-w-max border-b border-white/10"
+        className="min-w-max rounded-2xl border border-white/10 bg-slate-950/35 p-1.5 ring-1 ring-white/5"
       >
-        <div className="flex items-end gap-1">
+        <div className="flex gap-1">
       {tabs.map((t) => {
         const isActive = active === t.key;
         return (
@@ -23,19 +23,13 @@ export default function EditTabs({ consultantId, active = "profile" }) {
             href={t.href}
             prefetch
             aria-current={isActive ? "page" : undefined}
-            className={`relative -mb-px px-4 py-2.5 text-sm font-medium transition ${
+            className={`relative rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
               isActive
-                ? "text-sky-200"
-                : "text-slate-300 hover:text-white"
+                ? "bg-sky-400/15 text-sky-100 shadow-[inset_0_0_0_1px_rgba(125,211,252,0.25)]"
+                : "text-slate-400 hover:bg-white/[0.06] hover:text-white"
             }`}
           >
             <span>{t.label}</span>
-            <span
-              className={`pointer-events-none absolute inset-x-2 bottom-0 h-0.5 rounded-full transition ${
-                isActive ? "bg-sky-300 shadow-[0_0_18px_rgba(56,189,248,0.85)]" : "bg-transparent"
-              }`}
-              aria-hidden="true"
-            />
           </Link>
         );
       })}

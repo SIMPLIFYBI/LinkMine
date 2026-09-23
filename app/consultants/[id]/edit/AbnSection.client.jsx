@@ -98,14 +98,15 @@ export default function AbnSection({
   }
 
   return (
-    <section className="mt-10 space-y-3">
-      <h2 className="text-lg font-semibold text-slate-100">Business registration (optional)</h2>
-      <p className="text-sm text-slate-400">
+    <section className="mt-10 rounded-[24px] border border-white/10 bg-white/[0.04] p-5 shadow-[0_22px_54px_-42px_rgba(0,0,0,0.9)] ring-1 ring-white/10 sm:p-6">
+      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-200">Trust signal</p>
+      <h2 className="mt-2 text-xl font-semibold text-white">Business registration <span className="text-sm font-normal text-slate-400">(optional)</span></h2>
+      <p className="mt-2 text-sm leading-6 text-slate-400">
         Add your ABN and/or ACN to display a verified badge on your public profile. This is optional—but recommended.
       </p>
 
       {/* inputs */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 ring-1 ring-white/10">
+      <div className="mt-5 rounded-2xl border border-white/10 bg-slate-950/20 p-4 ring-1 ring-white/5">
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="grid gap-1 text-sm">
             <span className="text-slate-300">ABN</span>
@@ -115,7 +116,7 @@ export default function AbnSection({
               placeholder="12 345 678 901"
               value={abn}
               onChange={(e) => setAbn(formatAbn(e.target.value))}
-              className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-slate-100 placeholder:text-slate-400 outline-none focus:border-sky-400/60 focus:ring-2 focus:ring-sky-400/30"
+              className="rounded-xl border border-white/10 bg-white/[0.08] px-3 py-2.5 text-slate-100 placeholder:text-slate-400 outline-none transition focus:border-sky-400/60 focus:ring-2 focus:ring-sky-400/30"
             />
           </label>
           <label className="grid gap-1 text-sm">
@@ -126,7 +127,7 @@ export default function AbnSection({
               placeholder="123 456 789"
               value={acn}
               onChange={(e) => setAcn(formatAcn(e.target.value))}
-              className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-slate-100 placeholder:text-slate-400 outline-none focus:border-sky-400/60 focus:ring-2 focus:ring-sky-400/30"
+              className="rounded-xl border border-white/10 bg-white/[0.08] px-3 py-2.5 text-slate-100 placeholder:text-slate-400 outline-none transition focus:border-sky-400/60 focus:ring-2 focus:ring-sky-400/30"
             />
           </label>
         </div>
@@ -136,7 +137,7 @@ export default function AbnSection({
             type="button"
             onClick={onVerify}
             disabled={!canVerify || loading}
-            className="inline-flex items-center rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            className="inline-flex items-center rounded-full border border-sky-200/35 bg-gradient-to-r from-sky-500 to-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_14px_30px_-18px_rgba(56,189,248,0.95)] transition hover:brightness-110 disabled:opacity-60"
           >
             {loading ? "Verifying…" : "Verify ABN/ACN"}
           </button>

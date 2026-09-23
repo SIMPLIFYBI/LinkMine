@@ -8,6 +8,7 @@ export default function DeveloperEmailTemplatesClient() {
   const [error, setError] = useState("");
   const [templates, setTemplates] = useState([]);
   const [activeId, setActiveId] = useState("");
+  const [copyStatus, setCopyStatus] = useState("");
 
   useEffect(() => {
     let ignore = false;
@@ -59,6 +60,26 @@ export default function DeveloperEmailTemplatesClient() {
     [templates, activeId],
   );
 
+  async function handleCopyHtml() {
+    if (!activeTemplate?.html) return;
+
+    try {
+      if (navigator.clipboard?.write && typeof ClipboardItem !== "undefined") {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/html": new Blob([activeTemplate.html], { type: "text/html" }),
+            "text/plain": new Blob([activeTemplate.text || activeTemplate.html], { type: "text/plain" }),
+          }),
+        ]);
+      } else {
+        await navigator.clipboard.writeText(activeTemplate.html);
+      }
+      setCopyStatus("Copied. Paste into an Outlook message.");
+    } catch {
+      setCopyStatus("Could not copy the template. Check clipboard permissions and try again.");
+    }
+  }
+
   return (
     <section className="space-y-4">
       <header className="space-y-2">
@@ -96,7 +117,10 @@ export default function DeveloperEmailTemplatesClient() {
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => setActiveId(item.id)}
+                    onClick={() => {
+                      setActiveId(item.id);
+                      setCopyStatus("");
+                    }}
                     className={[
                       "mb-2 w-full rounded-xl border px-3 py-3 text-left transition",
                       isActive
@@ -119,12 +143,26 @@ export default function DeveloperEmailTemplatesClient() {
             {activeTemplate ? (
               <>
                 <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-                  <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Trigger</div>
-                  <div className="mt-1 text-sm text-slate-100">{activeTemplate.trigger}</div>
-                  <div className="mt-3 text-xs uppercase tracking-[0.16em] text-slate-400">Recipient</div>
-                  <div className="mt-1 text-sm text-slate-100">{activeTemplate.recipient}</div>
-                  <div className="mt-3 text-xs uppercase tracking-[0.16em] text-slate-400">Subject</div>
-                  <div className="mt-1 text-sm font-semibold text-white">{activeTemplate.subject}</div>
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Trigger</div>
+                      <div className="mt-1 text-sm text-slate-100">{activeTemplate.trigger}</div>
+                      <div className="mt-3 text-xs uppercase tracking-[0.16em] text-slate-400">Recipient</div>
+                      <div className="mt-1 text-sm text-slate-100">{activeTemplate.recipient}</div>
+                      <div className="mt-3 text-xs uppercase tracking-[0.16em] text-slate-400">Subject</div>
+                      <div className="mt-1 text-sm font-semibold text-white">{activeTemplate.subject}</div>
+                    </div>
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={handleCopyHtml}
+                        className="inline-flex items-center justify-center rounded-full border border-sky-300/50 bg-sky-500/20 px-4 py-2 text-sm font-semibold text-sky-50 transition hover:bg-sky-500/30"
+                      >
+                        Copy HTML
+                      </button>
+                      {copyStatus ? <div className="max-w-[230px] text-xs leading-5 text-slate-300">{copyStatus}</div> : null}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
