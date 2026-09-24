@@ -24,9 +24,9 @@ function getHomeCopy(market) {
       description:
         "YouMine connects oil & gas teams with trusted consultants and contractors. Browse services, view portfolios, and contact experts directly.",
       heroAlt: "YouMine — consultants and contractors in oil and gas",
-      heroTitle: "Match with the right oil & gas expert today.",
+      heroTitle: "The resources industry, connected.",
       heroDescription:
-        "Discover trusted consultants and contractors across subsurface, wells, facilities, operations, and project delivery.",
+        "Discover experts, opportunities, events and digital tools across mining and oil & gas.",
       overviewTitle: "Connect oil & gas teams with trusted contractors & consultants",
       overviewDescription:
         "YouMine helps operators, asset teams, and project leads find qualified oil & gas contractors and consultants fast — with portfolios, verified business details, service categories, and Google-linked profiles.",
@@ -41,9 +41,9 @@ function getHomeCopy(market) {
       description:
         "YouMine connects mining and oil & gas teams with trusted consultants and contractors. Browse services, view portfolios, and contact experts directly.",
       heroAlt: "YouMine — consultants and contractors across mining and oil and gas",
-      heroTitle: "Everything mining. One platform.",
+      heroTitle: "The resources industry, connected.",
       heroDescription:
-        "Connect with industry experts, discover new opportunities, find talent, explore events and training, and access the digital tools shaping the future of mining. All in one place.",
+        "Discover experts, opportunities, events and digital tools across mining and oil & gas.",
       overviewTitle: "Connect industry teams with trusted contractors & consultants",
       overviewDescription:
         "YouMine helps mining and oil & gas teams find qualified contractors and consultants fast — with portfolios, verified business details, service categories, and Google-linked profiles.",
@@ -57,9 +57,9 @@ function getHomeCopy(market) {
     description:
       "YouMine connects mining clients with trusted consultants and contractors. Browse services, view portfolios, and contact experts directly.",
     heroAlt: "YouMine — consultants and contractors in mining",
-    heroTitle: "Everything mining. One platform.",
+    heroTitle: "The resources industry, connected.",
     heroDescription:
-      "Discover trusted consultants and contractors, review portfolios, and contact directly.",
+      "Discover experts, opportunities, events and digital tools across mining and oil & gas.",
     overviewTitle: "Connect mining clients with trusted contractors & consultants",
     overviewDescription:
       "YouMine helps mining companies find qualified contractors and consultants fast — with portfolios, verified business details, service categories, and Google-linked profiles. For consultants, it’s the easiest way to showcase your work, build credibility, and track profile metrics.",

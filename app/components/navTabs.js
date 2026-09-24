@@ -1,7 +1,7 @@
 const navTabs = [
   { label: "Home", href: "/" },
   { label: "Vault", href: "/vault" },
-  { label: "Jobs Board", href: "/jobs" },
+  { label: "Jobs", href: "/jobs" },
   { label: "Consultants", href: "/consultants" },
   { label: "What's On", href: "/whats-on" },
   { label: "My Activity", href: "/activity" }, // NEW
