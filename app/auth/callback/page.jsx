@@ -1,21 +1,44 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
+  const [error, setError] = useState("");
 
   useEffect(() => {
     (async () => {
-      // This triggers Supabase to parse the URL and store the session (detectSessionInUrl:true)
-      await supabase.auth.getSession();
+      const callbackParams = new URLSearchParams(`${window.location.search}&${window.location.hash.replace(/^#/, "")}`);
+      const providerError = callbackParams.get("error_description");
+      if (providerError) {
+        setError(providerError);
+        return;
+      }
 
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id || null;
+      const code = callbackParams.get("code");
+      let { data: sessionData } = await supabase.auth.getSession();
+      let session = sessionData.session;
+
+      if (!session && code) {
+        const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError) {
+          setError(exchangeError.message || "Unable to complete sign-in.");
+          return;
+        }
+
+        session = exchangeData.session;
+      }
+
+      if (!session) {
+        setError("Microsoft did not return a signed-in session. Please try again.");
+        return;
+      }
+
+      const userId = session.user?.id || null;
       if (!userId) {
-        router.replace("/");
+        setError("Microsoft did not return a signed-in account. Please try again.");
         return;
       }
 
@@ -29,5 +52,5 @@ export default function AuthCallbackPage() {
     })();
   }, [router]);
 
-  return <div style={{ padding: 16 }}>Completing sign-in…</div>;
+  return <div style={{ padding: 16 }}>{error || "Completing sign-in…"}</div>;
 }

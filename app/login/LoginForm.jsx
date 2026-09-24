@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
+import { getAuthRedirectUrl, isNativeAppRuntime } from "@/lib/mobileRuntime";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [oauthSubmitting, setOauthSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   // Forgot password UI
@@ -89,6 +91,24 @@ export default function LoginForm() {
     }
   }
 
+  async function handleMicrosoftSignIn() {
+    setError("");
+    setOauthSubmitting(true);
+
+    const redirectTo = isNativeAppRuntime()
+      ? getAuthRedirectUrl()
+      : `${window.location.origin}/auth/callback`;
+    const { error: oauthError } = await supabaseBrowser().auth.signInWithOAuth({
+      provider: "azure",
+      options: { redirectTo },
+    });
+
+    if (oauthError) {
+      setOauthSubmitting(false);
+      setError(oauthError.message || "Unable to continue with Microsoft.");
+    }
+  }
+
   return (
     <div className="min-h-[calc(100vh-56px)] flex items-start justify-center">
       <div className="w-full mx-auto max-w-sm px-4 pt-8 pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-8">
@@ -136,6 +156,27 @@ export default function LoginForm() {
             className="w-full rounded-md bg-gradient-to-r from-sky-600 to-indigo-600 px-4 py-2 text-sm font-medium disabled:opacity-60"
           >
             {submitting ? "Signing in…" : "Log in"}
+          </button>
+
+          <div className="flex items-center gap-3 py-1" aria-hidden="true">
+            <div className="h-px flex-1 bg-white/10" />
+            <span className="text-xs text-slate-400">or</span>
+            <div className="h-px flex-1 bg-white/10" />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleMicrosoftSignIn}
+            disabled={submitting || oauthSubmitting}
+            className="flex w-full items-center justify-center gap-2 rounded-md border border-white/15 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition-colors hover:bg-slate-100 disabled:opacity-60"
+          >
+            <span className="grid grid-cols-2 gap-px" aria-hidden="true">
+              <span className="h-2 w-2 bg-[#f25022]" />
+              <span className="h-2 w-2 bg-[#7fba00]" />
+              <span className="h-2 w-2 bg-[#00a4ef]" />
+              <span className="h-2 w-2 bg-[#ffb900]" />
+            </span>
+            {oauthSubmitting ? "Redirecting…" : "Continue with Microsoft"}
           </button>
         </form>
 
