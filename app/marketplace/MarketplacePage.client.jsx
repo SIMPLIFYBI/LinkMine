@@ -945,7 +945,7 @@ function MarketplaceShelfCard({ resource, onResourceClick }) {
   const artwork = getResourceArtwork(resource);
   const cardVariant = getResourceCardVariant(resource.resourceFormat);
   const accessLabel = resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file";
-  const shellClassName = "h-[276px] w-[286px] sm:h-[292px] sm:w-[320px] lg:w-[320px]";
+  const shellClassName = "h-[304px] w-[286px] sm:h-[320px] sm:w-[320px] lg:w-[320px]";
   const titleClassName = "block line-clamp-2 text-[1.12rem] font-semibold leading-tight text-white transition hover:text-sky-100 sm:text-[1.3rem]";
 
   return (
@@ -958,7 +958,7 @@ function MarketplaceShelfCard({ resource, onResourceClick }) {
         className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center overflow-hidden rounded-[14px] border border-white/18 text-sm font-semibold text-slate-950 shadow-[0_14px_30px_-18px_rgba(255,255,255,0.8)]"
         style={{ backgroundImage: artwork.chipBackground }}
       />
-      <div className="relative flex h-full flex-col p-4">
+      <div className="relative flex h-full flex-col justify-between p-4">
         <div>
           <div className={cardVariant.homeTitleRowClass}>
             <Link href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} className={titleClassName}>
@@ -972,7 +972,9 @@ function MarketplaceShelfCard({ resource, onResourceClick }) {
           <p className={cardVariant.homeSummaryClass}>{resource.summary || accessLabel}</p>
         </div>
 
-        <div className="mt-auto flex items-center justify-between gap-2.5 pt-4 sm:gap-3">
+        <div>
+          <div className="min-h-[28px] text-[11px] text-slate-100/76">{resource.openCount ?? resource.downloadCount ?? 0} opens</div>
+          <div className="mt-3.5 flex items-center justify-between gap-2.5 sm:mt-4 sm:gap-3">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
               <div className="mt-1 line-clamp-1 max-w-[130px] text-[11px] text-slate-100/72 sm:max-w-[160px] sm:text-xs">{accessLabel}</div>
@@ -980,6 +982,7 @@ function MarketplaceShelfCard({ resource, onResourceClick }) {
             <Link href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} className={HOME_CTA_CLASS}>
               View resource
             </Link>
+          </div>
         </div>
       </div>
     </article>
