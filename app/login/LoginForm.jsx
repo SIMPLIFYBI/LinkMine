@@ -91,7 +91,7 @@ export default function LoginForm() {
     }
   }
 
-  async function handleMicrosoftSignIn() {
+  async function handleOAuthSignIn(provider, providerName) {
     setError("");
     setOauthSubmitting(true);
 
@@ -99,13 +99,13 @@ export default function LoginForm() {
       ? getAuthRedirectUrl()
       : `${window.location.origin}/auth/callback`;
     const { error: oauthError } = await supabaseBrowser().auth.signInWithOAuth({
-      provider: "azure",
+      provider,
       options: { redirectTo },
     });
 
     if (oauthError) {
       setOauthSubmitting(false);
-      setError(oauthError.message || "Unable to continue with Microsoft.");
+      setError(oauthError.message || `Unable to continue with ${providerName}.`);
     }
   }
 
@@ -166,7 +166,22 @@ export default function LoginForm() {
 
           <button
             type="button"
-            onClick={handleMicrosoftSignIn}
+            onClick={() => handleOAuthSignIn("google", "Google")}
+            disabled={submitting || oauthSubmitting}
+            className="flex w-full items-center justify-center gap-2 rounded-md border border-white/15 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition-colors hover:bg-slate-100 disabled:opacity-60"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
+              <path fill="#4285F4" d="M21.35 12.23c0-.71-.06-1.4-.18-2.05H12v3.87h5.24a4.48 4.48 0 0 1-1.94 2.94v2.51h3.23c1.89-1.74 2.82-4.31 2.82-7.27Z" />
+              <path fill="#34A853" d="M12 21.75c2.63 0 4.84-.87 6.45-2.35l-3.23-2.51c-.9.6-2.05.96-3.22.96-2.48 0-4.58-1.68-5.33-3.94H3.33v2.59A9.75 9.75 0 0 0 12 21.75Z" />
+              <path fill="#FBBC05" d="M6.67 13.91A5.86 5.86 0 0 1 6.37 12c0-.66.11-1.3.3-1.91V7.5H3.33A9.75 9.75 0 0 0 2.25 12c0 1.57.38 3.05 1.08 4.5l3.34-2.59Z" />
+              <path fill="#EA4335" d="M12 6.15c1.52 0 2.88.52 3.95 1.54l2.96-2.96C16.84 2.8 14.63 1.75 12 1.75A9.75 9.75 0 0 0 3.33 7.5l3.34 2.59C7.42 7.83 9.52 6.15 12 6.15Z" />
+            </svg>
+            {oauthSubmitting ? "Redirecting…" : "Continue with Google"}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleOAuthSignIn("azure", "Microsoft")}
             disabled={submitting || oauthSubmitting}
             className="flex w-full items-center justify-center gap-2 rounded-md border border-white/15 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition-colors hover:bg-slate-100 disabled:opacity-60"
           >
