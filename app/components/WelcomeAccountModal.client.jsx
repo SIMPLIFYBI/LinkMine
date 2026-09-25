@@ -134,14 +134,14 @@ export default function WelcomeAccountModal() {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto p-3 sm:items-center sm:p-6">
+    <div className="fixed inset-0 z-[120] flex items-start justify-center overflow-x-hidden overflow-y-auto p-3 sm:items-center sm:p-6">
       <div
-        className="welcome-modal-backdrop absolute inset-0 bg-slate-950/75 backdrop-blur-[3px]"
+        className="welcome-modal-backdrop absolute inset-0 bg-slate-950/85 backdrop-blur-md"
         onClick={closeModal}
         aria-hidden="true"
       />
 
-      <section className="welcome-modal-sheet relative my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl overflow-y-auto rounded-2xl border border-cyan-200/30 bg-[radial-gradient(circle_at_18%_0%,rgba(34,211,238,0.25),transparent_40%),radial-gradient(circle_at_90%_12%,rgba(20,184,166,0.22),transparent_42%),linear-gradient(155deg,#081528_0%,#0a2036_55%,#0b2840_100%)] p-4 text-slate-100 shadow-[0_30px_100px_-30px_rgba(2,12,27,0.95)] ring-1 ring-white/20 sm:max-h-[calc(100dvh-3rem)] sm:rounded-[28px] sm:p-8">
+      <section className="welcome-modal-sheet relative my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl overflow-x-hidden overflow-y-auto rounded-2xl border border-cyan-200/30 bg-[radial-gradient(circle_at_18%_0%,rgba(34,211,238,0.25),transparent_40%),radial-gradient(circle_at_90%_12%,rgba(20,184,166,0.22),transparent_42%),linear-gradient(155deg,#081528_0%,#0a2036_55%,#0b2840_100%)] p-4 text-slate-100 shadow-[0_30px_100px_-30px_rgba(2,12,27,0.95)] ring-1 ring-white/20 sm:max-h-[calc(100dvh-3rem)] sm:rounded-[28px] sm:p-8">
         <div className="welcome-modal-glow-one pointer-events-none absolute -top-24 -right-20 h-56 w-56 rounded-full border border-cyan-300/25 bg-cyan-300/10 blur-sm" aria-hidden="true" />
         <div className="welcome-modal-glow-two pointer-events-none absolute -bottom-20 -left-16 h-48 w-48 rounded-full border border-sky-200/25 bg-sky-300/10 blur-sm" aria-hidden="true" />
 
