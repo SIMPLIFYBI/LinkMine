@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { X } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 
 function SparkIcon({ className = "h-5 w-5" }) {
@@ -148,10 +149,10 @@ export default function WelcomeAccountModal() {
         <button
           type="button"
           onClick={closeModal}
-          className="absolute right-4 top-4 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-100 transition hover:bg-white/15"
+          className="absolute right-3 top-3 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-slate-950/50 text-slate-100 transition hover:bg-white/15 sm:right-4 sm:top-4"
           aria-label="Close welcome message"
         >
-          Close
+          <X className="h-5 w-5" aria-hidden="true" />
         </button>
 
         <div className="relative">
