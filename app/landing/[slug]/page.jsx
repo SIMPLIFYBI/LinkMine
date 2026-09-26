@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { getLandingEntry, landingPages } from "../registry";
 import { HeroSection } from "../components/HeroSection";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
@@ -115,6 +116,100 @@ async function fetchShowcase(entry) {
     .slice(0, limit);
 }
 
+async function ConsultantShowcase({ entry, browseHref }) {
+  const showcaseConsultants = await fetchShowcase(entry);
+
+  return (
+    <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 ring-1 ring-white/10">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-white">{entry.showcase.heading}</h2>
+        <Link
+          href={browseHref}
+          className="text-xs font-semibold text-sky-300 underline-offset-2 hover:underline"
+        >
+          See more
+        </Link>
+      </div>
+      {showcaseConsultants.length === 0 ? (
+        <p className="text-sm text-slate-400">
+          Consultants offering any services in this category will appear here as they are approved.
+        </p>
+      ) : (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {showcaseConsultants.map(c => {
+            const logo = c?.metadata?.logo?.url || "";
+            return (
+              <Link
+                key={c.id}
+                href={`/consultants/${c.id}`}
+                className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-5 ring-1 ring-white/10 transition hover:-translate-y-0.5 hover:border-sky-400/30 hover:bg-white/[0.06]"
+              >
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-500/70 via-indigo-400/70 to-sky-500/70" />
+                <div className="flex items-start gap-4">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10">
+                    {logo ? (
+                      <img
+                        src={logo}
+                        alt={`${c.display_name} logo`}
+                        width={56}
+                        height={56}
+                        loading="lazy"
+                        decoding="async"
+                        className="h-14 w-14 object-contain"
+                      />
+                    ) : (
+                      <div className="text-sm font-semibold text-slate-300">
+                        {c.display_name?.slice(0, 1) || "•"}
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-lg font-semibold tracking-tight text-white">
+                      {c.display_name}
+                    </div>
+                    {c.headline && (
+                      <div className="mt-1 line-clamp-2 text-sm text-slate-300">{c.headline}</div>
+                    )}
+                    {c.location && (
+                      <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                        <span className="h-1.5 w-1.5 rounded-full bg-sky-400/70" />
+                        <span className="truncate">{c.location}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-xs text-slate-400">Profile</span>
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-sky-300">
+                    View
+                    <svg
+                      className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10.293 3.293a1 1 0 011.414 0l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414-1.414L13.586 11H4a1 1 0 110-2h9.586l-3.293-3.293a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </span>
+                </div>
+                <div
+                  className="pointer-events-none absolute -inset-20 -z-10 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-10"
+                  style={{
+                    background: "radial-gradient(600px circle at 0% 0%, rgba(56,189,248,0.35), transparent 40%)"
+                  }}
+                />
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
 // Page component
 export default async function LandingPage({ params }) {
   const resolvedParams = await params;
@@ -129,8 +224,6 @@ export default async function LandingPage({ params }) {
 
   const browseHref = consultantsParams.toString() ? `/consultants?${consultantsParams.toString()}` : "/consultants";
   const allHref = marketValue !== "mining" ? `/consultants?market=${encodeURIComponent(marketValue)}` : "/consultants";
-
-  const showcaseConsultants = await fetchShowcase(entry);
 
   const faqLd = entry.faqs?.length
     ? {
@@ -149,93 +242,9 @@ export default async function LandingPage({ params }) {
       <HeroSection hero={entry.hero} browseHref={browseHref} allHref={allHref} />
 
       {entry.showcase && (
-        <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 ring-1 ring-white/10">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-white">{entry.showcase.heading}</h2>
-            <Link
-              href={browseHref}
-              className="text-xs font-semibold text-sky-300 underline-offset-2 hover:underline"
-            >
-              See more
-            </Link>
-          </div>
-          {showcaseConsultants.length === 0 ? (
-            <p className="text-sm text-slate-400">
-              Consultants offering any services in this category will appear here as they are approved.
-            </p>
-          ) : (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {showcaseConsultants.map(c => {
-                const logo = c?.metadata?.logo?.url || "";
-                return (
-                  <Link
-                    key={c.id}
-                    href={`/consultants/${c.id}`}
-                    className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-5 ring-1 ring-white/10 transition hover:-translate-y-0.5 hover:border-sky-400/30 hover:bg-white/[0.06]"
-                  >
-                    <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-500/70 via-indigo-400/70 to-sky-500/70" />
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10">
-                        {logo ? (
-                          <img
-                            src={logo}
-                            alt={`${c.display_name} logo`}
-                            width={56}
-                            height={56}
-                            loading="lazy"
-                            decoding="async"
-                            className="h-14 w-14 object-contain"
-                          />
-                        ) : (
-                          <div className="text-sm font-semibold text-slate-300">
-                            {c.display_name?.slice(0, 1) || "•"}
-                          </div>
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="truncate text-lg font-semibold tracking-tight text-white">
-                          {c.display_name}
-                        </div>
-                        {c.headline && (
-                          <div className="mt-1 line-clamp-2 text-sm text-slate-300">{c.headline}</div>
-                        )}
-                        {c.location && (
-                          <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
-                            <span className="h-1.5 w-1.5 rounded-full bg-sky-400/70" />
-                            <span className="truncate">{c.location}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="mt-4 flex items-center justify-between">
-                      <span className="text-xs text-slate-400">Profile</span>
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-sky-300">
-                        View
-                        <svg
-                          className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10.293 3.293a1 1 0 011.414 0l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414-1.414L13.586 11H4a1 1 0 110-2h9.586l-3.293-3.293a1 1 0 010-1.414z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </span>
-                    </div>
-                    <div
-                      className="pointer-events-none absolute -inset-20 -z-10 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-10"
-                      style={{
-                        background: "radial-gradient(600px circle at 0% 0%, rgba(56,189,248,0.35), transparent 40%)"
-                      }}
-                    />
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </section>
+        <Suspense fallback={null}>
+          <ConsultantShowcase entry={entry} browseHref={browseHref} />
+        </Suspense>
       )}
 
       {entry.problem?.length > 0 && (
