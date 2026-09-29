@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
+import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import TopSection from "../TopSection";
 import OwnerEditButton from "./OwnerEditButton.client";
 
@@ -8,6 +9,9 @@ export const revalidate = 300;
 export default async function ConsultantPortfolioPage({ params }) {
   const { id } = await params;
   const sb = supabasePublicServer();
+  const authClient = await supabaseServerClient();
+  const { data: auth } = await authClient.auth.getUser();
+  const userId = auth?.user?.id || null;
 
   // Fetch more fields so TopSection matches the Profile page
   const { data: consultant } = await sb
@@ -17,7 +21,19 @@ export default async function ConsultantPortfolioPage({ params }) {
     .maybeSingle();
 
   if (!consultant) return notFound();
-  if (consultant.visibility !== "public" || consultant.status !== "approved") return notFound();
+  let canViewUnpublishedPortfolio = false;
+  if (userId) {
+    const [{ data: ownedConsultant }, { data: adminRow }] = await Promise.all([
+      authClient.from("consultants").select("claimed_by").eq("id", id).maybeSingle(),
+      authClient.from("app_admins").select("user_id").eq("user_id", userId).maybeSingle(),
+    ]);
+    canViewUnpublishedPortfolio = ownedConsultant?.claimed_by === userId || Boolean(adminRow);
+  }
+
+  if (
+    (consultant.visibility !== "public" || consultant.status !== "approved") &&
+    !canViewUnpublishedPortfolio
+  ) return notFound();
   if (!["consultant", "both"].includes(String(consultant.profile_type || "consultant"))) return notFound();
 
   const { data: portfolio } = await sb
