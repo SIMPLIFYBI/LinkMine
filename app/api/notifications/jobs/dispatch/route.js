@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import { sendEmail } from "@/lib/emailPostmark";
+import { siteUrl } from "@/lib/siteUrl";
 import { buildEmailLayout, emailButton, emailDetails, emailPanel, escapeHtml } from "@/lib/emails/emailLayout";
 
 function checkSecret(req) {
@@ -14,8 +15,7 @@ function checkSecret(req) {
 }
 
 function renderEmail(row) {
-  const baseUrl =
-    (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "") || "http://localhost:3000";
+  const baseUrl = siteUrl("");
   const jobUrl = `${baseUrl}/jobs/${row.job_id}`;
   const subject = `New job in ${row.category_name}: ${row.job_title || "Untitled"}`;
   const text = [

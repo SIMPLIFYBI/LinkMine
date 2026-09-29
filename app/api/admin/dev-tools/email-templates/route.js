@@ -21,7 +21,7 @@ function escapeHtml(s) {
 }
 
 function renderJobNotificationEmail(row) {
-  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "") || "http://localhost:3000";
+  const baseUrl = (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "") || "https://youmine.io";
   const jobUrl = `${baseUrl}/jobs/${row.job_id}`;
   const subject = `New job in ${row.category_name}: ${row.job_title || "Untitled"}`;
   const text = [

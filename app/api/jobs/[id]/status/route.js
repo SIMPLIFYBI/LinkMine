@@ -55,7 +55,7 @@ async function notifyApprovedJob(sb, job) {
   }
 
   try {
-    const base = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
+    const base = (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
     const secret = process.env.CRON_SECRET || process.env.NOTIFY_CRON_SECRET;
     if (base && secret) {
       fetch(`${base}/api/notifications/jobs/dispatch`, {
