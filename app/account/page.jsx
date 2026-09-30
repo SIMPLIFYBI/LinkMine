@@ -6,14 +6,15 @@ import AccountPageClient from "./AccountPage.client.jsx";
 
 export const dynamic = "force-dynamic"; // Avoid static optimization & searchParams warnings
 
-const ALLOWED_TABS = new Set(["account", "notifications", "consultants"]);
+const ALLOWED_TABS = new Set(["account", "notifications", "profiles"]);
 
 function AccountPageWrapper() {
   const sp = useSearchParams();
   const rawTab = sp?.get("tab");
+  const tab = rawTab === "consultants" || rawTab === "creators" ? "profiles" : rawTab;
   const initialTab =
-    rawTab && ALLOWED_TABS.has(rawTab.toLowerCase())
-      ? rawTab.toLowerCase()
+    tab && ALLOWED_TABS.has(tab.toLowerCase())
+      ? tab.toLowerCase()
       : "account";
   return <AccountPageClient initialTab={initialTab} />;
 }

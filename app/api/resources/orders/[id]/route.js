@@ -11,54 +11,7 @@ import {
   RESOURCE_ORDER_SELECT,
 } from "@/lib/resourceCommerce";
 import { cleanText, getResourceAuthContext } from "@/lib/resourceHubServer";
-
-async function grantPaidOrderEntitlements(adminSb, order) {
-  const paidAt = new Date().toISOString();
-
-  for (const item of order.resource_order_items || []) {
-    const { error: entitlementError } = await adminSb
-      .from("resource_entitlements")
-      .insert({
-        user_id: order.buyer_user_id,
-        resource_id: item.resource_id,
-        grant_source: "purchase",
-        revoked_at: null,
-      });
-
-    if (entitlementError && entitlementError.code !== "23505") {
-      throw new Error(entitlementError.message || "Failed to grant entitlement.");
-    }
-
-    await adminSb
-      .from("resource_order_items")
-      .update({
-        order_status: "paid",
-        entitlement_granted_at: item.entitlement_granted_at || paidAt,
-      })
-      .eq("id", item.id);
-
-    const { error: payoutError } = await adminSb
-      .from("resource_payout_ledger")
-      .insert({
-        order_item_id: item.id,
-        seller_user_id: item.seller_user_id,
-        entry_type: "earning",
-        status: item.seller_net_cents > 0 ? "available" : "pending",
-        gross_cents: item.line_total_cents,
-        platform_fee_cents: item.platform_fee_cents,
-        net_cents: item.seller_net_cents,
-        currency_code: item.currency_code,
-        available_at: paidAt,
-        metadata: { orderId: order.id, resourceId: item.resource_id },
-      });
-
-    if (payoutError && payoutError.code !== "23505") {
-      throw new Error(payoutError.message || "Failed to create payout ledger entry.");
-    }
-  }
-
-  return paidAt;
-}
+import { settlePaidResourceOrder } from "@/lib/resourceOrderSettlement";
 
 export async function GET(_req, { params }) {
   const { id } = await params;
@@ -148,7 +101,7 @@ export async function PATCH(req, { params }) {
 
   if (update.status === "paid" && !existing.paid_at) {
     try {
-      const paidAt = await grantPaidOrderEntitlements(adminSb, existing);
+      const paidAt = await settlePaidResourceOrder(adminSb, existing);
       update.paid_at = paidAt;
       await adminSb
         .from("resource_payment_attempts")

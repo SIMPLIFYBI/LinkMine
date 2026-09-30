@@ -148,6 +148,17 @@ export default async function MarketplaceResourcePage({ params }) {
 
   const resource = buildResourceRoutePayload(data, data.resource_tag_links || []);
   const canEditResource = Boolean(userId && (resource.ownerUserId === userId || isAdmin));
+  let hasAccess = canEditResource;
+  if (userId && !hasAccess) {
+    const { data: entitlement } = await sb
+      .from("resource_entitlements")
+      .select("resource_id")
+      .eq("user_id", userId)
+      .eq("resource_id", resource.id)
+      .is("revoked_at", null)
+      .maybeSingle();
+    hasAccess = Boolean(entitlement?.resource_id);
+  }
   const canViewDirectSourceUrl = Boolean(userId);
   const resourceForActions = canViewDirectSourceUrl ? resource : { ...resource, sourceUrl: null };
 
@@ -365,7 +376,7 @@ export default async function MarketplaceResourcePage({ params }) {
               </div>
 
               <div className="rounded-[28px] border border-white/10 bg-slate-950/35 p-5 ring-1 ring-white/10">
-                <ResourceDetailActions resource={resourceForActions} requiresAuth={!user} />
+                <ResourceDetailActions resource={resourceForActions} requiresAuth={!user} hasAccess={hasAccess} />
               </div>
             </div>
           </div>

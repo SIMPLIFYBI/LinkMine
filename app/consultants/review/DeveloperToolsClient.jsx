@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 import DeveloperEmailTemplatesClient from "./DeveloperEmailTemplatesClient";
 import VaultCreatorClaimOutreach from "./VaultCreatorClaimOutreach.client";
@@ -26,6 +26,168 @@ export default function DeveloperToolsClient() {
   const [consultantSandbox, setConsultantSandbox] = useState(null);
   const [consultantSandboxBusy, setConsultantSandboxBusy] = useState(false);
   const [consultantDeleteText, setConsultantDeleteText] = useState("");
+  const [stripePayoutAccount, setStripePayoutAccount] = useState(null);
+  const [stripeBusy, setStripeBusy] = useState(false);
+  const [checkoutResources, setCheckoutResources] = useState([]);
+  const [checkoutResourceId, setCheckoutResourceId] = useState("");
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
+
+  async function callAuthenticatedApi(path, { method = "GET", body } = {}) {
+    const sb = supabaseBrowser();
+    const {
+      data: { session },
+      error: sessionError,
+    } = await sb.auth.getSession();
+    if (sessionError) throw new Error(sessionError.message || "Unable to read session.");
+
+    const response = await fetch(path, {
+      method,
+      headers: {
+        ...(body ? { "Content-Type": "application/json" } : {}),
+        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      },
+      credentials: "include",
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result?.ok === false) {
+      throw new Error(result?.error || `Request failed (${response.status}).`);
+    }
+    return { result, userId: session?.user?.id || "" };
+  }
+
+  async function loadCheckoutResources() {
+    setError("");
+    setCheckoutBusy(true);
+    try {
+      const { result, userId } = await callAuthenticatedApi("/api/resources?view=card&limit=200");
+      const resources = (result.resources || []).filter((resource) => (
+        Number(resource.priceCents) > 0 && resource.ownerUserId && resource.ownerUserId !== userId
+      ));
+      setCheckoutResources(resources);
+      setCheckoutResourceId((current) => resources.some((resource) => resource.id === current) ? current : resources[0]?.id || "");
+    } catch (err) {
+      setError(err.message || "Unable to load paid Vault resources.");
+    } finally {
+      setCheckoutBusy(false);
+    }
+  }
+
+  async function handleCheckoutTest() {
+    if (!checkoutResourceId) {
+      setError("Select a paid resource to test Checkout.");
+      return;
+    }
+
+    setError("");
+    setCheckoutBusy(true);
+    try {
+      const { result: orderResult } = await callAuthenticatedApi("/api/resources/orders", {
+        method: "POST",
+        body: { resourceIds: [checkoutResourceId] },
+      });
+      const orderId = orderResult.order?.id;
+      if (!orderId) throw new Error("Order creation did not return an order ID.");
+
+      const { result: checkoutResult } = await callAuthenticatedApi(`/api/resources/orders/${orderId}/checkout`, {
+        method: "POST",
+      });
+      if (!checkoutResult.url) throw new Error("Stripe did not return a Checkout URL.");
+      window.location.assign(checkoutResult.url);
+    } catch (err) {
+      setError(err.message || "Unable to start Stripe Checkout.");
+      setCheckoutBusy(false);
+    }
+  }
+
+  async function handleCheckoutSandbox() {
+    setError("");
+    setCheckoutBusy(true);
+    try {
+      const { result: sandboxResult } = await callAuthenticatedApi("/api/admin/dev-tools/stripe-checkout-sandbox", {
+        method: "POST",
+      });
+      if (!sandboxResult.orderId) throw new Error("Sandbox setup did not return an order ID.");
+
+      const { result: checkoutResult } = await callAuthenticatedApi(`/api/resources/orders/${sandboxResult.orderId}/checkout`, {
+        method: "POST",
+      });
+      if (!checkoutResult.url) throw new Error("Stripe did not return a Checkout URL.");
+      window.location.assign(checkoutResult.url);
+    } catch (err) {
+      setError(err.message || "Unable to start the Stripe Checkout sandbox.");
+      setCheckoutBusy(false);
+    }
+  }
+
+  async function configureWebhookSettlement() {
+    setError("");
+    setCheckoutBusy(true);
+    try {
+      await callAuthenticatedApi("/api/admin/dev-tools/stripe-webhook-settlement", { method: "POST" });
+      setMessage("Stripe webhook settlement is configured for this environment.");
+    } catch (err) {
+      setError(err.message || "Unable to configure Stripe webhook settlement.");
+    } finally {
+      setCheckoutBusy(false);
+    }
+  }
+
+  async function callStripeConnectApi(path, method = "GET") {
+    const sb = supabaseBrowser();
+    const {
+      data: { session },
+      error: sessionError,
+    } = await sb.auth.getSession();
+
+    if (sessionError) throw new Error(sessionError.message || "Unable to read session.");
+
+    const response = await fetch(path, {
+      method,
+      headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+      credentials: "include",
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok || body?.ok === false) {
+      throw new Error(body?.error || `Request failed (${response.status}).`);
+    }
+    return body;
+  }
+
+  async function loadStripePayoutAccount() {
+    setError("");
+    setStripeBusy(true);
+    try {
+      const body = await callStripeConnectApi("/api/resources/payout-account");
+      setStripePayoutAccount(body.payoutAccount || null);
+    } catch (err) {
+      setError(err.message || "Unable to load Stripe payout account.");
+    } finally {
+      setStripeBusy(false);
+    }
+  }
+
+  async function handleStripeConnect() {
+    setError("");
+    setStripeBusy(true);
+    try {
+      const body = await callStripeConnectApi("/api/resources/payout-account/onboard", "POST");
+      if (!body.url) throw new Error("Stripe did not return an onboarding URL.");
+      window.location.assign(body.url);
+    } catch (err) {
+      setError(err.message || "Unable to start Stripe onboarding.");
+      setStripeBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    if (activeTool === "stripe-connect") {
+      void loadStripePayoutAccount();
+    }
+    if (activeTool === "stripe-checkout") {
+      void loadCheckoutResources();
+    }
+  }, [activeTool]);
 
   async function callSandboxApi(mode) {
     const sb = supabaseBrowser();
@@ -276,10 +438,134 @@ export default function DeveloperToolsClient() {
         >
           Consultant sandbox
         </button>
+        <button
+          type="button"
+          onClick={() => setActiveTool("stripe-connect")}
+          className={[
+            "rounded-full px-4 py-2 text-sm font-semibold transition",
+            activeTool === "stripe-connect"
+              ? "bg-sky-500/20 text-sky-100 border border-sky-300/50"
+              : "bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10",
+          ].join(" ")}
+        >
+          Stripe Connect
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTool("stripe-checkout")}
+          className={[
+            "rounded-full px-4 py-2 text-sm font-semibold transition",
+            activeTool === "stripe-checkout"
+              ? "bg-sky-500/20 text-sky-100 border border-sky-300/50"
+              : "bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10",
+          ].join(" ")}
+        >
+          Stripe Checkout
+        </button>
       </div>
 
       {activeTool === "email-templates" ? <DeveloperEmailTemplatesClient /> : null}
       {activeTool === "creator-claims" ? <VaultCreatorClaimOutreach /> : null}
+
+      {activeTool === "stripe-connect" ? (
+        <article className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-6">
+          <div>
+            <h2 className="text-xl font-semibold text-white">Stripe Connect test</h2>
+            <p className="mt-1 text-sm text-slate-400">Creates or resumes onboarding for your current signed-in account.</p>
+          </div>
+
+          <div className="space-y-1 rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-sm text-slate-200">
+            <div>Account status: <span className="text-sky-300">{stripePayoutAccount?.status || "Not connected"}</span></div>
+            <div>Provider account ID: <span className="break-all text-sky-300">{stripePayoutAccount?.providerAccountId || "-"}</span></div>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={loadStripePayoutAccount}
+              disabled={stripeBusy}
+              className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/15 disabled:opacity-60"
+            >
+              {stripeBusy ? "Working..." : "Refresh status"}
+            </button>
+            <button
+              type="button"
+              onClick={handleStripeConnect}
+              disabled={stripeBusy}
+              className="rounded-full border border-sky-300/40 bg-sky-500/15 px-4 py-2 text-sm font-semibold text-sky-100 hover:bg-sky-500/25 disabled:opacity-60"
+            >
+              {stripeBusy ? "Opening Stripe..." : "Test Stripe Connect"}
+            </button>
+          </div>
+
+          {error ? <div className="rounded-lg border border-rose-400/30 bg-rose-500/10 p-3 text-sm text-rose-100">{error}</div> : null}
+        </article>
+      ) : null}
+
+      {activeTool === "stripe-checkout" ? (
+        <article className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-6">
+          <div>
+            <h2 className="text-xl font-semibold text-white">Stripe Checkout test</h2>
+            <p className="mt-1 text-sm text-slate-400">Creates a new draft order for the selected paid resource, then opens Stripe Checkout.</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleCheckoutSandbox}
+            disabled={checkoutBusy}
+            className="w-fit rounded-full border border-emerald-300/40 bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/25 disabled:opacity-60"
+          >
+            {checkoutBusy ? "Working..." : "Create $1 test resource and open Checkout"}
+          </button>
+          <p className="text-sm text-slate-400">Uses a clearly marked Dev Tools resource and your active Stripe test recipient account.</p>
+
+          <button
+            type="button"
+            onClick={configureWebhookSettlement}
+            disabled={checkoutBusy}
+            className="w-fit rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/15 disabled:opacity-60"
+          >
+            {checkoutBusy ? "Working..." : "Configure webhook settlement"}
+          </button>
+
+          <label className="block text-sm text-slate-200">
+            Paid resource
+            <select
+              value={checkoutResourceId}
+              onChange={(event) => setCheckoutResourceId(event.target.value)}
+              disabled={checkoutBusy || !checkoutResources.length}
+              className="mt-2 w-full rounded-xl border border-white/15 bg-slate-900/70 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-400/60 disabled:opacity-60"
+            >
+              {checkoutResources.length ? checkoutResources.map((resource) => (
+                <option key={resource.id} value={resource.id}>
+                  {resource.title} - {resource.currencyCode} {(Number(resource.priceCents) / 100).toFixed(2)}
+                </option>
+              )) : <option value="">No eligible paid resources found</option>}
+            </select>
+          </label>
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={loadCheckoutResources}
+              disabled={checkoutBusy}
+              className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/15 disabled:opacity-60"
+            >
+              {checkoutBusy ? "Working..." : "Refresh resources"}
+            </button>
+            <button
+              type="button"
+              onClick={handleCheckoutTest}
+              disabled={checkoutBusy || !checkoutResourceId}
+              className="rounded-full border border-sky-300/40 bg-sky-500/15 px-4 py-2 text-sm font-semibold text-sky-100 hover:bg-sky-500/25 disabled:opacity-60"
+            >
+              {checkoutBusy ? "Opening Stripe..." : "Create order and test Checkout"}
+            </button>
+          </div>
+
+          {error ? <div className="rounded-lg border border-rose-400/30 bg-rose-500/10 p-3 text-sm text-rose-100">{error}</div> : null}
+        </article>
+      ) : null}
 
       {activeTool === "claim-sandbox" ? (
         <article className="rounded-3xl border border-white/10 bg-white/5 p-6 space-y-4">
