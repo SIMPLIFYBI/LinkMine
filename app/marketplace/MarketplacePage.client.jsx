@@ -2019,10 +2019,6 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
 
   function beginEditResource(resource) {
     if (!resource?.id) return;
-    if (resource.consultantId) {
-      router.push(`/consultants/${resource.consultantId}/workspace/edit?resourceId=${resource.id}&resourceTab=library`);
-      return;
-    }
     router.push(`/vault/${resource.id}/edit`);
   }
 

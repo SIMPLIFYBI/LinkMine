@@ -3,7 +3,6 @@ import Link from "next/link";
 export default function EditTabs({ consultantId, active = "profile" }) {
   const tabs = [
     { key: "profile", label: "Profile", href: `/consultants/${consultantId}/edit` },
-    { key: "workspace", label: "Workspace", href: `/consultants/${consultantId}/workspace/edit` },
     { key: "portfolio", label: "Portfolio", href: `/consultants/${consultantId}/portfolio/edit` },
     { key: "resources", label: "My Resources", href: `/consultants/${consultantId}/resources/edit` },
   ];

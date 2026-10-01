@@ -312,10 +312,7 @@ export default async function MarketplaceResourcePage({ params }) {
   }
 
   const totalOpenCount = Number(resource.openCount ?? resource.downloadCount ?? 0);
-  const workspaceConsultantId = selectedConsultantId || consultantProfile?.id || null;
-  const editResourceHref = workspaceConsultantId
-    ? `/consultants/${workspaceConsultantId}/workspace/edit?resourceId=${resource.id}&resourceTab=library`
-    : `/vault/${resource.id}/edit`;
+  const editResourceHref = `/vault/${resource.id}/edit`;
 
   return (
     <MarketplaceRouteShell signedIn={Boolean(user)} isAdmin={isAdmin} activeKey="account">

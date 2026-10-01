@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { supabasePublicServer } from "@/lib/supabasePublicServer";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import TopSection from "../TopSection";
 import OwnerEditButton from "./OwnerEditButton.client";
@@ -8,13 +7,12 @@ export const revalidate = 300;
 
 export default async function ConsultantPortfolioPage({ params }) {
   const { id } = await params;
-  const sb = supabasePublicServer();
   const authClient = await supabaseServerClient();
   const { data: auth } = await authClient.auth.getUser();
   const userId = auth?.user?.id || null;
 
-  // Fetch more fields so TopSection matches the Profile page
-  const { data: consultant } = await sb
+  // Use the viewer session so a profile owner can preview a pending profile.
+  const { data: consultant } = await authClient
     .from("consultants")
     .select("id, display_name, metadata, view_count, headline, abn_verified, linkedin_url, facebook_url, twitter_url, instagram_url, visibility, status, profile_type")
     .eq("id", id)
@@ -34,9 +32,9 @@ export default async function ConsultantPortfolioPage({ params }) {
     (consultant.visibility !== "public" || consultant.status !== "approved") &&
     !canViewUnpublishedPortfolio
   ) return notFound();
-  if (!["consultant", "both"].includes(String(consultant.profile_type || "consultant"))) return notFound();
+  if (!["consultant", "creator", "both"].includes(String(consultant.profile_type || "consultant"))) return notFound();
 
-  const { data: portfolio } = await sb
+  const { data: portfolio } = await authClient
     .from("consultant_portfolio")
     .select("overall_intro, images, attachment, updated_at, links")
     .eq("consultant_id", id)
