@@ -104,7 +104,8 @@ async function createOnboardingLink(sb, user, req) {
 }
 
 async function getOnboardingContext(req) {
-  const sb = await supabaseServerClient();
+  const authorization = req.headers.get("authorization") || req.headers.get("Authorization") || "";
+  const sb = await supabaseServerClient({ global: { headers: { Authorization: authorization } } });
   const { user } = await getResourceAuthContext(sb);
   if (!user) return { error: NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 }) };
 

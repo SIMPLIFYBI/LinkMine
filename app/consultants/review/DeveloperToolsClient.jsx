@@ -515,7 +515,7 @@ export default function DeveloperToolsClient() {
             <button
               type="button"
               onClick={resetStripePayoutAccount}
-              disabled={stripeBusy || !stripePayoutAccount}
+              disabled={stripeBusy}
               className="rounded-full border border-rose-300/40 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-100 hover:bg-rose-500/20 disabled:opacity-60"
             >
               {stripeBusy ? "Working..." : "Reset local Stripe record"}

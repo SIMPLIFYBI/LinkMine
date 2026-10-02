@@ -22,9 +22,10 @@ async function retrieveStripeAccount(accountId) {
   return stripeV2Request(`/v2/core/accounts/${accountId}?${query.toString()}`);
 }
 
-export async function GET() {
+export async function GET(req) {
   return timedRoute("resources.payout.account.get", async () => {
-    const sb = await supabaseServerClient();
+    const authorization = req.headers.get("authorization") || req.headers.get("Authorization") || "";
+    const sb = await supabaseServerClient({ global: { headers: { Authorization: authorization } } });
     const { userId } = await getResourceAuthContext(sb);
     if (!userId) {
       return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
