@@ -99,4 +99,32 @@ $$;
 revoke all on function public.create_resource_order(uuid[]) from public;
 grant execute on function public.create_resource_order(uuid[]) to authenticated;
 
+create or replace function public.get_resource_order_stripe_destination(p_order_id uuid)
+returns table (provider_account_id text, status text)
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'Not authenticated' using errcode = '42501';
+  end if;
+
+  return query
+  select payout.provider_account_id, payout.status
+  from public.resource_orders as resource_order
+  join public.resource_order_items as order_item
+    on order_item.order_id = resource_order.id
+  join public.resource_payout_accounts as payout
+    on payout.user_id = order_item.seller_user_id
+  where resource_order.id = p_order_id
+    and resource_order.buyer_user_id = auth.uid()
+    and payout.provider = 'stripe'
+  limit 1;
+end;
+$$;
+
+revoke all on function public.get_resource_order_stripe_destination(uuid) from public;
+grant execute on function public.get_resource_order_stripe_destination(uuid) to authenticated;
+
 select pg_notify('pgrst', 'reload schema');

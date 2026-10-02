@@ -31,6 +31,7 @@ export default function DeveloperToolsClient() {
   const [checkoutResources, setCheckoutResources] = useState([]);
   const [checkoutResourceId, setCheckoutResourceId] = useState("");
   const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const [buyerJourneyResourcePath, setBuyerJourneyResourcePath] = useState("");
 
   async function callAuthenticatedApi(path, { method = "GET", body } = {}) {
     const sb = supabaseBrowser();
@@ -102,20 +103,18 @@ export default function DeveloperToolsClient() {
 
   async function handleCheckoutSandbox() {
     setError("");
+    setMessage("");
     setCheckoutBusy(true);
     try {
       const { result: sandboxResult } = await callAuthenticatedApi("/api/admin/dev-tools/stripe-checkout-sandbox", {
         method: "POST",
       });
-      if (!sandboxResult.orderId) throw new Error("Sandbox setup did not return an order ID.");
-
-      const { result: checkoutResult } = await callAuthenticatedApi(`/api/resources/orders/${sandboxResult.orderId}/checkout`, {
-        method: "POST",
-      });
-      if (!checkoutResult.url) throw new Error("Stripe did not return a Checkout URL.");
-      window.location.assign(checkoutResult.url);
+      if (!sandboxResult.resourcePath) throw new Error("Sandbox setup did not return a resource path.");
+      setBuyerJourneyResourcePath(sandboxResult.resourcePath);
+      setMessage("Seller test resource is ready. Sign out, sign in as the separate buyer, then open the resource below.");
     } catch (err) {
-      setError(err.message || "Unable to start the Stripe Checkout sandbox.");
+      setError(err.message || "Unable to prepare the Stripe Checkout sandbox.");
+    } finally {
       setCheckoutBusy(false);
     }
   }
@@ -176,6 +175,23 @@ export default function DeveloperToolsClient() {
       window.location.assign(body.url);
     } catch (err) {
       setError(err.message || "Unable to start Stripe onboarding.");
+      setStripeBusy(false);
+    }
+  }
+
+  async function resetStripePayoutAccount() {
+    if (!window.confirm("Remove this local Stripe payout record? This does not delete the Stripe account.")) return;
+
+    setError("");
+    setMessage("");
+    setStripeBusy(true);
+    try {
+      const body = await callStripeConnectApi("/api/admin/dev-tools/stripe-payout-account", "DELETE");
+      setStripePayoutAccount(null);
+      setMessage(body.deleted ? "Local Stripe payout record removed. You can now start live Connect onboarding." : "No local Stripe payout record was found.");
+    } catch (err) {
+      setError(err.message || "Unable to remove the local Stripe payout record.");
+    } finally {
       setStripeBusy(false);
     }
   }
@@ -496,9 +512,20 @@ export default function DeveloperToolsClient() {
             >
               {stripeBusy ? "Opening Stripe..." : "Test Stripe Connect"}
             </button>
+            <button
+              type="button"
+              onClick={resetStripePayoutAccount}
+              disabled={stripeBusy || !stripePayoutAccount}
+              className="rounded-full border border-rose-300/40 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-100 hover:bg-rose-500/20 disabled:opacity-60"
+            >
+              {stripeBusy ? "Working..." : "Reset local Stripe record"}
+            </button>
           </div>
 
+          <p className="text-sm text-slate-400">This removes only the local payout record for your signed-in user. It does not delete anything in Stripe.</p>
+
           {error ? <div className="rounded-lg border border-rose-400/30 bg-rose-500/10 p-3 text-sm text-rose-100">{error}</div> : null}
+          {message ? <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-3 text-sm text-emerald-100">{message}</div> : null}
         </article>
       ) : null}
 
@@ -515,9 +542,19 @@ export default function DeveloperToolsClient() {
             disabled={checkoutBusy}
             className="w-fit rounded-full border border-emerald-300/40 bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/25 disabled:opacity-60"
           >
-            {checkoutBusy ? "Working..." : "Create $1 test resource and open Checkout"}
+            {checkoutBusy ? "Preparing..." : "Prepare $1 buyer-journey test resource"}
           </button>
-          <p className="text-sm text-slate-400">Uses a clearly marked Dev Tools resource and your active Stripe test recipient account.</p>
+          <p className="text-sm text-slate-400">Creates or refreshes a clearly marked seller resource using your active Stripe test recipient. It does not create an order.</p>
+
+          {buyerJourneyResourcePath ? (
+            <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+              <div className="font-semibold">Buyer test link ready</div>
+              <p className="mt-1 text-emerald-100/85">Sign out, sign in as the separate buyer, then open this link and use the normal Buy button.</p>
+              <a href={buyerJourneyResourcePath} className="mt-3 inline-flex break-all text-sky-200 underline decoration-sky-300/50 underline-offset-4 hover:text-white">
+                {buyerJourneyResourcePath}
+              </a>
+            </div>
+          ) : null}
 
           <button
             type="button"
@@ -564,6 +601,7 @@ export default function DeveloperToolsClient() {
           </div>
 
           {error ? <div className="rounded-lg border border-rose-400/30 bg-rose-500/10 p-3 text-sm text-rose-100">{error}</div> : null}
+          {message ? <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-3 text-sm text-emerald-100">{message}</div> : null}
         </article>
       ) : null}
 

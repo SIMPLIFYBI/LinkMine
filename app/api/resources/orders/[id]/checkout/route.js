@@ -72,10 +72,7 @@ export async function POST(req, { params }) {
     }
 
     const { data: payoutAccount, error: payoutError } = await sb
-      .from("resource_payout_accounts")
-      .select("id, provider_account_id, status")
-      .eq("user_id", sellerIds[0])
-      .eq("provider", "stripe")
+      .rpc("get_resource_order_stripe_destination", { p_order_id: order.id })
       .maybeSingle();
 
     if (payoutError) {
@@ -88,16 +85,6 @@ export async function POST(req, { params }) {
     const stripeAccount = await retrieveStripeAccount(payoutAccount.provider_account_id);
     if (payoutStatus(stripeAccount) !== "active") {
       return NextResponse.json({ ok: false, error: "The seller's Stripe account is not ready to receive transfers." }, { status: 400 });
-    }
-
-    if (payoutAccount.status !== "active") {
-          const { error: updatePayoutError } = await sb
-        .from("resource_payout_accounts")
-        .update({ status: "active" })
-        .eq("id", payoutAccount.id);
-      if (updatePayoutError) {
-        return NextResponse.json({ ok: false, error: updatePayoutError.message }, { status: 400 });
-      }
     }
 
     const currency = String(order.currency_code || "AUD").toLowerCase();

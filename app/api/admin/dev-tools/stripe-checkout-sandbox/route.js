@@ -2,7 +2,6 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
-import { calculatePlatformFeeCents, calculateSellerNetCents } from "@/lib/resourceCommerce";
 
 const SANDBOX = {
   slug: "dev-stripe-checkout-sandbox-resource",
@@ -95,37 +94,11 @@ export async function POST(req) {
       .single();
     if (resourceError || !resource?.id) throw new Error(resourceError?.message || "Could not create Checkout sandbox resource.");
 
-    const platformFeeCents = calculatePlatformFeeCents(SANDBOX.priceCents);
-    const sellerNetCents = calculateSellerNetCents(SANDBOX.priceCents, platformFeeCents);
-    const { data: order, error: orderError } = await sb
-      .from("resource_orders")
-      .insert({
-        buyer_user_id: user.id,
-        status: "draft",
-        subtotal_cents: SANDBOX.priceCents,
-        platform_fee_cents: platformFeeCents,
-        total_cents: SANDBOX.priceCents,
-        currency_code: "AUD",
-      })
-      .select("id")
-      .single();
-    if (orderError || !order?.id) throw new Error(orderError?.message || "Could not create Checkout sandbox order.");
-
-    const { error: itemError } = await sb.from("resource_order_items").insert({
-      order_id: order.id,
-      resource_id: resource.id,
-      seller_user_id: user.id,
-      order_status: "pending",
-      quantity: 1,
-      unit_price_cents: SANDBOX.priceCents,
-      line_total_cents: SANDBOX.priceCents,
-      platform_fee_cents: platformFeeCents,
-      seller_net_cents: sellerNetCents,
-      currency_code: "AUD",
+    return NextResponse.json({
+      ok: true,
+      resourceId: resource.id,
+      resourcePath: `/vault/${resource.id}`,
     });
-    if (itemError) throw new Error(itemError.message || "Could not create Checkout sandbox order item.");
-
-    return NextResponse.json({ ok: true, resourceId: resource.id, orderId: order.id });
   } catch (error) {
     return NextResponse.json({ ok: false, error: error?.message || "Unable to set up Stripe Checkout sandbox." }, { status: 500 });
   }
