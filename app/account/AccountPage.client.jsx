@@ -4,12 +4,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
-import {
-  USER_TYPE_OPTIONS,
-  decodeStoredUserTypes,
-  encodeSelectedUserTypes,
-  formatSelectedUserTypes,
-} from "@/lib/userTypeSelections";
 import NotificationsPreferences from "./NotificationsPreferences.client.jsx";
 import AccountTabs from "./AccountTabs.jsx";
 import { useTheme } from "@/app/components/ThemeProvider";
@@ -22,7 +16,14 @@ const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "")
 const TABS = [
   { key: "account", label: "Account" },
   { key: "notifications", label: "Notifications" },
-  { key: "profiles", label: "Public Profile" },
+  { key: "consultants", label: "My Consultancy" },
+  { key: "creators", label: "My Creators" },
+];
+
+const userTypes = [
+  { value: "consultant", label: "Consultant / Contractor" },
+  { value: "client", label: "Client" },
+  { value: "both", label: "Both" },
 ];
 
 const organisationSizes = [
@@ -50,7 +51,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
 
   // NEW: profile form state for the Account tab
   const [profileForm, setProfileForm] = useState({
-    userTypes: [],
+    userType: "",
     organisationSize: "",
     organisationName: "",
     profession: "",
@@ -90,7 +91,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
         sb.from("app_admins").select("user_id").eq("user_id", userId).maybeSingle(),
         sb
           .from("consultants")
-          .select("id, display_name, claimed_by, profile_type, status, visibility")
+          .select("id, display_name, claimed_by, profile_type")
           .eq("claimed_by", userId)
           .order("display_name"),
         sb
@@ -120,7 +121,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
       } else if (profileRow) {
         setProfileForm((prev) => ({
           ...prev,
-          userTypes: decodeStoredUserTypes(profileRow.user_type),
+          userType: profileRow.user_type ?? "",
           organisationSize: profileRow.organisation_size ?? "",
           organisationName: profileRow.organisation_name ?? "",
           profession: profileRow.profession ?? "",
@@ -154,32 +155,30 @@ export default function AccountPageClient({ initialTab = "account" }) {
   const userEmail = session?.user?.email ?? "Unknown";
   const userId = session?.user?.id ?? null;
 
-  const ownedProfiles = useMemo(() => {
+  const ownedConsultants = useMemo(() => {
     if (!userId) return [];
     return consultants
+      .filter((row) => ["consultant", "both"].includes(String(row.profile_type || "consultant")))
       .map((row) => ({
         id: row.id,
         name: row.display_name,
         isOwner: row.claimed_by === userId,
-        profileType: String(row.profile_type || "consultant"),
-        isLive: row.status === "approved" && row.visibility === "public",
       }));
+  }, [consultants, userId]);
+
+  const ownedCreators = useMemo(() => {
+    if (!userId) return [];
+    return consultants
+      .filter((row) => ["creator", "both"].includes(String(row.profile_type || "consultant")))
+      .map((row) => ({
+      id: row.id,
+      name: row.display_name,
+      isOwner: row.claimed_by === userId,
+    }));
   }, [consultants, userId]);
 
   function updateProfileField(field, value) {
     setProfileForm((prev) => ({ ...prev, [field]: value }));
-  }
-
-  function toggleProfileUserType(value) {
-    setProfileForm((prev) => {
-      const exists = prev.userTypes.includes(value);
-      return {
-        ...prev,
-        userTypes: exists
-          ? prev.userTypes.filter((item) => item !== value)
-          : [...prev.userTypes, value],
-      };
-    });
   }
 
   async function handleProfileSave(e) {
@@ -188,13 +187,6 @@ export default function AccountPageClient({ initialTab = "account" }) {
 
     setProfileSaveError("");
     setProfileSaveMessage("");
-
-    const hasOrganisationOrProfession =
-      Boolean(profileForm.organisationName?.trim()) || Boolean(profileForm.profession?.trim());
-    if (!hasOrganisationOrProfession) {
-      setProfileSaveError("Please add either an organisation name or your profession.");
-      return;
-    }
 
     startSavingProfile(async () => {
       try {
@@ -205,10 +197,10 @@ export default function AccountPageClient({ initialTab = "account" }) {
             Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            userType: encodeSelectedUserTypes(profileForm.userTypes),
+            userType: profileForm.userType,
             organisationSize: profileForm.organisationSize,
             organisationName: profileForm.organisationName?.trim() || null,
-            profession: profileForm.profession?.trim() || undefined,
+            profession: profileForm.profession.trim(),
             firstName: profileForm.firstName?.trim() || undefined,
             lastName: profileForm.lastName?.trim() || undefined,
           }),
@@ -227,9 +219,9 @@ export default function AccountPageClient({ initialTab = "account" }) {
   }
 
   const isProfileSubmitDisabled =
-    profileForm.userTypes.length === 0 ||
+    !profileForm.userType ||
     !profileForm.organisationSize ||
-    (!profileForm.organisationName?.trim() && !profileForm.profession?.trim()) ||
+    !profileForm.profession ||
     isSavingProfile;
 
   const appearanceOptions = [
@@ -368,45 +360,24 @@ export default function AccountPageClient({ initialTab = "account" }) {
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="block text-xs font-medium text-slate-300">
-                    I’m here as (select all that apply)
+                    I’m here as a…
                   </label>
                   <div className="mt-2 grid gap-2">
-                    {USER_TYPE_OPTIONS.map((option) => (
+                    {userTypes.map((option) => (
                       <button
                         key={option.value}
                         type="button"
-                        onClick={() => toggleProfileUserType(option.value)}
+                        onClick={() => updateProfileField("userType", option.value)}
                         className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-xs sm:text-sm transition ${
-                          profileForm.userTypes.includes(option.value)
+                          profileForm.userType === option.value
                             ? "border-sky-400/70 bg-sky-500/10 text-white"
                             : "border-white/10 bg-white/[0.02] text-slate-200 hover:border-white/25"
                         }`}
                       >
-                        <span className="flex items-center gap-2">
-                          <span>{option.label}</span>
-                          <span className="group relative inline-flex" onClick={(event) => event.stopPropagation()}>
-                            <span
-                              role="button"
-                              tabIndex={0}
-                              aria-label={`About ${option.label}`}
-                              className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/30 text-[11px] font-semibold text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter" || event.key === " ") {
-                                  event.preventDefault();
-                                  event.stopPropagation();
-                                }
-                              }}
-                            >
-                              i
-                            </span>
-                            <span className="pointer-events-none absolute left-1/2 top-7 z-20 hidden w-64 -translate-x-1/2 rounded-lg border border-white/15 bg-slate-900/95 px-3 py-2 text-left text-xs leading-relaxed text-slate-100 shadow-xl group-hover:block group-focus-within:block">
-                              {option.helpText}
-                            </span>
-                          </span>
-                        </span>
+                        <span>{option.label}</span>
                         <span
-                          className={`h-4 w-4 rounded border ${
-                            profileForm.userTypes.includes(option.value)
+                          className={`h-4 w-4 rounded-full border ${
+                            profileForm.userType === option.value
                               ? "border-sky-400 bg-sky-500/60"
                               : "border-slate-500"
                           }`}
@@ -442,24 +413,8 @@ export default function AccountPageClient({ initialTab = "account" }) {
               </div>
 
               <div>
-                <label className="flex items-center gap-2 text-xs font-medium text-slate-300">
-                  <span>Organisation name <span className="text-slate-500">(or profession)</span></span>
-                  <span className="group relative inline-flex">
-                    <button
-                      type="button"
-                      aria-label="Organisation name guidance"
-                      className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/30 text-[11px] font-semibold text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                      }}
-                    >
-                      i
-                    </button>
-                    <span className="pointer-events-none absolute left-1/2 top-7 z-20 hidden w-64 -translate-x-1/2 rounded-lg border border-white/15 bg-slate-900/95 px-3 py-2 text-left text-xs leading-relaxed text-slate-100 shadow-xl group-hover:block group-focus-within:block">
-                      Fill out either organisation name or profession. You can include both.
-                    </span>
-                  </span>
+                <label className="block text-xs font-medium text-slate-300">
+                  Organisation name <span className="text-slate-500">(optional)</span>
                 </label>
                 <input
                   type="text"
@@ -473,35 +428,17 @@ export default function AccountPageClient({ initialTab = "account" }) {
               </div>
 
               <div>
-                <label className="flex items-center gap-2 text-xs font-medium text-slate-300">
-                  <span>Profession / role <span className="text-slate-500">(or organisation name)</span></span>
-                  <span className="group relative inline-flex">
-                    <button
-                      type="button"
-                      aria-label="Profession guidance"
-                      className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/30 text-[11px] font-semibold text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                      }}
-                    >
-                      i
-                    </button>
-                    <span className="pointer-events-none absolute left-1/2 top-7 z-20 hidden w-64 -translate-x-1/2 rounded-lg border border-white/15 bg-slate-900/95 px-3 py-2 text-left text-xs leading-relaxed text-slate-100 shadow-xl group-hover:block group-focus-within:block">
-                      Fill out either profession or organisation name. One of these fields is required.
-                    </span>
-                  </span>
+                <label className="block text-xs font-medium text-slate-300">
+                  Profession / role
                 </label>
                 <input
                   type="text"
                   value={profileForm.profession}
                   onChange={(e) => updateProfileField("profession", e.target.value)}
+                  required
                   className="mt-1 w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/40"
                   placeholder="e.g. Principal Mining Engineer"
                 />
-                <p className="mt-2 text-xs text-slate-400">
-                  Add either organisation name or profession. At least one is required.
-                </p>
               </div>
 
               {profileSaveError && (
@@ -543,7 +480,10 @@ export default function AccountPageClient({ initialTab = "account" }) {
                   <div className="flex items-center justify-between gap-3">
                     <dt className="text-slate-400">User type</dt>
                     <dd className="text-right text-slate-100">
-                      {formatSelectedUserTypes(profileForm.userTypes)}
+                      {
+                        (userTypes.find((u) => u.value === profileForm.userType) || {})
+                          .label || "Not set"
+                      }
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-3">
@@ -628,19 +568,19 @@ export default function AccountPageClient({ initialTab = "account" }) {
       )}
 
       {/* Existing tabs unchanged below */}
-      {activeTab === "profiles" && (
+      {activeTab === "consultants" && (
         <section className="mb-12 space-y-6">
           <header>
-            <h2 className="text-2xl font-semibold tracking-tight">Public Profile</h2>
-            <p className="mt-1 text-sm text-slate-300">Consultant and creator pages you’ve claimed or manage.</p>
+            <h2 className="text-2xl font-semibold tracking-tight">Consultant Ownership</h2>
+            <p className="mt-1 text-sm text-slate-300">Pages you’ve claimed or manage.</p>
           </header>
           {profileError ? (
             <p className="text-sm text-red-400">{profileError}</p>
-          ) : ownedProfiles.length === 0 ? (
-            <p className="text-sm text-slate-300">You don’t own or manage any public profiles yet.</p>
+          ) : ownedConsultants.length === 0 ? (
+            <p className="text-sm text-slate-300">You don’t own or manage any consultant pages yet.</p>
           ) : (
             <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {ownedProfiles.map((item) => (
+              {ownedConsultants.map((item) => (
                 <li
                   key={item.id}
                   className="group rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-sky-400/50 hover:bg-sky-500/10"
@@ -652,17 +592,41 @@ export default function AccountPageClient({ initialTab = "account" }) {
                   >
                     <strong className="font-semibold">{item.name}</strong>
                     <div className="mt-1 text-xs text-slate-400">
-                      {item.profileType === "creator" ? "Digital creator" : "Consultant"}
-                      {item.isOwner ? " · Owner (claimed by you)" : ""}
+                      {item.isOwner ? "Owner (claimed by you)" : "—"}
                     </div>
-                    <div
-                      className={`mt-3 inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${
-                        item.isLive
-                          ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
-                          : "border-amber-400/40 bg-amber-500/10 text-amber-100"
-                      }`}
-                    >
-                      {item.isLive ? "Live" : "Awaiting approval"}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
+      {activeTab === "creators" && (
+        <section className="mb-12 space-y-6">
+          <header>
+            <h2 className="text-2xl font-semibold tracking-tight">Creator Ownership</h2>
+            <p className="mt-1 text-sm text-slate-300">Creator pages you’ve claimed or manage.</p>
+          </header>
+          {profileError ? (
+            <p className="text-sm text-red-400">{profileError}</p>
+          ) : ownedCreators.length === 0 ? (
+            <p className="text-sm text-slate-300">You don’t own or manage any creator pages yet.</p>
+          ) : (
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {ownedCreators.map((item) => (
+                <li
+                  key={item.id}
+                  className="group rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-sky-400/50 hover:bg-sky-500/10"
+                >
+                  <Link
+                    href={`/creators/${item.id}`}
+                    className="block text-slate-100 no-underline"
+                    aria-label={`Open creator profile: ${item.name}`}
+                  >
+                    <strong className="font-semibold">{item.name}</strong>
+                    <div className="mt-1 text-xs text-slate-400">
+                      {item.isOwner ? "Owner (claimed by you)" : "—"}
                     </div>
                   </Link>
                 </li>

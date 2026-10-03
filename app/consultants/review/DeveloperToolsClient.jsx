@@ -101,14 +101,21 @@ export default function DeveloperToolsClient() {
     }
   }
 
-  async function handleCheckoutSandbox() {
+  async function handleCheckoutSandbox(mode = "prepare") {
+    if (mode === "delete" && !window.confirm("Delete only the DEV Stripe Checkout Test Resource?")) return;
     setError("");
     setMessage("");
     setCheckoutBusy(true);
     try {
       const { result: sandboxResult } = await callAuthenticatedApi("/api/admin/dev-tools/stripe-checkout-sandbox", {
         method: "POST",
+        body: { mode },
       });
+      if (mode === "delete") {
+        setBuyerJourneyResourcePath("");
+        setMessage(sandboxResult.deleted ? "Stripe Checkout test resource deleted." : "Stripe Checkout test resource was already absent.");
+        return;
+      }
       if (!sandboxResult.resourcePath) throw new Error("Sandbox setup did not return a resource path.");
       setBuyerJourneyResourcePath(sandboxResult.resourcePath);
       setMessage("Seller test resource is ready. Sign out, sign in as the separate buyer, then open the resource below.");
@@ -244,7 +251,9 @@ export default function DeveloperToolsClient() {
       setMessage(
         mode === "reset"
           ? "Sandbox resource reset and ready for claim-flow testing."
-          : "Loaded current sandbox state."
+          : mode === "delete"
+            ? (body.deleted ? "Claim sandbox resource deleted." : "Claim sandbox resource was already absent.")
+            : "Loaded current sandbox state."
       );
     } catch (err) {
       setError(err.message || "Sandbox request failed.");
@@ -544,6 +553,14 @@ export default function DeveloperToolsClient() {
           >
             {checkoutBusy ? "Preparing..." : "Prepare $1 buyer-journey test resource"}
           </button>
+          <button
+            type="button"
+            onClick={() => handleCheckoutSandbox("delete")}
+            disabled={checkoutBusy}
+            className="w-fit rounded-full border border-rose-300/40 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-100 hover:bg-rose-500/20 disabled:opacity-60"
+          >
+            {checkoutBusy ? "Working..." : "Delete DEV Stripe Checkout Test Resource"}
+          </button>
           <p className="text-sm text-slate-400">Creates or refreshes a clearly marked seller resource using your active Stripe test recipient. It does not create an order.</p>
 
           {buyerJourneyResourcePath ? (
@@ -630,6 +647,16 @@ export default function DeveloperToolsClient() {
               className="rounded-full border border-sky-300/40 bg-sky-500/15 px-4 py-2 text-sm font-semibold text-sky-100 hover:bg-sky-500/25 disabled:opacity-60"
             >
               {sandboxBusy ? "Working..." : "Reset sandbox"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm("Delete only the DEV Claim Sandbox Resource?")) void handleSandbox("delete");
+              }}
+              disabled={sandboxBusy}
+              className="rounded-full border border-rose-300/40 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-100 hover:bg-rose-500/20 disabled:opacity-60"
+            >
+              {sandboxBusy ? "Working..." : "Delete DEV Claim Sandbox Resource"}
             </button>
           </div>
 

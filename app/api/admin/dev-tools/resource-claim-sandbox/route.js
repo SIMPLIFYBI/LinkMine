@@ -145,6 +145,18 @@ async function ensureSandboxRows(sb, actorUserId) {
     approved_by: actorUserId,
   };
 
+  const { data: existingResource, error: resourceLookupErr } = await sb
+    .from("resources")
+    .select("id, source_url")
+    .eq("slug", SANDBOX.resourceSlug)
+    .maybeSingle();
+  if (resourceLookupErr) {
+    throw new Error(resourceLookupErr.message || "Could not look up sandbox resource.");
+  }
+  if (existingResource && existingResource.source_url !== "https://example.com/dev-claim-sandbox") {
+    throw new Error("The claim sandbox slug is already used by a non-sandbox resource.");
+  }
+
   let { data: resource, error: resourceErr } = await sb
     .from("resources")
     .upsert(resourcePayload, { onConflict: "slug" })
@@ -189,7 +201,7 @@ async function loadSandboxState(sb) {
       .limit(1),
     sb
       .from("resources")
-      .select("id, slug, owner_user_id, claim_contact_email, consultant_id, status")
+      .select("id, slug, owner_user_id, claim_contact_email, consultant_id, source_url, status")
       .eq("slug", SANDBOX.resourceSlug)
       .maybeSingle(),
   ]);
@@ -206,7 +218,7 @@ export async function POST(req) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const mode = body?.mode === "preview" ? "preview" : "reset";
+    const mode = ["preview", "reset", "delete"].includes(body?.mode) ? body.mode : "reset";
 
     const sb = await supabaseServerClient({
       global: {
@@ -220,6 +232,31 @@ export async function POST(req) {
 
     if (mode === "reset") {
       state = await ensureSandboxRows(sb, adminCheck.user.id);
+    }
+
+    if (mode === "delete") {
+      const resource = state?.resource;
+      if (!resource) return NextResponse.json({ ok: true, mode, deleted: false });
+      if (
+        resource.slug !== SANDBOX.resourceSlug
+        || resource.claim_contact_email?.toLowerCase() !== SANDBOX.claimEmail
+        || resource.source_url !== "https://example.com/dev-claim-sandbox"
+      ) {
+        return NextResponse.json({ ok: false, error: "Refusing to delete a resource that is not the claim sandbox." }, { status: 403 });
+      }
+
+      const { count, error: orderItemError } = await sb
+        .from("resource_order_items")
+        .select("id", { count: "exact", head: true })
+        .eq("resource_id", resource.id);
+      if (orderItemError) throw new Error(orderItemError.message || "Could not check claim sandbox orders.");
+      if (count) {
+        return NextResponse.json({ ok: false, error: "Cannot delete the claim sandbox while test order items still reference it." }, { status: 409 });
+      }
+
+      const { error: deleteError } = await sb.from("resources").delete().eq("id", resource.id);
+      if (deleteError) throw new Error(deleteError.message || "Could not delete claim sandbox resource.");
+      return NextResponse.json({ ok: true, mode, deleted: true });
     }
 
     const resourceId = state?.resource?.id || null;

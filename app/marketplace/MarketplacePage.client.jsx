@@ -26,6 +26,7 @@ const DEFAULT_RESOURCE_FORM = {
   description: "",
   sourceUrl: "",
   tagIds: [],
+  submitForReview: false,
 };
 
 const DEFAULT_REQUEST_FORM = {
@@ -339,15 +340,6 @@ function MarketplaceNavIcon({ name, active }) {
     );
   }
 
-  if (name === "creators") {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="8" r="3.25" />
-        <path d="M5 19c1.6-2.7 4.1-4 7-4s5.4 1.3 7 4" />
-      </svg>
-    );
-  }
-
   return null;
 }
 
@@ -398,14 +390,14 @@ function AccountTopTab({ active, label, meta, onClick }) {
       type="button"
       onClick={onClick}
       className={[
-        "group relative min-w-[132px] border-b-2 px-2 pb-3 pt-2 text-left transition",
+        "group min-w-[132px] rounded-[20px] border px-4 py-3 text-left transition",
         active
-          ? "border-cyan-300 text-white"
-          : "border-transparent text-slate-300 hover:border-white/30 hover:text-white",
+          ? "border-white/20 bg-white text-slate-950 shadow-[0_20px_50px_-34px_rgba(255,255,255,0.8)]"
+          : "border-white/10 bg-white/[0.04] text-slate-200 hover:border-white/20 hover:bg-white/[0.08]",
       ].join(" ")}
     >
-      <div className={active ? "text-[11px] uppercase tracking-[0.2em] text-cyan-200" : "text-[11px] uppercase tracking-[0.2em] text-slate-500 group-hover:text-slate-400"}>{meta}</div>
-      <div className={active ? "mt-2 text-sm font-semibold text-white" : "mt-2 text-sm font-semibold text-slate-200 group-hover:text-white"}>{label}</div>
+      <div className={active ? "text-[11px] uppercase tracking-[0.2em] text-slate-600" : "text-[11px] uppercase tracking-[0.2em] text-slate-400"}>{meta}</div>
+      <div className={active ? "mt-2 text-sm font-semibold text-slate-950" : "mt-2 text-sm font-semibold text-white"}>{label}</div>
     </button>
   );
 }
@@ -745,11 +737,7 @@ function CreateFlowSection({ step, title, subtitle, completed = false, onToggleC
                     : "border-emerald-300/35 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/18",
                 ].join(" ")}
               >
-                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-emerald-200/60 bg-emerald-400/25" aria-hidden="true">
-                  <svg viewBox="0 0 16 16" className="h-2.5 w-2.5 text-emerald-100" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3.5 8.5 6.5 11.5 12.5 5.5" />
-                  </svg>
-                </span>
+                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-emerald-200/60 bg-emerald-400/25 text-[11px] leading-none">âœ“</span>
                 {completed ? "Completed" : "Mark section complete"}
               </button>
             </div>
@@ -1386,7 +1374,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
   const [resources, setResources] = useState([]);
-  const [homeBannerResourceId, setHomeBannerResourceId] = useState(null);
+  const [homeBannerResourceId, setHomeBannerResourceId] = useState("");
   const [myResources, setMyResources] = useState([]);
   const [library, setLibrary] = useState([]);
   const [requests, setRequests] = useState([]);
@@ -1458,7 +1446,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
       const initialResources = resourcesRes.resources || [];
       setCategories(categoriesRes.categories || []);
       setResources(initialResources);
-      setHomeBannerResourceId(resourcesRes.homeBannerResourceId || null);
+      setHomeBannerResourceId(resourcesRes.homeBannerResourceId || "");
       setCanCreateResources(Boolean(resourcesRes.canCreateResources));
       setCreateResourceRequirementMessage(resourcesRes.createResourceRequirementMessage || "");
 
@@ -1559,7 +1547,6 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
       setIsAdmin(false);
       setCanCreateResources(false);
       setCreateResourceRequirementMessage("");
-      setHomeBannerResourceId(null);
       setMyResources([]);
       setLibrary([]);
       setRequests([]);
@@ -1686,17 +1673,9 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
   }, [discoverFilter, resources]);
 
   const featuredResources = useMemo(() => {
-    const explicitFeatured = discoverResources.filter((resource) => resource.isFeatured);
-    if (explicitFeatured.length) {
-      return explicitFeatured.slice(0, 3);
-    }
-    return discoverResources.slice(0, 3);
+    const configuredResources = discoverResources.filter((resource) => resource.isFeatured);
+    return configuredResources.length ? configuredResources.slice(0, 3) : discoverResources.slice(0, 3);
   }, [discoverResources]);
-
-  const adminSelectedHero = useMemo(() => {
-    if (!homeBannerResourceId) return null;
-    return discoverResources.find((resource) => resource.id === homeBannerResourceId) || null;
-  }, [discoverResources, homeBannerResourceId]);
 
   const trendingResources = useMemo(() => {
     return [...discoverResources]
@@ -1704,17 +1683,19 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
       .slice(0, 4);
   }, [discoverResources]);
 
-  const heroResource = useMemo(() => {
-    return adminSelectedHero || featuredResources[0] || discoverResources[0] || null;
-  }, [adminSelectedHero, discoverResources, featuredResources]);
+  const heroResource = useMemo(() => (
+    discoverResources.find((resource) => resource.id === homeBannerResourceId)
+    || featuredResources[0]
+    || discoverResources[0]
+    || null
+  ), [discoverResources, featuredResources, homeBannerResourceId]);
 
   const mobileHeroResources = useMemo(() => {
-    if (!discoverResources.length) return [];
-    if (!heroResource?.id) return discoverResources.slice(0, 5);
-
-    const remaining = discoverResources.filter((resource) => resource.id !== heroResource.id);
-    return [heroResource, ...remaining].slice(0, 5);
-  }, [discoverResources, heroResource]);
+    const orderedResources = [heroResource, ...featuredResources, ...discoverResources].filter(Boolean);
+    return orderedResources.filter((resource, index) => (
+      orderedResources.findIndex((candidate) => candidate.id === resource.id) === index
+    )).slice(0, 5);
+  }, [discoverResources, featuredResources, heroResource]);
 
   const spotlightResource = useMemo(() => {
     const spotlightPool = [...featuredResources.slice(1), ...trendingResources, ...discoverResources];
@@ -1876,15 +1857,13 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
       return [
         { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary", href: "/vault" },
         { key: "all-resources", label: "All Resources", hint: "Browse the full vault resource index.", icon: "orders", group: "primary", href: "/vault/resources" },
-        { key: "creators", label: "Creators", hint: "Browse creators publishing digital resources.", icon: "creators", group: "primary", href: "/vault/creators" },
       ];
     }
 
     const baseTabs = [
       { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary", href: "/vault" },
       { key: "all-resources", label: "All Resources", hint: "Browse the full vault resource index.", icon: "orders", group: "primary", href: "/vault/resources" },
-      { key: "creators", label: "Creators", hint: "Browse creators publishing digital resources.", icon: "creators", group: "primary", href: "/vault/creators" },
-      { key: "submit", label: "Create", hint: "Create hosted or external listings and send them for review.", icon: "submit", group: "primary", href: "/vault/submit" },
+      { key: "submit", label: "Submit", hint: "Create hosted or external listings and send them for review.", icon: "submit", group: "primary", href: "/vault/submit" },
       { key: "requests", label: "Requests", hint: "Track industry requests and completion workflows.", icon: "requests", group: "primary", href: "/vault/requests" },
       { key: "account", label: "My Vault", hint: "Manage your library and created vault resources.", icon: "library", group: "secondary", href: "/vault/account" },
     ];
@@ -2132,7 +2111,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
       return;
     }
 
-    if (resourceForm.resourceType === "hosted" && !resourceFile) {
+    if (resourceForm.resourceType === "hosted" && resourceForm.submitForReview && !resourceFile) {
       setError("Hosted resources need a pack upload before they can be sent for review.");
       return;
     }
@@ -2149,7 +2128,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
             description: resourceForm.description,
             sourceUrl: resourceForm.resourceType === "external" ? resourceForm.sourceUrl : null,
             tagIds: resourceForm.tagIds,
-            status: "pending",
+            status: resourceForm.submitForReview ? "pending" : "draft",
           },
         });
 
@@ -2625,7 +2604,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                     <Link
                       href="/consultants/new?profileType=creator"
                       onClick={handleBecomeCreatorClick}
-                      className="group inline-flex min-w-[178px] items-center justify-center gap-2 rounded-full border border-emerald-200/35 bg-[linear-gradient(135deg,rgba(16,185,129,0.26),rgba(5,150,105,0.35))] px-4 py-2 text-white shadow-[0_14px_34px_-18px_rgba(16,185,129,0.8)] ring-1 ring-white/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-emerald-100/45 hover:shadow-[0_20px_44px_-20px_rgba(16,185,129,0.95)]"
+                      className="group inline-flex items-center gap-2 rounded-full border border-emerald-200/35 bg-[linear-gradient(135deg,rgba(16,185,129,0.26),rgba(5,150,105,0.35))] px-4 py-2 text-white shadow-[0_14px_34px_-18px_rgba(16,185,129,0.8)] ring-1 ring-white/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-emerald-100/45 hover:shadow-[0_20px_44px_-20px_rgba(16,185,129,0.95)]"
                     >
                       <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/95">Become a Creator</span>
                       <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -2636,13 +2615,18 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                     <button
                       type="button"
                       onClick={collapseMarketplaceCover}
-                      className="group inline-flex min-w-[178px] items-center justify-center gap-2 rounded-full border border-sky-200/30 bg-[linear-gradient(135deg,rgba(56,189,248,0.26),rgba(14,116,144,0.35))] px-4 py-2 text-white shadow-[0_14px_34px_-18px_rgba(56,189,248,0.75)] ring-1 ring-white/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-sky-100/40 hover:shadow-[0_20px_44px_-20px_rgba(56,189,248,0.9)]"
+                      className="group inline-flex items-center gap-2 rounded-full border border-sky-200/30 bg-[linear-gradient(135deg,rgba(56,189,248,0.26),rgba(14,116,144,0.35))] px-3.5 py-2 text-white shadow-[0_14px_34px_-18px_rgba(56,189,248,0.75)] ring-1 ring-white/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-sky-100/40 hover:shadow-[0_20px_44px_-20px_rgba(56,189,248,0.9)]"
                       aria-label="Collapse vault banner"
                     >
                       <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/95">Collapse</span>
-                      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5 transition group-hover:translate-y-0.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m6 9 6 6 6-6" />
-                      </svg>
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/25 bg-white/15">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5 transition group-hover:translate-y-0.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="m6 9 6 6 6-6" />
+                        </svg>
+                      </span>
+                      <span className="h-1.5 w-6 rounded-full bg-white/70" />
+                      <span className="h-1.5 w-6 rounded-full bg-white/50" />
+                      <span className="h-1.5 w-6 rounded-full bg-white/35" />
                       <span className="sr-only">Collapse header to compact search bar</span>
                     </button>
                   </div>
@@ -2700,12 +2684,12 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                     <div className={["pointer-events-none absolute", heroCardVariant.blockClass].join(" ")} />
                     <ResourceOwnerBadge
                       resource={heroResource}
-                      className="absolute right-7 top-7 flex h-28 w-28 items-center justify-center overflow-hidden rounded-[18px] border border-white/20 text-base font-semibold text-slate-950 shadow-[0_10px_26px_-12px_rgba(255,255,255,0.7)]"
+                      className="absolute left-7 top-7 flex h-14 w-14 items-center justify-center overflow-hidden rounded-[18px] border border-white/20 text-base font-semibold text-slate-950 shadow-[0_10px_26px_-12px_rgba(255,255,255,0.7)]"
                       style={{ backgroundImage: heroArtwork?.chipBackground }}
                     />
                     <div className="relative z-10 flex h-full flex-col justify-between gap-6 pt-6 sm:pt-7">
                       <div>
-                        <div className="mt-6 max-w-[34rem] pr-20 sm:pr-24">
+                        <div className="mt-6 max-w-[34rem]">
                           <div className="text-[11px] uppercase tracking-[0.28em] text-slate-200">{heroCardVariant.heroLabel}</div>
                           <div className={heroCardVariant.heroTitleClass}>{heroResource.title}</div>
                           <p className={heroCardVariant.heroSummaryClass}>{heroResource.summary || heroResource.description || "Open the resource to review the full pack details."}</p>
@@ -2759,11 +2743,21 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
             </ScrollShelf>
             </div>
 
-            <section className="space-y-4">
+            <section className="grid gap-4 xl:grid-cols-[minmax(0,1.32fr),minmax(0,1fr)]">
               <ScrollShelf title="Trending resources" subtitle="High-activity items presented as a card rail for quick scanning." metaLabel="Top activity">
                 {trendingResources.length ? trendingResources.map((resource) => (
                   <MarketplaceShelfCard key={resource.id} resource={resource} onResourceClick={handleResourceOpenIntent} />
                 )) : <div className="py-2 text-sm text-slate-400">Trending resources will appear once usage data builds up.</div>}
+              </ScrollShelf>
+
+              <ScrollShelf title="Browse categories" subtitle="Jump into the strongest parts of the catalogue with one tap." metaLabel="Quick filters">
+                {categoryHighlights.length ? categoryHighlights.map((category) => (
+                  <CategoryShelfCard
+                    key={category.id}
+                    category={category}
+                    onSelect={() => setDiscoverFilter((prev) => ({ ...prev, categoryId: category.id }))}
+                  />
+                )) : <div className="py-2 text-sm text-slate-400">Categories will populate here once resources are approved.</div>}
               </ScrollShelf>
             </section>
 
@@ -2948,13 +2942,21 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                       <CreateFlowSection
                         step="4"
                         title="Finalize discovery and publish settings"
-                        subtitle="Review launch limits and submit for final approval."
+                        subtitle="Choose your submission preference and publish settings."
                         showCompleteToggle={false}
                       >
-                          <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-300">
-                            <span className="block font-semibold text-white">This resource will be sent for review immediately on submit.</span>
-                            <span className="mt-1 block text-slate-400">Hosted resources still require a file upload before submission.</span>
-                          </div>
+                          <label className="flex items-start gap-3 rounded-[20px] border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-300">
+                            <input
+                              type="checkbox"
+                              checked={resourceForm.submitForReview}
+                              onChange={(event) => setResourceForm((prev) => ({ ...prev, submitForReview: event.target.checked }))}
+                              className="mt-1 h-4 w-4 rounded border-white/20 bg-slate-950/70 text-sky-500"
+                            />
+                            <span>
+                              <span className="block font-semibold text-white">Send this resource for review immediately</span>
+                              <span className="mt-1 block text-slate-400">Hosted resources need a file upload before they can move into review.</span>
+                            </span>
+                          </label>
                           <div className="rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(56,189,248,0.08),rgba(15,23,42,0.58))] p-4 text-sm text-slate-300">
                             <div className="font-semibold text-white">Launch limits currently applied</div>
                             <div className="mt-2">10 active hosted resources, 25 MB max hosted pack size, up to 3 preview images (5 MB each), and 250 MB total hosted storage per user.</div>
@@ -2967,7 +2969,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                             disabled={busyAction}
                             className="w-full rounded-full bg-gradient-to-r from-sky-500 to-cyan-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:from-sky-400 hover:to-cyan-400 disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            {busyAction ? "Saving resource..." : "Sumbit resource for Final Approval"}
+                            {busyAction ? "Saving resource..." : "Create resource"}
                           </button>
                     </CreateFlowSection>
                 </form>
@@ -2995,8 +2997,8 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
           <div className="space-y-6">
             <SectionCard title="My Vault" subtitle="Move between your library and created listings with a single account workspace.">
               <div className="space-y-6">
-                <div className="overflow-x-auto border-b border-white/10 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  <div className="flex min-w-max items-end gap-5">
+                <div className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <div className="flex min-w-max gap-3">
                     {accountAreas.map((area) => (
                       <AccountTopTab
                         key={area.key}

@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BriefcaseBusiness, Check, Layers3, PackageOpen, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { COUNTRY_OPTIONS, GLOBAL_REGION_OPTIONS } from "@/lib/geoOptions";
 
@@ -16,7 +15,7 @@ const PROFILE_TYPES = [
   },
   {
     value: "creator",
-    label: "Digital product creator",
+    label: "Digital Creator",
     description: "Publish and manage digital resources in Vault.",
   },
   {
@@ -29,39 +28,6 @@ const PROFILE_TYPES = [
 function marketLabel(value) {
   return value === "oil_gas" ? "Oil & Gas" : "Mining";
 }
-
-const PROFILE_FIELD_HELP = {
-  generic: {
-    displayName: "This is the public profile name people will see in listings and on your profile page.",
-    headline: "A one-line summary that helps people quickly understand what you offer.",
-    city: "Your primary base city so clients can understand local context and timezone.",
-    contactEmail: "Public enquiries go here. Use an inbox you actively monitor.",
-  },
-  consultant: {
-    displayName: "Use your personal or business trading name that clients would recognize.",
-    headline: "Summarize your consulting specialty and outcomes in one line.",
-    city: "Your primary service location or operating base.",
-    contactEmail: "Client enquiry email for consulting opportunities.",
-  },
-  creator: {
-    displayName: "Use your creator or brand name that should appear on your digital products.",
-    headline: "Describe the kind of digital products you create and who they help.",
-    city: "Your base location for credibility and timezone context.",
-    contactEmail: "Customer and collaboration enquiries for your digital products.",
-  },
-  both: {
-    displayName: "Use the name that best represents both your consulting and digital product brand.",
-    headline: "Blend your service capability and digital product focus in one clear line.",
-    city: "Your main operating location and timezone.",
-    contactEmail: "Primary inbox for consulting and product enquiries.",
-  },
-};
-
-const PROFILE_TYPE_ICONS = {
-  consultant: BriefcaseBusiness,
-  creator: PackageOpen,
-  both: Layers3,
-};
 
 export default function ProfileSetupBasic({ services = [], initialProfileType = "" }) {
   const router = useRouter();
@@ -114,8 +80,6 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
     return { mining, oil_gas };
   }, [selected, services]);
 
-  const fieldHelp = PROFILE_FIELD_HELP[profileType] || PROFILE_FIELD_HELP.generic;
-
   function toggleService(id) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -139,7 +103,7 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
     if (!name) return setMsg({ ok: false, text: "Display name is required." });
     if (!head) return setMsg({ ok: false, text: "Headline is required." });
     if (head.length > MAX_HEADLINE) return setMsg({ ok: false, text: `Headline must be ${MAX_HEADLINE} characters or fewer.` });
-    if (!loc) return setMsg({ ok: false, text: "City is required." });
+    if (!loc) return setMsg({ ok: false, text: "Location is required." });
     if (!countryCode) return setMsg({ ok: false, text: "Country is required." });
     if (!globalRegion) return setMsg({ ok: false, text: "Global region is required." });
     if (!email) return setMsg({ ok: false, text: "Contact email is required." });
@@ -188,88 +152,55 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
   return (
     <>
       <form onSubmit={onSubmit} className="space-y-6">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.025] p-4 sm:p-5">
-          <div className="flex flex-wrap items-end justify-between gap-2">
-            <div>
-              <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-300/15 text-xs font-bold text-cyan-100">1</span>
-                Choose your profile type <span className="text-rose-300">*</span>
-              </div>
-              <p className="mt-1 text-xs text-slate-400">This determines how your profile works across YouMine.</p>
-            </div>
-            {profileType ? <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/10 px-2.5 py-1 text-xs font-semibold text-emerald-100"><Check className="h-3.5 w-3.5" /> Selected</span> : null}
-          </div>
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <div className="space-y-2">
+          <p className="text-sm font-semibold text-slate-200">
+            Profile type <span className="text-rose-300">*</span>
+          </p>
+          <div className="grid gap-2 md:grid-cols-3">
             {PROFILE_TYPES.map((option) => {
               const active = option.value === profileType;
-              const Icon = PROFILE_TYPE_ICONS[option.value];
               return (
                 <button
                   key={option.value}
                   type="button"
                   onClick={() => setProfileType(option.value)}
                   className={[
-                    "group relative min-h-[142px] overflow-hidden rounded-2xl border p-4 text-left transition duration-200",
+                    "rounded-2xl border px-3 py-3 text-left transition",
                     active
-                      ? "border-cyan-200/65 bg-[linear-gradient(145deg,rgba(34,211,238,0.2),rgba(14,116,144,0.11))] text-white shadow-[0_18px_36px_-26px_rgba(34,211,238,0.95)] ring-1 ring-cyan-200/25"
-                      : "border-white/10 bg-slate-950/35 text-slate-200 hover:-translate-y-0.5 hover:border-cyan-200/35 hover:bg-white/[0.07]",
+                      ? "border-sky-400/70 bg-sky-500/10 text-white"
+                      : "border-white/10 bg-white/[0.04] text-slate-200 hover:border-white/20 hover:bg-white/[0.08]",
                   ].join(" ")}
                 >
-                  <div className={`flex h-9 w-9 items-center justify-center rounded-xl border ${active ? "border-cyan-100/40 bg-cyan-100/15 text-cyan-100" : "border-white/10 bg-white/[0.05] text-slate-300 group-hover:text-cyan-100"}`}>
-                    <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
-                  </div>
-                  <div className="mt-4 text-sm font-bold">{option.label}</div>
-                  <div className="mt-1.5 text-xs leading-5 text-slate-300">{option.description}</div>
-                  {active ? <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-200 text-slate-950"><Check className="h-3.5 w-3.5 stroke-[3]" /></span> : null}
+                  <div className="text-sm font-semibold">{option.label}</div>
+                  <div className="mt-1 text-xs text-slate-300">{option.description}</div>
                 </button>
               );
             })}
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/[0.025] p-4 sm:p-5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-white">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-300/15 text-xs font-bold text-cyan-100">2</span>
-            Add your essentials
-          </div>
-          <p className="mt-1 text-xs text-slate-400">These details appear on your public profile and help the right people find you.</p>
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           <Field
             label="Display name"
             value={displayName}
             onChange={setDisplayName}
             required
-            placeholder={
-              profileType === "creator"
-                ? "e.g. MineFlow Studio"
-                : profileType === "both"
-                ? "e.g. Jane Doe | MineFlow Studio"
-                : "e.g. Jane Doe"
-            }
-            infoText={fieldHelp.displayName}
+            placeholder="e.g. Jane Doe"
           />
           <Field
             label={`Headline (max ${MAX_HEADLINE})`}
             value={headline}
             onChange={(v) => setHeadline(v.slice(0, MAX_HEADLINE))}
             required
-            placeholder={
-              profileType === "creator"
-                ? "e.g. Build drill-and-blast templates for open pit teams"
-                : profileType === "both"
-                ? "e.g. Mine planning consultant + digital workflow creator"
-                : "Short summary, e.g. Mining engineer (LOM planning)"
-            }
+            placeholder="Short summary, e.g. Mining engineer (LOM planning)"
             hint={`${headline.length}/${MAX_HEADLINE}`}
-            infoText={fieldHelp.headline}
           />
           <Field
-            label="City"
+            label="Location"
             value={location}
             onChange={setLocation}
             required
-            placeholder="e.g. Perth"
-            infoText={fieldHelp.city}
+            placeholder="City, Country"
           />
           <SelectField
             label="Country"
@@ -294,33 +225,23 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
             onChange={setContactEmail}
             required
             placeholder="name@example.com"
-            infoText={fieldHelp.contactEmail}
           />
-          </div>
         </div>
 
-        {profileType ? (
-          <p className="-mt-1 text-xs text-slate-400">
-            Hints are tailored to your selected profile type: {PROFILE_TYPES.find((p) => p.value === profileType)?.label || "Profile"}.
-          </p>
-        ) : null}
-
         {requiresServices ? (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.025] p-4 sm:p-5">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <p className="flex items-center gap-2 text-sm font-semibold text-white">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-300/15 text-xs font-bold text-cyan-100">3</span>
+              <p className="text-sm font-semibold text-slate-200">
                 Services you offer <span className="text-rose-300">*</span>
               </p>
               <span className="text-xs text-slate-400">
                 {selectedCount > 0 ? `${selectedCount} selected` : "None selected"}
               </span>
             </div>
-            <p className="mt-1 text-xs text-slate-400">Choose the expertise you want clients to discover.</p>
             <button
               type="button"
               onClick={() => setServicesOpen(true)}
-              className="mt-4 inline-flex items-center gap-2 rounded-full border border-cyan-200/30 bg-cyan-300/10 px-4 py-2 text-sm font-semibold text-cyan-50 transition hover:bg-cyan-300/20"
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/15"
               aria-haspopup="dialog"
               aria-expanded={servicesOpen}
             >
@@ -359,12 +280,10 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
           <button
             type="submit"
             disabled={saving || !displayName.trim()}
-            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-cyan-100/35 bg-[linear-gradient(135deg,#22d3ee,#0284c7_55%,#1d4ed8)] px-5 py-2.5 text-sm font-bold text-white shadow-[0_16px_34px_-18px_rgba(34,211,238,0.9)] transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
           >
-            <Sparkles className="h-4 w-4" aria-hidden="true" />
             {saving ? "Creating…" : "Create and continue"}
           </button>
-          <span className="text-xs text-slate-400">Your profile remains private until you submit it for review.</span>
         </div>
       </form>
 
@@ -384,31 +303,10 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
   );
 }
 
-function Field({ label, value, onChange, type = "text", required = false, placeholder, hint, infoText }) {
+function Field({ label, value, onChange, type = "text", required = false, placeholder, hint }) {
   return (
     <label className="block text-sm text-slate-300">
-      <span className="flex items-center gap-2">
-        <span>
-          {label} {required ? "*" : ""}
-        </span>
-        {infoText ? (
-          <span className="group relative inline-flex">
-            <button
-              type="button"
-              aria-label={`About ${label}`}
-              className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/30 text-[11px] font-semibold text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
-              onClick={(event) => {
-                event.preventDefault();
-              }}
-            >
-              i
-            </button>
-            <span className="pointer-events-none absolute left-1/2 top-7 z-20 hidden w-64 -translate-x-1/2 rounded-lg border border-white/15 bg-slate-900/95 px-3 py-2 text-xs leading-relaxed text-slate-100 shadow-xl group-hover:block group-focus-within:block">
-              {infoText}
-            </span>
-          </span>
-        ) : null}
-      </span>
+      {label} {required ? "*" : ""}
       <input
         type={type}
         value={value}

@@ -28,6 +28,7 @@ export async function GET(req) {
 
     const url = new URL(req.url);
     const status = cleanText(url.searchParams.get("status")) || "pending";
+    const allStatuses = status === "all";
     const resourceType = cleanText(url.searchParams.get("type"));
     const view = cleanText(url.searchParams.get("view"));
     const { page, limit, rangeStart, rangeEnd } = parsePaginationParams(url, {
@@ -42,7 +43,7 @@ export async function GET(req) {
       .order("created_at", { ascending: true })
       .range(rangeStart, rangeEnd);
 
-    if (isValidResourceStatus(status)) {
+    if (!allStatuses && isValidResourceStatus(status)) {
       query = query.eq("status", status);
     }
 

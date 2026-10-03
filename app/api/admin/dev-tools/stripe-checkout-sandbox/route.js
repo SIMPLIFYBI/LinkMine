@@ -47,7 +47,39 @@ export async function POST(req) {
       return NextResponse.json({ ok: false, error: adminCheck.error }, { status: adminCheck.status });
     }
 
+    const { mode = "prepare" } = await req.json().catch(() => ({}));
     const { user, sb } = adminCheck;
+
+    if (mode === "delete") {
+      const { data: sandboxResource, error: lookupError } = await sb
+        .from("resources")
+        .select("id, source_url")
+        .eq("slug", SANDBOX.slug)
+        .maybeSingle();
+      if (lookupError) throw new Error(lookupError.message || "Could not load Checkout sandbox resource.");
+      if (!sandboxResource) return NextResponse.json({ ok: true, deleted: false });
+      if (sandboxResource.source_url !== SANDBOX.sourceUrl) {
+        return NextResponse.json({ ok: false, error: "Refusing to delete a resource that is not the Checkout sandbox." }, { status: 403 });
+      }
+
+      const { count, error: orderItemError } = await sb
+        .from("resource_order_items")
+        .select("id", { count: "exact", head: true })
+        .eq("resource_id", sandboxResource.id);
+      if (orderItemError) throw new Error(orderItemError.message || "Could not check Checkout sandbox orders.");
+      if (count) {
+        return NextResponse.json({ ok: false, error: "Cannot delete the Checkout sandbox while test order items still reference it." }, { status: 409 });
+      }
+
+      const { error: deleteError } = await sb.from("resources").delete().eq("id", sandboxResource.id);
+      if (deleteError) throw new Error(deleteError.message || "Could not delete Checkout sandbox resource.");
+      return NextResponse.json({ ok: true, deleted: true });
+    }
+
+    if (mode !== "prepare") {
+      return NextResponse.json({ ok: false, error: "Unsupported Checkout sandbox action." }, { status: 400 });
+    }
+
     const { data: payoutAccount, error: payoutError } = await sb
       .from("resource_payout_accounts")
       .select("id")

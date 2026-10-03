@@ -89,7 +89,6 @@ const ALLOWED_LOGO_TYPES = ["image/png", "image/jpeg", "image/webp"];
 export default function EditConsultantForm({ consultant }) {
   const router = useRouter();
   const sb = supabaseBrowser();
-  const redirectTimerRef = useRef(null);
 
   const originalCompany = useRef(consultant.company?.trim() || "");
 
@@ -132,15 +131,6 @@ export default function EditConsultantForm({ consultant }) {
   const [busyLogo, setBusyLogo] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
-
-  useEffect(() => {
-    return () => {
-      if (redirectTimerRef.current) {
-        window.clearTimeout(redirectTimerRef.current);
-        redirectTimerRef.current = null;
-      }
-    };
-  }, []);
 
   const handleChange = (field) => (event) =>
     setForm((prev) => ({ ...prev, [field]: event.target.value }));
@@ -303,9 +293,10 @@ export default function EditConsultantForm({ consultant }) {
       return;
     }
 
-    setMessage({ type: "success", text: "Profile updated. Redirecting..." });
-    redirectTimerRef.current = window.setTimeout(() => {
+    setMessage({ type: "success", text: "Profile updated. Redirecting…" });
+    setTimeout(() => {
       router.replace(`/consultants/${consultant.id}`);
+      router.refresh();
     }, 900);
   };
 
@@ -313,35 +304,16 @@ export default function EditConsultantForm({ consultant }) {
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* Core details & logo */}
       <section className="rounded-3xl border border-white/12 bg-white/[0.05] p-6 shadow-sm ring-1 ring-white/10 space-y-6">
-        <SectionTitle
-          title="Core profile details"
-          subtitle="Set the essentials clients use to find you and decide whether to reach out."
-          icon={
-            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <circle cx="10" cy="6" r="3" />
-              <path d="M3.5 16c1.6-2.7 4-4 6.5-4s4.9 1.3 6.5 4" />
-            </svg>
-          }
-        />
-
-        <div className="rounded-2xl border border-sky-300/20 bg-sky-500/10 px-4 py-3 text-xs text-sky-100">
-          Tip: Start with display name, headline, profile mode, and market focus. These have the biggest impact on discoverability.
-        </div>
+        <header className="space-y-1">
+          <h2 className="text-lg font-semibold text-white">Core profile details</h2>
+          <p className="text-xs text-slate-400">
+            Name, headline, contact and brand identity. These define the public top of your profile.
+          </p>
+        </header>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <Field
-            label="Display name"
-            value={form.display_name}
-            onChange={handleChange("display_name")}
-            required
-            infoText="This is your public profile name shown in search and across YouMine."
-          />
-          <Field
-            label="Headline"
-            value={form.headline}
-            onChange={handleChange("headline")}
-            infoText="A short one-line summary of what you do best and who you help."
-          />
+          <Field label="Display name" value={form.display_name} onChange={handleChange("display_name")} required />
+          <Field label="Headline" value={form.headline} onChange={handleChange("headline")} />
           <div className="md:col-span-1">
             <SelectField
               label="Profile mode"
@@ -350,21 +322,17 @@ export default function EditConsultantForm({ consultant }) {
               options={PROFILE_TYPE_OPTIONS}
               placeholder="Select profile mode"
               hint="Consultant appears in consultant discovery. Creator appears in creator discovery. Both appears in both."
-              infoText="Choose where you appear: consultant listings, creator listings, or both."
             />
           </div>
           <div className="md:col-span-1">
             <label className="block text-sm text-slate-300">
-              <LabelWithHint
-                label="Provider type"
-                infoText="Clarifies whether you mainly offer operational services, professional services, or both."
-              />
+              Provider type
               <ProviderKindSelect
                 value={form.provider_kind}
                 onChange={(v) => setForm((p) => ({ ...p, provider_kind: v }))}
               />
               <p className="mt-1 text-xs text-slate-400">
-                Helps clients quickly understand your service model.
+                Choose whether you operate in operational services, professional services, or both.
               </p>
             </label>
           </div>
@@ -376,22 +344,15 @@ export default function EditConsultantForm({ consultant }) {
               options={MARKET_FOCUS_OPTIONS}
               placeholder="Select market focus"
               hint="Controls whether this profile is tagged as Mining, Oil & Gas, or Both."
-              infoText="Used in filters so clients in Mining and/or Oil & Gas can find you faster."
             />
           </div>
-          <Field
-            label="Location"
-            value={form.location}
-            onChange={handleChange("location")}
-            infoText="Your base location helps clients assess fit, timezone, and proximity."
-          />
+          <Field label="Location" value={form.location} onChange={handleChange("location")} />
           <SelectField
             label="Country"
             value={form.country_code}
             onChange={handleChange("country_code")}
             options={COUNTRY_OPTIONS}
             placeholder="Select a country"
-            infoText="Adds country context for search and trust signals."
           />
           <SelectField
             label="Global region"
@@ -399,21 +360,13 @@ export default function EditConsultantForm({ consultant }) {
             onChange={handleChange("global_region")}
             options={GLOBAL_REGION_OPTIONS}
             placeholder="Select a region"
-            infoText="Supports broad region filtering (for example APAC or North America)."
           />
-          <Field
-            label="Contact email"
-            type="email"
-            value={form.contact_email}
-            onChange={handleChange("contact_email")}
-            infoText="This is your public enquiry inbox. Use an address you check regularly."
-          />
+          <Field label="Contact email" type="email" value={form.contact_email} onChange={handleChange("contact_email")} />
           <Field
             label="Website"
             placeholder="https://your-site.example.com"
             value={form.website_url}
             onChange={handleChange("website_url")}
-            infoText="Add your website or landing page so clients can validate your brand quickly."
           />
           <div className="md:col-span-2">
             <Field
@@ -423,7 +376,6 @@ export default function EditConsultantForm({ consultant }) {
               value={form.bio}
               onChange={handleChange("bio")}
               hint="A concise overview of your expertise. Supports multiple paragraphs."
-              infoText="Share your niche, typical projects, and results clients can expect."
             />
           </div>
         </div>
@@ -482,64 +434,53 @@ export default function EditConsultantForm({ consultant }) {
 
       {/* Social links */}
       <section className="space-y-5 rounded-3xl border border-white/12 bg-white/[0.05] p-6 shadow-sm ring-1 ring-white/10">
-        <SectionTitle
-          title="Social presence"
-          subtitle="Optional social links that help clients verify your credibility and recent activity."
-          icon={
-            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d="M3 10h14" />
-              <path d="M10 3v14" />
-              <circle cx="10" cy="10" r="6.5" />
-            </svg>
-          }
-        />
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-xs text-slate-300">
-          Tip: Add only active profiles that strengthen trust and show current work.
-        </div>
+        <header className="space-y-1">
+          <h2 className="text-lg font-semibold text-white">Social presence</h2>
+          <p className="text-xs text-slate-400">
+            Optional links to verified social profiles. Paste full https URLs.
+          </p>
+        </header>
         <div className="grid gap-4 md:grid-cols-2">
           <Field
             label="LinkedIn"
             placeholder="https://www.linkedin.com/in/your-handle"
             value={form.linkedin_url}
             onChange={handleChange("linkedin_url")}
-            infoText="Best for showcasing professional background, expertise, and project history."
           />
           <Field
             label="Facebook"
             placeholder="https://www.facebook.com/your-page"
             value={form.facebook_url}
             onChange={handleChange("facebook_url")}
-            infoText="Useful if your page is active and includes relevant updates or testimonials."
           />
           <Field
             label="Twitter/X"
             placeholder="https://x.com/your-handle"
             value={form.twitter_url}
             onChange={handleChange("twitter_url")}
-            infoText="Great for timely updates, thought leadership, and industry commentary."
           />
           <Field
             label="Instagram"
             placeholder="https://www.instagram.com/your-handle"
             value={form.instagram_url}
             onChange={handleChange("instagram_url")}
-            infoText="Useful for visual proof of projects, team capability, and field activity."
           />
         </div>
       </section>
 
       {/* Google listing */}
       <section className="space-y-5 rounded-3xl border border-white/12 bg-white/[0.05] p-6 shadow-sm ring-1 ring-white/10">
-        <SectionTitle
-          title="Google business listing"
-          subtitle="Link your Google Place ID to show map context and public review signals."
-          icon={
-            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d="M10 18s5-4.4 5-8.2A5 5 0 1 0 5 9.8C5 13.6 10 18 10 18Z" />
-              <circle cx="10" cy="8" r="1.8" />
-            </svg>
-          }
-        />
+        <header className="space-y-1 flex items-center gap-2">
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-sm font-bold text-[#4285F4] shadow">
+            G
+          </span>
+          <div>
+            <h2 className="text-lg font-semibold text-white">Google business listing</h2>
+            <p className="text-xs text-slate-400">
+              Connect your Google Place ID to show map & ratings (optional).
+            </p>
+          </div>
+        </header>
         <div className="grid gap-4 md:grid-cols-[2fr,1fr]">
           <Field
             label="Google Place ID"
@@ -547,7 +488,6 @@ export default function EditConsultantForm({ consultant }) {
             value={form.place_id}
             onChange={handleChange("place_id")}
             hint="Paste the full Place ID. Leave blank if unsure."
-            infoText="Connects your profile to the exact Google Maps listing clients see publicly."
           />
           <div className="self-end">
             <InfoPopover />
@@ -637,94 +577,36 @@ function InfoPopover() {
   );
 }
 
-function Field({ label, as = "input", hint, infoText, ...props }) {
+function Field({ label, as = "input", hint, ...props }) {
   const Component = as;
   const shared =
     "mt-1 w-full rounded-xl border border-white/10 bg-white/[0.07] px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:border-sky-400/60 focus:outline-none focus:ring-2 focus:ring-sky-400/30";
   return (
     <label className="block text-sm text-slate-300">
-      <LabelWithHint label={label} infoText={infoText} />
+      {label}
       <Component className={shared} {...props} />
       {hint ? <p className="mt-1 text-xs text-slate-400">{hint}</p> : null}
     </label>
   );
 }
 
-function SelectField({ label, hint, options, placeholder, infoText, ...props }) {
+function SelectField({ label, hint, options, placeholder, ...props }) {
   return (
     <label className="block text-sm text-slate-300">
-      <LabelWithHint label={label} infoText={infoText} />
-      <div className="relative mt-1">
-        <select
-          {...props}
-          className="w-full appearance-none rounded-xl border border-white/10 bg-slate-900/95 px-3 py-2 pr-10 text-sm text-slate-100 hover:bg-slate-900 focus:border-sky-400/60 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
-        >
-          <option value="" className="bg-slate-900 text-slate-300">{placeholder}</option>
-          {options.map((option) => (
-            <option key={option.value} value={option.value} className="bg-slate-900 text-slate-100">
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <svg
-          viewBox="0 0 20 20"
-          aria-hidden="true"
-          className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="m5.5 7.5 4.5 5 4.5-5" />
-        </svg>
-      </div>
+      {label}
+      <select
+        {...props}
+        className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.07] px-3 py-2 text-sm text-slate-100 focus:border-sky-400/60 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
       {hint ? <p className="mt-1 text-xs text-slate-400">{hint}</p> : null}
     </label>
-  );
-}
-
-function LabelWithHint({ label, infoText }) {
-  return (
-    <span className="inline-flex items-center gap-2">
-      <span>{label}</span>
-      {infoText ? <HoverHint text={infoText} /> : null}
-    </span>
-  );
-}
-
-function HoverHint({ text }) {
-  return (
-    <span className="group relative inline-flex">
-      <button
-        type="button"
-        aria-label="Field help"
-        className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/25 text-[11px] font-semibold text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400/60"
-        onClick={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-        }}
-      >
-        i
-      </button>
-      <span className="pointer-events-none absolute left-1/2 top-7 z-30 hidden w-64 -translate-x-1/2 rounded-lg border border-white/15 bg-slate-900/95 px-3 py-2 text-left text-xs leading-relaxed text-slate-100 shadow-xl group-hover:block group-focus-within:block">
-        {text}
-      </span>
-    </span>
-  );
-}
-
-function SectionTitle({ title, subtitle, icon }) {
-  return (
-    <header className="space-y-1">
-      <div className="inline-flex items-center gap-2">
-        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/[0.08] text-slate-100">
-          {icon}
-        </span>
-        <h2 className="text-lg font-semibold text-white">{title}</h2>
-      </div>
-      <p className="text-xs text-slate-400">{subtitle}</p>
-    </header>
   );
 }
 

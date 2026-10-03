@@ -120,6 +120,7 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
   });
   const [adminSection, setAdminSection] = useState("review");
   const [placementResources, setPlacementResources] = useState([]);
+  const [placementsConfigured, setPlacementsConfigured] = useState(true);
   const [placementSearch, setPlacementSearch] = useState("");
   const [selectedFeaturedIds, setSelectedFeaturedIds] = useState([]);
   const [selectedHomeBannerId, setSelectedHomeBannerId] = useState("");
@@ -127,6 +128,10 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
   const [dropTarget, setDropTarget] = useState("");
   const [loadingPlacements, setLoadingPlacements] = useState(false);
   const [savingPlacements, setSavingPlacements] = useState(false);
+  const [visibilityResources, setVisibilityResources] = useState([]);
+  const [visibilitySearch, setVisibilitySearch] = useState("");
+  const [loadingVisibility, setLoadingVisibility] = useState(false);
+  const [savingVisibilityResourceId, setSavingVisibilityResourceId] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -192,6 +197,7 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
       const placementRes = await apiSend("/api/resources/admin/placements");
       const resources = Array.isArray(placementRes.resources) ? placementRes.resources : [];
       setPlacementResources(resources);
+      setPlacementsConfigured(placementRes.placementsConfigured !== false);
       setSelectedFeaturedIds(resources.filter((resource) => resource.isFeatured).map((resource) => resource.id));
       setSelectedHomeBannerId(placementRes.homeBannerResourceId || "");
       if (!silent) {
@@ -203,6 +209,31 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
       }
     } finally {
       setLoadingPlacements(false);
+    }
+  }
+
+  async function refreshVisibility({ silent = false } = {}) {
+    if (!silent) resetMessages();
+    setLoadingVisibility(true);
+
+    try {
+      const resources = [];
+      let page = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        const result = await apiSend(`/api/resources/review?status=all&view=card&limit=200&page=${page}`);
+        resources.push(...(Array.isArray(result.resources) ? result.resources : []));
+        hasMore = Boolean(result?.paging?.hasMore);
+        page += 1;
+      }
+
+      setVisibilityResources(resources);
+      if (!silent) setSuccess("Resource visibility list refreshed.");
+    } catch (nextError) {
+      if (!silent) setError(nextError.message || "Unable to load resources.");
+    } finally {
+      setLoadingVisibility(false);
     }
   }
 
@@ -284,6 +315,7 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
 
       const resources = Array.isArray(placementRes.resources) ? placementRes.resources : [];
       setPlacementResources(resources);
+      setPlacementsConfigured(placementRes.placementsConfigured !== false);
       setSelectedFeaturedIds(resources.filter((resource) => resource.isFeatured).map((resource) => resource.id));
       setSelectedHomeBannerId(placementRes.homeBannerResourceId || "");
       setSuccess("Placement settings saved.");
@@ -317,6 +349,19 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
     });
   }, [placementResources, placementSearch]);
 
+  const filteredVisibilityResources = useMemo(() => {
+    const searchTerm = visibilitySearch.trim().toLowerCase();
+    if (!searchTerm) return visibilityResources;
+
+    return visibilityResources.filter((resource) => (
+      [resource.title, resource.slug, resource.ownerUserId]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(searchTerm)
+    ));
+  }, [visibilityResources, visibilitySearch]);
+
   useEffect(() => {
     void refreshAnalytics({ silent: true });
     void refreshPlacements({ silent: true });
@@ -342,6 +387,26 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
         setError(nextError.message || `Unable to mark resource as ${status}.`);
       } finally {
         setBusyResourceId(null);
+      }
+    });
+  }
+
+  function setResourceVisibility(resource, visible) {
+    const status = visible ? "approved" : "draft";
+    resetMessages();
+    setSavingVisibilityResourceId(resource.id);
+
+    startTransition(async () => {
+      try {
+        const result = await apiSend(`/api/resources/${resource.id}/status`, "PATCH", { status });
+        setVisibilityResources((prev) => prev.map((item) => (
+          item.id === resource.id ? result.resource : item
+        )));
+        setSuccess(`${resource.title} is now ${visible ? "visible" : "hidden"}.`);
+      } catch (nextError) {
+        setError(nextError.message || "Unable to update resource visibility.");
+      } finally {
+        setSavingVisibilityResourceId(null);
       }
     });
   }
@@ -378,6 +443,15 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
                   {loadingAnalytics ? "Refreshing analytics..." : "Refresh analytics"}
                 </button>
               </>
+            ) : adminSection === "visibility" ? (
+              <button
+                type="button"
+                onClick={() => refreshVisibility()}
+                disabled={loadingVisibility || savingVisibilityResourceId || isPending}
+                className="rounded-full border border-cyan-300/25 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loadingVisibility ? "Refreshing resources..." : "Refresh resources"}
+              </button>
             ) : (
               <>
                 <button
@@ -416,6 +490,16 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
               className={`rounded-full px-4 py-2 text-sm font-semibold transition ${adminSection === "placements" ? "bg-white text-slate-900" : "border border-white/10 bg-white/[0.04] text-slate-200 hover:bg-white/[0.08]"}`}
             >
               Placements
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAdminSection("visibility");
+                if (!visibilityResources.length) void refreshVisibility({ silent: true });
+              }}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${adminSection === "visibility" ? "bg-white text-slate-900" : "border border-white/10 bg-white/[0.04] text-slate-200 hover:bg-white/[0.08]"}`}
+            >
+              Visibility
             </button>
           </div>
         </section>
@@ -577,15 +661,88 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
           </>
         ) : null}
 
+        {adminSection === "visibility" ? (
+          <section className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10 sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-semibold text-white">Resource visibility</h2>
+                <p className="mt-1 text-sm text-slate-300">Visible resources appear in the public Vault. Hidden resources are saved as drafts and remain available to their owner and admins.</p>
+              </div>
+              <div className="text-xs uppercase tracking-[0.18em] text-slate-400">{visibilityResources.length} resources</div>
+            </div>
+
+            <div className="mt-5">
+              <label htmlFor="visibility-search" className="text-xs uppercase tracking-[0.16em] text-slate-400">Search resources</label>
+              <input
+                id="visibility-search"
+                value={visibilitySearch}
+                onChange={(event) => setVisibilitySearch(event.target.value)}
+                placeholder="Search title or slug"
+                className="mt-2 w-full rounded-2xl border border-white/12 bg-slate-950/35 px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-sky-300/45"
+              />
+            </div>
+
+            <div className="mt-5 overflow-x-auto rounded-2xl border border-white/10">
+              <table className="min-w-full text-left text-sm">
+                <thead className="bg-slate-950/45 text-xs uppercase tracking-[0.14em] text-slate-400">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold">Resource</th>
+                    <th className="px-4 py-3 font-semibold">Status</th>
+                    <th className="px-4 py-3 font-semibold">Public</th>
+                    <th className="px-4 py-3 text-right font-semibold">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/10">
+                  {filteredVisibilityResources.map((resource) => {
+                    const isVisible = resource.status === "approved";
+                    const isSaving = savingVisibilityResourceId === resource.id;
+                    return (
+                      <tr key={resource.id} className="bg-slate-950/20">
+                        <td className="px-4 py-3">
+                          <div className="font-semibold text-white">{resource.title}</div>
+                          <div className="mt-1 font-mono text-xs text-slate-400">{resource.slug}</div>
+                        </td>
+                        <td className="px-4 py-3"><Badge tone={statusTone(resource.status)}>{resource.status}</Badge></td>
+                        <td className="px-4 py-3">
+                          <span className={`font-semibold ${isVisible ? "text-emerald-200" : "text-amber-200"}`}>{isVisible ? "Visible" : "Hidden"}</span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => setResourceVisibility(resource, !isVisible)}
+                            disabled={isSaving || isPending}
+                            className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${isVisible ? "border-amber-300/30 bg-amber-500/10 text-amber-100 hover:bg-amber-500/20" : "border-emerald-300/30 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20"}`}
+                          >
+                            {isSaving ? "Saving..." : isVisible ? "Hide" : "Make visible"}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {!loadingVisibility && !filteredVisibilityResources.length ? (
+                <div className="px-5 py-8 text-center text-sm text-slate-300">No resources match this search.</div>
+              ) : null}
+              {loadingVisibility ? <div className="px-5 py-8 text-center text-sm text-slate-300">Loading resources...</div> : null}
+            </div>
+          </section>
+        ) : null}
+
         {adminSection === "placements" ? (
           <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            {!placementsConfigured ? (
+              <div className="xl:col-span-2 rounded-2xl border border-amber-400/30 bg-amber-500/10 px-5 py-4 text-sm text-amber-100">
+                The resource cards are available, but saving homepage placements requires the `20260902_04_resource_homepage_placements.sql` Supabase migration.
+              </div>
+            ) : null}
             <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10 sm:p-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h2 className="text-xl font-semibold text-white">All resources</h2>
-                  <p className="mt-1 text-sm text-slate-300">Drag a resource from this list into the drop zones on the right.</p>
+                  <p className="mt-1 text-sm text-slate-300">Drag visible resources from this list into the public Vault placements. Hidden resources remain listed for reference.</p>
                 </div>
-                <div className="text-xs uppercase tracking-[0.18em] text-slate-400">{placementResources.length} approved resources</div>
+                <div className="text-xs uppercase tracking-[0.18em] text-slate-400">{placementResources.length} resources</div>
               </div>
 
               <div className="mt-4">
@@ -604,43 +761,29 @@ export default function MarketplaceAdminPageClient({ initialQueue = [], initialC
               <div className="mt-4 max-h-[560px] space-y-3 overflow-y-auto pr-1">
                 {filteredPlacementResources.length ? (
                   filteredPlacementResources.map((resource) => {
-                    const isFeatured = selectedFeaturedIds.includes(resource.id);
-                    const isHomeBanner = selectedHomeBannerId === resource.id;
                     const isDragging = draggedResourceId === resource.id;
+                    const canPlace = resource.status === "approved";
 
                     return (
                       <article
                         key={resource.id}
-                        draggable
-                        onDragStart={() => handleResourceDragStart(resource.id)}
+                        draggable={canPlace}
+                        onDragStart={() => {
+                          if (canPlace) handleResourceDragStart(resource.id);
+                        }}
                         onDragEnd={handleResourceDragEnd}
-                        className={`cursor-grab rounded-[20px] border bg-slate-950/30 p-4 active:cursor-grabbing ${isDragging ? "border-sky-300/45 ring-1 ring-sky-300/25" : "border-white/10"}`}
+                        className={`rounded-xl border bg-slate-950/30 px-3 py-2 ${canPlace ? "cursor-grab active:cursor-grabbing" : "cursor-not-allowed opacity-65"} ${isDragging ? "border-sky-300/45 ring-1 ring-sky-300/25" : "border-white/10"}`}
                       >
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div className="max-w-2xl">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <div className="text-sm font-semibold text-white">{resource.title}</div>
-                              <ResourceFormatChip format={resource.resourceFormat} />
-                            </div>
-                            {resource.summary ? <p className="mt-2 text-sm text-slate-300">{resource.summary}</p> : null}
-                            <div className="mt-2 text-xs text-slate-500">{resource.slug}</div>
-                          </div>
-                          <Link href={`/vault/${resource.id}`} className="rounded-full border border-white/15 bg-white/[0.05] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/[0.12]">
-                            Open
-                          </Link>
-                        </div>
-
-                        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-300">
-                          {isHomeBanner ? <span className="rounded-full border border-sky-300/35 bg-sky-500/15 px-2.5 py-1 font-semibold text-sky-100">Top banner</span> : null}
-                          {isFeatured ? <span className="rounded-full border border-emerald-300/35 bg-emerald-500/15 px-2.5 py-1 font-semibold text-emerald-100">Featured lane</span> : null}
-                          {!isHomeBanner && !isFeatured ? <span className="text-slate-400">Unassigned</span> : null}
+                        <div className="flex min-w-0 items-center justify-between gap-3">
+                          <div className="min-w-0 truncate text-sm font-semibold text-white">{resource.title}</div>
+                          <ResourceFormatChip format={resource.resourceFormat} />
                         </div>
                       </article>
                     );
                   })
                 ) : (
                   <div className="rounded-[20px] border border-white/10 bg-slate-950/25 px-5 py-8 text-center text-sm text-slate-300">
-                    No approved resources match your search.
+                    No resources match your search.
                   </div>
                 )}
               </div>

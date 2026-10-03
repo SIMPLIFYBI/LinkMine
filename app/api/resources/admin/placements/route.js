@@ -20,11 +20,15 @@ function normalizeIdArray(value) {
   return ids;
 }
 
+function isMissingPlacementsTable(error) {
+  return error?.code === "PGRST205"
+    || String(error?.message || "").includes("resource_homepage_placements");
+}
+
 async function listPlacementRows(sb) {
   const { data, error } = await sb
     .from("resources")
     .select("id, title, slug, summary, resource_format, status, is_featured, updated_at")
-    .eq("status", "approved")
     .order("is_featured", { ascending: false })
     .order("updated_at", { ascending: false, nullsFirst: false })
     .order("title", { ascending: true });
@@ -40,7 +44,7 @@ async function listPlacementRows(sb) {
     .eq("placement_key", PLACEMENT_KEY)
     .maybeSingle();
 
-  if (placementError) {
+  if (placementError && !isMissingPlacementsTable(placementError)) {
     throw new Error(placementError.message || "Unable to load placement settings.");
   }
 
@@ -53,10 +57,12 @@ async function listPlacementRows(sb) {
       slug: row.slug,
       summary: row.summary,
       resourceFormat: row.resource_format,
+      status: row.status,
       isFeatured: Boolean(row.is_featured),
       updatedAt: row.updated_at,
     })),
     homeBannerResourceId,
+    placementsConfigured: !placementError,
   };
 }
 
@@ -159,6 +165,12 @@ export async function PUT(req) {
     }, { onConflict: "placement_key" });
 
   if (placementError) {
+    if (isMissingPlacementsTable(placementError)) {
+      return NextResponse.json(
+        { ok: false, error: "Homepage placements are not configured. Apply db/migrations/20260902_04_resource_homepage_placements.sql to Supabase first." },
+        { status: 409 }
+      );
+    }
     return NextResponse.json({ ok: false, error: placementError.message }, { status: 400 });
   }
 

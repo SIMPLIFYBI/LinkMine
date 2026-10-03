@@ -148,19 +148,6 @@ export default async function MarketplaceResourcePage({ params }) {
 
   const resource = buildResourceRoutePayload(data, data.resource_tag_links || []);
   const canEditResource = Boolean(userId && (resource.ownerUserId === userId || isAdmin));
-  let hasAccess = canEditResource;
-  if (userId && !hasAccess) {
-    const { data: entitlement } = await sb
-      .from("resource_entitlements")
-      .select("resource_id")
-      .eq("user_id", userId)
-      .eq("resource_id", resource.id)
-      .is("revoked_at", null)
-      .maybeSingle();
-    hasAccess = Boolean(entitlement?.resource_id);
-  }
-  const canViewDirectSourceUrl = Boolean(userId);
-  const resourceForActions = canViewDirectSourceUrl ? resource : { ...resource, sourceUrl: null };
 
   let consultantProfile = null;
   const selectedConsultantId = resource.consultantId || null;
@@ -273,46 +260,15 @@ export default async function MarketplaceResourcePage({ params }) {
 
   let uniqueOpeners30d = null;
   try {
-    if (canEditResource) {
-      const sinceIso = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      let metricsSb = sb;
-      try {
-        metricsSb = supabaseAdminClient();
-      } catch {
-        metricsSb = sb;
-      }
-
-      const [{ data: openRows = [] }, { data: downloadRows = [] }] = await Promise.all([
-        metricsSb
-          .from("resource_open_events")
-          .select("user_id")
-          .eq("resource_id", id)
-          .gte("opened_at", sinceIso),
-        metricsSb
-          .from("resource_download_events")
-          .select("user_id")
-          .eq("resource_id", id)
-          .gte("created_at", sinceIso),
-      ]);
-
-      const uniqueUserIds = new Set(
-        [...openRows, ...downloadRows]
-          .map((row) => row?.user_id)
-          .filter(Boolean)
-      );
-      uniqueOpeners30d = uniqueUserIds.size;
-    } else {
-      const { data: uniqueOpeners } = await sb.rpc("resource_unique_openers_30d", {
-        p_resource_id: id,
-      });
-      uniqueOpeners30d = Number(uniqueOpeners ?? 0);
-    }
+    const { data: uniqueOpeners } = await sb.rpc("resource_unique_openers_30d", {
+      p_resource_id: id,
+    });
+    uniqueOpeners30d = Number(uniqueOpeners ?? 0);
   } catch {
     uniqueOpeners30d = null;
   }
 
   const totalOpenCount = Number(resource.openCount ?? resource.downloadCount ?? 0);
-  const editResourceHref = `/vault/${resource.id}/edit`;
 
   return (
     <MarketplaceRouteShell signedIn={Boolean(user)} isAdmin={isAdmin} activeKey="account">
@@ -322,7 +278,7 @@ export default async function MarketplaceResourcePage({ params }) {
             Back to vault
           </Link>
           {canEditResource ? (
-            <Link href={editResourceHref} className="rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
+            <Link href={`/vault/${resource.id}/edit`} className="rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
               Edit resource
             </Link>
           ) : null}
@@ -373,7 +329,7 @@ export default async function MarketplaceResourcePage({ params }) {
               </div>
 
               <div className="rounded-[28px] border border-white/10 bg-slate-950/35 p-5 ring-1 ring-white/10">
-                <ResourceDetailActions resource={resourceForActions} requiresAuth={!user} hasAccess={hasAccess} />
+                <ResourceDetailActions resource={resource} requiresAuth={!user} />
               </div>
             </div>
           </div>
@@ -384,7 +340,7 @@ export default async function MarketplaceResourcePage({ params }) {
             <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Access</div>
             <div className="mt-3 text-sm text-slate-200">{resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file"}</div>
             <div className="mt-3"><ResourceFormatChip format={resource.resourceFormat} /></div>
-            {resource.sourceUrl && canViewDirectSourceUrl ? <div className="mt-2 break-all text-xs text-slate-400">{resource.sourceUrl}</div> : null}
+            {resource.sourceUrl ? <div className="mt-2 break-all text-xs text-slate-400">{resource.sourceUrl}</div> : null}
           </div>
           <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5 ring-1 ring-white/10">
             <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Size</div>

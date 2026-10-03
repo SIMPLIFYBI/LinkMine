@@ -22,7 +22,6 @@ import {
   normaliseTagIds,
   sanitizeSlug,
 } from "@/lib/resourceHubServer";
-import { sendNewResourceNotification } from "@/lib/emails/sendNewResource";
 import { timedRoute } from "@/lib/apiTiming";
 
 function asNullablePositiveInteger(value) {
@@ -95,7 +94,28 @@ export async function GET(req) {
 
     const rows = data || [];
     const hasMore = rows.length > limit;
-    const slicedRows = hasMore ? rows.slice(0, limit) : rows;
+    let slicedRows = hasMore ? rows.slice(0, limit) : rows;
+    let homeBannerResourceId = null;
+
+    try {
+      const { data: placement } = await dataSb
+        .from("resource_homepage_placements")
+        .select("hero_resource_id")
+        .eq("placement_key", "vault_home")
+        .maybeSingle();
+      homeBannerResourceId = placement?.hero_resource_id || null;
+    } catch {}
+
+    if (homeBannerResourceId && !slicedRows.some((row) => row.id === homeBannerResourceId)) {
+      const { data: bannerRow } = await dataSb
+        .from("resources")
+        .select(view === "card" ? RESOURCE_CARD_SELECT : DEFAULT_RESOURCE_SELECT)
+        .eq("id", homeBannerResourceId)
+        .eq("status", "approved")
+        .maybeSingle();
+      if (bannerRow) slicedRows = [...slicedRows, bannerRow];
+    }
+
     const consultantIconByResourceId = await resolveResourceConsultantIcons(dataSb, slicedRows);
     const resourceIds = slicedRows.map((row) => row.id).filter(Boolean);
     const resourceImagesByResourceId = new Map();
@@ -144,16 +164,6 @@ export async function GET(req) {
       } catch {}
     }
 
-    let homeBannerResourceId = null;
-    try {
-      const { data: placementRow } = await dataSb
-        .from("resource_homepage_placements")
-        .select("hero_resource_id")
-        .eq("placement_key", "vault_home")
-        .maybeSingle();
-      homeBannerResourceId = placementRow?.hero_resource_id || null;
-    } catch {}
-
     return NextResponse.json({
       ok: true,
       canCreateResources,
@@ -161,22 +171,13 @@ export async function GET(req) {
         ? ""
         : "You need an approved consultant or creator profile before you can publish marketplace resources.",
       homeBannerResourceId,
-      resources: slicedRows.map((row) => {
-        const payload = buildResourceRoutePayload({
+      resources: slicedRows.map((row) => ({
+        ...buildResourceRoutePayload({
           ...row,
           consultant_icon_url: consultantIconByResourceId.get(row.id) || null,
-        }, row.resource_tag_links || []);
-
-        // Keep discover pages public, but avoid exposing direct external URLs to anonymous viewers.
-        if (!user) {
-          payload.sourceUrl = null;
-        }
-
-        return {
-          ...payload,
-          resourceImages: resourceImagesByResourceId.get(row.id) || [],
-        };
-      }),
+        }, row.resource_tag_links || []),
+        resourceImages: resourceImagesByResourceId.get(row.id) || [],
+      })),
       paging: {
         page,
         limit,
@@ -323,14 +324,6 @@ export async function POST(req) {
   if (reloadError) {
     return NextResponse.json({ ok: false, error: reloadError.message }, { status: 400 });
   }
-
-  // Notify admin inbox when a new resource is created (fire-and-forget).
-  sendNewResourceNotification({
-    resource: hydrated,
-    createdBy: { email: user?.email || "", name: user?.user_metadata?.full_name || "" },
-  })
-    .then(() => console.log("[resources.create] admin notified for resource:", hydrated?.id))
-    .catch((err) => console.error("[resources.create] notify error:", err));
 
   return NextResponse.json({
     ok: true,

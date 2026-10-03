@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 export const revalidate = 180; // 3 minutes
 
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import { fetchPlaceDetails } from "@/lib/googlePlaces";
 import ConsultantClaimButton from "@/app/components/ConsultantClaimButton";
@@ -55,28 +55,8 @@ function formatAcn(acn) {
   return `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}`;
 }
 
-async function getViewerContext() {
+async function getConsultant(id) {
   const sb = await supabaseServerClient();
-  const { data: auth } = await sb.auth.getUser();
-  const userId = auth?.user?.id || null;
-
-  let isAdmin = false;
-  if (userId) {
-    const { data: adminRow } = await sb
-      .from("app_admins")
-      .select("user_id")
-      .eq("user_id", userId)
-      .maybeSingle();
-    isAdmin = Boolean(adminRow);
-  }
-
-  return { userId, isAdmin };
-}
-
-async function getConsultant(id, viewer = {}) {
-  const sb = await supabaseServerClient();
-  const viewerUserId = viewer?.userId || null;
-  const viewerIsAdmin = Boolean(viewer?.isAdmin);
 
   const { data } = await sb
     .from("consultants")
@@ -85,23 +65,8 @@ async function getConsultant(id, viewer = {}) {
     .eq("id", id)
     .maybeSingle();
 
-  if (!data) return null;
-
-  const canViewAsOwnerOrAdmin = Boolean(
-    viewerIsAdmin ||
-    (viewerUserId && (data.user_id === viewerUserId || data.claimed_by === viewerUserId))
-  );
-
-  const hiddenByVisibility = data.visibility !== "public" && !canViewAsOwnerOrAdmin;
-  const hiddenByProfileType =
-    !["consultant", "creator", "both"].includes(String(data.profile_type || "consultant")) &&
-    !canViewAsOwnerOrAdmin;
-  if (hiddenByVisibility || hiddenByProfileType) {
-    return {
-      restricted: true,
-      requiresAuth: !viewerUserId,
-    };
-  }
+  if (!data || data.visibility !== "public") return null;
+  if (!["consultant", "both"].includes(String(data.profile_type || "consultant"))) return null;
 
   const { data: svc } = await sb
     .from("consultant_services")
@@ -167,41 +132,20 @@ async function getConsultant(id, viewer = {}) {
     }))
     .sort((a, b) => String(a.title || "").localeCompare(String(b.title || "")));
 
-  let resourcesQuery = sb
-    .from("resources")
-    .select("id, title, summary, resource_type, resource_format, status")
-    .order("updated_at", { ascending: false })
-    .limit(12);
-
-  if (!canViewAsOwnerOrAdmin) {
-    resourcesQuery = resourcesQuery.eq("status", "approved");
-  }
-
-  if (data.claimed_by) {
-    resourcesQuery = resourcesQuery.or(`consultant_id.eq.${id},owner_user_id.eq.${data.claimed_by}`);
-  } else {
-    resourcesQuery = resourcesQuery.eq("consultant_id", id);
-  }
-
-  const { data: resources = [] } = await resourcesQuery;
-
   return {
     consultant: data,
     services: (svc || []).map((r) => r.service).filter(Boolean),
     ports: ports || [],
     viewsCount: viewsCount || 0,
     trainingCourses: normalizedTrainingCourses,
-    resources,
-    canViewAsOwnerOrAdmin,
   };
 }
 
 export async function generateMetadata(props) {
   const { id: consultantId } = await props.params;
-  const viewer = await getViewerContext();
-  const data = await getConsultant(consultantId, viewer);
+  const data = await getConsultant(consultantId);
 
-  if (!data || data.restricted) {
+  if (!data) {
     return {
       title: "Consultant not found · YouMine",
       description: "This consultant profile is no longer available on YouMine.",
@@ -255,34 +199,10 @@ export async function generateMetadata(props) {
 
 export default async function ConsultantPage(props) {
   const { id: consultantId } = await props.params;
-  const searchParams = await props.searchParams;
-  const viewer = await getViewerContext();
-  const data = await getConsultant(consultantId, viewer);
-  if (data?.restricted && data.requiresAuth) {
-    redirect(`/login?redirect=${encodeURIComponent(`/consultants/${consultantId}`)}`);
-  }
+  const data = await getConsultant(consultantId);
   if (!data) return notFound();
-  if (data.restricted) return notFound();
 
-  const {
-    consultant,
-    services,
-    ports,
-    viewsCount,
-    trainingCourses,
-    resources,
-    canViewAsOwnerOrAdmin,
-  } = data;
-
-  const requestedBackHref = Array.isArray(searchParams?.backTo)
-    ? searchParams.backTo[0]
-    : searchParams?.backTo;
-  const defaultBackHref = ["creator", "both"].includes(String(consultant.profile_type || "consultant"))
-    ? "/vault/creators"
-    : "/consultants";
-  const backHref = typeof requestedBackHref === "string" && requestedBackHref.startsWith("/") && !requestedBackHref.startsWith("//")
-    ? requestedBackHref
-    : defaultBackHref;
+  const { consultant, services, ports, viewsCount, trainingCourses } = data;
 
   const place = consultant.place_id
     ? await fetchPlaceDetails(consultant.place_id)
@@ -299,7 +219,7 @@ export default async function ConsultantPage(props) {
       <TrackView consultantId={consultantId} source="consultant_profile" />
 
       <div className="flex items-start justify-between">
-        <Link href={backHref} className="text-sky-300 hover:underline">
+        <Link href="/consultants" className="text-sky-300 hover:underline">
           ← Back
         </Link>
         <PermissionsGate
@@ -398,66 +318,6 @@ export default async function ConsultantPage(props) {
             consultantName={consultant.display_name}
             initialCourses={trainingCourses}
           />
-
-          {[
-            "creator",
-            "both",
-          ].includes(String(consultant.profile_type || "consultant")) || resources.length > 0 ? (
-            <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-slate-100 shadow-sm ring-1 ring-white/5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-white">Digital resources</h2>
-                {canViewAsOwnerOrAdmin ? (
-                  <Link
-                    href="/vault/submit"
-                    className="rounded-full border border-white/15 bg-white/[0.06] px-3 py-1.5 text-xs font-semibold text-slate-100 hover:bg-white/[0.12]"
-                  >
-                    Create resource
-                  </Link>
-                ) : null}
-              </div>
-
-              {resources.length === 0 ? (
-                <p className="mt-3 text-sm text-slate-400">
-                  No digital resources are linked yet.
-                </p>
-              ) : (
-                <ul className="mt-4 space-y-3">
-                  {resources.map((resource) => (
-                    <li
-                      key={resource.id}
-                      className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <Link
-                          href={`/vault/${resource.id}`}
-                          className="text-white font-semibold hover:text-sky-200"
-                        >
-                          {resource.title}
-                        </Link>
-                        {canViewAsOwnerOrAdmin ? (
-                          <Link
-                            href={`/vault/${resource.id}/edit`}
-                            className="rounded-full border border-white/15 bg-white/[0.05] px-2.5 py-1 text-[11px] font-semibold text-slate-200 hover:bg-white/[0.1]"
-                          >
-                            Edit
-                          </Link>
-                        ) : null}
-                      </div>
-                      {resource.summary ? (
-                        <p className="mt-1 text-sm text-slate-300 line-clamp-2">
-                          {resource.summary}
-                        </p>
-                      ) : null}
-                      <div className="mt-2 text-xs uppercase tracking-[0.14em] text-slate-400">
-                        {resource.resource_type} • {resource.resource_format}
-                        {canViewAsOwnerOrAdmin ? ` • ${resource.status}` : ""}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </article>
-          ) : null}
 
           {ports.length ? (
             <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-slate-100 shadow-sm ring-1 ring-white/5">
