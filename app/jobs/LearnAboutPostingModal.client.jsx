@@ -143,7 +143,7 @@ export default function LearnAboutPostingModal({ buttonClassName = "" }) {
                 <div className="text-xs text-slate-400">Ready when you are—pick a path that fits your job.</div>
                 <div className="flex items-center gap-2">
                   <Link
-                    href="/activity?tab=jobs"
+                    href="/account?tab=activity&activityTab=jobs"
                     className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
                     onClick={() => setOpen(false)}
                   >

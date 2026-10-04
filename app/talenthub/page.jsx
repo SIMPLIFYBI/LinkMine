@@ -198,6 +198,7 @@ export default async function TalentHubPage() {
 
   const currentWorker = currentWorkerResult.data || null;
   const currentProfile = {
+    id: currentWorker?.id || null,
     displayName: currentWorker?.display_name || "",
     publicProfileName: currentWorker?.public_profile_name || "",
     headline: currentWorker?.headline || "",

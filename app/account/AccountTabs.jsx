@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 export default function AccountTabs({ tabs, active, onChange }) {
@@ -69,16 +70,31 @@ export default function AccountTabs({ tabs, active, onChange }) {
         <div ref={gridRef} className={`relative grid ${gridColsClass}`}>
           {tabs.map((t) => {
             const isActive = t.key === current;
+            const className = [
+              "relative z-10 flex h-10 w-full items-center justify-center rounded-full px-4 text-center transition-colors",
+              isActive ? "text-slate-900" : "text-slate-300 hover:text-white",
+            ].join(" ");
+
+            if (t.href) {
+              return (
+                <Link
+                  key={t.key}
+                  href={t.href}
+                  aria-current={isActive ? "page" : undefined}
+                  className={className}
+                >
+                  <span className="pointer-events-none">{t.label}</span>
+                </Link>
+              );
+            }
+
             return (
               <button
                 key={t.key}
                 type="button"
                 onClick={() => handleClick(t.key)}
                 aria-current={isActive ? "page" : undefined}
-                className={[
-                  "relative z-10 flex h-10 w-full items-center justify-center rounded-full px-4 text-center transition-colors",
-                  isActive ? "text-slate-900" : "text-slate-300 hover:text-white",
-                ].join(" ")}
+                className={className}
               >
                 <span className="pointer-events-none">{t.label}</span>
               </button>

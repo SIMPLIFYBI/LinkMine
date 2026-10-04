@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import JobsRequestedTable from "@/app/jobs/JobsRequestedTable";
+import AccountTabs from "@/app/account/AccountTabs";
 
 export const metadata = {
   title: "My Activity",
@@ -73,12 +74,20 @@ function pickLogoFromMetadata(supabaseUrl, metadata) {
   return null;
 }
 
-export default async function MyActivityPage({ searchParams }) {
+export default async function MyActivityPage({ searchParams, embedded = false }) {
+  if (!embedded) {
+    const requestedActivityTab = String(searchParams?.tab ?? "contacts").toLowerCase();
+    const activityTab = ["contacts", "jobs", "favourites", "training"].includes(requestedActivityTab)
+      ? requestedActivityTab
+      : "contacts";
+    redirect(`/account?tab=activity&activityTab=${activityTab}`);
+  }
+
   const sb = await supabaseServerClient();
   const { data: auth } = await sb.auth.getUser();
   const user = auth?.user;
   if (!user) {
-    redirect(`/login?redirect=${encodeURIComponent("/activity")}`);
+    redirect(`/login?redirect=${encodeURIComponent("/account?tab=activity")}`);
   }
 
   const requestedTab = String(searchParams?.tab ?? "contacts").toLowerCase();
@@ -186,6 +195,11 @@ export default async function MyActivityPage({ searchParams }) {
 
   return (
     <div className="mx-auto max-w-screen-lg px-4 py-8">
+      {embedded ? (
+        <div className="mb-6">
+          <AccountTabs tabs={ACCOUNT_TABS} active="activity" />
+        </div>
+      ) : null}
       <header className="mb-6">
         <h1 className="text-2xl font-semibold">My Activity</h1>
         <p className="mt-1 text-slate-400">A private log of your activity across YouMine.</p>
@@ -398,12 +412,20 @@ export default async function MyActivityPage({ searchParams }) {
   );
 }
 
+const ACCOUNT_TABS = [
+  { key: "account", label: "Account", href: "/account" },
+  { key: "activity", label: "My Activity", href: "/account?tab=activity" },
+  { key: "notifications", label: "Notifications", href: "/account?tab=notifications" },
+  { key: "consultants", label: "My Consultancy", href: "/account?tab=consultants" },
+  { key: "creators", label: "My Creators", href: "/account?tab=creators" },
+];
+
 function TabNav({ activeTab }) {
   const tabs = [
-    { key: "contacts", label: "Direct contacts", href: "/activity?tab=contacts" },
-    { key: "jobs", label: "My Jobs", href: "/activity?tab=jobs" },
-    { key: "favourites", label: "Favourites", href: "/activity?tab=favourites" },
-    { key: "training", label: "Training", href: "/activity?tab=training" },
+    { key: "contacts", label: "Direct contacts", href: "/account?tab=activity&activityTab=contacts" },
+    { key: "jobs", label: "My Jobs", href: "/account?tab=activity&activityTab=jobs" },
+    { key: "favourites", label: "Favourites", href: "/account?tab=activity&activityTab=favourites" },
+    { key: "training", label: "Training", href: "/account?tab=activity&activityTab=training" },
   ];
 
   return (

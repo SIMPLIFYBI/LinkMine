@@ -163,7 +163,7 @@ export default function LearnAboutPostingModalMobile({ buttonClassName = "" }) {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Link
-                      href="/activity?tab=jobs"
+                      href="/account?tab=activity&activityTab=jobs"
                       onClick={close}
                       className="inline-flex items-center rounded-full bg-gradient-to-r from-sky-600 to-indigo-600 px-4 py-2 text-[12px] font-semibold text-white shadow hover:from-sky-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
                     >

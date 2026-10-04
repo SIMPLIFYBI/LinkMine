@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Eye, UserRoundPlus } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 import WorkerFavouriteButton from "./WorkerFavouriteButton.client";
 import MyProfileForm from "./MyProfileForm.client";
@@ -79,9 +80,9 @@ function createWorkerPreview(profile, roleOptions, workingRightsOptions) {
   };
 }
 
-function TalentHubTabs({ activeTab, onChange, showCta = false }) {
+function TalentHubTabs({ activeTab, onChange, showAddProfile = false }) {
   return (
-    <div className={showCta ? "mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" : ""}>
+    <div className={showAddProfile ? "mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" : ""}>
       <nav className="flex gap-3 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1 text-sm text-slate-100">
         {tabs.map((tab) => {
           const isActive = tab.key === activeTab;
@@ -100,13 +101,14 @@ function TalentHubTabs({ activeTab, onChange, showCta = false }) {
         })}
       </nav>
 
-      {showCta ? (
+      {showAddProfile ? (
         <button
           type="button"
           onClick={() => onChange("my-profile")}
-          className="inline-flex items-center justify-center rounded-full border border-cyan-300/30 bg-cyan-400/10 px-5 py-2.5 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/16"
+          className="group inline-flex min-h-14 items-center justify-center gap-3 rounded-xl border border-cyan-200/50 bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 shadow-[0_12px_30px_-12px_rgba(34,211,238,0.9)] transition hover:bg-cyan-200 focus:outline-none focus:ring-2 focus:ring-cyan-200 focus:ring-offset-2 focus:ring-offset-slate-950"
         >
-          Add my profile
+          <UserRoundPlus className="h-7 w-7 transition-transform group-hover:scale-110" aria-hidden="true" />
+          <span>Add my profile</span>
         </button>
       ) : null}
     </div>
@@ -224,8 +226,11 @@ function WorkerDetailModal({ worker, onClose }) {
   );
 }
 
-function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef = null }) {
+function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef = null, preview = false }) {
+  const isInteractive = !preview && typeof onOpen === "function";
+
   function handleKeyDown(event) {
+    if (!isInteractive) return;
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       onOpen();
@@ -235,10 +240,10 @@ function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef =
   return (
     <div
       ref={cardRef}
-      onClick={onOpen}
+      onClick={isInteractive ? onOpen : undefined}
       onKeyDown={handleKeyDown}
-      role="button"
-      tabIndex={0}
+      role={isInteractive ? "button" : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
       className={`group relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(7,20,34,0.98),rgba(8,17,28,0.98))] text-left shadow-[0_30px_110px_-48px_rgba(8,145,178,0.85)] transition hover:-translate-y-1 hover:border-cyan-300/30 hover:shadow-[0_36px_130px_-50px_rgba(8,145,178,0.95)] focus:outline-none focus:ring-2 focus:ring-cyan-300/40 ${className}`}
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_26%),radial-gradient(circle_at_82%_14%,rgba(56,189,248,0.16),transparent_20%)]" />
@@ -251,12 +256,14 @@ function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef =
             <h2 className={`${compact ? "mt-3 text-2xl" : "mt-4 text-3xl sm:text-[2.2rem]"} font-semibold tracking-tight text-white`}>{worker.displayName}</h2>
             <p className={`${compact ? "mt-2 line-clamp-2 text-sm" : "mt-2 text-sm sm:text-base"} max-w-2xl leading-7 text-slate-200`}>{worker.headline}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <WorkerFavouriteButton workerId={worker.id} />
-            <span className="rounded-full border border-white/12 bg-white/[0.06] px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100 transition group-hover:bg-white/[0.12]">
-              Open
-            </span>
-          </div>
+          {!preview ? (
+            <div className="flex items-center gap-2">
+              <WorkerFavouriteButton workerId={worker.id} />
+              <span className="rounded-full border border-white/12 bg-white/[0.06] px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100 transition group-hover:bg-white/[0.12]">
+                Open
+              </span>
+            </div>
+          ) : null}
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2">
@@ -294,6 +301,39 @@ function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef =
   );
 }
 
+function MyCardPreviewModal({ worker, onClose }) {
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function onKeyDown(event) {
+      if (event.key === "Escape") onClose();
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 px-4 py-6 backdrop-blur-xl" onClick={onClose}>
+      <div className="relative w-full max-w-3xl" onClick={(event) => event.stopPropagation()}>
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-slate-950/80 text-xl text-slate-100 transition hover:bg-slate-900"
+          aria-label="Close card preview"
+        >
+          ×
+        </button>
+        <WorkerCard worker={worker} preview />
+      </div>
+    </div>
+  );
+}
+
 export default function TalentHubDeck({ workers, currentProfile, roleOptions, workingRightsOptions }) {
   const sb = supabaseBrowser();
   const [activeTab, setActiveTab] = useState("candidates");
@@ -304,6 +344,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
   const [favouriteIds, setFavouriteIds] = useState([]);
   const [favouritesLoaded, setFavouritesLoaded] = useState(false);
   const [pendingFocusWorkerId, setPendingFocusWorkerId] = useState(null);
+  const [isMyCardPreviewOpen, setIsMyCardPreviewOpen] = useState(false);
   const trackRef = useRef(null);
   const itemRefs = useRef([]);
   const displayedWorkers = activeTab === "favourites"
@@ -469,12 +510,24 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
 
   const emptyCandidates = !workersState.length;
   const emptyFavourites = favouritesLoaded && favouriteIds.length === 0;
+  const showAddProfile = !currentProfileState?.id;
+  const myCardPreview = createWorkerPreview(currentProfileState, roleOptions, workingRightsOptions);
 
   if (activeTab === "my-profile") {
     return (
       <>
         <div>
-          <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} />
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} />
+            <button
+              type="button"
+              onClick={() => setIsMyCardPreviewOpen(true)}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-cyan-300/35 bg-cyan-400/10 px-4 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/16 focus:outline-none focus:ring-2 focus:ring-cyan-300/50"
+            >
+              <Eye className="h-5 w-5" aria-hidden="true" />
+              View My Card
+            </button>
+          </div>
 
           <MyProfileForm
             initialProfile={currentProfileState}
@@ -485,6 +538,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
         </div>
 
         <WorkerDetailModal worker={selectedWorker} onClose={() => setSelectedWorkerId(null)} />
+        {isMyCardPreviewOpen ? <MyCardPreviewModal worker={myCardPreview} onClose={() => setIsMyCardPreviewOpen(false)} /> : null}
       </>
     );
   }
@@ -493,7 +547,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
     return (
       <>
         <div>
-          <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} showCta />
+          <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} showAddProfile={showAddProfile} />
 
           <div className="mt-6 rounded-[2rem] border border-white/10 bg-white/[0.04] px-6 py-16 text-center text-slate-300 shadow-[0_28px_80px_-44px_rgba(15,23,42,0.9)]">
             <h2 className="text-xl font-semibold text-white">
@@ -515,7 +569,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
   return (
     <>
       <div>
-        <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} showCta />
+        <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} showAddProfile={showAddProfile} />
 
         <section className="relative overflow-hidden rounded-[2.25rem] border border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.54),rgba(2,6,23,0.12))] px-4 py-6 shadow-[0_36px_110px_-54px_rgba(8,145,178,0.95)] sm:px-6 sm:py-8">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.12),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(56,189,248,0.1),transparent_18%)]" />

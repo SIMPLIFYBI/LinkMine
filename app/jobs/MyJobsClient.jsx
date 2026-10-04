@@ -289,7 +289,7 @@ export default function MyJobsClient() {
 
     // Redirect to jobs board so user can see their posting (if Public / Both)
     // Note: Private jobs will not appear there; adjust if you prefer a different destination.
-    router.push("/activity?tab=jobs");
+    router.push("/account?tab=activity&activityTab=jobs");
 
     setStatus("idle");
   }

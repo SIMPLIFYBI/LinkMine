@@ -15,6 +15,7 @@ const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "")
 
 const TABS = [
   { key: "account", label: "Account" },
+  { key: "activity", label: "My Activity", href: "/account?tab=activity" },
   { key: "notifications", label: "Notifications" },
   { key: "consultants", label: "My Consultancy" },
   { key: "creators", label: "My Creators" },
