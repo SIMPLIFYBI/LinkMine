@@ -249,17 +249,17 @@ function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef =
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_26%),radial-gradient(circle_at_82%_14%,rgba(56,189,248,0.16),transparent_20%)]" />
       <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:34px_34px]" />
 
-      <div className={`relative flex flex-col ${compact ? "p-5" : "p-6 sm:p-8"}`}>
-        <div className="flex items-start justify-between gap-4">
+      <div className={`relative flex flex-col ${compact ? "p-5" : "p-6 pb-4 sm:p-8"}`}>
+        <div>
           <div>
             <p className="section-label">Candidate deck</p>
-            <h2 className={`${compact ? "mt-3 text-2xl" : "mt-4 text-3xl sm:text-[2.2rem]"} font-semibold tracking-tight text-white`}>{worker.displayName}</h2>
-            <p className={`${compact ? "mt-2 line-clamp-2 text-sm" : "mt-2 text-sm sm:text-base"} max-w-2xl leading-7 text-slate-200`}>{worker.headline}</p>
+            <h2 className={`${compact ? "mt-3 text-2xl" : "mt-4 text-3xl sm:text-[2.2rem]"} truncate font-semibold tracking-tight text-white`}>{worker.displayName}</h2>
+            <p className={`${compact ? "mt-2 line-clamp-2 text-sm" : "mt-2 text-sm sm:text-base"} leading-7 text-slate-200`}>{worker.headline}</p>
           </div>
           {!preview ? (
-            <div className="flex items-center gap-2">
+            <div className="absolute right-6 top-6 flex items-center gap-2 sm:right-8 sm:top-8">
               <WorkerFavouriteButton workerId={worker.id} />
-              <span className="rounded-full border border-white/12 bg-white/[0.06] px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100 transition group-hover:bg-white/[0.12]">
+              <span className="hidden rounded-full border border-white/12 bg-white/[0.06] px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-100 transition group-hover:bg-white/[0.12] sm:inline-flex">
                 Open
               </span>
             </div>
@@ -272,27 +272,7 @@ function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef =
           {worker.workingRights ? <Badge>{worker.workingRights}</Badge> : null}
         </div>
 
-        <div className="mt-6 flex-1">
-          <section className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-5">
-            <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">Brief CV overview</div>
-            <p className={`${compact ? "line-clamp-4" : ""} mt-4 text-sm leading-7 text-slate-200`}>{worker.bioPreview}</p>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {worker.roles.slice(0, 4).map((role) => (
-                <div key={`${worker.id}-${role.slug || role.name}`} className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-200">
-                  {role.name}
-                </div>
-              ))}
-              {!worker.roles.length ? (
-                <div className="rounded-2xl border border-dashed border-white/10 px-4 py-3 text-sm text-slate-400 sm:col-span-2">
-                  No roles linked yet.
-                </div>
-              ) : null}
-            </div>
-          </section>
-        </div>
-
-        <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4 text-xs uppercase tracking-[0.18em] text-slate-400">
+        <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-3 text-xs uppercase tracking-[0.18em] text-slate-400 sm:mt-5 sm:pt-4">
           <span>Swipe or scroll</span>
           <span>Tap to open</span>
         </div>
