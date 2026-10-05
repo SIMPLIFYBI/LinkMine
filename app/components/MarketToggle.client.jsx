@@ -22,7 +22,7 @@ function writeMarketCookie(value) {
   document.cookie = `${SITE_MARKET_COOKIE}=${encodeURIComponent(value)}; Max-Age=${COOKIE_MAX_AGE}; Path=/; SameSite=Lax${secure ? "; Secure" : ""}`;
 }
 
-export default function MarketToggle({ market = "mining" }) {
+export default function MarketToggle({ market = "mining", onMarketChange = null }) {
   const currentMarket = normaliseSiteMarket(market);
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -61,6 +61,11 @@ export default function MarketToggle({ market = "mining" }) {
     if (marketValue === visualMarket) return;
 
     setVisualMarket(marketValue);
+
+    if (typeof onMarketChange === "function") {
+      onMarketChange(marketValue);
+      return;
+    }
 
     writeMarketCookie(marketValue);
 
