@@ -2,6 +2,8 @@ import TalentHubDeck from "./TalentHubDeck.client";
 import { notFound } from "next/navigation";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
+import { getResolvedSiteMarket } from "@/lib/siteMarketServer";
+import { getTalentAliasParts } from "@/lib/talentAliases";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -59,6 +61,7 @@ function normaliseAchievements(value) {
 
 export default async function TalentHubPage() {
   const authClient = await supabaseServerClient();
+  const { market } = await getResolvedSiteMarket();
   const { data: auth } = await authClient.auth.getUser();
   const user = auth?.user || null;
 
@@ -84,20 +87,20 @@ export default async function TalentHubPage() {
 
   const sb = supabasePublicServer();
 
-  const [currentWorkerResult, currentWorkerAvailabilityResult, currentWorkerRolesResult, currentWorkerExperiencesResult, roleCategoriesResult, workingRightsOptionsResult] = await Promise.all([
-    sb
-      .from("workers")
-      .select("id, display_name, public_profile_name, headline, bio, location, visibility, status, working_rights_slug")
-      .eq("id", user.id)
+  const [currentTalentProfileResult, currentWorkerAvailabilityResult, currentWorkerServicesResult, currentWorkerExperiencesResult, serviceCategoriesResult, servicesResult, workingRightsOptionsResult] = await Promise.all([
+    authClient
+      .from("talent_hub_profiles")
+      .select("worker_id, talent_alias, headline, bio, location, visibility, status, working_rights_slug")
+      .eq("worker_id", user.id)
       .maybeSingle(),
     sb
       .from("worker_availability")
       .select("worker_id, available_now, available_from")
       .eq("worker_id", user.id)
       .maybeSingle(),
-    sb
-      .from("worker_roles")
-      .select("role_category_id")
+    authClient
+      .from("worker_service_interests")
+      .select("service_id")
       .eq("worker_id", user.id),
     sb
       .from("worker_experiences")
@@ -106,9 +109,15 @@ export default async function TalentHubPage() {
       .order("position", { ascending: true })
       .order("start_date", { ascending: false }),
     sb
-      .from("role_categories")
-      .select("id, name, slug, description, group_name, group_position, position")
-      .order("group_position", { ascending: true })
+      .from("service_categories")
+      .select("id, name, slug, description, position, market")
+      .in("market", ["mining", "oil_gas"])
+      .order("position", { ascending: true })
+      .order("name", { ascending: true }),
+    sb
+      .from("services")
+      .select("id, name, slug, description, category_id, position, market")
+      .in("market", ["mining", "oil_gas"])
       .order("position", { ascending: true })
       .order("name", { ascending: true }),
     sb
@@ -118,15 +127,14 @@ export default async function TalentHubPage() {
       .order("name", { ascending: true }),
   ]);
 
-  const { data: workersRaw = [] } = await sb
-    .from("workers")
-    .select("id, display_name, public_profile_name, headline, bio, location, working_rights_slug, created_at")
-    .eq("visibility", "public")
-    .eq("status", "approved")
+  const { data: workersRawResult } = await sb
+    .from("talent_hub_public_profiles")
+    .select("worker_id, talent_alias, headline, bio, location, working_rights_slug, created_at")
     .order("created_at", { ascending: false })
     .limit(24);
+  const workersRaw = workersRawResult || [];
 
-  const workerIds = workersRaw.map((worker) => worker.id).filter(Boolean);
+  const workerIds = workersRaw.map((worker) => worker.worker_id).filter(Boolean);
   const workingRightsSlugs = Array.from(
     new Set(workersRaw.map((worker) => worker.working_rights_slug).filter(Boolean))
   );
@@ -134,8 +142,8 @@ export default async function TalentHubPage() {
   const [rolesResult, availabilityResult, experiencesResult, workingRightsResult] = await Promise.all([
     workerIds.length
       ? sb
-          .from("worker_roles")
-          .select("worker_id, role_categories(name, slug)")
+          .from("talent_hub_public_profile_services")
+          .select("worker_id, service_name, service_slug")
           .in("worker_id", workerIds)
       : Promise.resolve({ data: [] }),
     workerIds.length
@@ -164,10 +172,10 @@ export default async function TalentHubPage() {
   const rolesByWorker = new Map();
   for (const row of rolesResult.data || []) {
     const current = rolesByWorker.get(row.worker_id) || [];
-    if (row.role_categories?.name) {
+    if (row.service_name) {
       current.push({
-        name: row.role_categories.name,
-        slug: row.role_categories.slug,
+        name: row.service_name,
+        slug: row.service_slug,
       });
     }
     rolesByWorker.set(row.worker_id, current);
@@ -196,20 +204,22 @@ export default async function TalentHubPage() {
     (workingRightsResult.data || []).map((row) => [row.slug, row.name])
   );
 
-  const currentWorker = currentWorkerResult.data || null;
+  const currentTalentProfile = currentTalentProfileResult.data || null;
+  const currentAliasParts = getTalentAliasParts(currentTalentProfile?.talent_alias);
   const currentProfile = {
-    id: currentWorker?.id || null,
-    displayName: currentWorker?.display_name || "",
-    publicProfileName: currentWorker?.public_profile_name || "",
-    headline: currentWorker?.headline || "",
-    bio: currentWorker?.bio || "",
-    location: currentWorker?.location || "",
-    visibility: currentWorker?.visibility || "public",
-    status: currentWorker?.status || "draft",
-    workingRightsSlug: currentWorker?.working_rights_slug || "",
+    id: currentTalentProfile?.worker_id || null,
+    talentAlias: currentTalentProfile?.talent_alias || "",
+    aliasDescriptor: currentTalentProfile?.alias_descriptor || currentAliasParts?.descriptor || "",
+    aliasAnimal: currentTalentProfile?.alias_animal || currentAliasParts?.animal || "",
+    headline: currentTalentProfile?.headline || "",
+    bio: currentTalentProfile?.bio || "",
+    location: currentTalentProfile?.location || "",
+    visibility: currentTalentProfile?.visibility || "public",
+    status: currentTalentProfile?.status || "draft",
+    workingRightsSlug: currentTalentProfile?.working_rights_slug || "",
     availableNow: Boolean(currentWorkerAvailabilityResult.data?.available_now),
     availableFrom: currentWorkerAvailabilityResult.data?.available_from || "",
-    roleCategoryIds: (currentWorkerRolesResult.data || []).map((row) => row.role_category_id).filter(Boolean),
+    roleCategoryIds: (currentWorkerServicesResult.data || []).map((row) => row.service_id).filter(Boolean),
     experiences: (currentWorkerExperiencesResult.data || []).map((experience) => ({
       id: experience.id,
       roleTitle: experience.role_title || "",
@@ -241,13 +251,21 @@ export default async function TalentHubPage() {
     ];
   }
 
-  const roleOptions = (roleCategoriesResult.data || []).map((role) => ({
-    id: role.id,
-    name: role.name,
-    slug: role.slug,
-    description: role.description || "",
-    groupName: role.group_name || "Other roles",
-  }));
+  const serviceCategoriesById = new Map(
+    (serviceCategoriesResult.data || []).map((category) => [category.id, category])
+  );
+  const roleOptions = (servicesResult.data || []).flatMap((service) => {
+    const category = serviceCategoriesById.get(service.category_id);
+    if (!category) return [];
+    return [{
+      id: service.id,
+      name: service.name,
+      slug: service.slug,
+      description: service.description || "",
+      groupName: category.name,
+      market: category.market,
+    }];
+  });
 
   const workingRightsOptions = (workingRightsOptionsResult.data || []).map((option) => ({
     slug: option.slug,
@@ -256,12 +274,14 @@ export default async function TalentHubPage() {
   }));
 
   const workers = workersRaw.map((worker) => {
-    const displayName = worker.public_profile_name || worker.display_name || "Unnamed worker";
     const bio = (worker.bio || "").trim();
+    const aliasParts = getTalentAliasParts(worker.talent_alias);
 
     return {
-      id: worker.id,
-      displayName,
+      id: worker.worker_id,
+      displayName: worker.talent_alias,
+      aliasDescriptor: worker.alias_descriptor || aliasParts?.descriptor || "",
+      aliasAnimal: worker.alias_animal || aliasParts?.animal || "",
       headline: worker.headline || "Mining professional ready for the next opportunity.",
       bioPreview: bio ? bio.slice(0, 240) : "No bio added yet.",
       location: worker.location || "Location not specified",
@@ -282,6 +302,8 @@ export default async function TalentHubPage() {
           currentProfile={currentProfile}
           roleOptions={roleOptions}
           workingRightsOptions={workingRightsOptions}
+          market={market}
+          isAdmin={isAdmin}
         />
       </section>
     </main>

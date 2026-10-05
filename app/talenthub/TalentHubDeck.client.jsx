@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Eye, UserRoundPlus } from "lucide-react";
+import { Eye, Pencil, UserRoundPlus } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 import WorkerFavouriteButton from "./WorkerFavouriteButton.client";
 import MyProfileForm from "./MyProfileForm.client";
+import TalentAvatar from "./TalentAvatar.client";
 
 const tabs = [
   { key: "candidates", label: "Candidates" },
@@ -47,7 +48,7 @@ function formatAvailabilityPreview(profile) {
 }
 
 function createWorkerPreview(profile, roleOptions, workingRightsOptions) {
-  const displayName = profile?.publicProfileName || profile?.displayName || "Unnamed worker";
+  const displayName = profile?.talentAlias || "Unnamed talent";
   const bio = String(profile?.bio || "").trim();
   const selectedRoleIds = new Set(profile?.roleCategoryIds || []);
   const roles = (roleOptions || [])
@@ -70,6 +71,8 @@ function createWorkerPreview(profile, roleOptions, workingRightsOptions) {
   return {
     id: profile?.id,
     displayName,
+    aliasDescriptor: profile?.aliasDescriptor || "",
+    aliasAnimal: profile?.aliasAnimal || "",
     headline: profile?.headline || "Mining professional ready for the next opportunity.",
     bioPreview: bio ? bio.slice(0, 240) : "No bio added yet.",
     location: profile?.location || "Location not specified",
@@ -130,7 +133,7 @@ function Badge({ children, tone = "neutral" }) {
   );
 }
 
-function WorkerDetailModal({ worker, onClose }) {
+function WorkerDetailModal({ worker, onClose, isAdmin = false, onEdit, isEditing = false }) {
   if (!worker) return null;
 
   useEffect(() => {
@@ -163,10 +166,24 @@ function WorkerDetailModal({ worker, onClose }) {
           Close
         </button>
 
-        <div className="pr-20">
-          <p className="section-label">Profile summary</p>
-          <h2 className="mt-4 text-3xl font-semibold text-white">{worker.displayName}</h2>
-          <p className="mt-2 text-lg text-slate-200">{worker.headline}</p>
+        <div className="flex gap-4 pr-20">
+          <TalentAvatar animal={worker.aliasAnimal} descriptor={worker.aliasDescriptor} alias={worker.displayName} size="lg" />
+          <div>
+            <p className="section-label">Profile summary</p>
+            <h2 className="mt-4 text-3xl font-semibold text-white">{worker.displayName}</h2>
+            <p className="mt-2 text-lg text-slate-200">{worker.headline}</p>
+            {isAdmin ? (
+              <button
+                type="button"
+                onClick={() => onEdit?.(worker.id)}
+                disabled={isEditing}
+                className="mt-4 inline-flex items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-100 transition hover:bg-cyan-400/16 disabled:cursor-wait disabled:opacity-60"
+              >
+                <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                {isEditing ? "Loading editor" : "Edit profile"}
+              </button>
+            ) : null}
+          </div>
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2">
@@ -251,10 +268,13 @@ function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef =
 
       <div className={`relative flex flex-col ${compact ? "p-5" : "p-6 pb-4 sm:p-8"}`}>
         <div>
-          <div>
-            <p className="section-label">Candidate deck</p>
-            <h2 className={`${compact ? "mt-3 text-2xl" : "mt-4 text-3xl sm:text-[2.2rem]"} truncate font-semibold tracking-tight text-white`}>{worker.displayName}</h2>
-            <p className={`${compact ? "mt-2 line-clamp-2 text-sm" : "mt-2 text-sm sm:text-base"} leading-7 text-slate-200`}>{worker.headline}</p>
+          <div className="flex items-start gap-3 pr-16 sm:pr-20">
+            <TalentAvatar animal={worker.aliasAnimal} descriptor={worker.aliasDescriptor} alias={worker.displayName} size={compact ? "sm" : "md"} />
+            <div className="min-w-0">
+              <p className="section-label">Candidate deck</p>
+              <h2 className={`${compact ? "mt-3 text-2xl" : "mt-4 text-3xl sm:text-[2.2rem]"} truncate font-semibold tracking-tight text-white`}>{worker.displayName}</h2>
+              <p className={`${compact ? "mt-2 line-clamp-2 text-sm" : "mt-2 text-sm sm:text-base"} leading-7 text-slate-200`}>{worker.headline}</p>
+            </div>
           </div>
           {!preview ? (
             <div className="absolute right-6 top-6 flex items-center gap-2 sm:right-8 sm:top-8">
@@ -314,7 +334,7 @@ function MyCardPreviewModal({ worker, onClose }) {
   );
 }
 
-export default function TalentHubDeck({ workers, currentProfile, roleOptions, workingRightsOptions }) {
+export default function TalentHubDeck({ workers, currentProfile, roleOptions, workingRightsOptions, market, isAdmin = false }) {
   const sb = supabaseBrowser();
   const [activeTab, setActiveTab] = useState("candidates");
   const [selectedWorkerId, setSelectedWorkerId] = useState(null);
@@ -325,6 +345,8 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
   const [favouritesLoaded, setFavouritesLoaded] = useState(false);
   const [pendingFocusWorkerId, setPendingFocusWorkerId] = useState(null);
   const [isMyCardPreviewOpen, setIsMyCardPreviewOpen] = useState(false);
+  const [adminEditingProfile, setAdminEditingProfile] = useState(null);
+  const [isLoadingAdminProfile, setIsLoadingAdminProfile] = useState(false);
   const trackRef = useRef(null);
   const itemRefs = useRef([]);
   const displayedWorkers = activeTab === "favourites"
@@ -488,6 +510,33 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
     setActiveTab("candidates");
   }
 
+  async function handleAdminProfileEdit(workerId) {
+    if (!workerId || isLoadingAdminProfile) return;
+
+    setIsLoadingAdminProfile(true);
+    try {
+      const response = await fetch(`/api/workers/me/profile?workerId=${encodeURIComponent(workerId)}`);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data?.profile) {
+        throw new Error(data?.error || "Unable to load this profile.");
+      }
+
+      setAdminEditingProfile(data.profile);
+      setSelectedWorkerId(null);
+      setActiveTab("my-profile");
+    } finally {
+      setIsLoadingAdminProfile(false);
+    }
+  }
+
+  function handleAdminProfileSaved(savedProfile) {
+    setAdminEditingProfile(savedProfile);
+    const savedWorker = createWorkerPreview(savedProfile, roleOptions, workingRightsOptions);
+    setWorkersState((current) => current.map((worker) => (
+      worker.id === savedWorker.id ? savedWorker : worker
+    )));
+  }
+
   const emptyCandidates = !workersState.length;
   const emptyFavourites = favouritesLoaded && favouriteIds.length === 0;
   const showAddProfile = !currentProfileState?.id;
@@ -497,8 +546,8 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
     return (
       <>
         <div>
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} />
+          <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} />
+          <div className="mt-4 flex justify-end">
             <button
               type="button"
               onClick={() => setIsMyCardPreviewOpen(true)}
@@ -510,14 +559,17 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
           </div>
 
           <MyProfileForm
-            initialProfile={currentProfileState}
+            initialProfile={adminEditingProfile || currentProfileState}
             roleOptions={roleOptions}
             workingRightsOptions={workingRightsOptions}
-            onSave={handleProfileSaved}
+            market={market}
+            profileEndpoint={adminEditingProfile ? `/api/workers/me/profile?workerId=${encodeURIComponent(adminEditingProfile.id)}` : undefined}
+            title={adminEditingProfile ? "Edit candidate profile" : "My Profile"}
+            onSave={adminEditingProfile ? handleAdminProfileSaved : handleProfileSaved}
           />
         </div>
 
-        <WorkerDetailModal worker={selectedWorker} onClose={() => setSelectedWorkerId(null)} />
+        <WorkerDetailModal worker={selectedWorker} onClose={() => setSelectedWorkerId(null)} isAdmin={isAdmin} onEdit={handleAdminProfileEdit} isEditing={isLoadingAdminProfile} />
         {isMyCardPreviewOpen ? <MyCardPreviewModal worker={myCardPreview} onClose={() => setIsMyCardPreviewOpen(false)} /> : null}
       </>
     );
@@ -541,7 +593,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
           </div>
         </div>
 
-        <WorkerDetailModal worker={selectedWorker} onClose={() => setSelectedWorkerId(null)} />
+        <WorkerDetailModal worker={selectedWorker} onClose={() => setSelectedWorkerId(null)} isAdmin={isAdmin} onEdit={handleAdminProfileEdit} isEditing={isLoadingAdminProfile} />
       </>
     );
   }
@@ -551,7 +603,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
       <div>
         <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} showAddProfile={showAddProfile} />
 
-        <section className="relative overflow-hidden rounded-[2.25rem] border border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.54),rgba(2,6,23,0.12))] px-4 py-6 shadow-[0_36px_110px_-54px_rgba(8,145,178,0.95)] sm:px-6 sm:py-8">
+        <section className="relative mt-6 overflow-hidden rounded-[2.25rem] border border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.54),rgba(2,6,23,0.12))] px-4 py-6 shadow-[0_36px_110px_-54px_rgba(8,145,178,0.95)] sm:px-6 sm:py-8">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.12),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(56,189,248,0.1),transparent_18%)]" />
           <button
             type="button"
@@ -629,7 +681,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
         </section>
       </div>
 
-      <WorkerDetailModal worker={selectedWorker} onClose={() => setSelectedWorkerId(null)} />
+      <WorkerDetailModal worker={selectedWorker} onClose={() => setSelectedWorkerId(null)} isAdmin={isAdmin} onEdit={handleAdminProfileEdit} isEditing={isLoadingAdminProfile} />
     </>
   );
 }

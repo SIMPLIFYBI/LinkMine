@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
+import { generateTalentAlias, getTalentAliasParts, isTalentAlias } from "@/lib/talentAliases";
 
 const VISIBILITY_VALUES = new Set(["public", "private"]);
 const STATUS_VALUES = new Set(["draft", "pending", "approved", "rejected"]);
@@ -69,19 +70,98 @@ function normaliseExperience(experience, index) {
   };
 }
 
-export async function PUT(req) {
+async function canManageWorker(sb, user, workerId) {
+  if (workerId === user.id) return true;
+
+  const [{ data: adminRow }, email] = await Promise.all([
+    sb.from("app_admins").select("user_id").eq("user_id", user.id).maybeSingle(),
+    Promise.resolve(user.email?.toLowerCase() || ""),
+  ]);
+  const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+
+  return Boolean(adminRow) || (email && adminEmails.includes(email));
+}
+
+async function getProfileAccess(req, payload = {}) {
   const sb = await supabaseFromCookies();
   const {
     data: { user },
   } = await sb.auth.getUser();
 
-  if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
+  if (!user) return { error: NextResponse.json({ error: "Not authenticated" }, { status: 401 }) };
 
+  const workerId = new URL(req.url).searchParams.get("workerId") || payload.workerId || user.id;
+  const canManage = await canManageWorker(sb, user, workerId);
+  if (!canManage) return { error: NextResponse.json({ error: "Not authorized" }, { status: 403 }) };
+
+  return { sb, workerId, isOwnProfile: workerId === user.id };
+}
+
+function toClientExperience(experience) {
+  return {
+    id: experience.id,
+    roleTitle: experience.role_title || "",
+    company: experience.company || "",
+    description: experience.description || "",
+    location: experience.location || "",
+    startDate: experience.start_date || "",
+    endDate: experience.end_date || "",
+    isCurrent: Boolean(experience.is_current),
+    achievementsText: Array.isArray(experience.achievements)
+      ? experience.achievements.join("\n")
+      : typeof experience.achievements === "string"
+        ? experience.achievements
+        : "",
+    position: experience.position ?? 0,
+  };
+}
+
+export async function GET(req) {
+  const access = await getProfileAccess(req);
+  if (access.error) return access.error;
+
+  const [profileResult, availabilityResult, servicesResult, experiencesResult] = await Promise.all([
+    access.sb.from("talent_hub_profiles").select("worker_id, talent_alias, headline, bio, location, visibility, status, working_rights_slug").eq("worker_id", access.workerId).maybeSingle(),
+    access.sb.from("worker_availability").select("available_now, available_from").eq("worker_id", access.workerId).maybeSingle(),
+    access.sb.from("worker_service_interests").select("service_id").eq("worker_id", access.workerId),
+    access.sb.from("worker_experiences").select("id, role_title, company, description, location, start_date, end_date, is_current, achievements, position").eq("worker_id", access.workerId).order("position", { ascending: true }),
+  ]);
+  const error = profileResult.error || availabilityResult.error || servicesResult.error || experiencesResult.error;
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+
+  const profile = profileResult.data || {};
+  const aliasParts = getTalentAliasParts(profile.talent_alias);
+  return NextResponse.json({
+    profile: {
+      id: access.workerId,
+      talentAlias: profile.talent_alias || "",
+      aliasDescriptor: aliasParts?.descriptor || "",
+      aliasAnimal: aliasParts?.animal || "",
+      headline: profile.headline || "",
+      bio: profile.bio || "",
+      location: profile.location || "",
+      visibility: profile.visibility || "public",
+      status: profile.status || "draft",
+      workingRightsSlug: profile.working_rights_slug || "",
+      availableNow: Boolean(availabilityResult.data?.available_now),
+      availableFrom: availabilityResult.data?.available_from || "",
+      roleCategoryIds: (servicesResult.data || []).map((row) => row.service_id).filter(Boolean),
+      experiences: (experiencesResult.data || []).map(toClientExperience),
+    },
+  });
+}
+
+export async function PUT(req) {
   const payload = await req.json().catch(() => ({}));
-  const displayName = cleanText(payload.displayName);
-  const publicProfileName = cleanText(payload.publicProfileName);
+  const access = await getProfileAccess(req, payload);
+  if (access.error) return access.error;
+  const { sb, workerId, isOwnProfile } = access;
+  const requestedAlias = cleanText(payload.talentAlias);
+  const talentAlias = isTalentAlias(requestedAlias) ? requestedAlias : generateTalentAlias();
+  const aliasParts = getTalentAliasParts(talentAlias);
   const headline = cleanText(payload.headline);
   const bio = cleanText(payload.bio);
   const location = cleanText(payload.location);
@@ -111,10 +191,19 @@ export async function PUT(req) {
     experiences.push(normalized);
   }
 
-  const workerRow = {
-    id: user.id,
-    display_name: displayName || publicProfileName || user.email || "Unnamed worker",
-    public_profile_name: publicProfileName || null,
+  if (isOwnProfile) {
+    const { error: workerError } = await sb.from("workers").upsert({
+      id: workerId,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "id" });
+    if (workerError) {
+      return NextResponse.json({ error: workerError.message }, { status: 400 });
+    }
+  }
+
+  const talentProfileRow = {
+    worker_id: workerId,
+    talent_alias: talentAlias,
     headline: headline || null,
     bio: bio || null,
     location: location || null,
@@ -124,13 +213,18 @@ export async function PUT(req) {
     updated_at: new Date().toISOString(),
   };
 
-  const { error: workerError } = await sb.from("workers").upsert(workerRow, { onConflict: "id" });
-  if (workerError) {
-    return NextResponse.json({ error: workerError.message }, { status: 400 });
+  const { error: talentProfileError } = await sb
+    .from("talent_hub_profiles")
+    .upsert(talentProfileRow, { onConflict: "worker_id" });
+  if (talentProfileError) {
+    const error = talentProfileError.code === "23505"
+      ? "That Talent Alias was just claimed. Regenerate one and save again."
+      : talentProfileError.message;
+    return NextResponse.json({ error }, { status: 400 });
   }
 
   const { error: availabilityError } = await sb.from("worker_availability").upsert({
-    worker_id: user.id,
+    worker_id: workerId,
     available_now: availableNow,
     available_from: availableFrom,
     updated_at: new Date().toISOString(),
@@ -140,25 +234,28 @@ export async function PUT(req) {
     return NextResponse.json({ error: availabilityError.message }, { status: 400 });
   }
 
-  const { error: deleteRolesError } = await sb.from("worker_roles").delete().eq("worker_id", user.id);
-  if (deleteRolesError) {
-    return NextResponse.json({ error: deleteRolesError.message }, { status: 400 });
+  const { error: deleteServicesError } = await sb
+    .from("worker_service_interests")
+    .delete()
+    .eq("worker_id", workerId);
+  if (deleteServicesError) {
+    return NextResponse.json({ error: deleteServicesError.message }, { status: 400 });
   }
 
   if (roleCategoryIds.length) {
-    const { error: insertRolesError } = await sb.from("worker_roles").insert(
-      roleCategoryIds.map((roleCategoryId) => ({
-        worker_id: user.id,
-        role_category_id: roleCategoryId,
+    const { error: insertServicesError } = await sb.from("worker_service_interests").insert(
+      roleCategoryIds.map((serviceId) => ({
+        worker_id: workerId,
+        service_id: serviceId,
       }))
     );
 
-    if (insertRolesError) {
-      return NextResponse.json({ error: insertRolesError.message }, { status: 400 });
+    if (insertServicesError) {
+      return NextResponse.json({ error: insertServicesError.message }, { status: 400 });
     }
   }
 
-  const { error: deleteExperiencesError } = await sb.from("worker_experiences").delete().eq("worker_id", user.id);
+  const { error: deleteExperiencesError } = await sb.from("worker_experiences").delete().eq("worker_id", workerId);
   if (deleteExperiencesError) {
     return NextResponse.json({ error: deleteExperiencesError.message }, { status: 400 });
   }
@@ -167,7 +264,7 @@ export async function PUT(req) {
   if (experiences.length) {
     const { data, error: insertExperiencesError } = await sb
       .from("worker_experiences")
-      .insert(experiences.map((experience) => ({ ...experience, worker_id: user.id })))
+      .insert(experiences.map((experience) => ({ ...experience, worker_id: workerId })))
       .select("id, role_title, company, description, location, start_date, end_date, is_current, achievements, position")
       .order("position", { ascending: true });
 
@@ -196,15 +293,16 @@ export async function PUT(req) {
   return NextResponse.json({
     ok: true,
     profile: {
-      id: user.id,
-      displayName: workerRow.display_name || "",
-      publicProfileName: workerRow.public_profile_name || "",
-      headline: workerRow.headline || "",
-      bio: workerRow.bio || "",
-      location: workerRow.location || "",
-      visibility: workerRow.visibility,
-      status: workerRow.status,
-      workingRightsSlug: workerRow.working_rights_slug || "",
+      id: workerId,
+      talentAlias: talentProfileRow.talent_alias,
+      aliasDescriptor: aliasParts.descriptor,
+      aliasAnimal: aliasParts.animal,
+      headline: talentProfileRow.headline || "",
+      bio: talentProfileRow.bio || "",
+      location: talentProfileRow.location || "",
+      visibility: talentProfileRow.visibility,
+      status: talentProfileRow.status,
+      workingRightsSlug: talentProfileRow.working_rights_slug || "",
       availableNow,
       availableFrom: availableFrom || "",
       roleCategoryIds,

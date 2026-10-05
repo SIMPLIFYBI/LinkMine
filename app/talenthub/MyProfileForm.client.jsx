@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { RefreshCw } from "lucide-react";
+import { generateTalentIdentity, getTalentAliasParts } from "@/lib/talentAliases";
+import MarketToggle from "@/app/components/MarketToggle.client";
+import TalentAvatar from "./TalentAvatar.client";
 
 function FieldShell({ label, hint, children }) {
   return (
@@ -54,18 +58,44 @@ function createEmptyExperience(position = 0) {
   };
 }
 
-export default function MyProfileForm({ initialProfile, roleOptions, workingRightsOptions, onSave }) {
-  const [profile, setProfile] = useState(initialProfile);
+function createProfileIdentity(initialProfile, currentProfile = {}) {
+  const alias = initialProfile.talentAlias || currentProfile.talentAlias;
+  const generatedIdentity = alias ? null : generateTalentIdentity();
+  const aliasParts = alias ? getTalentAliasParts(alias) : generatedIdentity;
+
+  return {
+    ...initialProfile,
+    talentAlias: alias || generatedIdentity.alias,
+    aliasDescriptor: initialProfile.aliasDescriptor || aliasParts.descriptor,
+    aliasAnimal: initialProfile.aliasAnimal || aliasParts.animal,
+  };
+}
+
+export default function MyProfileForm({ initialProfile, roleOptions, workingRightsOptions, market, onSave, profileEndpoint = "/api/workers/me/profile", title = "My Profile" }) {
+  const [profile, setProfile] = useState(() => createProfileIdentity(initialProfile));
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState(null);
+  const [specialisationMarket, setSpecialisationMarket] = useState(market);
 
   useEffect(() => {
-    setProfile(initialProfile);
+    setProfile((current) => createProfileIdentity(initialProfile, current));
   }, [initialProfile]);
+
+  useEffect(() => {
+    setSpecialisationMarket(market);
+  }, [market]);
 
   function updateField(field, value) {
     setProfile((current) => ({ ...current, [field]: value }));
   }
+
+  function regenerateTalentAlias() {
+    setProfile((current) => ({ ...current, ...generateTalentIdentity([current.talentAlias]) }));
+  }
+
+  const visibleRoleOptions = (roleOptions || []).filter(
+    (option) => specialisationMarket === "both" || option.market === specialisationMarket
+  );
 
   function toggleRole(roleId) {
     setProfile((current) => {
@@ -104,7 +134,7 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
     setStatus(null);
 
     try {
-      const res = await fetch("/api/workers/me/profile", {
+      const res = await fetch(profileEndpoint, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profile),
@@ -128,18 +158,18 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
   }
 
   return (
-    <section className="mt-6 rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.54),rgba(2,6,23,0.18))] px-4 py-6 pb-[calc(env(safe-area-inset-bottom)+9rem)] shadow-[0_36px_110px_-54px_rgba(8,145,178,0.95)] sm:px-6 sm:py-8 sm:pb-32">
+    <section className="mt-6 touch-pan-y overscroll-y-contain rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.54),rgba(2,6,23,0.18))] px-4 py-6 pb-[calc(env(safe-area-inset-bottom)+9rem)] shadow-[0_36px_110px_-54px_rgba(8,145,178,0.95)] sm:px-6 sm:py-8 sm:pb-32">
       <div className="flex flex-col gap-4 border-b border-white/10 pb-6 md:flex-row md:items-end md:justify-between">
         <div>
-          <div className="section-label">Worker profile</div>
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">My Profile</h2>
+          <div className="section-label">Talent identity</div>
+          <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">{title}</h2>
           <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-300">
-            Build out the full candidate card that Talent Hub uses for discovery. This form covers the worker table plus availability, roles, and experience entries.
+            Shape the profile employers see in Talent Hub. Your Talent Alias is your public identity until a future match is mutually approved.
           </p>
         </div>
 
         <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-xs leading-6 text-amber-100">
-          Form UI is ready. Save wiring to Supabase is the next step.
+          Your real name is not shown in Talent Hub.
         </div>
       </div>
 
@@ -148,12 +178,22 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
           <section className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5">
             <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">Core profile</div>
             <div className="mt-5 grid gap-5 md:grid-cols-2">
-              <FieldShell label="Display name" hint="Internal name tied to the worker record.">
-                <input className={inputClasses()} value={profile.displayName} onChange={(event) => updateField("displayName", event.target.value)} placeholder="Jane Smith" />
-              </FieldShell>
-              <FieldShell label="Public profile name" hint="Name shown on the candidate card.">
-                <input className={inputClasses()} value={profile.publicProfileName} onChange={(event) => updateField("publicProfileName", event.target.value)} placeholder="J. Smith" />
-              </FieldShell>
+              <div className="md:col-span-2">
+                <FieldShell label="Talent Alias" hint="This is the name Talent Hub uses for your candidate profile.">
+                  <div className="flex items-center justify-between gap-3 rounded-2xl border border-cyan-300/25 bg-cyan-400/[0.08] px-4 py-3">
+                    <TalentAvatar animal={profile.aliasAnimal} descriptor={profile.aliasDescriptor} alias={profile.talentAlias} size="lg" />
+                    <span className="min-w-0 flex-1 truncate text-lg font-semibold text-cyan-50">{profile.talentAlias}</span>
+                    <button
+                      type="button"
+                      onClick={regenerateTalentAlias}
+                      className="inline-flex shrink-0 items-center gap-2 rounded-full border border-cyan-300/30 px-3 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-400/10"
+                    >
+                      <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                      Regenerate
+                    </button>
+                  </div>
+                </FieldShell>
+              </div>
               <FieldShell label="Headline" hint="Short one-line summary for the deck.">
                 <input className={inputClasses()} value={profile.headline} onChange={(event) => updateField("headline", event.target.value)} placeholder="Senior mine planner open to contract work" />
               </FieldShell>
@@ -302,9 +342,15 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
           </section>
 
           <section className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5">
-            <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">Roles</div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">Specialisations</div>
+                <p className="mt-2 text-sm leading-6 text-slate-400">Choose the same categories and services used across YouMine consultant profiles.</p>
+              </div>
+              <MarketToggle market={specialisationMarket} onMarketChange={setSpecialisationMarket} />
+            </div>
             <div className="mt-5 space-y-5">
-              {groupedRoleOptions(roleOptions).map(([groupName, options]) => (
+              {groupedRoleOptions(visibleRoleOptions).map(([groupName, options]) => (
                 <details
                   key={groupName}
                   open={options.some((option) => profile.roleCategoryIds.includes(option.id))}
@@ -347,8 +393,8 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
           <section className="rounded-[1.75rem] border border-emerald-400/20 bg-emerald-500/[0.08] p-5">
             <div className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-100">Profile completion notes</div>
             <ul className="mt-4 space-y-2 text-sm leading-6 text-emerald-50/90">
-              <li>Public profile name, headline, location, and bio drive the deck presentation.</li>
-              <li>Role selections feed the skill tags shown on worker cards.</li>
+              <li>Your Talent Alias, headline, location, and bio drive the deck presentation.</li>
+              <li>Specialisation selections use the shared YouMine consultant taxonomy.</li>
               <li>Availability and working rights help shortlist candidates faster.</li>
               <li>Experience entries should be ordered with the most relevant roles first.</li>
             </ul>
@@ -359,7 +405,7 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
       <div className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] z-40 flex justify-center px-4 sm:bottom-5">
         <div className="pointer-events-auto flex w-full max-w-xl items-center justify-between gap-3 rounded-[1.5rem] border border-cyan-300/20 bg-slate-950/92 px-4 py-3 shadow-[0_24px_80px_-30px_rgba(8,145,178,0.9)] backdrop-blur-xl">
           <div className="min-w-0">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/85">My Profile</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/85">{title}</div>
             <div className="truncate text-sm text-slate-300">
               {status?.msg || "Save changes to publish this profile back into the candidate deck."}
             </div>
