@@ -16,7 +16,7 @@ export default function TalentAvatar({ animal, descriptor, alias, background, si
 
   useEffect(() => {
     setHasAsset(Boolean(animalConfig));
-  }, [animalConfig?.id]);
+  }, [animal]);
 
   const descriptorClass = descriptor ? `talent-avatar-${String(descriptor).toLowerCase()}` : "";
   const backgroundColor = getTalentAvatarBackground(background, alias);
@@ -28,6 +28,7 @@ export default function TalentAvatar({ animal, descriptor, alias, background, si
     >
       {hasAsset && animalConfig ? (
         <img
+          key={animalConfig.id}
           src={animalConfig.assetPath}
           alt={alias ? `${alias} avatar` : `${animalConfig.label} avatar`}
           className="h-full w-full object-contain p-1.5"

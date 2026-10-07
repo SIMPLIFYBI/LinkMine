@@ -92,7 +92,7 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
 
   useEffect(() => {
     setProfile((current) => createProfileIdentity(initialProfile, current));
-  }, [initialProfile]);
+  }, [initialProfile.id]);
 
   useEffect(() => {
     setSpecialisationMarket(market);
@@ -181,8 +181,15 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
   }
 
   function regenerateTalentAlias() {
-    const nextProfile = { ...profile, ...getNextTalentIdentity(profile.talentAlias) };
-    setProfile(nextProfile);
+    setProfile((current) => {
+      const nextIdentity = getNextTalentIdentity(current.talentAlias);
+      return {
+        ...current,
+        talentAlias: nextIdentity.alias,
+        aliasDescriptor: nextIdentity.descriptor,
+        aliasAnimal: nextIdentity.animal,
+      };
+    });
     setAliasChangeVersion((current) => current + 1);
     setIsAliasPreviewAnimating(true);
     setStatus({ ok: true, msg: "New Talent Alias selected. Save to keep it." });
@@ -210,7 +217,11 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
             <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">Core profile</div>
             <div className="mt-5 grid gap-5 md:grid-cols-2">
               <div className="md:col-span-2">
-                <FieldShell label="Talent Alias" hint="This is the name Talent Hub uses for your candidate profile.">
+                <div className="space-y-2" role="group" aria-labelledby="talent-alias-label">
+                  <div>
+                    <div id="talent-alias-label" className="text-sm font-semibold text-white">Talent Alias</div>
+                    <div className="mt-1 text-xs text-slate-400">This is the name Talent Hub uses for your candidate profile.</div>
+                  </div>
                   <div className="flex items-center justify-between gap-3 rounded-2xl border border-cyan-300/25 bg-cyan-400/[0.08] px-4 py-3">
                     <div key={aliasChangeVersion} className={isAliasPreviewAnimating ? "animate-pulse" : ""} aria-live="polite">
                       <TalentAvatar animal={profile.aliasAnimal} descriptor={profile.aliasDescriptor} alias={profile.talentAlias} background={profile.avatarBackground} size="lg" />
@@ -245,7 +256,7 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
                       );
                     })}
                   </div>
-                </FieldShell>
+                </div>
               </div>
               <FieldShell label="Headline" hint="Short one-line summary for the deck.">
                 <input className={inputClasses()} value={profile.headline} onChange={(event) => updateField("headline", event.target.value)} placeholder="Senior mine planner open to contract work" />
