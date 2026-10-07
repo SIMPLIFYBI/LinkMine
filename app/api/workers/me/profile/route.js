@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { generateTalentAlias, getTalentAliasParts, isTalentAlias } from "@/lib/talentAliases";
+import { TALENT_AVATAR_BACKGROUND_IDS } from "@/lib/talentAvatarConfig";
+import { DEFAULT_TALENT_OPPORTUNITY_STATUS, TALENT_OPPORTUNITY_STATUS_VALUES } from "@/lib/talentOpportunityStatuses";
 
 const VISIBILITY_VALUES = new Set(["public", "private"]);
 const STATUS_VALUES = new Set(["draft", "pending", "approved", "rejected"]);
+const AVATAR_BACKGROUND_VALUES = new Set(TALENT_AVATAR_BACKGROUND_IDS);
 
 async function supabaseFromCookies() {
   const jar = await cookies();
@@ -70,9 +73,7 @@ function normaliseExperience(experience, index) {
   };
 }
 
-async function canManageWorker(sb, user, workerId) {
-  if (workerId === user.id) return true;
-
+async function isApplicationAdmin(sb, user) {
   const [{ data: adminRow }, email] = await Promise.all([
     sb.from("app_admins").select("user_id").eq("user_id", user.id).maybeSingle(),
     Promise.resolve(user.email?.toLowerCase() || ""),
@@ -82,7 +83,7 @@ async function canManageWorker(sb, user, workerId) {
     .map((value) => value.trim().toLowerCase())
     .filter(Boolean);
 
-  return Boolean(adminRow) || (email && adminEmails.includes(email));
+  return Boolean(adminRow) || Boolean(email && adminEmails.includes(email));
 }
 
 async function getProfileAccess(req, payload = {}) {
@@ -94,10 +95,11 @@ async function getProfileAccess(req, payload = {}) {
   if (!user) return { error: NextResponse.json({ error: "Not authenticated" }, { status: 401 }) };
 
   const workerId = new URL(req.url).searchParams.get("workerId") || payload.workerId || user.id;
-  const canManage = await canManageWorker(sb, user, workerId);
+  const isAdmin = await isApplicationAdmin(sb, user);
+  const canManage = workerId === user.id || isAdmin;
   if (!canManage) return { error: NextResponse.json({ error: "Not authorized" }, { status: 403 }) };
 
-  return { sb, workerId, isOwnProfile: workerId === user.id };
+  return { sb, workerId, isOwnProfile: workerId === user.id, isAdmin };
 }
 
 function toClientExperience(experience) {
@@ -124,13 +126,21 @@ export async function GET(req) {
   if (access.error) return access.error;
 
   const [profileResult, availabilityResult, servicesResult, experiencesResult] = await Promise.all([
-    access.sb.from("talent_hub_profiles").select("worker_id, talent_alias, headline, bio, location, visibility, status, working_rights_slug").eq("worker_id", access.workerId).maybeSingle(),
+    access.sb.from("talent_hub_profiles").select("worker_id, talent_alias, headline, bio, location, visibility, status, opportunity_status, avatar_background, working_rights_slug").eq("worker_id", access.workerId).maybeSingle(),
     access.sb.from("worker_availability").select("available_now, available_from").eq("worker_id", access.workerId).maybeSingle(),
     access.sb.from("worker_service_interests").select("service_id").eq("worker_id", access.workerId),
     access.sb.from("worker_experiences").select("id, role_title, company, description, location, start_date, end_date, is_current, achievements, position").eq("worker_id", access.workerId).order("position", { ascending: true }),
   ]);
-  const error = profileResult.error || availabilityResult.error || servicesResult.error || experiencesResult.error;
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  const failedResult = [
+    ["profile", profileResult],
+    ["availability", availabilityResult],
+    ["service interests", servicesResult],
+    ["experiences", experiencesResult],
+  ].find(([, result]) => result.error);
+  if (failedResult) {
+    const [resource, result] = failedResult;
+    return NextResponse.json({ error: `Unable to load ${resource}: ${result.error.message}` }, { status: 400 });
+  }
 
   const profile = profileResult.data || {};
   const aliasParts = getTalentAliasParts(profile.talent_alias);
@@ -145,6 +155,8 @@ export async function GET(req) {
       location: profile.location || "",
       visibility: profile.visibility || "public",
       status: profile.status || "draft",
+      opportunityStatus: profile.opportunity_status || DEFAULT_TALENT_OPPORTUNITY_STATUS,
+      avatarBackground: profile.avatar_background || "sage",
       workingRightsSlug: profile.working_rights_slug || "",
       availableNow: Boolean(availabilityResult.data?.available_now),
       availableFrom: availabilityResult.data?.available_from || "",
@@ -158,15 +170,17 @@ export async function PUT(req) {
   const payload = await req.json().catch(() => ({}));
   const access = await getProfileAccess(req, payload);
   if (access.error) return access.error;
-  const { sb, workerId, isOwnProfile } = access;
+  const { sb, workerId, isAdmin } = access;
   const requestedAlias = cleanText(payload.talentAlias);
-  const talentAlias = isTalentAlias(requestedAlias) ? requestedAlias : generateTalentAlias();
-  const aliasParts = getTalentAliasParts(talentAlias);
+  let talentAlias = isTalentAlias(requestedAlias) ? requestedAlias : generateTalentAlias();
+  let aliasParts = getTalentAliasParts(talentAlias);
   const headline = cleanText(payload.headline);
   const bio = cleanText(payload.bio);
   const location = cleanText(payload.location);
   const visibility = cleanText(payload.visibility) || "public";
-  const status = cleanText(payload.status) || "draft";
+  const requestedStatus = cleanText(payload.status);
+  const opportunityStatus = cleanText(payload.opportunityStatus) || DEFAULT_TALENT_OPPORTUNITY_STATUS;
+  const avatarBackground = cleanText(payload.avatarBackground) || "sage";
   const workingRightsSlug = cleanNullableText(payload.workingRightsSlug);
   const availableNow = Boolean(payload.availableNow);
   const availableFrom = availableNow ? null : cleanNullableText(payload.availableFrom);
@@ -177,8 +191,29 @@ export async function PUT(req) {
     return NextResponse.json({ error: "Invalid visibility." }, { status: 400 });
   }
 
-  if (!STATUS_VALUES.has(status)) {
+  if (requestedStatus && !STATUS_VALUES.has(requestedStatus)) {
     return NextResponse.json({ error: "Invalid status." }, { status: 400 });
+  }
+
+  const { data: existingTalentProfile, error: existingTalentProfileError } = await sb
+    .from("talent_hub_profiles")
+    .select("status")
+    .eq("worker_id", workerId)
+    .maybeSingle();
+  if (existingTalentProfileError) {
+    return NextResponse.json({ error: existingTalentProfileError.message }, { status: 400 });
+  }
+
+  const status = isAdmin
+    ? requestedStatus || existingTalentProfile?.status || "draft"
+    : existingTalentProfile?.status || "draft";
+
+  if (!TALENT_OPPORTUNITY_STATUS_VALUES.has(opportunityStatus)) {
+    return NextResponse.json({ error: "Invalid opportunity status." }, { status: 400 });
+  }
+
+  if (!AVATAR_BACKGROUND_VALUES.has(avatarBackground)) {
+    return NextResponse.json({ error: "Invalid avatar background." }, { status: 400 });
   }
 
   const experiences = [];
@@ -191,31 +226,30 @@ export async function PUT(req) {
     experiences.push(normalized);
   }
 
-  if (isOwnProfile) {
-    const { error: workerError } = await sb.from("workers").upsert({
-      id: workerId,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: "id" });
-    if (workerError) {
-      return NextResponse.json({ error: workerError.message }, { status: 400 });
-    }
-  }
-
   const talentProfileRow = {
     worker_id: workerId,
-    talent_alias: talentAlias,
     headline: headline || null,
     bio: bio || null,
     location: location || null,
     visibility,
     status,
+    opportunity_status: opportunityStatus,
+    avatar_background: avatarBackground,
     working_rights_slug: workingRightsSlug,
     updated_at: new Date().toISOString(),
   };
 
-  const { error: talentProfileError } = await sb
-    .from("talent_hub_profiles")
-    .upsert(talentProfileRow, { onConflict: "worker_id" });
+  let talentProfileError = null;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const { error } = await sb
+      .from("talent_hub_profiles")
+      .upsert({ ...talentProfileRow, talent_alias: talentAlias }, { onConflict: "worker_id" });
+    talentProfileError = error;
+    if (!talentProfileError || talentProfileError.code !== "23505") break;
+
+    talentAlias = generateTalentAlias([talentAlias]);
+    aliasParts = getTalentAliasParts(talentAlias);
+  }
   if (talentProfileError) {
     const error = talentProfileError.code === "23505"
       ? "That Talent Alias was just claimed. Regenerate one and save again."
@@ -294,7 +328,7 @@ export async function PUT(req) {
     ok: true,
     profile: {
       id: workerId,
-      talentAlias: talentProfileRow.talent_alias,
+      talentAlias,
       aliasDescriptor: aliasParts.descriptor,
       aliasAnimal: aliasParts.animal,
       headline: talentProfileRow.headline || "",
@@ -302,6 +336,8 @@ export async function PUT(req) {
       location: talentProfileRow.location || "",
       visibility: talentProfileRow.visibility,
       status: talentProfileRow.status,
+      opportunityStatus: talentProfileRow.opportunity_status,
+      avatarBackground: talentProfileRow.avatar_background,
       workingRightsSlug: talentProfileRow.working_rights_slug || "",
       availableNow,
       availableFrom: availableFrom || "",

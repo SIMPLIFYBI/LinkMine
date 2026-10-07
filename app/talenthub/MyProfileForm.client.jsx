@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
-import { generateTalentIdentity, getTalentAliasParts } from "@/lib/talentAliases";
+import { generateTalentIdentity, getNextTalentIdentity, getTalentAliasParts } from "@/lib/talentAliases";
+import { TALENT_AVATAR_BACKGROUNDS } from "@/lib/talentAvatarConfig";
+import { TALENT_OPPORTUNITY_STATUSES } from "@/lib/talentOpportunityStatuses";
 import MarketToggle from "@/app/components/MarketToggle.client";
 import TalentAvatar from "./TalentAvatar.client";
 
@@ -29,6 +31,13 @@ function textareaClasses() {
 function selectOptionStyle() {
   return { backgroundColor: "#08111c", color: "#f8fafc" };
 }
+
+const workflowStatusDetails = {
+  draft: { label: "Draft", note: "This profile is not yet submitted for review.", markerClass: "bg-slate-400" },
+  pending: { label: "Pending review", note: "This profile is waiting for an administrator review.", markerClass: "bg-amber-300" },
+  approved: { label: "Approved", note: "This profile is approved and can be visible in Talent Hub.", markerClass: "bg-emerald-300" },
+  rejected: { label: "Needs changes", note: "An administrator has requested changes before approval.", markerClass: "bg-rose-300" },
+};
 
 function groupedRoleOptions(roleOptions) {
   const grouped = new Map();
@@ -59,21 +68,25 @@ function createEmptyExperience(position = 0) {
 }
 
 function createProfileIdentity(initialProfile, currentProfile = {}) {
-  const alias = initialProfile.talentAlias || currentProfile.talentAlias;
+  const isSameProfile = currentProfile.id === initialProfile.id;
+  const currentAlias = isSameProfile ? currentProfile.talentAlias : "";
+  const alias = currentAlias || initialProfile.talentAlias;
   const generatedIdentity = alias ? null : generateTalentIdentity();
   const aliasParts = alias ? getTalentAliasParts(alias) : generatedIdentity;
 
   return {
     ...initialProfile,
     talentAlias: alias || generatedIdentity.alias,
-    aliasDescriptor: initialProfile.aliasDescriptor || aliasParts.descriptor,
-    aliasAnimal: initialProfile.aliasAnimal || aliasParts.animal,
+    aliasDescriptor: aliasParts?.descriptor || initialProfile.aliasDescriptor || "",
+    aliasAnimal: aliasParts?.animal || initialProfile.aliasAnimal || "",
   };
 }
 
 export default function MyProfileForm({ initialProfile, roleOptions, workingRightsOptions, market, onSave, profileEndpoint = "/api/workers/me/profile", title = "My Profile" }) {
   const [profile, setProfile] = useState(() => createProfileIdentity(initialProfile));
   const [saving, setSaving] = useState(false);
+  const [aliasChangeVersion, setAliasChangeVersion] = useState(0);
+  const [isAliasPreviewAnimating, setIsAliasPreviewAnimating] = useState(false);
   const [status, setStatus] = useState(null);
   const [specialisationMarket, setSpecialisationMarket] = useState(market);
 
@@ -85,12 +98,15 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
     setSpecialisationMarket(market);
   }, [market]);
 
+  useEffect(() => {
+    if (!isAliasPreviewAnimating) return undefined;
+
+    const timeout = window.setTimeout(() => setIsAliasPreviewAnimating(false), 700);
+    return () => window.clearTimeout(timeout);
+  }, [isAliasPreviewAnimating, aliasChangeVersion]);
+
   function updateField(field, value) {
     setProfile((current) => ({ ...current, [field]: value }));
-  }
-
-  function regenerateTalentAlias() {
-    setProfile((current) => ({ ...current, ...generateTalentIdentity([current.talentAlias]) }));
   }
 
   const visibleRoleOptions = (roleOptions || []).filter(
@@ -129,7 +145,7 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
     }));
   }
 
-  async function handleSave() {
+  async function saveProfile(profileToSave, { stayOnProfile = false, successMessage = "" } = {}) {
     setSaving(true);
     setStatus(null);
 
@@ -137,7 +153,7 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
       const res = await fetch(profileEndpoint, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profile),
+        body: JSON.stringify(profileToSave),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -148,13 +164,28 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
       const savedProfile = data?.profile || profile;
       setProfile(savedProfile);
       if (onSave) {
-        await onSave(savedProfile);
+        await onSave(savedProfile, { stayOnProfile });
+      }
+      if (successMessage) {
+        setStatus({ ok: true, msg: successMessage });
       }
     } catch (error) {
       setStatus({ ok: false, msg: error?.message || "Failed to save profile." });
     } finally {
       setSaving(false);
     }
+  }
+
+  function handleSave() {
+    return saveProfile(profile);
+  }
+
+  function regenerateTalentAlias() {
+    const nextProfile = { ...profile, ...getNextTalentIdentity(profile.talentAlias) };
+    setProfile(nextProfile);
+    setAliasChangeVersion((current) => current + 1);
+    setIsAliasPreviewAnimating(true);
+    setStatus({ ok: true, msg: "New Talent Alias selected. Save to keep it." });
   }
 
   return (
@@ -181,8 +212,12 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
               <div className="md:col-span-2">
                 <FieldShell label="Talent Alias" hint="This is the name Talent Hub uses for your candidate profile.">
                   <div className="flex items-center justify-between gap-3 rounded-2xl border border-cyan-300/25 bg-cyan-400/[0.08] px-4 py-3">
-                    <TalentAvatar animal={profile.aliasAnimal} descriptor={profile.aliasDescriptor} alias={profile.talentAlias} size="lg" />
-                    <span className="min-w-0 flex-1 truncate text-lg font-semibold text-cyan-50">{profile.talentAlias}</span>
+                    <div key={aliasChangeVersion} className={isAliasPreviewAnimating ? "animate-pulse" : ""} aria-live="polite">
+                      <TalentAvatar animal={profile.aliasAnimal} descriptor={profile.aliasDescriptor} alias={profile.talentAlias} background={profile.avatarBackground} size="lg" />
+                    </div>
+                    <span key={`${profile.talentAlias}-${aliasChangeVersion}`} className={`min-w-0 flex-1 truncate text-lg font-semibold text-cyan-50 ${isAliasPreviewAnimating ? "animate-pulse" : ""}`} aria-live="polite">
+                      {profile.talentAlias}
+                    </span>
                     <button
                       type="button"
                       onClick={regenerateTalentAlias}
@@ -191,6 +226,24 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
                       <RefreshCw className="h-4 w-4" aria-hidden="true" />
                       Regenerate
                     </button>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <span className="mr-1 text-xs font-semibold text-slate-300">Avatar background</span>
+                    {TALENT_AVATAR_BACKGROUNDS.map((background) => {
+                      const selected = profile.avatarBackground === background.id;
+                      return (
+                        <button
+                          key={background.id}
+                          type="button"
+                          onClick={() => updateField("avatarBackground", background.id)}
+                          aria-label={`Use ${background.label} avatar background`}
+                          aria-pressed={selected}
+                          title={background.label}
+                          className={`h-8 w-8 rounded-full border-2 transition focus:outline-none focus:ring-2 focus:ring-cyan-300/50 ${selected ? "scale-110 border-cyan-100 ring-2 ring-cyan-300/50" : "border-white/20 hover:scale-105 hover:border-white/70"}`}
+                          style={{ backgroundColor: background.color }}
+                        />
+                      );
+                    })}
                   </div>
                 </FieldShell>
               </div>
@@ -206,14 +259,44 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
                   <option value="private">Private</option>
                 </select>
               </FieldShell>
-              <FieldShell label="Status" hint="Workflow state for review and publishing.">
-                <select className={inputClasses()} value={profile.status} onChange={(event) => updateField("status", event.target.value)}>
-                  <option value="draft">Draft</option>
-                  <option value="pending">Pending</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
-                </select>
+              <FieldShell label="Status" hint="Managed by Talent Hub administrators.">
+                {(() => {
+                  const workflowStatus = workflowStatusDetails[profile.status] || workflowStatusDetails.draft;
+                  return (
+                    <div className="group relative flex min-h-12 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-100" tabIndex={0}>
+                      <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${workflowStatus.markerClass}`} aria-hidden="true" />
+                      <span className="font-semibold">{workflowStatus.label}</span>
+                      <span className="ml-auto text-xs text-slate-400">Admin managed</span>
+                      <span role="tooltip" className="pointer-events-none absolute bottom-full left-0 z-20 mb-2 w-64 rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs leading-5 text-slate-200 opacity-0 shadow-xl transition group-hover:opacity-100 group-focus:opacity-100">
+                        {workflowStatus.note}
+                      </span>
+                    </div>
+                  );
+                })()}
               </FieldShell>
+              <div className="md:col-span-2">
+                <fieldset>
+                  <legend className="text-sm font-semibold text-white">Opportunity status</legend>
+                  <p className="mt-1 text-xs text-slate-400">Signals how open you are to hearing about work.</p>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {TALENT_OPPORTUNITY_STATUSES.map((opportunityStatus) => {
+                      const selected = profile.opportunityStatus === opportunityStatus.value;
+                      return (
+                        <button
+                          key={opportunityStatus.value}
+                          type="button"
+                          onClick={() => updateField("opportunityStatus", opportunityStatus.value)}
+                          aria-pressed={selected}
+                          className={`min-h-24 rounded-2xl border px-4 py-3 text-left transition focus:outline-none focus:ring-2 focus:ring-cyan-300/40 ${selected ? "border-cyan-300/55 bg-cyan-400/15 text-cyan-50 shadow-[0_12px_32px_-20px_rgba(34,211,238,0.9)]" : "border-white/10 bg-white/[0.03] text-slate-200 hover:border-white/20 hover:bg-white/[0.06]"}`}
+                        >
+                          <span className="block text-sm font-semibold">{opportunityStatus.label}</span>
+                          <span className={`mt-1 block text-xs leading-5 ${selected ? "text-cyan-100/85" : "text-slate-400"}`}>{opportunityStatus.description}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+              </div>
               <div className="md:col-span-2">
                 <FieldShell label="Bio" hint="Long-form summary used for the CV snapshot and modal.">
                   <textarea className={textareaClasses()} value={profile.bio} onChange={(event) => updateField("bio", event.target.value)} placeholder="Summarise experience, strengths, sector exposure, and the type of roles you want next." />
@@ -274,9 +357,6 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
                     </FieldShell>
                     <FieldShell label="Location">
                       <input className={inputClasses()} value={experience.location} onChange={(event) => updateExperience(index, "location", event.target.value)} placeholder="Pilbara, WA" />
-                    </FieldShell>
-                    <FieldShell label="Position order" hint="Lower numbers appear first.">
-                      <input type="number" className={inputClasses()} value={experience.position} onChange={(event) => updateExperience(index, "position", Number(event.target.value || 0))} />
                     </FieldShell>
                     <FieldShell label="Start date">
                       <input type="date" className={inputClasses()} value={experience.startDate} onChange={(event) => updateExperience(index, "startDate", event.target.value)} />
@@ -395,7 +475,7 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
             <ul className="mt-4 space-y-2 text-sm leading-6 text-emerald-50/90">
               <li>Your Talent Alias, headline, location, and bio drive the deck presentation.</li>
               <li>Specialisation selections use the shared YouMine consultant taxonomy.</li>
-              <li>Availability and working rights help shortlist candidates faster.</li>
+              <li>Opportunity status, availability, and working rights help shortlist candidates faster.</li>
               <li>Experience entries should be ordered with the most relevant roles first.</li>
             </ul>
           </section>

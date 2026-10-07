@@ -10,7 +10,7 @@ const sizes = {
   lg: "h-[6.25rem] w-[6.25rem]",
 };
 
-export default function TalentAvatar({ animal, descriptor, alias, size = "md", className = "" }) {
+export default function TalentAvatar({ animal, descriptor, alias, background, size = "md", className = "" }) {
   const animalConfig = getTalentAnimal(animal);
   const [hasAsset, setHasAsset] = useState(Boolean(animalConfig));
 
@@ -19,7 +19,7 @@ export default function TalentAvatar({ animal, descriptor, alias, size = "md", c
   }, [animalConfig?.id]);
 
   const descriptorClass = descriptor ? `talent-avatar-${String(descriptor).toLowerCase()}` : "";
-  const backgroundColor = getTalentAvatarBackground(alias);
+  const backgroundColor = getTalentAvatarBackground(background, alias);
 
   return (
     <div

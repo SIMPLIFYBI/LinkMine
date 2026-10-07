@@ -4,6 +4,7 @@ import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
 import { getResolvedSiteMarket } from "@/lib/siteMarketServer";
 import { getTalentAliasParts } from "@/lib/talentAliases";
+import { DEFAULT_TALENT_OPPORTUNITY_STATUS, getTalentOpportunityStatus } from "@/lib/talentOpportunityStatuses";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -90,7 +91,7 @@ export default async function TalentHubPage() {
   const [currentTalentProfileResult, currentWorkerAvailabilityResult, currentWorkerServicesResult, currentWorkerExperiencesResult, serviceCategoriesResult, servicesResult, workingRightsOptionsResult] = await Promise.all([
     authClient
       .from("talent_hub_profiles")
-      .select("worker_id, talent_alias, headline, bio, location, visibility, status, working_rights_slug")
+      .select("worker_id, talent_alias, headline, bio, location, visibility, status, opportunity_status, avatar_background, working_rights_slug")
       .eq("worker_id", user.id)
       .maybeSingle(),
     sb
@@ -129,7 +130,7 @@ export default async function TalentHubPage() {
 
   const { data: workersRawResult } = await sb
     .from("talent_hub_public_profiles")
-    .select("worker_id, talent_alias, headline, bio, location, working_rights_slug, created_at")
+    .select("worker_id, talent_alias, headline, bio, location, opportunity_status, avatar_background, working_rights_slug, created_at")
     .order("created_at", { ascending: false })
     .limit(24);
   const workersRaw = workersRawResult || [];
@@ -216,6 +217,8 @@ export default async function TalentHubPage() {
     location: currentTalentProfile?.location || "",
     visibility: currentTalentProfile?.visibility || "public",
     status: currentTalentProfile?.status || "draft",
+    opportunityStatus: currentTalentProfile?.opportunity_status || DEFAULT_TALENT_OPPORTUNITY_STATUS,
+    avatarBackground: currentTalentProfile?.avatar_background || "sage",
     workingRightsSlug: currentTalentProfile?.working_rights_slug || "",
     availableNow: Boolean(currentWorkerAvailabilityResult.data?.available_now),
     availableFrom: currentWorkerAvailabilityResult.data?.available_from || "",
@@ -286,6 +289,8 @@ export default async function TalentHubPage() {
       bioPreview: bio ? bio.slice(0, 240) : "No bio added yet.",
       location: worker.location || "Location not specified",
       roles: rolesByWorker.get(worker.id) || [],
+      opportunityStatus: getTalentOpportunityStatus(worker.opportunity_status)?.label || null,
+      avatarBackground: worker.avatar_background || "sage",
       availability: formatAvailability(availabilityByWorker.get(worker.id)),
       workingRights: worker.working_rights_slug
         ? workingRightsBySlug.get(worker.working_rights_slug) || null

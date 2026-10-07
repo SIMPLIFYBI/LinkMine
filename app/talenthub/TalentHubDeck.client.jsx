@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Eye, Pencil, UserRoundPlus } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
+import { getTalentOpportunityStatus } from "@/lib/talentOpportunityStatuses";
 import WorkerFavouriteButton from "./WorkerFavouriteButton.client";
 import MyProfileForm from "./MyProfileForm.client";
 import TalentAvatar from "./TalentAvatar.client";
@@ -73,10 +74,12 @@ function createWorkerPreview(profile, roleOptions, workingRightsOptions) {
     displayName,
     aliasDescriptor: profile?.aliasDescriptor || "",
     aliasAnimal: profile?.aliasAnimal || "",
+    avatarBackground: profile?.avatarBackground || "sage",
     headline: profile?.headline || "Mining professional ready for the next opportunity.",
     bioPreview: bio ? bio.slice(0, 240) : "No bio added yet.",
     location: profile?.location || "Location not specified",
     roles,
+    opportunityStatus: getTalentOpportunityStatus(profile?.opportunityStatus)?.label || null,
     availability: formatAvailabilityPreview(profile),
     workingRights,
     experiences,
@@ -134,9 +137,9 @@ function Badge({ children, tone = "neutral" }) {
 }
 
 function WorkerDetailModal({ worker, onClose, isAdmin = false, onEdit, isEditing = false }) {
-  if (!worker) return null;
-
   useEffect(() => {
+    if (!worker) return undefined;
+
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
@@ -150,7 +153,9 @@ function WorkerDetailModal({ worker, onClose, isAdmin = false, onEdit, isEditing
       document.body.style.overflow = previous;
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [onClose]);
+  }, [worker, onClose]);
+
+  if (!worker) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4 py-6 backdrop-blur-xl" onClick={onClose}>
@@ -167,7 +172,7 @@ function WorkerDetailModal({ worker, onClose, isAdmin = false, onEdit, isEditing
         </button>
 
         <div className="flex gap-4 pr-20">
-          <TalentAvatar animal={worker.aliasAnimal} descriptor={worker.aliasDescriptor} alias={worker.displayName} size="lg" />
+          <TalentAvatar animal={worker.aliasAnimal} descriptor={worker.aliasDescriptor} alias={worker.displayName} background={worker.avatarBackground} size="lg" />
           <div>
             <p className="section-label">Profile summary</p>
             <h2 className="mt-4 text-3xl font-semibold text-white">{worker.displayName}</h2>
@@ -188,6 +193,7 @@ function WorkerDetailModal({ worker, onClose, isAdmin = false, onEdit, isEditing
 
         <div className="mt-5 flex flex-wrap gap-2">
           <Badge tone="accent">{worker.location}</Badge>
+          {worker.opportunityStatus ? <Badge tone="accent">{worker.opportunityStatus}</Badge> : null}
           {worker.availability ? <Badge tone={worker.availability.tone}>{worker.availability.label}</Badge> : null}
           {worker.workingRights ? <Badge>{worker.workingRights}</Badge> : null}
         </div>
@@ -269,13 +275,12 @@ function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef =
       <div className={`relative flex flex-col ${compact ? "p-5" : "p-6 pb-4 sm:p-8"}`}>
         <div>
           <div className="flex items-start gap-3 pr-16 sm:pr-20">
-            <TalentAvatar animal={worker.aliasAnimal} descriptor={worker.aliasDescriptor} alias={worker.displayName} size={compact ? "sm" : "md"} />
-            <div className="min-w-0">
-              <p className="section-label">Candidate deck</p>
-              <h2 className={`${compact ? "mt-3 text-2xl" : "mt-4 text-3xl sm:text-[2.2rem]"} truncate font-semibold tracking-tight text-white`}>{worker.displayName}</h2>
-              <p className={`${compact ? "mt-2 line-clamp-2 text-sm" : "mt-2 text-sm sm:text-base"} leading-7 text-slate-200`}>{worker.headline}</p>
+            <TalentAvatar animal={worker.aliasAnimal} descriptor={worker.aliasDescriptor} alias={worker.displayName} background={worker.avatarBackground} size={compact ? "sm" : "md"} />
+            <div className="min-w-0 pt-1">
+              <p className="section-label truncate">{worker.displayName}</p>
             </div>
           </div>
+          <p className={`${compact ? "mt-2 line-clamp-2 text-sm" : "mt-2 text-sm sm:text-base"} leading-7 text-slate-200`}>{worker.headline}</p>
           {!preview ? (
             <div className="absolute right-6 top-6 flex items-center gap-2 sm:right-8 sm:top-8">
               <WorkerFavouriteButton workerId={worker.id} />
@@ -288,6 +293,7 @@ function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef =
 
         <div className="mt-5 flex flex-wrap gap-2">
           <Badge tone="accent">{worker.location}</Badge>
+          {worker.opportunityStatus ? <Badge tone="accent">{worker.opportunityStatus}</Badge> : null}
           {worker.availability ? <Badge tone={worker.availability.tone}>{worker.availability.label}</Badge> : null}
           {worker.workingRights ? <Badge>{worker.workingRights}</Badge> : null}
         </div>
@@ -489,7 +495,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
     setActiveIndex(boundedIndex);
   }
 
-  async function handleProfileSaved(savedProfile) {
+  async function handleProfileSaved(savedProfile, { stayOnProfile = false } = {}) {
     setCurrentProfileState(savedProfile);
 
     const savedWorker = createWorkerPreview(savedProfile, roleOptions, workingRightsOptions);
@@ -507,7 +513,9 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
       setPendingFocusWorkerId(savedWorker.id);
     }
 
-    setActiveTab("candidates");
+    if (!stayOnProfile) {
+      setActiveTab("candidates");
+    }
   }
 
   async function handleAdminProfileEdit(workerId) {
@@ -638,7 +646,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
                   key={worker.id}
                   worker={worker}
                   compact={false}
-                  className={`w-[78vw] min-w-[78vw] shrink-0 snap-center md:w-[68vw] md:min-w-[68vw] xl:w-[58vw] xl:min-w-[58vw] transition duration-300 ${activeIndex === index ? "scale-100 opacity-100" : "scale-[0.92] opacity-45"}`}
+                  className={`w-[78vw] min-w-[78vw] shrink-0 snap-center snap-always md:w-[68vw] md:min-w-[68vw] xl:w-[58vw] xl:min-w-[58vw] transition duration-300 ${activeIndex === index ? "scale-100 opacity-100" : "scale-[0.92] opacity-45"}`}
                   onOpen={() => setSelectedWorkerId(worker.id)}
                   cardRef={(element) => {
                     itemRefs.current[index] = element;
