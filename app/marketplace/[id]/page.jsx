@@ -19,6 +19,7 @@ import {
   resolveConsultantIconUrl,
 } from "@/lib/resourceHubServer";
 import { supabaseAdminClient } from "@/lib/supabaseAdminClient";
+import { supabasePublicServer } from "@/lib/supabasePublicServer";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import MarketplaceRouteShell from "@/app/marketplace/MarketplaceRouteShell.client.jsx";
 import ConsultantClaimButton from "@/app/components/ConsultantClaimButton";
@@ -95,33 +96,50 @@ function ResourceFormatChip({ format }) {
   );
 }
 
-function ConsultantBadge({ consultant }) {
-  if (!consultant?.id) return null;
-
-  const initials = String(consultant.displayName || "Consultant")
+function getCreatorInitials(name) {
+  return String(name || "Creator")
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0])
     .join("")
     .toUpperCase() || "C";
+}
 
-  return (
-    <Link
-      href={`/consultants/${consultant.id}`}
-      className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:border-white/25 hover:bg-white/[0.08]"
-      aria-label={`View consultant profile for ${consultant.displayName}`}
-    >
-      <span className="inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-slate-900/45 text-[10px] font-bold text-white">
-        {consultant.iconUrl ? (
-          <img src={consultant.iconUrl} alt={consultant.displayName} className="h-full w-full object-cover" />
-        ) : (
-          initials
-        )}
-      </span>
-      <span className="whitespace-nowrap">Added by {consultant.displayName}</span>
-    </Link>
+function CreatorPanel({ consultant, fallbackName = "", fallbackIconUrl = "" }) {
+  const displayName = consultant?.displayName || fallbackName;
+  if (!displayName) return null;
+
+  const initials = getCreatorInitials(displayName);
+  const iconUrl = consultant?.iconUrl || fallbackIconUrl;
+  const profileHref = consultant?.id ? `/consultants/${consultant.id}?backTo=${encodeURIComponent("/vault/creators")}` : "";
+  const panelClassName = "mt-6 flex flex-wrap items-center justify-between gap-4 rounded-[20px] border border-sky-200/15 bg-[linear-gradient(135deg,rgba(56,189,248,0.14),rgba(15,23,42,0.36))] p-4 ring-1 ring-white/5";
+  const panelContents = (
+    <>
+      <div className="flex min-w-0 items-center gap-3.5">
+        <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[17px] border border-sky-100/25 bg-slate-900/45 text-lg font-bold text-white shadow-[0_14px_30px_-18px_rgba(56,189,248,0.8)]">
+          {iconUrl ? (
+            <img src={iconUrl} alt={`${displayName} logo`} className="h-full w-full object-cover" />
+          ) : (
+            initials
+          )}
+        </span>
+        <div className="min-w-0">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-200/80">Published by</div>
+          <div className="mt-1 truncate text-base font-semibold text-white">{displayName}</div>
+          <div className="mt-1 text-xs text-slate-300">Creator of this Vault resource</div>
+        </div>
+      </div>
+      {profileHref ? <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-sky-200/35 bg-sky-400/15 px-3.5 py-2 text-xs font-semibold text-sky-50 transition group-hover:-translate-y-0.5 group-hover:border-sky-100/60 group-hover:bg-sky-400/25">
+        View creator
+        <span aria-hidden="true" className="text-base leading-none transition-transform group-hover:translate-x-0.5">↗</span>
+      </span> : null}
+    </>
   );
+
+  if (!profileHref) return <section className={panelClassName}>{panelContents}</section>;
+
+  return <Link href={profileHref} className={`${panelClassName} group transition hover:-translate-y-0.5 hover:border-sky-200/40 hover:bg-sky-400/[0.12]`} aria-label={`View creator profile for ${displayName}`}>{panelContents}</Link>;
 }
 
 export async function generateMetadata({ params }) {
@@ -134,6 +152,7 @@ export async function generateMetadata({ params }) {
 export default async function MarketplaceResourcePage({ params }) {
   const { id } = await params;
   const sb = await supabaseServerClient();
+  const publicSb = supabasePublicServer();
   const { user, userId, isAdmin } = await getResourceAuthContext(sb);
 
   const { data, error } = await sb
@@ -154,16 +173,16 @@ export default async function MarketplaceResourcePage({ params }) {
   let claimTarget = null;
 
   if (selectedConsultantId) {
-    const { data: consultantRow } = await sb
+    const { data: consultantRow } = await publicSb
       .from("consultants")
-      .select("id, display_name, name, logo_url, thumbnail_url, avatar_url, photo_url, image_url, metadata, contact_email, claimed_by")
+      .select("id, display_name, metadata, contact_email, claimed_by")
       .eq("id", selectedConsultantId)
       .maybeSingle();
 
     if (consultantRow?.id) {
       consultantProfile = {
         id: consultantRow.id,
-        displayName: consultantRow.display_name || consultantRow.name || "Consultant",
+        displayName: consultantRow.display_name || "Consultant",
         iconUrl: resource.consultantIconUrl || resolveConsultantIconUrl(consultantRow),
       };
 
@@ -178,9 +197,9 @@ export default async function MarketplaceResourcePage({ params }) {
   if (!claimTarget?.consultantId && resource.claimContactEmail) {
     const claimEmail = String(resource.claimContactEmail || "").trim().toLowerCase();
     if (claimEmail) {
-      const { data: fallbackClaimRow } = await sb
+      const { data: fallbackClaimRow } = await publicSb
         .from("consultants")
-        .select("id, contact_email, claimed_by, claimed_at")
+        .select("id, display_name, metadata, contact_email, claimed_by, claimed_at")
         .ilike("contact_email", claimEmail)
         .order("claimed_at", { ascending: true, nullsFirst: true })
         .order("created_at", { ascending: false })
@@ -193,6 +212,12 @@ export default async function MarketplaceResourcePage({ params }) {
           contactEmail: fallbackClaimRow.contact_email || null,
           claimedBy: fallbackClaimRow.claimed_by || null,
         };
+
+        consultantProfile = {
+          id: fallbackClaimRow.id,
+          displayName: fallbackClaimRow.display_name || "Creator",
+          iconUrl: resource.consultantIconUrl || resolveConsultantIconUrl(fallbackClaimRow),
+        };
       }
     }
   }
@@ -203,9 +228,9 @@ export default async function MarketplaceResourcePage({ params }) {
   );
 
   if (!consultantProfile && resource.ownerUserId) {
-    const { data: ownerConsultantRow } = await sb
+    const { data: ownerConsultantRow } = await publicSb
       .from("consultants")
-      .select("id, display_name, name, logo_url, thumbnail_url, avatar_url, photo_url, image_url, metadata")
+      .select("id, display_name, metadata")
       .eq("user_id", resource.ownerUserId)
       .eq("visibility", "public")
       .order("created_at", { ascending: false })
@@ -215,8 +240,27 @@ export default async function MarketplaceResourcePage({ params }) {
     if (ownerConsultantRow?.id) {
       consultantProfile = {
         id: ownerConsultantRow.id,
-        displayName: ownerConsultantRow.display_name || ownerConsultantRow.name || "Consultant",
+        displayName: ownerConsultantRow.display_name || "Consultant",
         iconUrl: resource.consultantIconUrl || resolveConsultantIconUrl(ownerConsultantRow),
+      };
+    }
+  }
+
+  if (!consultantProfile && resource.sourceName) {
+    const { data: sourceConsultantRow } = await publicSb
+      .from("consultants")
+      .select("id, display_name, metadata")
+      .ilike("display_name", resource.sourceName)
+      .eq("visibility", "public")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (sourceConsultantRow?.id) {
+      consultantProfile = {
+        id: sourceConsultantRow.id,
+        displayName: sourceConsultantRow.display_name || resource.sourceName,
+        iconUrl: resource.consultantIconUrl || resolveConsultantIconUrl(sourceConsultantRow),
       };
     }
   }
@@ -291,7 +335,6 @@ export default async function MarketplaceResourcePage({ params }) {
                 <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
                 <ResourceFormatChip format={resource.resourceFormat} />
                 {resource.category?.name ? <Badge tone="border-white/10 bg-white/[0.04] text-slate-300">{resource.category.name}</Badge> : null}
-                <ConsultantBadge consultant={consultantProfile} />
               </div>
 
               <h1 className="mt-5 text-3xl font-semibold tracking-tight text-white sm:text-4xl">{resource.title}</h1>
@@ -299,6 +342,8 @@ export default async function MarketplaceResourcePage({ params }) {
               <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
                 {resource.description || resource.summary || "No description has been added for this resource yet."}
               </p>
+
+              <CreatorPanel consultant={consultantProfile} fallbackName={resource.sourceName} />
 
               {resourceImages.length ? (
                 <div className="mt-5 space-y-2">

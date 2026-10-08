@@ -220,55 +220,55 @@ const RESOURCE_FORMAT_CARD_VARIANTS = {
   website: {
     orbClass: "-right-10 top-3 h-24 w-24 rounded-full border border-cyan-100/35 bg-cyan-200/18 backdrop-blur-md",
     blockClass: "bottom-[-10%] right-[14%] h-20 w-20 rotate-[16deg] rounded-[22px] border border-cyan-100/30 bg-cyan-950/24",
-    titleRowClass: "min-h-[3.4rem] pr-14 sm:min-h-[3.75rem]",
+    titleRowClass: "min-h-[3.4rem] pr-20 sm:min-h-[3.75rem]",
     summaryClass: "mt-3 line-clamp-2 max-w-[28ch] text-[13px] leading-5 text-slate-100/82 sm:text-sm sm:leading-6",
   },
   repository: {
     orbClass: "-right-11 top-2 h-24 w-24 rounded-[28px] border border-emerald-100/30 bg-emerald-200/16 backdrop-blur-md",
     blockClass: "bottom-[-12%] right-[20%] h-16 w-24 -rotate-[11deg] rounded-[16px] border border-emerald-100/25 bg-emerald-950/26",
-    titleRowClass: "min-h-[3.4rem] pr-14 sm:min-h-[3.75rem]",
+    titleRowClass: "min-h-[3.4rem] pr-20 sm:min-h-[3.75rem]",
     summaryClass: "mt-3 line-clamp-2 max-w-[26ch] text-[13px] leading-5 text-slate-100/82 sm:text-sm sm:leading-6",
   },
   excel: {
     orbClass: "-right-9 top-3 h-20 w-20 rounded-[20px] border border-green-100/32 bg-green-200/16 backdrop-blur-md",
     blockClass: "bottom-[-14%] right-[16%] h-20 w-20 rotate-[4deg] rounded-[12px] border border-green-100/24 bg-green-950/28",
-    titleRowClass: "min-h-[3.1rem] pr-14 sm:min-h-[3.45rem]",
+    titleRowClass: "min-h-[3.1rem] pr-20 sm:min-h-[3.45rem]",
     summaryClass: "mt-3 line-clamp-2 max-w-[25ch] text-[13px] leading-5 text-slate-100/82 sm:text-sm sm:leading-6",
   },
   word: {
     orbClass: "-right-10 top-3 h-24 w-24 rounded-full border border-blue-100/35 bg-blue-200/16 backdrop-blur-md",
     blockClass: "bottom-[-12%] right-[16%] h-16 w-24 rotate-[8deg] rounded-[20px] border border-blue-100/26 bg-blue-950/24",
-    titleRowClass: "min-h-[3.4rem] pr-14 sm:min-h-[3.75rem]",
+    titleRowClass: "min-h-[3.4rem] pr-20 sm:min-h-[3.75rem]",
     summaryClass: "mt-3 line-clamp-2 max-w-[29ch] text-[13px] leading-5 text-slate-100/82 sm:text-sm sm:leading-6",
   },
   powerpoint: {
     orbClass: "-right-8 top-3 h-20 w-20 rounded-full border border-orange-100/35 bg-orange-200/16 backdrop-blur-md",
     blockClass: "bottom-[-10%] right-[14%] h-[4.5rem] w-[5.5rem] -rotate-[14deg] rounded-[16px] border border-orange-100/26 bg-orange-950/26",
-    titleRowClass: "min-h-[3.2rem] pr-14 sm:min-h-[3.55rem]",
+    titleRowClass: "min-h-[3.2rem] pr-20 sm:min-h-[3.55rem]",
     summaryClass: "mt-3 line-clamp-2 max-w-[24ch] text-[13px] leading-5 text-slate-100/82 sm:text-sm sm:leading-6",
   },
   script: {
     orbClass: "-right-10 top-2 h-24 w-24 rounded-[24px] border border-violet-100/34 bg-violet-200/16 backdrop-blur-md",
     blockClass: "bottom-[-14%] right-[18%] h-[4.5rem] w-20 rotate-[24deg] rounded-[12px] border border-violet-100/24 bg-violet-950/30",
-    titleRowClass: "min-h-[3.1rem] pr-14 sm:min-h-[3.5rem]",
+    titleRowClass: "min-h-[3.1rem] pr-20 sm:min-h-[3.5rem]",
     summaryClass: "mt-3 line-clamp-2 max-w-[25ch] text-[13px] leading-5 text-slate-100/82 sm:text-sm sm:leading-6",
   },
   app: {
     orbClass: "-right-10 top-3 h-24 w-24 rounded-[30px] border border-pink-100/34 bg-pink-200/16 backdrop-blur-md",
     blockClass: "bottom-[-12%] right-[16%] h-[4.25rem] w-24 -rotate-[9deg] rounded-[18px] border border-pink-100/26 bg-pink-950/28",
-    titleRowClass: "min-h-[3.2rem] pr-14 sm:min-h-[3.6rem]",
+    titleRowClass: "min-h-[3.2rem] pr-20 sm:min-h-[3.6rem]",
     summaryClass: "mt-3 line-clamp-2 max-w-[25ch] text-[13px] leading-5 text-slate-100/82 sm:text-sm sm:leading-6",
   },
   pdf: {
     orbClass: "-right-9 top-3 h-20 w-20 rounded-[18px] border border-rose-100/34 bg-rose-200/16 backdrop-blur-md",
     blockClass: "bottom-[-12%] right-[16%] h-20 w-20 rotate-[9deg] rounded-[16px] border border-rose-100/26 bg-rose-950/28",
-    titleRowClass: "min-h-[3.15rem] pr-14 sm:min-h-[3.5rem]",
+    titleRowClass: "min-h-[3.15rem] pr-20 sm:min-h-[3.5rem]",
     summaryClass: "mt-3 line-clamp-2 max-w-[24ch] text-[13px] leading-5 text-slate-100/82 sm:text-sm sm:leading-6",
   },
   generic: {
     orbClass: "-right-10 top-3 h-24 w-24 rounded-full border border-slate-100/30 bg-slate-200/12 backdrop-blur-md",
     blockClass: "bottom-[-10%] right-[16%] h-[4.75rem] w-[5.5rem] rotate-[8deg] rounded-[16px] border border-slate-100/24 bg-slate-950/30",
-    titleRowClass: "min-h-[3.3rem] pr-14 sm:min-h-[3.65rem]",
+    titleRowClass: "min-h-[3.3rem] pr-20 sm:min-h-[3.65rem]",
     summaryClass: "mt-3 line-clamp-2 max-w-[26ch] text-[13px] leading-5 text-slate-100/82 sm:text-sm sm:leading-6",
   },
 };
@@ -420,6 +420,40 @@ async function readJson(response) {
   return body;
 }
 
+function ResourceLoadingGrid() {
+  return (
+    <div className="grid gap-3 sm:gap-4" aria-live="polite" aria-label="Loading resources">
+      {[0, 1, 2].map((item) => (
+        <div
+          key={item}
+          className="relative h-[304px] overflow-hidden rounded-[26px] border border-white/10 bg-slate-950/45 p-4"
+          style={{ animationDelay: `${item * 110}ms` }}
+        >
+          <div className="absolute inset-0 -translate-x-full animate-[resource-shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
+          <div className="relative flex h-full flex-col justify-between animate-pulse">
+            <div className="space-y-4">
+              <div className="h-7 w-24 rounded-full bg-white/[0.08]" />
+              <div className="space-y-2">
+                <div className="h-6 w-3/5 rounded-md bg-white/[0.12]" />
+                <div className="h-6 w-2/5 rounded-md bg-white/[0.08]" />
+              </div>
+              <div className="space-y-2 pt-2">
+                <div className="h-3 w-4/5 rounded bg-white/[0.08]" />
+                <div className="h-3 w-3/5 rounded bg-white/[0.06]" />
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="h-9 w-28 rounded-xl bg-white/[0.1]" />
+              <div className="h-9 w-9 rounded-full bg-white/[0.08]" />
+            </div>
+          </div>
+        </div>
+      ))}
+      <span className="sr-only">Loading resources</span>
+    </div>
+  );
+}
+
 export default function ResourcesTablePageClient() {
   const { session } = useAuth();
   const signedIn = Boolean(session);
@@ -501,6 +535,7 @@ export default function ResourcesTablePageClient() {
 
   useEffect(() => {
     const controller = new AbortController();
+    let active = true;
 
     async function fetchData() {
       if (hasLoadedOnce) {
@@ -524,20 +559,29 @@ export default function ResourcesTablePageClient() {
           signal: controller.signal,
         }).then(readJson);
 
-        setResources(resourcesRes.resources || []);
-        setPaging(resourcesRes.paging || { page: filters.page, limit: filters.limit, hasMore: false });
-        setHasLoadedOnce(true);
+        if (active) {
+          setResources(resourcesRes.resources || []);
+          setPaging(resourcesRes.paging || { page: filters.page, limit: filters.limit, hasMore: false });
+          setHasLoadedOnce(true);
+        }
       } catch (nextError) {
         if (nextError?.name === "AbortError") return;
-        setError(nextError.message || "Unable to load resources.");
+        if (active) {
+          setError(nextError.message || "Unable to load resources.");
+        }
       } finally {
-        setLoading(false);
-        setIsRefreshing(false);
+        if (active) {
+          setLoading(false);
+          setIsRefreshing(false);
+        }
       }
     }
 
     fetchData();
-    return () => controller.abort();
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [filters]);
 
   const categoryOptions = useMemo(() => {
@@ -548,19 +592,19 @@ export default function ResourcesTablePageClient() {
   const tabs = useMemo(() => {
     if (!signedIn) {
       return [
-        { key: "discover", label: "Home", icon: "discover", group: "primary", href: "/vault?tab=discover" },
+        { key: "discover", label: "Home", icon: "discover", group: "primary", href: "/vault" },
         { key: "all-resources", label: "All Resources", icon: "orders", group: "primary", href: "/vault/resources", active: true },
         { key: "creators", label: "Creators", icon: "creators", group: "primary", href: "/vault/creators" },
       ];
     }
 
     const baseTabs = [
-      { key: "discover", label: "Home", icon: "discover", group: "primary", href: "/vault?tab=discover" },
+      { key: "discover", label: "Home", icon: "discover", group: "primary", href: "/vault" },
       { key: "all-resources", label: "All Resources", icon: "orders", group: "primary", href: "/vault/resources", active: true },
       { key: "creators", label: "Creators", icon: "creators", group: "primary", href: "/vault/creators" },
-      { key: "submit", label: "Create", icon: "submit", group: "primary", href: "/vault?tab=submit" },
-      { key: "requests", label: "Requests", icon: "requests", group: "primary", href: "/vault?tab=requests" },
-      { key: "account", label: "My Vault", icon: "library", group: "secondary", href: "/vault?tab=account" },
+      { key: "submit", label: "Create", icon: "submit", group: "primary", href: "/vault/submit" },
+      { key: "requests", label: "Requests", icon: "requests", group: "primary", href: "/vault/requests" },
+      { key: "account", label: "My Vault", icon: "library", group: "secondary", href: "/vault/account" },
     ];
 
     if (isAdmin) {
@@ -878,7 +922,7 @@ export default function ResourcesTablePageClient() {
             ) : null}
 
             {loading ? (
-              <div className="rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-12 text-center text-sm text-slate-300">Loading resources...</div>
+              <ResourceLoadingGrid />
             ) : error && resources.length === 0 ? (
               <div className="rounded-2xl border border-red-300/30 bg-red-500/10 px-4 py-12 text-center text-sm text-red-100">{error}</div>
             ) : resources.length === 0 ? (
@@ -906,7 +950,7 @@ export default function ResourcesTablePageClient() {
                       <div className={["pointer-events-none absolute", cardStyle.blockClass].join(" ")} />
                       <ResourceOwnerBadge
                         resource={resource}
-                        className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center overflow-hidden rounded-[14px] border border-white/18 text-sm font-semibold text-slate-950 shadow-[0_14px_30px_-18px_rgba(255,255,255,0.8)]"
+                        className="absolute right-4 top-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-[14px] border border-white/18 text-sm font-semibold text-slate-950 shadow-[0_14px_30px_-18px_rgba(255,255,255,0.8)]"
                         style={{ backgroundImage: artwork.chipBackground }}
                       />
                       <div className="relative flex h-full w-full flex-col justify-between p-4">
@@ -1026,9 +1070,9 @@ export default function ResourcesTablePageClient() {
             authPromptVisible ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-[0.98] opacity-0",
           ].join(" ")}>
             <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-100/90">Account required</div>
-            <div className="mt-2 text-2xl font-semibold leading-tight text-white">Sign in or create an account to open this resource.</div>
+            <div className="mt-2 text-2xl font-semibold leading-tight text-white">Sign in or create a free account to open this resource.</div>
             <p className="mt-3 text-sm leading-7 text-slate-200/90">
-              You can browse all listings while signed out. Opening resource details requires an account.
+              Creating an account is free and quick. You can browse all listings while signed out; an account lets you open resource details.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link href={`/login?redirect=${encodeURIComponent(authPromptResourceHref)}`} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">

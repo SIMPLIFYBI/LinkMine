@@ -114,14 +114,14 @@ export default function ResourceDetailActions({ resource, requiresAuth = false, 
     );
   }
 
-  function handlePrimary() {
+  function handlePrimary(openDirectly = false) {
     if (checkoutStartRef.current || busy || checkoutStarting) return;
     setError("");
     setSuccess("");
 
     startBusy(async () => {
       try {
-        if (!hasAccess) {
+        if (!hasAccess && !openDirectly) {
           if (isPaid) {
             checkoutStartRef.current = true;
             setCheckoutStarting(true);
@@ -175,7 +175,7 @@ export default function ResourceDetailActions({ resource, requiresAuth = false, 
       <div className="flex flex-wrap gap-3">
         <button
           type="button"
-          onClick={handlePrimary}
+          onClick={() => handlePrimary()}
           disabled={busy || checkoutStarting}
           className="group relative inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full border border-sky-200/45 bg-[linear-gradient(135deg,rgba(56,189,248,0.95),rgba(59,130,246,0.92)_46%,rgba(14,165,233,0.95))] px-6 py-3 text-sm font-semibold tracking-[0.02em] text-white shadow-[0_16px_34px_-16px_rgba(14,165,233,0.95)] ring-1 ring-white/30 transition duration-200 hover:-translate-y-0.5 hover:border-sky-100/60 hover:brightness-105 hover:shadow-[0_20px_42px_-16px_rgba(14,165,233,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200/50 disabled:cursor-not-allowed disabled:opacity-60"
         >
@@ -183,6 +183,17 @@ export default function ResourceDetailActions({ resource, requiresAuth = false, 
           <span className="relative">{checkoutStarting ? "Opening secure Checkout..." : busy ? (hasAccess && isHosted ? "Preparing download..." : "Updating your vault...") : primaryLabel}</span>
           {busy ? null : <span className="relative text-base leading-none transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true">↗</span>}
         </button>
+        {!hasAccess && !isPaid ? (
+          <button
+            type="button"
+            onClick={() => handlePrimary(true)}
+            disabled={busy || checkoutStarting}
+            className="group inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full border border-white/20 bg-white/[0.08] px-6 py-3 text-sm font-semibold tracking-[0.02em] text-white transition duration-200 hover:-translate-y-0.5 hover:border-sky-200/55 hover:bg-white/[0.14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200/50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <span>{busy ? "Opening resource..." : "Open resource"}</span>
+            {busy ? null : <span className="text-base leading-none transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true">↗</span>}
+          </button>
+        ) : null}
       </div>
       {busy && hasAccess && isHosted ? <div className="text-xs text-slate-400">Your file is being prepared and should download shortly.</div> : null}
       {paymentPending ? <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">Payment received. Confirming it with the secure payment service...</div> : null}

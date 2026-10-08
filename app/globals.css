@@ -244,6 +244,10 @@ html[data-theme="light"] :is(input, textarea)::placeholder {
   100% { background-position: 200% 50%; }
 }
 
+@keyframes resource-shimmer {
+  100% { transform: translateX(100%); }
+}
+
 @keyframes welcomeModalBackdropIn {
   from { opacity: 0; }
   to { opacity: 1; }

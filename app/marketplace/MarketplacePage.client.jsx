@@ -332,6 +332,15 @@ function MarketplaceNavIcon({ name, active }) {
     );
   }
 
+  if (name === "creators") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="8" r="3.25" />
+        <path d="M5 19c1.6-2.7 4.1-4 7-4s5.4 1.3 7 4" />
+      </svg>
+    );
+  }
+
   if (name === "payouts") {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -1866,13 +1875,15 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
       return [
         { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary", href: "/vault" },
         { key: "all-resources", label: "All Resources", hint: "Browse the full vault resource index.", icon: "orders", group: "primary", href: "/vault/resources" },
+        { key: "creators", label: "Creators", hint: "Meet the creators behind Vault resources.", icon: "creators", group: "primary", href: "/vault/creators" },
       ];
     }
 
     const baseTabs = [
       { key: "discover", label: "Home", hint: "Browse approved hosted packs and external sources.", icon: "discover", group: "primary", href: "/vault" },
       { key: "all-resources", label: "All Resources", hint: "Browse the full vault resource index.", icon: "orders", group: "primary", href: "/vault/resources" },
-      { key: "submit", label: "Submit", hint: "Create hosted or external listings and send them for review.", icon: "submit", group: "primary", href: "/vault/submit" },
+      { key: "creators", label: "Creators", hint: "Meet the creators behind Vault resources.", icon: "creators", group: "primary", href: "/vault/creators" },
+      { key: "submit", label: "Create", hint: "Create hosted or external listings and send them for review.", icon: "submit", group: "primary", href: "/vault/submit" },
       { key: "requests", label: "Requests", hint: "Track industry requests and completion workflows.", icon: "requests", group: "primary", href: "/vault/requests" },
       { key: "account", label: "My Vault", hint: "Manage your library and created vault resources.", icon: "library", group: "secondary", href: "/vault/account" },
     ];
@@ -3225,9 +3236,9 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
             authPromptVisible ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-[0.98] opacity-0",
           ].join(" ")}>
             <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-100/90">Account required</div>
-            <div className="mt-2 text-2xl font-semibold leading-tight text-white">Sign in or create an account to open this resource.</div>
+            <div className="mt-2 text-2xl font-semibold leading-tight text-white">Sign in or create a free account to open this resource.</div>
             <p className="mt-3 text-sm leading-7 text-slate-200/90">
-              You can browse freely while signed out. Opening resources requires an account so we can manage your vault access and library.
+              Creating an account is free and quick. You can browse freely while signed out; an account lets us manage your vault access and library.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link href={`/login?redirect=${encodeURIComponent(authPromptResourceHref)}`} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">

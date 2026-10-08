@@ -20,6 +20,15 @@ function truncateText(value, maxLength = 160) {
   return `${normalized.slice(0, Math.max(0, maxLength - 1)).trimEnd()}...`;
 }
 
+function getBackHref(value) {
+  const href = typeof value === "string" ? value : "";
+  return href.startsWith("/") && !href.startsWith("//") ? href : "/consultants";
+}
+
+function getProfileMonogram(name) {
+  return String(name || "Consultant").trim().slice(0, 2).toUpperCase();
+}
+
 function buildConsultantDescription(consultant, services) {
   const serviceNames = Array.isArray(services)
     ? services.map((service) => service?.name).filter(Boolean)
@@ -66,7 +75,7 @@ async function getConsultant(id) {
     .maybeSingle();
 
   if (!data || data.visibility !== "public") return null;
-  if (!["consultant", "both"].includes(String(data.profile_type || "consultant"))) return null;
+  if (!["consultant", "creator", "both"].includes(String(data.profile_type || "consultant"))) return null;
 
   const { data: svc } = await sb
     .from("consultant_services")
@@ -199,6 +208,8 @@ export async function generateMetadata(props) {
 
 export default async function ConsultantPage(props) {
   const { id: consultantId } = await props.params;
+  const searchParams = await props.searchParams;
+  const backHref = getBackHref(searchParams?.backTo);
   const data = await getConsultant(consultantId);
   if (!data) return notFound();
 
@@ -219,7 +230,7 @@ export default async function ConsultantPage(props) {
       <TrackView consultantId={consultantId} source="consultant_profile" />
 
       <div className="flex items-start justify-between">
-        <Link href="/consultants" className="text-sky-300 hover:underline">
+        <Link href={backHref} className="text-sky-300 hover:underline">
           ← Back
         </Link>
         <PermissionsGate
@@ -241,7 +252,11 @@ export default async function ConsultantPage(props) {
               loading="eager"
               className="h-28 w-28 shrink-0 rounded-lg bg-white/5 object-contain"
             />
-          ) : null}
+          ) : (
+            <div aria-label={`${consultant.display_name} monogram`} className="flex h-28 w-28 shrink-0 items-center justify-center rounded-lg border border-sky-200/25 bg-[linear-gradient(145deg,rgba(56,189,248,0.34),rgba(30,41,59,0.72))] text-3xl font-semibold text-sky-50 shadow-[0_16px_36px_-24px_rgba(56,189,248,0.9)]">
+              {getProfileMonogram(consultant.display_name)}
+            </div>
+          )}
           <div>
             <h1 className="text-3xl font-semibold text-slate-50">{consultant.display_name}</h1>
             {consultant.abn_verified ? (

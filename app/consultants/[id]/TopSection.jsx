@@ -5,6 +5,10 @@ import TrackView from "./TrackView.client.jsx";
 import ConsultantSocialLinks from "@/app/components/ConsultantSocialLinks";
 import ContactConsultantButton from "./ContactConsultantButton.client.jsx";
 
+function getProfileMonogram(name) {
+  return String(name || "Consultant").trim().slice(0, 2).toUpperCase();
+}
+
 export default function TopSection({
   consultantId,
   consultant,
@@ -41,7 +45,11 @@ export default function TopSection({
               loading="eager"
               className="h-28 w-28 shrink-0 rounded-lg bg-white/5 object-contain"
             />
-          ) : null}
+          ) : (
+            <div aria-label={`${consultant.display_name} monogram`} className="flex h-28 w-28 shrink-0 items-center justify-center rounded-lg border border-sky-200/25 bg-[linear-gradient(145deg,rgba(56,189,248,0.34),rgba(30,41,59,0.72))] text-3xl font-semibold text-sky-50 shadow-[0_16px_36px_-24px_rgba(56,189,248,0.9)]">
+              {getProfileMonogram(consultant.display_name)}
+            </div>
+          )}
           <div>
             <h1 className="text-3xl font-semibold text-slate-50">
               {consultant.display_name}
