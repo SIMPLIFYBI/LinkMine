@@ -1941,15 +1941,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
     setSuccess("");
   }
 
-  function handleResourceOpenIntent(event, href) {
-    if (signedIn) return;
-    event.preventDefault();
-    if (authPromptCloseTimeoutRef.current != null) {
-      window.clearTimeout(authPromptCloseTimeoutRef.current);
-      authPromptCloseTimeoutRef.current = null;
-    }
-    setAuthPromptResourceHref(href);
-  }
+  function handleResourceOpenIntent() {}
 
   function handleBecomeCreatorClick(event) {
     if (signedIn) return;

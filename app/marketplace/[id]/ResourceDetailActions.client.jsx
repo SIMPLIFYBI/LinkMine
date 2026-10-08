@@ -50,6 +50,7 @@ export default function ResourceDetailActions({ resource, requiresAuth = false, 
   const [success, setSuccess] = useState("");
   const [checkoutStarting, setCheckoutStarting] = useState(false);
   const [paymentPending, setPaymentPending] = useState(false);
+  const [showAccountPrompt, setShowAccountPrompt] = useState(false);
   const checkoutStartRef = useRef(false);
   const confirmedOrderIdRef = useRef("");
   const router = useRouter();
@@ -102,15 +103,45 @@ export default function ResourceDetailActions({ resource, requiresAuth = false, 
   }, [router, searchParams]);
 
   if (requiresAuth) {
+    if (!showAccountPrompt) {
+      return (
+        <section className="relative overflow-hidden rounded-[22px] border border-sky-200/20 bg-[linear-gradient(145deg,rgba(56,189,248,0.13),rgba(15,23,42,0.4)_56%,rgba(2,6,23,0.56))] p-5 ring-1 ring-white/[0.06]">
+          <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full border border-sky-100/15 bg-sky-300/10" aria-hidden="true" />
+          <div className="relative">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-sky-100/90">Ready when you are</div>
+            <p className="mt-2 text-sm leading-6 text-slate-200">Open this resource to continue.</p>
+            <button
+              type="button"
+              onClick={() => setShowAccountPrompt(true)}
+              className="group mt-5 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full border border-sky-100/55 bg-[linear-gradient(135deg,rgba(56,189,248,0.95),rgba(59,130,246,0.92))] px-5 text-sm font-semibold text-white shadow-[0_16px_34px_-18px_rgba(14,165,233,0.95)] transition hover:-translate-y-0.5 hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-100/70"
+            >
+              Open this resource
+              <span className="text-base leading-none transition-transform group-hover:translate-x-0.5" aria-hidden="true">↗</span>
+            </button>
+          </div>
+        </section>
+      );
+    }
+
     return (
-      <div className="space-y-3">
-        <div className="text-sm leading-7 text-slate-300">Sign in to download this resource and add it to your vault library.</div>
-        <div className="flex flex-wrap gap-3">
-          <Link href={`/login?redirect=${encodeURIComponent(`/vault/${resource.id}`)}`} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
-            Sign in to access
-          </Link>
+      <section className="relative overflow-hidden rounded-[22px] border border-sky-200/25 bg-[linear-gradient(145deg,rgba(56,189,248,0.18),rgba(15,23,42,0.42)_48%,rgba(2,6,23,0.56))] p-5 shadow-[0_24px_54px_-38px_rgba(56,189,248,0.9)] ring-1 ring-white/10">
+        <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full border border-sky-100/15 bg-sky-300/10" aria-hidden="true" />
+        <div className="relative">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-sky-100/90">Free account</div>
+          <h2 className="mt-2 text-xl font-semibold leading-tight text-white">Open this resource and build your Vault.</h2>
+          <p className="mt-2.5 max-w-md text-sm leading-6 text-slate-200/90">
+            Creating an account is fast and free. Save resources to your Vault, return to them anytime, and keep your mining tools in one place.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link href={`/login?redirect=${encodeURIComponent(`/vault/${resource.id}`)}`} className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-white/25 bg-white px-5 text-sm font-semibold text-slate-950 shadow-[0_14px_28px_-16px_rgba(255,255,255,0.8)] transition hover:-translate-y-0.5 hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-100/70">
+              Log in
+            </Link>
+            <Link href={`/signup?redirect=${encodeURIComponent(`/vault/${resource.id}`)}`} className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-sky-200/45 bg-sky-400/15 px-5 text-sm font-semibold text-sky-50 transition hover:-translate-y-0.5 hover:border-sky-100/70 hover:bg-sky-400/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-100/70">
+              Create free account
+            </Link>
+          </div>
         </div>
-      </div>
+      </section>
     );
   }
 

@@ -14,39 +14,17 @@ function normalizeSourceSurface(value) {
   return source.slice(0, 60);
 }
 
-async function logOpenEvent(sb, { userId, resourceId, accessKind, sourceSurface }) {
-  const { error } = await sb.from("resource_open_events").insert({
-    user_id: userId,
-    resource_id: resourceId,
-    access_kind: accessKind,
-    source_surface: sourceSurface,
+async function recordOpen(sb, { resourceId, accessKind, sourceSurface }) {
+  const { error } = await sb.rpc("record_resource_open", {
+    p_resource_id: resourceId,
+    p_access_kind: accessKind,
+    p_source_surface: sourceSurface,
   });
-
   if (error) {
-    console.error("[resources.access] Failed to log open event", {
+    console.error("[resources.access] Failed to record resource open", {
       resourceId,
-      userId,
       accessKind,
       sourceSurface,
-      error: error.message,
-    });
-  }
-}
-
-async function incrementOpenCount(sb, resourceId, currentOpenCount, currentDownloadCount) {
-  const nextOpenCount = Number(currentOpenCount || 0) + 1;
-  const nextDownloadCount = Number(currentDownloadCount || 0) + 1;
-  const { error } = await sb
-    .from("resources")
-    .update({
-      open_count: nextOpenCount,
-      download_count: nextDownloadCount,
-    })
-    .eq("id", resourceId);
-
-  if (error) {
-    console.error("[resources.access] Failed to update open counters", {
-      resourceId,
       error: error.message,
     });
   }
@@ -91,14 +69,11 @@ export async function POST(req, { params }) {
       return NextResponse.json({ ok: false, error: "External resource is missing a source URL." }, { status: 400 });
     }
 
-    void logOpenEvent(sb, {
-      userId,
+    await recordOpen(sb, {
       resourceId: id,
       accessKind: "external",
       sourceSurface,
     });
-
-    void incrementOpenCount(sb, id, resource.open_count, resource.download_count);
 
     return NextResponse.json({
       ok: true,
@@ -216,14 +191,11 @@ export async function POST(req, { params }) {
     return NextResponse.json({ ok: false, error: logError.message }, { status: 400 });
   }
 
-  await logOpenEvent(sb, {
-    userId,
+  await recordOpen(sb, {
     resourceId: id,
     accessKind: "hosted",
     sourceSurface,
   });
-
-  await incrementOpenCount(sb, id, resource.open_count, resource.download_count);
 
   return NextResponse.json({
     ok: true,

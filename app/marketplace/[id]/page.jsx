@@ -113,11 +113,11 @@ function CreatorPanel({ consultant, fallbackName = "", fallbackIconUrl = "" }) {
   const initials = getCreatorInitials(displayName);
   const iconUrl = consultant?.iconUrl || fallbackIconUrl;
   const profileHref = consultant?.id ? `/consultants/${consultant.id}?backTo=${encodeURIComponent("/vault/creators")}` : "";
-  const panelClassName = "mt-6 flex flex-wrap items-center justify-between gap-4 rounded-[20px] border border-sky-200/15 bg-[linear-gradient(135deg,rgba(56,189,248,0.14),rgba(15,23,42,0.36))] p-4 ring-1 ring-white/5";
+  const panelClassName = "mt-7 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.055] p-3.5 ring-1 ring-white/[0.04]";
   const panelContents = (
     <>
       <div className="flex min-w-0 items-center gap-3.5">
-        <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[17px] border border-sky-100/25 bg-slate-900/45 text-lg font-bold text-white shadow-[0_14px_30px_-18px_rgba(56,189,248,0.8)]">
+        <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-slate-900/60 text-base font-bold text-white shadow-[0_12px_24px_-18px_rgba(56,189,248,0.8)]">
           {iconUrl ? (
             <img src={iconUrl} alt={`${displayName} logo`} className="h-full w-full object-cover" />
           ) : (
@@ -130,9 +130,8 @@ function CreatorPanel({ consultant, fallbackName = "", fallbackIconUrl = "" }) {
           <div className="mt-1 text-xs text-slate-300">Creator of this Vault resource</div>
         </div>
       </div>
-      {profileHref ? <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-sky-200/35 bg-sky-400/15 px-3.5 py-2 text-xs font-semibold text-sky-50 transition group-hover:-translate-y-0.5 group-hover:border-sky-100/60 group-hover:bg-sky-400/25">
+      {profileHref ? <span className="inline-flex shrink-0 items-center rounded-full border border-sky-200/25 bg-sky-400/10 px-3.5 py-2 text-xs font-semibold text-sky-50 transition group-hover:-translate-y-0.5 group-hover:border-sky-100/50 group-hover:bg-sky-400/20">
         View creator
-        <span aria-hidden="true" className="text-base leading-none transition-transform group-hover:translate-x-0.5">↗</span>
       </span> : null}
     </>
   );
@@ -304,10 +303,12 @@ export default async function MarketplaceResourcePage({ params }) {
 
   let uniqueOpeners30d = null;
   try {
-    const { data: uniqueOpeners } = await sb.rpc("resource_unique_openers_30d", {
+    const { data: uniqueOpeners, error: uniqueOpenersError } = await sb.rpc("resource_unique_openers_30d", {
       p_resource_id: id,
     });
-    uniqueOpeners30d = Number(uniqueOpeners ?? 0);
+    if (!uniqueOpenersError) {
+      uniqueOpeners30d = Number(uniqueOpeners ?? 0);
+    }
   } catch {
     uniqueOpeners30d = null;
   }
@@ -316,10 +317,11 @@ export default async function MarketplaceResourcePage({ params }) {
 
   return (
     <MarketplaceRouteShell signedIn={Boolean(user)} isAdmin={isAdmin} activeKey="account">
-      <div className="mx-auto max-w-6xl space-y-6">
+      <div className="mx-auto max-w-7xl space-y-5 pb-4 sm:space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link href="/vault" className="inline-flex items-center text-sm text-slate-400 transition hover:text-white">
-            Back to vault
+          <Link href="/vault" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-3.5 py-2 text-xs font-semibold text-slate-300 transition hover:border-sky-200/30 hover:bg-sky-400/10 hover:text-white">
+            <span aria-hidden="true">&larr;</span>
+            Back to Vault
           </Link>
           {canEditResource ? (
             <Link href={`/vault/${resource.id}/edit`} className="rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
@@ -328,16 +330,18 @@ export default async function MarketplaceResourcePage({ params }) {
           ) : null}
         </div>
 
-        <section className="overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_35px_120px_-60px_rgba(0,0,0,0.9)] ring-1 ring-white/10">
-          <div className="grid gap-8 px-6 py-7 sm:px-8 lg:grid-cols-[1.2fr,0.8fr] lg:px-10 lg:py-10">
-            <div>
+        <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(135deg,rgba(18,69,86,0.7),rgba(15,23,42,0.9)_48%,rgba(2,6,23,0.92))] shadow-[0_38px_110px_-58px_rgba(0,0,0,0.95)] ring-1 ring-white/[0.08]">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-200/50 to-transparent" aria-hidden="true" />
+          <div className="pointer-events-none absolute -left-24 -top-28 h-72 w-72 rounded-full bg-cyan-300/[0.08] blur-3xl" aria-hidden="true" />
+          <div className="relative grid xl:grid-cols-[minmax(0,1fr)_360px]">
+            <div className="p-6 sm:p-8 xl:p-10">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={statusTone(resource.status)}>{resource.status}</Badge>
                 <ResourceFormatChip format={resource.resourceFormat} />
                 {resource.category?.name ? <Badge tone="border-white/10 bg-white/[0.04] text-slate-300">{resource.category.name}</Badge> : null}
               </div>
 
-              <h1 className="mt-5 text-3xl font-semibold tracking-tight text-white sm:text-4xl">{resource.title}</h1>
+              <h1 className="mt-5 max-w-4xl bg-gradient-to-r from-white via-sky-50 to-sky-200/90 bg-clip-text text-3xl font-semibold leading-[1.08] tracking-tight text-transparent sm:text-4xl xl:text-[2.75rem]">{resource.title}</h1>
 
               <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
                 {resource.description || resource.summary || "No description has been added for this resource yet."}
@@ -363,37 +367,45 @@ export default async function MarketplaceResourcePage({ params }) {
               ) : null}
             </div>
 
-            <div className="space-y-4">
-              <div className="rounded-[28px] border border-white/10 bg-slate-950/35 p-5 ring-1 ring-white/10">
-                <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Click-through</div>
-                <div className="mt-3 text-3xl font-semibold text-white">{totalOpenCount}</div>
-                <div className="mt-2 text-sm text-slate-400">Total open clicks</div>
-                <div className="mt-2 text-xs text-slate-500">
-                  {uniqueOpeners30d == null ? "Unique users (30d): unavailable" : `Unique users (30d): ${uniqueOpeners30d}`}
-                </div>
-              </div>
-
-              <div className="rounded-[28px] border border-white/10 bg-slate-950/35 p-5 ring-1 ring-white/10">
+            <aside className="border-t border-white/10 bg-slate-950/25 xl:border-l xl:border-t-0">
+              <div className="p-5 sm:p-6 xl:p-7">
+                <div className="mb-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-sky-100/75">Resource access</div>
                 <ResourceDetailActions resource={resource} requiresAuth={!user} />
               </div>
-            </div>
+              <div className="grid grid-cols-2 divide-x divide-white/10 border-t border-white/10">
+                <div className="p-5 xl:p-6">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Opens</div>
+                  <div className="mt-2 text-3xl font-semibold tracking-tight text-white">{totalOpenCount}</div>
+                  <div className="mt-1 text-xs text-slate-400">Total activity</div>
+                </div>
+                <div className="p-5 xl:p-6">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Visitors</div>
+                  <div className="mt-2 text-3xl font-semibold tracking-tight text-white">{uniqueOpeners30d == null ? "-" : uniqueOpeners30d}</div>
+                  <div className="mt-1 text-xs text-slate-400">Last 30 days</div>
+                </div>
+              </div>
+            </aside>
           </div>
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-3">
-          <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5 ring-1 ring-white/10">
-            <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Access</div>
-            <div className="mt-3 text-sm text-slate-200">{resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file"}</div>
+        <section className="grid gap-3 md:grid-cols-3">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 transition hover:border-sky-200/20 hover:bg-white/[0.055]">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Access</div>
+            <div className="mt-3 text-sm font-medium text-slate-100">{resource.resourceType === "external" ? (resource.sourceName || "External source") : "Resource file"}</div>
             <div className="mt-3"><ResourceFormatChip format={resource.resourceFormat} /></div>
-            {resource.sourceUrl ? <div className="mt-2 break-all text-xs text-slate-400">{resource.sourceUrl}</div> : null}
+            {resource.sourceUrl ? <div className="mt-3 line-clamp-1 break-all text-xs text-slate-500">{resource.sourceUrl}</div> : null}
           </div>
-          <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5 ring-1 ring-white/10">
-            <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Size</div>
-            <div className="mt-3 text-sm text-slate-200">{formatResourceBytes(resource.estimatedSizeBytes) || "Not set"}</div>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 transition hover:border-sky-200/20 hover:bg-white/[0.055]">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Size</div>
+            <div className="mt-3 text-sm font-medium text-slate-100">
+              {resource.resourceType === "external" && !Number(resource.estimatedSizeBytes)
+                ? "Hosted externally"
+                : formatResourceBytes(resource.estimatedSizeBytes) || "Not set"}
+            </div>
           </div>
-          <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5 ring-1 ring-white/10">
-            <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Updated</div>
-            <div className="mt-3 text-sm text-slate-200">{formatDate(resource.updatedAt) || "Recently"}</div>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 transition hover:border-sky-200/20 hover:bg-white/[0.055]">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Updated</div>
+            <div className="mt-3 text-sm font-medium text-slate-100">{formatDate(resource.updatedAt) || "Recently"}</div>
           </div>
         </section>
 

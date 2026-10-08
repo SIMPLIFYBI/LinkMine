@@ -643,15 +643,7 @@ export default function ResourcesTablePageClient() {
     setFilters((prev) => ({ ...prev, page: Math.max(1, prev.page - 1) }));
   }
 
-  function handleResourceOpenIntent(event, href) {
-    if (signedIn) return;
-    event.preventDefault();
-    if (authPromptCloseTimeoutRef.current != null) {
-      window.clearTimeout(authPromptCloseTimeoutRef.current);
-      authPromptCloseTimeoutRef.current = null;
-    }
-    setAuthPromptResourceHref(href);
-  }
+  function handleResourceOpenIntent() {}
 
   function closeAuthPrompt() {
     setAuthPromptVisible(false);
