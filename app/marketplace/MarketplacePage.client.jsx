@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
+  ArrowRight24Regular,
   Apps24Regular,
   BranchFork24Regular,
   Code24Regular,
@@ -616,7 +617,7 @@ const RESOURCE_FORMAT_CARD_VARIANTS = {
     miniTitleClass: "mt-2.5 line-clamp-2 max-w-[9.8rem] text-[1rem] font-semibold leading-tight text-white",
     heroTitleClass: "mt-3 max-w-[27rem] text-[2rem] font-semibold tracking-tight text-white sm:text-[2.28rem]",
     heroSummaryClass: "mt-3 line-clamp-2 max-w-[22rem] text-sm leading-5 text-slate-100/85 sm:text-[14px]",
-    heroLabel: "Featured app",
+    heroLabel: "Featured",
   },
   pdf: {
     orbClass: "-right-9 top-3 h-[5.5rem] w-[5.5rem] rounded-full border border-red-100/34 bg-red-200/16 backdrop-blur-md",
@@ -655,8 +656,22 @@ function getResourceCardVariant(format) {
   return RESOURCE_FORMAT_CARD_VARIANTS[safeFormat] || RESOURCE_FORMAT_CARD_VARIANTS.generic;
 }
 
-const HOME_CTA_CLASS = "inline-flex items-center justify-center rounded-full border border-sky-200/45 bg-[linear-gradient(135deg,rgba(56,189,248,0.95),rgba(59,130,246,0.92)_46%,rgba(14,165,233,0.95))] px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-white shadow-[0_14px_30px_-14px_rgba(14,165,233,0.95)] ring-1 ring-white/30 transition hover:-translate-y-0.5 hover:border-sky-100/60 hover:shadow-[0_20px_38px_-16px_rgba(14,165,233,1)]";
-const HOME_CTA_COMPACT_CLASS = "inline-flex items-center justify-center rounded-full border border-sky-200/45 bg-[linear-gradient(135deg,rgba(56,189,248,0.95),rgba(59,130,246,0.92)_46%,rgba(14,165,233,0.95))] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white shadow-[0_14px_30px_-14px_rgba(14,165,233,0.95)] ring-1 ring-white/30 transition hover:-translate-y-0.5 hover:border-sky-100/60 hover:shadow-[0_20px_38px_-16px_rgba(14,165,233,1)]";
+const HOME_CTA_CLASS = "inline-flex items-center justify-center rounded-full border border-sky-200/50 bg-sky-400 px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-slate-950 shadow-[0_12px_26px_-14px_rgba(56,189,248,0.95)] transition duration-200 hover:-translate-y-0.5 hover:border-white hover:bg-sky-200 hover:shadow-[0_18px_32px_-14px_rgba(56,189,248,1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950";
+const HOME_CTA_COMPACT_CLASS = "inline-flex items-center justify-center rounded-full border border-sky-200/50 bg-sky-400 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-950 shadow-[0_12px_26px_-14px_rgba(56,189,248,0.95)] transition duration-200 hover:-translate-y-0.5 hover:border-white hover:bg-sky-200 hover:shadow-[0_18px_32px_-14px_rgba(56,189,248,1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950";
+
+function HomeResourceAction({ href, onClick, compact = false, className = "", tooltip, children }) {
+  return (
+    <span className="group/home-resource-action relative inline-flex">
+      <Link href={href} onClick={onClick} className={`${compact ? HOME_CTA_COMPACT_CLASS : HOME_CTA_CLASS} gap-1.5 ${className}`}>
+        {children}
+        <ArrowRight24Regular aria-hidden="true" className="h-3.5 w-3.5 transition-transform duration-200 group-hover/home-resource-action:translate-x-0.5" />
+      </Link>
+      <span role="tooltip" className="pointer-events-none absolute bottom-[calc(100%+10px)] right-0 z-20 w-max max-w-[13rem] rounded-lg border border-white/15 bg-slate-950/95 px-2.5 py-1.5 text-[11px] text-slate-100 opacity-0 shadow-[0_14px_28px_-16px_rgba(0,0,0,0.9)] transition-opacity duration-150 group-hover/home-resource-action:opacity-100 group-focus-within/home-resource-action:opacity-100">
+        {tooltip}
+      </span>
+    </span>
+  );
+}
 
 function EmptyState({ title, body }) {
   return (
@@ -866,9 +881,15 @@ function LibraryGalleryCard({ resource }) {
 
         <div className="mt-6 flex items-center justify-between gap-3">
           <div className="text-sm text-slate-100/78">{accessLabel}</div>
-          <Link href={detailHref} className="rounded-full border border-white/15 bg-white px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-slate-100">
-            Open resource
-          </Link>
+          <span className="group/open-resource relative inline-flex">
+            <Link href={detailHref} className="inline-flex items-center gap-1.5 rounded-full border border-sky-200/50 bg-sky-400 px-4 py-2 text-xs font-semibold text-slate-950 shadow-[0_12px_26px_-14px_rgba(56,189,248,0.95)] transition duration-200 hover:-translate-y-0.5 hover:border-white hover:bg-sky-200 hover:shadow-[0_18px_32px_-14px_rgba(56,189,248,1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950">
+              Open resource
+              <ArrowRight24Regular aria-hidden="true" className="h-3.5 w-3.5 transition-transform duration-200 group-hover/open-resource:translate-x-0.5" />
+            </Link>
+            <span role="tooltip" className="pointer-events-none absolute bottom-[calc(100%+10px)] right-0 z-20 w-max max-w-[13rem] rounded-lg border border-white/15 bg-slate-950/95 px-2.5 py-1.5 text-[11px] text-slate-100 opacity-0 shadow-[0_14px_28px_-16px_rgba(0,0,0,0.9)] transition-opacity duration-150 group-hover/open-resource:opacity-100 group-focus-within/open-resource:opacity-100">
+              View the full resource
+            </span>
+          </span>
         </div>
       </div>
     </article>
@@ -961,15 +982,10 @@ function MarketplaceShelfCard({ resource, onResourceClick }) {
         </div>
 
         <div>
-          <div className="min-h-[28px] text-[11px] text-slate-100/76">{resource.openCount ?? resource.downloadCount ?? 0} opens</div>
-          <div className="mt-3.5 flex items-center justify-between gap-2.5 sm:mt-4 sm:gap-3">
-            <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
-              <div className="mt-1 line-clamp-1 max-w-[130px] text-[11px] text-slate-100/72 sm:max-w-[160px] sm:text-xs">{accessLabel}</div>
-            </div>
-            <Link href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} className={HOME_CTA_CLASS}>
+          <div className="flex items-center justify-end gap-2.5 sm:gap-3">
+            <HomeResourceAction href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} tooltip="View the full resource">
               View resource
-            </Link>
+            </HomeResourceAction>
           </div>
         </div>
       </div>
@@ -1071,13 +1087,10 @@ function PromoRailCard({ resource, variant = "compact", onResourceClick }) {
             {resource.summary || "Open the resource to review the pack or linked source details."}
           </p>
         </div>
-        <div className="flex items-end justify-between gap-3">
-          <div className="rounded-full border border-white/12 bg-slate-950/28 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-100/88">
-            Included
-          </div>
-          <Link href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} className={HOME_CTA_COMPACT_CLASS}>
+        <div className="flex items-end justify-end gap-3">
+          <HomeResourceAction href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} compact tooltip="Open the full resource">
             Open
-          </Link>
+          </HomeResourceAction>
         </div>
       </div>
     </article>
@@ -1229,14 +1242,10 @@ function MobileHeroCard({ resource, onResourceClick }) {
             <ResourceFormatChip format={resource.resourceFormat} className="bg-slate-950/28" />
           </div>
           <p className={cardVariant.mobileHeroSummaryClass}>{resource.summary || resource.description || "Open the resource to review the full pack details."}</p>
-          <div className="mt-3.5 flex items-end justify-between gap-3">
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
-              <div className="mt-1 text-xs text-slate-100/70">{resource.openCount ?? resource.downloadCount ?? 0} opens</div>
-            </div>
-            <Link href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} className={HOME_CTA_COMPACT_CLASS}>
+          <div className="mt-3.5 flex items-end justify-end gap-3">
+            <HomeResourceAction href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} compact tooltip="Open the full resource">
               Open
-            </Link>
+            </HomeResourceAction>
           </div>
         </div>
       </div>
@@ -1261,9 +1270,9 @@ function MobilePromoBillboard({ resource, eyebrow = "Featured", onResourceClick 
           <div className="text-[10px] uppercase tracking-[0.2em] text-slate-100/76">{eyebrow}</div>
           <div className="mt-2.5 line-clamp-2 text-[1.18rem] font-semibold leading-[1.12] text-white">{resource.title}</div>
           <div className="mt-1.5 line-clamp-2 text-[13px] leading-5 text-slate-100/80">{resource.summary || "Explore the resource details."}</div>
-          <Link href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} className={`${HOME_CTA_COMPACT_CLASS} mt-3 w-fit`}>
+          <HomeResourceAction href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} compact className="mt-3 w-fit" tooltip="View the full resource">
             View resource
-          </Link>
+          </HomeResourceAction>
         </div>
       </div>
     </article>
@@ -1285,9 +1294,9 @@ function MobileMiniPromoCard({ resource, onResourceClick }) {
           <div className="text-[10px] uppercase tracking-[0.2em] text-slate-100/76">{resource.category?.name || "Resource"}</div>
           <div className={cardVariant.miniTitleClass}>{resource.title}</div>
         </div>
-        <Link href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} className={`${HOME_CTA_COMPACT_CLASS} w-fit`}>
+        <HomeResourceAction href={detailHref} onClick={(event) => onResourceClick?.(event, detailHref)} compact className="w-fit" tooltip="Open the full resource">
           Open
-        </Link>
+        </HomeResourceAction>
       </div>
     </article>
   );
@@ -2604,7 +2613,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                     <Link
                       href="/consultants/new?profileType=creator"
                       onClick={handleBecomeCreatorClick}
-                      className="group inline-flex items-center gap-2 rounded-full border border-emerald-200/35 bg-[linear-gradient(135deg,rgba(16,185,129,0.26),rgba(5,150,105,0.35))] px-4 py-2 text-white shadow-[0_14px_34px_-18px_rgba(16,185,129,0.8)] ring-1 ring-white/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-emerald-100/45 hover:shadow-[0_20px_44px_-20px_rgba(16,185,129,0.95)]"
+                      className="group inline-flex h-10 w-[13.5rem] items-center justify-center gap-2 rounded-full border border-emerald-200/35 bg-[linear-gradient(135deg,rgba(16,185,129,0.26),rgba(5,150,105,0.35))] text-white shadow-[0_14px_34px_-18px_rgba(16,185,129,0.8)] ring-1 ring-white/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-emerald-100/45 hover:shadow-[0_20px_44px_-20px_rgba(16,185,129,0.95)]"
                     >
                       <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/95">Become a Creator</span>
                       <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -2615,7 +2624,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                     <button
                       type="button"
                       onClick={collapseMarketplaceCover}
-                      className="group inline-flex items-center gap-2 rounded-full border border-sky-200/30 bg-[linear-gradient(135deg,rgba(56,189,248,0.26),rgba(14,116,144,0.35))] px-3.5 py-2 text-white shadow-[0_14px_34px_-18px_rgba(56,189,248,0.75)] ring-1 ring-white/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-sky-100/40 hover:shadow-[0_20px_44px_-20px_rgba(56,189,248,0.9)]"
+                      className="group inline-flex h-10 w-[13.5rem] items-center justify-center gap-2 rounded-full border border-sky-200/30 bg-[linear-gradient(135deg,rgba(56,189,248,0.26),rgba(14,116,144,0.35))] text-white shadow-[0_14px_34px_-18px_rgba(56,189,248,0.75)] ring-1 ring-white/20 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-sky-100/40 hover:shadow-[0_20px_44px_-20px_rgba(56,189,248,0.9)]"
                       aria-label="Collapse vault banner"
                     >
                       <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/95">Collapse</span>
@@ -2682,15 +2691,15 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.18),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))]" />
                     <div className={["pointer-events-none absolute", heroCardVariant.orbClass].join(" ")} />
                     <div className={["pointer-events-none absolute", heroCardVariant.blockClass].join(" ")} />
-                    <ResourceOwnerBadge
-                      resource={heroResource}
-                      className="absolute left-7 top-7 flex h-14 w-14 items-center justify-center overflow-hidden rounded-[18px] border border-white/20 text-base font-semibold text-slate-950 shadow-[0_10px_26px_-12px_rgba(255,255,255,0.7)]"
-                      style={{ backgroundImage: heroArtwork?.chipBackground }}
-                    />
-                    <div className="relative z-10 flex h-full flex-col justify-between gap-6 pt-6 sm:pt-7">
+                    <div className="relative z-10 flex h-full flex-col justify-between gap-6">
                       <div>
-                        <div className="mt-6 max-w-[34rem]">
-                          <div className="text-[11px] uppercase tracking-[0.28em] text-slate-200">{heroCardVariant.heroLabel}</div>
+                        <div className="max-w-[34rem]">
+                          <div className="text-[11px] uppercase tracking-[0.28em] text-sky-300">{heroCardVariant.heroLabel}</div>
+                          <ResourceOwnerBadge
+                            resource={heroResource}
+                            className="mt-2 flex h-14 w-14 items-center justify-center overflow-hidden rounded-[18px] border border-white/20 text-base font-semibold text-slate-950 shadow-[0_10px_26px_-12px_rgba(255,255,255,0.7)]"
+                            style={{ backgroundImage: heroArtwork?.chipBackground }}
+                          />
                           <div className={heroCardVariant.heroTitleClass}>{heroResource.title}</div>
                           <p className={heroCardVariant.heroSummaryClass}>{heroResource.summary || heroResource.description || "Open the resource to review the full pack details."}</p>
                         </div>
@@ -2698,16 +2707,10 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                           <ResourceFormatChip format={heroResource.resourceFormat} />
                         </div>
                       </div>
-                      <div className="flex flex-wrap items-end justify-between gap-3.5">
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          <div className="rounded-[18px] border border-white/10 bg-slate-950/24 px-3.5 py-2.5 text-sm text-slate-100 backdrop-blur-sm">
-                            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-100">Included</div>
-                            <div className="mt-1 text-xs text-slate-300/80">{heroResource.openCount ?? heroResource.downloadCount ?? 0} opens</div>
-                          </div>
-                        </div>
-                        <Link href={`/vault/${heroResource.id}`} onClick={(event) => handleResourceOpenIntent(event, `/vault/${heroResource.id}`)} className={`${HOME_CTA_CLASS} px-4.5 py-2.5 text-sm`}>
+                      <div className="flex flex-wrap items-end justify-end gap-3.5">
+                        <HomeResourceAction href={`/vault/${heroResource.id}`} onClick={(event) => handleResourceOpenIntent(event, `/vault/${heroResource.id}`)} className="px-4.5 py-2.5 text-sm" tooltip="View the full resource">
                           View resource
-                        </Link>
+                        </HomeResourceAction>
                       </div>
                     </div>
                   </div>
