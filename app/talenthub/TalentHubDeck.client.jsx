@@ -171,9 +171,9 @@ function WorkerDetailModal({ worker, onClose, isAdmin = false, onEdit, isEditing
           Close
         </button>
 
-        <div className="flex gap-4 pr-20">
+        <div className="flex flex-col gap-4 pr-16 sm:flex-row sm:pr-20">
           <TalentAvatar animal={worker.aliasAnimal} descriptor={worker.aliasDescriptor} alias={worker.displayName} background={worker.avatarBackground} size="lg" />
-          <div>
+          <div className="w-full">
             <p className="section-label">Profile summary</p>
             <h2 className="mt-4 text-3xl font-semibold text-white">{worker.displayName}</h2>
             <p className="mt-2 text-lg text-slate-200">{worker.headline}</p>
@@ -198,31 +198,31 @@ function WorkerDetailModal({ worker, onClose, isAdmin = false, onEdit, isEditing
           {worker.workingRights ? <Badge>{worker.workingRights}</Badge> : null}
         </div>
 
-        <div className="mt-8 grid gap-6 md:grid-cols-[1.15fr_0.85fr]">
-          <section className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-5">
-            <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">CV snapshot</h3>
-            <p className="mt-4 text-sm leading-7 text-slate-200">{worker.bioPreview}</p>
+        <section className="mt-8 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-5">
+          <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">CV snapshot</h3>
+          <p className="mt-4 text-sm leading-7 text-slate-200">{worker.bioPreview}</p>
+        </section>
 
-            <div className="mt-6">
-              <h4 className="text-sm font-semibold text-white">Recent experience</h4>
-              <div className="mt-3 space-y-3">
-                {worker.experiences.length ? worker.experiences.map((experience, index) => (
-                  <article key={`${worker.id}-detail-${index}`} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-semibold text-white">{experience.roleTitle}</div>
-                        {experience.company ? <div className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-400">{experience.company}</div> : null}
-                      </div>
-                      {experience.dateRange ? <div className="text-xs text-slate-400">{experience.dateRange}</div> : null}
+        <div className="mt-6 grid gap-6 md:grid-cols-[1.15fr_0.85fr]">
+          <section className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-5">
+            <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">Recent experience</h3>
+            <div className="mt-3 space-y-3">
+              {worker.experiences.length ? worker.experiences.map((experience, index) => (
+                <article key={`${worker.id}-detail-${index}`} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-white">{experience.roleTitle}</div>
+                      {experience.company ? <div className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-400">{experience.company}</div> : null}
                     </div>
-                    {experience.description ? <p className="mt-3 text-sm leading-6 text-slate-300">{experience.description}</p> : null}
-                  </article>
-                )) : (
-                  <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-sm text-slate-400">
-                    No experience added yet.
+                    {experience.dateRange ? <div className="text-xs text-slate-400">{experience.dateRange}</div> : null}
                   </div>
-                )}
-              </div>
+                  {experience.description ? <p className="mt-3 text-sm leading-6 text-slate-300">{experience.description}</p> : null}
+                </article>
+              )) : (
+                <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-sm text-slate-400">
+                  No experience added yet.
+                </div>
+              )}
             </div>
           </section>
 
@@ -274,9 +274,9 @@ function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef =
 
       <div className={`relative flex flex-col ${compact ? "p-5" : "p-6 pb-4 sm:p-8"}`}>
         <div>
-          <div className="flex items-start gap-3 pr-16 sm:pr-20">
+          <div className="flex flex-col items-start gap-3 pr-16 sm:flex-row sm:pr-20">
             <TalentAvatar animal={worker.aliasAnimal} descriptor={worker.aliasDescriptor} alias={worker.displayName} background={worker.avatarBackground} size={compact ? "sm" : "md"} />
-            <div className="min-w-0 pt-1">
+            <div className="w-full min-w-0 sm:pt-1">
               <p className="section-label truncate">{worker.displayName}</p>
             </div>
           </div>
