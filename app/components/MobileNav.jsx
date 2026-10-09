@@ -28,9 +28,10 @@ function Icon({ name, active }) {
     case "vault":
       return (
         <svg {...common} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 10.5 12 4l9 6.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8.5Z" />
-          <circle cx="12" cy="13" r="2.4" />
-          <path d="M12 10.6v4.8" />
+          <path d="m5 8 7-4 7 4-7 4-7-4Z" />
+          <path d="M5 8v8l7 4 7-4V8" />
+          <path d="M12 12v8" />
+          <path d="m8 15 4 2 4-2" />
         </svg>
       );
     case "users":
