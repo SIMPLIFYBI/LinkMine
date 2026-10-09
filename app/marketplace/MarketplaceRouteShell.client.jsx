@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 function classNames(parts) {
@@ -133,23 +134,16 @@ function MobileSidebarTabButton({ active, label, icon, onClick }) {
 
 export default function MarketplaceRouteShell({ children, signedIn = false, isAdmin = false, activeKey = "account" }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [protectedTab, setProtectedTab] = useState(null);
 
   const tabs = useMemo(() => {
-    if (!signedIn) {
-      return [
-        { key: "discover", label: "Home", icon: "discover", group: "primary", href: "/vault" },
-        { key: "all-resources", label: "All Resources", icon: "orders", group: "primary", href: "/vault/resources" },
-        { key: "creators", label: "Creators", icon: "creators", group: "primary", href: "/vault/creators" },
-      ];
-    }
-
     const baseTabs = [
       { key: "discover", label: "Home", icon: "discover", group: "primary", href: "/vault" },
       { key: "all-resources", label: "All Resources", icon: "orders", group: "primary", href: "/vault/resources" },
       { key: "creators", label: "Creators", icon: "creators", group: "primary", href: "/vault/creators" },
-      { key: "submit", label: "Create", icon: "submit", group: "primary", href: "/vault/submit" },
-      { key: "requests", label: "Requests", icon: "requests", group: "primary", href: "/vault/requests" },
-      { key: "account", label: "My Vault", icon: "library", group: "secondary", href: "/vault/account" },
+      { key: "submit", label: "Create", icon: "submit", group: "primary", href: "/vault/submit", requiresAuth: true },
+      { key: "requests", label: "Requests", icon: "requests", group: "primary", href: "/vault/requests", requiresAuth: true },
+      { key: "account", label: "My Vault", icon: "library", group: "secondary", href: "/vault/account", requiresAuth: true },
     ];
 
     if (isAdmin) {
@@ -161,6 +155,15 @@ export default function MarketplaceRouteShell({ children, signedIn = false, isAd
 
   const primaryTabs = tabs.filter((tab) => tab.group === "primary");
   const secondaryTabs = tabs.filter((tab) => tab.group === "secondary");
+
+  function handleTabSelect(tab) {
+    setMobileNavOpen(false);
+    if (!signedIn && tab.requiresAuth) {
+      setProtectedTab(tab);
+      return;
+    }
+    window.location.assign(tab.href);
+  }
 
   return (
     <main className="w-full px-0 py-0 lg:min-h-[calc(100vh-8rem)]">
@@ -180,7 +183,7 @@ export default function MarketplaceRouteShell({ children, signedIn = false, isAd
                   active={Boolean(tab.active)}
                   label={tab.label}
                   icon={tab.icon}
-                  onClick={() => window.location.assign(tab.href)}
+                  onClick={() => handleTabSelect(tab)}
                 />
               ))}
             </div>
@@ -192,7 +195,7 @@ export default function MarketplaceRouteShell({ children, signedIn = false, isAd
                   active={Boolean(tab.active)}
                   label={tab.label}
                   icon={tab.icon}
-                  onClick={() => window.location.assign(tab.href)}
+                  onClick={() => handleTabSelect(tab)}
                 />
               ))}
             </div>
@@ -257,8 +260,7 @@ export default function MarketplaceRouteShell({ children, signedIn = false, isAd
                     label={tab.label}
                     icon={tab.icon}
                     onClick={() => {
-                      setMobileNavOpen(false);
-                      window.location.assign(tab.href);
+                      handleTabSelect(tab);
                     }}
                   />
                 ))}
@@ -269,6 +271,25 @@ export default function MarketplaceRouteShell({ children, signedIn = false, isAd
           {children}
         </div>
       </div>
+
+      {protectedTab ? (
+        <div className="fixed inset-0 z-[140] flex items-center justify-center px-4 py-6">
+          <button type="button" onClick={() => setProtectedTab(null)} className="absolute inset-0 bg-slate-950/75 backdrop-blur-[2px]" aria-label="Close account prompt" />
+          <section className="relative w-full max-w-lg overflow-hidden rounded-[28px] border border-sky-200/25 bg-[linear-gradient(155deg,rgba(56,189,248,0.18),rgba(15,23,42,0.92)_44%,rgba(2,6,23,0.96))] p-6 shadow-[0_42px_110px_-48px_rgba(0,0,0,0.95)] ring-1 ring-sky-200/25 sm:p-7">
+            <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full border border-sky-100/15 bg-sky-300/10" aria-hidden="true" />
+            <div className="relative">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-100/90">Free account</div>
+              <h2 className="mt-2 text-2xl font-semibold leading-tight text-white">Sign in to use {protectedTab.label}.</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-200/90">Create a free account to build your Vault, submit resources, and manage requests in one place.</p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link href={`/login?redirect=${encodeURIComponent(protectedTab.href)}`} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-50">Log in</Link>
+                <Link href={`/signup?redirect=${encodeURIComponent(protectedTab.href)}`} className="rounded-full border border-sky-200/40 bg-sky-400/15 px-5 py-3 text-sm font-semibold text-sky-50 transition hover:border-sky-100/65 hover:bg-sky-400/25">Create free account</Link>
+                <button type="button" onClick={() => setProtectedTab(null)} className="rounded-full border border-white/14 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/[0.1]">Not now</button>
+              </div>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }

@@ -3084,22 +3084,43 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
         ) : null}
 
         {activeTab === "requests" ? (
-          <SectionCard title="Resource requests" subtitle="Track open requests, claims, and completed fulfilment paths.">
+          <SectionCard title="Request board" subtitle="Turn unmet operational needs into useful Vault resources.">
+            <section className="relative mb-6 overflow-hidden rounded-[26px] border border-sky-300/20 bg-[radial-gradient(circle_at_88%_12%,rgba(56,189,248,0.28),transparent_28%),linear-gradient(135deg,rgba(8,47,73,0.9),rgba(15,23,42,0.96)_54%,rgba(2,6,23,0.98))] px-5 py-6 shadow-[0_26px_62px_-38px_rgba(14,165,233,0.64)] sm:px-6 sm:py-7">
+              <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full border border-sky-100/15 bg-sky-300/10" />
+              <div className="pointer-events-none absolute bottom-[-4rem] right-[16%] h-28 w-28 rotate-12 rounded-[24px] border border-white/10 bg-white/[0.04]" />
+              <div className="relative max-w-2xl">
+                <div className="inline-flex items-center gap-2 rounded-full border border-sky-200/20 bg-sky-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-100">
+                  Community demand
+                </div>
+                <h2 className="mt-3 text-2xl font-semibold leading-tight text-white sm:text-3xl">Need something that isn&apos;t built yet?</h2>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-slate-200 sm:text-base">Describe the tool, template, dataset, or workflow you need. Vault creators can respond with an existing resource or build the missing piece.</p>
+                <div className="mt-5 flex flex-wrap gap-2 text-xs font-medium">
+                  <span className="rounded-full border border-white/12 bg-white/[0.08] px-3 py-1.5 text-slate-100">{requests.filter((request) => request.status === "open").length} open requests</span>
+                  <span className="rounded-full border border-white/12 bg-white/[0.08] px-3 py-1.5 text-slate-100">{requests.filter((request) => request.status === "claimed").length} in progress</span>
+                  <span className="rounded-full border border-white/12 bg-white/[0.08] px-3 py-1.5 text-slate-100">Post a need. Get a response.</span>
+                </div>
+              </div>
+            </section>
             <div className="grid gap-6 lg:grid-cols-[0.9fr,1.1fr]">
-              <form className="space-y-4 rounded-[26px] border border-white/10 bg-white/[0.03] p-5" onSubmit={handleRequestSubmit}>
+              <form className="space-y-4 rounded-[26px] border border-sky-300/20 bg-[linear-gradient(180deg,rgba(14,116,144,0.16),rgba(255,255,255,0.035))] p-5 shadow-[0_24px_54px_-40px_rgba(14,165,233,0.7)] ring-1 ring-white/10" onSubmit={handleRequestSubmit}>
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-200">Post a request</div>
+                  <h3 className="mt-1 text-lg font-semibold text-white">Make the brief useful</h3>
+                  <p className="mt-1 text-sm leading-5 text-slate-300">Specific context helps creators decide whether they can help.</p>
+                </div>
                 <Field label="Request title">
                   <TextInput value={requestForm.title} onChange={(event) => setRequestForm((prev) => ({ ...prev, title: event.target.value }))} placeholder="Queensland open pit drill pattern spreadsheet" />
                 </Field>
                 <Field label="Specifications">
                   <TextArea rows={6} value={requestForm.specifications} onChange={(event) => setRequestForm((prev) => ({ ...prev, specifications: event.target.value }))} placeholder="Describe the required file, intended workflow, expected format, and any constraints." />
                 </Field>
-                <button type="submit" disabled={busyAction} className="w-full rounded-full border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50">
+                <button type="submit" disabled={busyAction} className="w-full rounded-full border border-sky-200/50 bg-sky-300 px-5 py-3 text-sm font-semibold text-slate-950 shadow-[0_14px_28px_-18px_rgba(56,189,248,0.9)] transition hover:-translate-y-0.5 hover:border-white hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50">
                   Create request
                 </button>
               </form>
               <div className="space-y-4">
                 {requests.length ? requests.map((request) => (
-                  <article key={request.id} className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5 ring-1 ring-white/10">
+                  <article key={request.id} className="rounded-[26px] border border-white/10 bg-[linear-gradient(140deg,rgba(255,255,255,0.08),rgba(255,255,255,0.025))] p-5 shadow-[0_20px_48px_-38px_rgba(0,0,0,0.82)] ring-1 ring-white/10 transition hover:border-sky-200/25 hover:bg-white/[0.06]">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
@@ -3108,8 +3129,8 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                         </div>
                         <p className="mt-3 text-sm leading-6 text-slate-300">{request.specifications}</p>
                       </div>
-                      <div className="text-right text-sm text-slate-400">
-                        <div>Open request</div>
+                      <div className="rounded-xl border border-white/10 bg-slate-950/25 px-3 py-2 text-right text-xs text-slate-400">
+                        <div className="font-medium text-slate-300">Posted</div>
                         <div className="mt-1">{formatDate(request.createdAt) || "Recently"}</div>
                       </div>
                     </div>
