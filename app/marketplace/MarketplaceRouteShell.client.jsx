@@ -22,11 +22,10 @@ function MarketplaceNavIcon({ name, active }) {
   if (name === "submit") {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="4" y="5" width="16" height="14" rx="2.5" />
-        <path d="M8 9h8" />
-        <path d="M8 13h5" />
-        <path d="M15.5 15.5v-4" />
-        <path d="M13.5 13.5h4" />
+        <path d="M7 3.5h6l4 4V20a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 6 20V5a1.5 1.5 0 0 1 1-1.5Z" />
+        <path d="M13 3.5V8h4" />
+        <path d="M9 13h6" />
+        <path d="M12 10v6" />
       </svg>
     );
   }

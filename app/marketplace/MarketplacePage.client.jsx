@@ -282,11 +282,10 @@ function MarketplaceNavIcon({ name, active }) {
   if (name === "submit") {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="4" y="5" width="16" height="14" rx="2.5" />
-        <path d="M8 9h8" />
-        <path d="M8 13h5" />
-        <path d="M15.5 15.5v-4" />
-        <path d="M13.5 13.5h4" />
+        <path d="M7 3.5h6l4 4V20a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 6 20V5a1.5 1.5 0 0 1 1-1.5Z" />
+        <path d="M13 3.5V8h4" />
+        <path d="M9 13h6" />
+        <path d="M12 10v6" />
       </svg>
     );
   }
@@ -380,15 +379,19 @@ function SidebarTabButton({ active, label, icon, onClick }) {
 }
 
 function SectionCard({ title, subtitle, actions, children }) {
+  const hasHeader = title || subtitle || actions;
+
   return (
     <section className="overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.035))] shadow-[0_30px_80px_-44px_rgba(0,0,0,0.75)] backdrop-blur-sm ring-1 ring-white/10">
-      <div className="flex flex-col gap-3 border-b border-white/10 px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6">
-        <div>
-          <div className="text-lg font-semibold text-white">{title}</div>
-          {subtitle ? <div className="mt-1 text-sm text-slate-300">{subtitle}</div> : null}
+      {hasHeader ? (
+        <div className="flex flex-col gap-3 border-b border-white/10 px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6">
+          <div>
+            {title ? <div className="text-lg font-semibold text-white">{title}</div> : null}
+            {subtitle ? <div className="mt-1 text-sm text-slate-300">{subtitle}</div> : null}
+          </div>
+          {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
         </div>
-        {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
-      </div>
+      ) : null}
       <div className="px-5 py-5 sm:px-6">{children}</div>
     </section>
   );
@@ -2803,14 +2806,31 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
         ) : null}
 
         {activeTab === "submit" ? (
-          <SectionCard title="Submit resources" subtitle="Create new vault listings for review.">
+          <SectionCard>
             <div className="space-y-6">
+              <section className="relative overflow-hidden rounded-[26px] border border-sky-300/20 bg-[radial-gradient(circle_at_88%_12%,rgba(56,189,248,0.28),transparent_28%),linear-gradient(135deg,rgba(8,47,73,0.9),rgba(15,23,42,0.96)_54%,rgba(2,6,23,0.98))] px-5 py-6 shadow-[0_26px_62px_-38px_rgba(14,165,233,0.64)] sm:px-6 sm:py-7">
+                <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full border border-sky-100/15 bg-sky-300/10" />
+                <div className="pointer-events-none absolute bottom-[-4rem] right-[16%] h-28 w-28 rotate-12 rounded-[24px] border border-white/10 bg-white/[0.04]" />
+                <div className="relative max-w-2xl">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-sky-200/20 bg-sky-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-100">
+                    Creator workspace
+                  </div>
+                  <h2 className="mt-3 text-2xl font-semibold leading-tight text-white sm:text-3xl">Have something worth sharing?</h2>
+                  <p className="mt-2 max-w-xl text-sm leading-6 text-slate-200 sm:text-base">Publish a practical pack or trusted external source for the mining community. Add the context people need, then send it through for review.</p>
+                  <div className="mt-5 flex flex-wrap gap-2 text-xs font-medium">
+                    <span className="rounded-full border border-white/12 bg-white/[0.08] px-3 py-1.5 text-slate-100">Hosted packs</span>
+                    <span className="rounded-full border border-white/12 bg-white/[0.08] px-3 py-1.5 text-slate-100">External sources</span>
+                    <span className="rounded-full border border-white/12 bg-white/[0.08] px-3 py-1.5 text-slate-100">Review before publishing</span>
+                  </div>
+                </div>
+              </section>
               {canCreateResources ? (
                 <form className="space-y-5" onSubmit={handleResourceSubmit}>
-                    <section className="overflow-hidden rounded-[28px] border border-white/12 bg-[linear-gradient(150deg,rgba(56,189,248,0.16),rgba(15,23,42,0.92))] ring-1 ring-white/10">
+                    <section className="overflow-hidden rounded-[28px] border border-sky-300/20 bg-[linear-gradient(150deg,rgba(14,116,144,0.22),rgba(15,23,42,0.92))] shadow-[0_24px_54px_-40px_rgba(14,165,233,0.7)] ring-1 ring-white/10">
                       <div className="border-b border-white/10 px-5 py-4 sm:px-6">
-                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-100/90">Create resource flow</div>
-                        <div className="mt-2 text-lg font-semibold text-white">Tell us what you are publishing</div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-100/90">Create resource</div>
+                        <div className="mt-2 text-lg font-semibold text-white">Start with the practical value</div>
+                        <p className="mt-1 text-sm text-slate-300">Work through the details below, then choose when to send it for review.</p>
                       </div>
                     </section>
 
@@ -2980,20 +3000,48 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                     </CreateFlowSection>
                 </form>
               ) : (
-                <div className="rounded-[28px] border border-amber-400/20 bg-[linear-gradient(180deg,rgba(245,158,11,0.12),rgba(15,23,42,0.6))] p-6 text-sm text-slate-300 ring-1 ring-amber-300/10">
-                  <div className="text-lg font-semibold text-white">Vault publishing is currently limited to approved consultants and creators</div>
-                  <p className="mt-3 max-w-2xl leading-7 text-slate-300">
-                    {createResourceRequirementMessage || "You need an approved consultant or creator profile before you can publish vault resources."}
-                  </p>
-                  <div className="mt-5 flex flex-wrap gap-3">
-                    <Link href="/consultants/new?profileType=creator" className="inline-flex rounded-full border border-sky-300/30 bg-sky-500/20 px-4 py-2 text-sm font-semibold text-sky-100 transition hover:bg-sky-500/30">
-                      Add a Digital Product
-                    </Link>
-                    <Link href="/account?tab=consultants" className="inline-flex rounded-full border border-white/10 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
-                      Open profile settings
-                    </Link>
+                <section className="relative overflow-hidden rounded-[28px] border border-amber-300/25 bg-[radial-gradient(circle_at_88%_12%,rgba(251,191,36,0.16),transparent_28%),linear-gradient(145deg,rgba(120,53,15,0.34),rgba(15,23,42,0.88)_58%,rgba(2,6,23,0.96))] p-5 text-sm text-slate-300 shadow-[0_26px_62px_-42px_rgba(245,158,11,0.46)] ring-1 ring-amber-300/10 sm:p-6">
+                  <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full border border-amber-100/15 bg-amber-300/10" />
+                  <div className="relative max-w-2xl">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-amber-200/25 bg-amber-300/10 px-3 py-1.5 text-xs font-semibold text-amber-100">
+                      <span className="h-2 w-2 rounded-full bg-amber-300 shadow-[0_0_14px_rgba(252,211,77,0.95)]" />
+                      {signedIn ? "Publishing profile required" : "Sign in required"}
+                    </div>
+                    <h3 className="mt-4 text-xl font-semibold text-white">
+                      {signedIn ? "Your account is not yet approved to publish" : "Sign in to start publishing"}
+                    </h3>
+                    <p className="mt-2 max-w-xl leading-7 text-slate-200">
+                      {signedIn
+                        ? "You are signed in, but this account does not currently have an approved consultant or creator profile connected for Vault publishing."
+                        : "Sign in or create a free account, then add a consultant or creator profile to publish resources in Vault."}
+                    </p>
+                    <div className="mt-4 rounded-2xl border border-amber-200/15 bg-slate-950/25 px-4 py-3 text-xs leading-5 text-amber-50/90">
+                      {createResourceRequirementMessage || "Vault publishing is available to approved consultant and creator profiles."}
+                    </div>
+                    {signedIn ? <p className="mt-3 text-xs font-medium text-amber-100/90">Creating a public creator profile is free.</p> : null}
+                    <div className="mt-5 flex flex-wrap gap-3">
+                      {signedIn ? (
+                        <>
+                          <Link href="/consultants/new?profileType=creator" className="inline-flex rounded-full border border-amber-200/35 bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 shadow-[0_14px_28px_-18px_rgba(251,191,36,0.82)] transition hover:-translate-y-0.5 hover:bg-amber-100">
+                            Create creator profile
+                          </Link>
+                          <Link href="/account?tab=consultants" className="inline-flex rounded-full border border-white/15 bg-white/[0.08] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.14]">
+                            Check profile status
+                          </Link>
+                        </>
+                      ) : (
+                        <>
+                          <Link href={`/login?redirect=${encodeURIComponent("/vault/submit")}`} className="inline-flex rounded-full border border-amber-200/35 bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 shadow-[0_14px_28px_-18px_rgba(251,191,36,0.82)] transition hover:-translate-y-0.5 hover:bg-amber-100">
+                            Log in
+                          </Link>
+                          <Link href={`/signup?redirect=${encodeURIComponent("/vault/submit")}`} className="inline-flex rounded-full border border-white/15 bg-white/[0.08] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.14]">
+                            Create free account
+                          </Link>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </section>
               )}
             </div>
           </SectionCard>
@@ -3084,7 +3132,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
         ) : null}
 
         {activeTab === "requests" ? (
-          <SectionCard title="Request board" subtitle="Turn unmet operational needs into useful Vault resources.">
+          <SectionCard>
             <section className="relative mb-6 overflow-hidden rounded-[26px] border border-sky-300/20 bg-[radial-gradient(circle_at_88%_12%,rgba(56,189,248,0.28),transparent_28%),linear-gradient(135deg,rgba(8,47,73,0.9),rgba(15,23,42,0.96)_54%,rgba(2,6,23,0.98))] px-5 py-6 shadow-[0_26px_62px_-38px_rgba(14,165,233,0.64)] sm:px-6 sm:py-7">
               <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full border border-sky-100/15 bg-sky-300/10" />
               <div className="pointer-events-none absolute bottom-[-4rem] right-[16%] h-28 w-28 rotate-12 rounded-[24px] border border-white/10 bg-white/[0.04]" />
