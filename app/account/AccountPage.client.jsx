@@ -15,10 +15,9 @@ const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "")
 
 const TABS = [
   { key: "account", label: "Account" },
-  { key: "activity", label: "My Activity", href: "/account?tab=activity" },
+  { key: "activity", label: "Activity", href: "/account?tab=activity" },
   { key: "notifications", label: "Notifications" },
-  { key: "consultants", label: "My Consultancy" },
-  { key: "creators", label: "My Creators" },
+  { key: "profiles", label: "Profile" },
 ];
 
 const userTypes = [
@@ -156,26 +155,15 @@ export default function AccountPageClient({ initialTab = "account" }) {
   const userEmail = session?.user?.email ?? "Unknown";
   const userId = session?.user?.id ?? null;
 
-  const ownedConsultants = useMemo(() => {
+  const ownedProfiles = useMemo(() => {
     if (!userId) return [];
     return consultants
-      .filter((row) => ["consultant", "both"].includes(String(row.profile_type || "consultant")))
       .map((row) => ({
         id: row.id,
         name: row.display_name,
+        profileType: String(row.profile_type || "consultant"),
         isOwner: row.claimed_by === userId,
       }));
-  }, [consultants, userId]);
-
-  const ownedCreators = useMemo(() => {
-    if (!userId) return [];
-    return consultants
-      .filter((row) => ["creator", "both"].includes(String(row.profile_type || "consultant")))
-      .map((row) => ({
-      id: row.id,
-      name: row.display_name,
-      isOwner: row.claimed_by === userId,
-    }));
   }, [consultants, userId]);
 
   function updateProfileField(field, value) {
@@ -568,68 +556,60 @@ export default function AccountPageClient({ initialTab = "account" }) {
         </section>
       )}
 
-      {/* Existing tabs unchanged below */}
-      {activeTab === "consultants" && (
+      {activeTab === "profiles" && (
         <section className="mb-12 space-y-6">
-          <header>
-            <h2 className="text-2xl font-semibold tracking-tight">Consultant Ownership</h2>
-            <p className="mt-1 text-sm text-slate-300">Pages you’ve claimed or manage.</p>
+          <header className="relative overflow-hidden rounded-3xl border border-sky-300/20 bg-[linear-gradient(118deg,rgba(14,116,144,0.26),rgba(15,23,42,0.82)_48%,rgba(30,41,59,0.68))] px-6 py-7 shadow-[0_24px_60px_-38px_rgba(56,189,248,0.7)] ring-1 ring-white/10 sm:px-8">
+            <div className="pointer-events-none absolute -right-14 -top-20 h-52 w-52 rounded-full border border-sky-200/15 bg-sky-300/10 blur-2xl" />
+            <div className="relative max-w-2xl">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-200">Public profile</p>
+              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Your public presence</h1>
+              <p className="mt-3 text-sm leading-6 text-slate-200 sm:text-base">This is the profile people see when they discover your consultancy or creator work on YouMine.</p>
+            </div>
           </header>
           {profileError ? (
             <p className="text-sm text-red-400">{profileError}</p>
-          ) : ownedConsultants.length === 0 ? (
-            <p className="text-sm text-slate-300">You don’t own or manage any consultant pages yet.</p>
+          ) : ownedProfiles.length === 0 ? (
+            <section className="rounded-2xl border border-dashed border-white/15 bg-white/[0.03] px-6 py-10 text-center shadow-[0_22px_48px_-38px_rgba(0,0,0,0.85)]">
+              <p className="text-sm font-medium text-slate-100">No public profile yet</p>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-300">Create a consultancy or creator profile to give people a clear way to find and connect with you.</p>
+            </section>
           ) : (
             <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {ownedConsultants.map((item) => (
+              {ownedProfiles.map((item) => (
                 <li
                   key={item.id}
-                  className="group rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-sky-400/50 hover:bg-sky-500/10"
+                  className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.09),rgba(255,255,255,0.025))] p-5 shadow-[0_20px_42px_-34px_rgba(0,0,0,0.95)] transition duration-200 hover:-translate-y-1 hover:border-sky-300/45 hover:shadow-[0_24px_50px_-30px_rgba(14,165,233,0.5)]"
                 >
-                  <Link
-                    href={`/consultants/${item.id}`}
-                    className="block text-slate-100 no-underline"
-                    aria-label={`Open consultant profile: ${item.name}`}
-                  >
-                    <strong className="font-semibold">{item.name}</strong>
-                    <div className="mt-1 text-xs text-slate-400">
-                      {item.isOwner ? "Owner (claimed by you)" : "—"}
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-200/60 to-transparent" />
+                  <div className="text-slate-100">
+                    <div className="flex items-start justify-between gap-3">
+                      <strong className="text-lg font-semibold tracking-tight text-white">{item.name}</strong>
+                      <span className="inline-flex shrink-0 rounded-full border border-sky-200/20 bg-sky-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sky-100">
+                      {item.profileType === "both"
+                        ? "Both"
+                        : item.profileType === "creator"
+                          ? "Creator"
+                          : "Consultancy"}
+                      </span>
                     </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      )}
-
-      {activeTab === "creators" && (
-        <section className="mb-12 space-y-6">
-          <header>
-            <h2 className="text-2xl font-semibold tracking-tight">Creator Ownership</h2>
-            <p className="mt-1 text-sm text-slate-300">Creator pages you’ve claimed or manage.</p>
-          </header>
-          {profileError ? (
-            <p className="text-sm text-red-400">{profileError}</p>
-          ) : ownedCreators.length === 0 ? (
-            <p className="text-sm text-slate-300">You don’t own or manage any creator pages yet.</p>
-          ) : (
-            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {ownedCreators.map((item) => (
-                <li
-                  key={item.id}
-                  className="group rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:border-sky-400/50 hover:bg-sky-500/10"
-                >
-                  <Link
-                    href={`/creators/${item.id}`}
-                    className="block text-slate-100 no-underline"
-                    aria-label={`Open creator profile: ${item.name}`}
-                  >
-                    <strong className="font-semibold">{item.name}</strong>
-                    <div className="mt-1 text-xs text-slate-400">
-                      {item.isOwner ? "Owner (claimed by you)" : "—"}
+                    <p className="mt-3 text-sm text-slate-300">{item.profileType === "both" ? "Consultancy and creator profile" : `${item.profileType === "creator" ? "Creator" : "Consultancy"} public profile`}</p>
+                    <div className="mt-6 flex flex-wrap gap-2 border-t border-white/10 pt-4">
+                      <Link
+                        href={`/consultants/${item.id}`}
+                        className="inline-flex items-center justify-center rounded-full border border-sky-200/30 bg-sky-400/10 px-3.5 py-2 text-xs font-semibold text-sky-100 transition hover:border-sky-100/60 hover:bg-sky-400 hover:text-slate-950"
+                      >
+                        View profile
+                      </Link>
+                      {item.isOwner ? (
+                        <Link
+                          href={`/consultants/${item.id}/edit`}
+                          className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/[0.06] px-3.5 py-2 text-xs font-semibold text-white transition hover:border-white/30 hover:bg-white/[0.12]"
+                        >
+                          Edit profile
+                        </Link>
+                      ) : null}
                     </div>
-                  </Link>
+                  </div>
                 </li>
               ))}
             </ul>

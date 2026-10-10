@@ -414,10 +414,9 @@ export default async function MyActivityPage({ searchParams, embedded = false })
 
 const ACCOUNT_TABS = [
   { key: "account", label: "Account", href: "/account" },
-  { key: "activity", label: "My Activity", href: "/account?tab=activity" },
+  { key: "activity", label: "Activity", href: "/account?tab=activity" },
   { key: "notifications", label: "Notifications", href: "/account?tab=notifications" },
-  { key: "consultants", label: "My Consultancy", href: "/account?tab=consultants" },
-  { key: "creators", label: "My Creators", href: "/account?tab=creators" },
+  { key: "profiles", label: "Profile", href: "/account?tab=profiles" },
 ];
 
 function TabNav({ activeTab }) {

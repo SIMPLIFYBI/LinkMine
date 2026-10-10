@@ -3025,7 +3025,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                           <Link href="/consultants/new?profileType=creator" className="inline-flex rounded-full border border-amber-200/35 bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 shadow-[0_14px_28px_-18px_rgba(251,191,36,0.82)] transition hover:-translate-y-0.5 hover:bg-amber-100">
                             Create creator profile
                           </Link>
-                          <Link href="/account?tab=consultants" className="inline-flex rounded-full border border-white/15 bg-white/[0.08] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.14]">
+                          <Link href="/account?tab=profiles" className="inline-flex rounded-full border border-white/15 bg-white/[0.08] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.14]">
                             Check profile status
                           </Link>
                         </>
