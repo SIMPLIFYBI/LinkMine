@@ -1005,6 +1005,54 @@ function MarketplaceShelfCard({ resource, onResourceClick }) {
   );
 }
 
+function HomeCardSkeleton({ className = "" }) {
+  return (
+    <div className={`relative flex flex-none snap-start overflow-hidden rounded-[26px] border border-white/10 bg-slate-950/45 p-4 ${className}`}>
+      <div className="absolute inset-0 -translate-x-full animate-[resource-shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/[0.07] to-transparent" />
+      <div className="relative flex h-full w-full flex-col justify-between animate-pulse">
+        <div className="space-y-4">
+          <div className="h-7 w-12 rounded-full bg-white/[0.1]" />
+          <div className="space-y-2">
+            <div className="h-6 w-4/5 rounded-md bg-white/[0.12]" />
+            <div className="h-6 w-3/5 rounded-md bg-white/[0.08]" />
+          </div>
+          <div className="space-y-2 pt-2">
+            <div className="h-3 w-full rounded bg-white/[0.08]" />
+            <div className="h-3 w-3/4 rounded bg-white/[0.06]" />
+          </div>
+        </div>
+        <div className="ml-auto h-9 w-28 rounded-full bg-white/[0.1]" />
+      </div>
+    </div>
+  );
+}
+
+function HomeShelfLoading({ count = 3 }) {
+  return (
+    <>
+      {Array.from({ length: count }, (_, index) => (
+        <HomeCardSkeleton
+          key={index}
+          className="h-[304px] w-[286px] sm:h-[320px] sm:w-[320px] lg:w-[320px]"
+        />
+      ))}
+    </>
+  );
+}
+
+function HomeHeroLoading() {
+  return <HomeCardSkeleton className="h-[336px] w-full rounded-[24px] p-6" />;
+}
+
+function HomePromoLoading() {
+  return (
+    <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-1">
+      <HomeCardSkeleton className="h-[161px] w-full rounded-[24px]" />
+      <HomeCardSkeleton className="h-[161px] w-full rounded-[24px]" />
+    </div>
+  );
+}
+
 function CategoryShelfCard({ category, onSelect }) {
   const hue = hashString(category.name || "category");
   const accentHue = (hue + 36) % 360;
@@ -1436,6 +1484,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
     account: false,
   });
   const currentUserId = session?.user?.id || "";
+  const isDiscoverInitialLoading = activeTab === "discover" && loading && !loadedTabs.discover;
 
   const loadRequestResponses = useCallback(async (requestRows) => {
     if (!Array.isArray(requestRows) || !requestRows.length) {
@@ -2654,7 +2703,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
           {error ? <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-5 py-4 text-sm text-red-100">{error}</div> : null}
           {authError && session ? <div className="rounded-2xl border border-amber-300/30 bg-amber-500/10 px-5 py-4 text-sm text-amber-100">{authError}</div> : null}
           {success ? <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-5 py-4 text-sm text-emerald-100">{success}</div> : null}
-          {loading ? <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-6 text-sm text-slate-300">Loading vault data...</div> : null}
+          {loading && !isDiscoverInitialLoading ? <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-6 text-sm text-slate-300">Loading vault data...</div> : null}
 
           <div className="space-y-6">
         {activeTab === "discover" ? (
@@ -2721,11 +2770,13 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                     </div>
                   </div>
                 </article>
+              ) : isDiscoverInitialLoading ? (
+                <HomeHeroLoading />
               ) : (
                 <EmptyState title="No featured resources available." body="Approved resources that match your current filters will appear here." />
               )}
 
-              <PromoRail spotlightResource={spotlightResource} supportingResources={supportingResources} onResourceClick={handleResourceOpenIntent} />
+              {isDiscoverInitialLoading ? <HomePromoLoading /> : <PromoRail spotlightResource={spotlightResource} supportingResources={supportingResources} onResourceClick={handleResourceOpenIntent} />}
             </section>
 
             <div className="lg:hidden">
@@ -2734,7 +2785,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
                 subtitle="Swipe through new vault picks."
                 metaLabel="Storefront lane"
               >
-                {homeShelfResources.length ? homeShelfResources.map((resource) => (
+                {isDiscoverInitialLoading ? <HomeShelfLoading count={2} /> : homeShelfResources.length ? homeShelfResources.map((resource) => (
                     <MarketplaceShelfCard key={resource.id} resource={resource} onResourceClick={handleResourceOpenIntent} />
                 )) : <div className="py-2 text-sm text-slate-400">New resources will appear here as the approved catalogue grows.</div>}
               </ScrollShelf>
@@ -2746,7 +2797,7 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
               subtitle="A billboard-style shelf with consistent card sizes for cleaner scanning."
               metaLabel="Storefront lane"
             >
-              {homeShelfResources.length ? homeShelfResources.map((resource) => (
+              {isDiscoverInitialLoading ? <HomeShelfLoading /> : homeShelfResources.length ? homeShelfResources.map((resource) => (
                 <MarketplaceShelfCard key={resource.id} resource={resource} onResourceClick={handleResourceOpenIntent} />
               )) : <div className="py-2 text-sm text-slate-400">New resources will appear here as the approved catalogue grows.</div>}
             </ScrollShelf>
@@ -2754,13 +2805,13 @@ export default function MarketplacePageClient({ initialTab = "discover" }) {
 
             <section className="grid gap-4 xl:grid-cols-[minmax(0,1.32fr),minmax(0,1fr)]">
               <ScrollShelf title="Trending resources" subtitle="High-activity items presented as a card rail for quick scanning." metaLabel="Top activity">
-                {trendingResources.length ? trendingResources.map((resource) => (
+                {isDiscoverInitialLoading ? <HomeShelfLoading count={2} /> : trendingResources.length ? trendingResources.map((resource) => (
                   <MarketplaceShelfCard key={resource.id} resource={resource} onResourceClick={handleResourceOpenIntent} />
                 )) : <div className="py-2 text-sm text-slate-400">Trending resources will appear once usage data builds up.</div>}
               </ScrollShelf>
 
               <ScrollShelf title="Browse categories" subtitle="Jump into the strongest parts of the catalogue with one tap." metaLabel="Quick filters">
-                {categoryHighlights.length ? categoryHighlights.map((category) => (
+                {isDiscoverInitialLoading ? <HomeShelfLoading count={2} /> : categoryHighlights.length ? categoryHighlights.map((category) => (
                   <CategoryShelfCard
                     key={category.id}
                     category={category}

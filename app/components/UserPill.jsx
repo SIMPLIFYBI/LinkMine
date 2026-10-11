@@ -13,10 +13,15 @@ export default function UserPill() {
     const sb = supabaseBrowser();
     let mounted = true;
 
-    sb.auth.getUser().then(({ data }) => {
-      if (!mounted) return;
-      setEmail(data?.user?.email ?? null);
-    });
+    sb.auth.getUser()
+      .then(({ data }) => {
+        if (!mounted) return;
+        setEmail(data?.user?.email ?? null);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setEmail(null);
+      });
 
     const { data: sub } = sb.auth.onAuthStateChange((_e, session) => {
       setEmail(session?.user?.email ?? null);
