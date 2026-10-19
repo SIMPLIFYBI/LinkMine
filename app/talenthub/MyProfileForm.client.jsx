@@ -24,6 +24,10 @@ function inputClasses() {
   return "w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300/40 focus:ring-2 focus:ring-cyan-300/20";
 }
 
+function selectClasses() {
+  return `${inputClasses()} appearance-auto bg-[linear-gradient(180deg,rgba(8,17,28,0.98),rgba(7,20,34,0.98))] text-white [color-scheme:dark]`;
+}
+
 function textareaClasses() {
   return `${inputClasses()} min-h-[132px] resize-y`;
 }
@@ -31,13 +35,6 @@ function textareaClasses() {
 function selectOptionStyle() {
   return { backgroundColor: "#08111c", color: "#f8fafc" };
 }
-
-const workflowStatusDetails = {
-  draft: { label: "Draft", note: "This profile is not yet submitted for review.", markerClass: "bg-slate-400" },
-  pending: { label: "Pending review", note: "This profile is waiting for an administrator review.", markerClass: "bg-amber-300" },
-  approved: { label: "Approved", note: "This profile is approved and can be visible in Talent Hub.", markerClass: "bg-emerald-300" },
-  rejected: { label: "Needs changes", note: "An administrator has requested changes before approval.", markerClass: "bg-rose-300" },
-};
 
 function groupedRoleOptions(roleOptions) {
   const grouped = new Map();
@@ -82,13 +79,16 @@ function createProfileIdentity(initialProfile, currentProfile = {}) {
   };
 }
 
-export default function MyProfileForm({ initialProfile, roleOptions, workingRightsOptions, market, onSave, profileEndpoint = "/api/workers/me/profile", title = "My Profile" }) {
+export default function MyProfileForm({ initialProfile, roleOptions, workingRightsOptions, market, onSave, onDelete, profileEndpoint = "/api/workers/me/profile", title = "My Profile" }) {
   const [profile, setProfile] = useState(() => createProfileIdentity(initialProfile));
   const [saving, setSaving] = useState(false);
   const [aliasChangeVersion, setAliasChangeVersion] = useState(0);
   const [isAliasPreviewAnimating, setIsAliasPreviewAnimating] = useState(false);
   const [status, setStatus] = useState(null);
   const [specialisationMarket, setSpecialisationMarket] = useState(market);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     setProfile((current) => createProfileIdentity(initialProfile, current));
@@ -195,8 +195,26 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
     setStatus({ ok: true, msg: "New Talent Alias selected. Save to keep it." });
   }
 
+  async function deleteProfile() {
+    if (deleteConfirmation !== "DELETE" || deleting) return;
+    setDeleting(true);
+    setStatus(null);
+    try {
+      const response = await fetch(profileEndpoint, { method: "DELETE" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.error || "Unable to delete Talent Hub profile.");
+      setDeleteModalOpen(false);
+      setDeleteConfirmation("");
+      await onDelete?.();
+    } catch (error) {
+      setStatus({ ok: false, msg: error?.message || "Unable to delete Talent Hub profile." });
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
-    <section className="mt-6 touch-pan-y overscroll-y-contain rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.54),rgba(2,6,23,0.18))] px-4 py-6 pb-[calc(env(safe-area-inset-bottom)+9rem)] shadow-[0_36px_110px_-54px_rgba(8,145,178,0.95)] sm:px-6 sm:py-8 sm:pb-32">
+    <section className="mt-6 min-w-0 touch-pan-y overscroll-y-contain rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.54),rgba(2,6,23,0.18))] px-4 py-6 pb-[calc(env(safe-area-inset-bottom)+9rem)] shadow-[0_36px_110px_-54px_rgba(8,145,178,0.95)] sm:px-6 sm:py-8 sm:pb-32">
       <div className="flex flex-col gap-4 border-b border-white/10 pb-6 md:flex-row md:items-end md:justify-between">
         <div>
           <div className="section-label">Talent identity</div>
@@ -211,8 +229,8 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
         </div>
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="space-y-6">
+      <div className="mt-6 grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+        <div className="min-w-0 space-y-6">
           <section className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5">
             <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">Core profile</div>
             <div className="mt-5 grid gap-5 md:grid-cols-2">
@@ -222,13 +240,15 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
                     <div id="talent-alias-label" className="text-sm font-semibold text-white">Talent Alias</div>
                     <div className="mt-1 text-xs text-slate-400">This is the name Talent Hub uses for your candidate profile.</div>
                   </div>
-                  <div className="flex items-center justify-between gap-3 rounded-2xl border border-cyan-300/25 bg-cyan-400/[0.08] px-4 py-3">
+                  <div className="flex min-w-0 flex-wrap items-center gap-3 rounded-2xl border border-cyan-300/25 bg-cyan-400/[0.08] px-4 py-3 sm:flex-nowrap sm:justify-between">
                     <div key={aliasChangeVersion} className={isAliasPreviewAnimating ? "animate-pulse" : ""} aria-live="polite">
                       <TalentAvatar animal={profile.aliasAnimal} descriptor={profile.aliasDescriptor} alias={profile.talentAlias} background={profile.avatarBackground} size="lg" />
                     </div>
-                    <span key={`${profile.talentAlias}-${aliasChangeVersion}`} className={`min-w-0 flex-1 truncate text-lg font-semibold text-cyan-50 ${isAliasPreviewAnimating ? "animate-pulse" : ""}`} aria-live="polite">
-                      {profile.talentAlias}
-                    </span>
+                    <div className="min-w-0 flex-1 basis-[10rem] sm:basis-auto">
+                      <span key={`${profile.talentAlias}-${aliasChangeVersion}`} className={`block truncate text-lg font-semibold text-cyan-50 ${isAliasPreviewAnimating ? "animate-pulse" : ""}`} aria-live="polite">
+                        {profile.talentAlias}
+                      </span>
+                    </div>
                     <button
                       type="button"
                       onClick={regenerateTalentAlias}
@@ -265,25 +285,10 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
                 <input className={inputClasses()} value={profile.location} onChange={(event) => updateField("location", event.target.value)} placeholder="Perth, WA" />
               </FieldShell>
               <FieldShell label="Visibility" hint="Controls whether the profile can be shown publicly.">
-                <select className={inputClasses()} value={profile.visibility} onChange={(event) => updateField("visibility", event.target.value)}>
-                  <option value="public">Public</option>
-                  <option value="private">Private</option>
+                <select className={selectClasses()} value={profile.visibility} onChange={(event) => updateField("visibility", event.target.value)} style={selectOptionStyle()}>
+                  <option value="public" style={selectOptionStyle()}>Public</option>
+                  <option value="private" style={selectOptionStyle()}>Private</option>
                 </select>
-              </FieldShell>
-              <FieldShell label="Status" hint="Managed by Talent Hub administrators.">
-                {(() => {
-                  const workflowStatus = workflowStatusDetails[profile.status] || workflowStatusDetails.draft;
-                  return (
-                    <div className="group relative flex min-h-12 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-100" tabIndex={0}>
-                      <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${workflowStatus.markerClass}`} aria-hidden="true" />
-                      <span className="font-semibold">{workflowStatus.label}</span>
-                      <span className="ml-auto text-xs text-slate-400">Admin managed</span>
-                      <span role="tooltip" className="pointer-events-none absolute bottom-full left-0 z-20 mb-2 w-64 rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs leading-5 text-slate-200 opacity-0 shadow-xl transition group-hover:opacity-100 group-focus:opacity-100">
-                        {workflowStatus.note}
-                      </span>
-                    </div>
-                  );
-                })()}
               </FieldShell>
               <div className="md:col-span-2">
                 <fieldset>
@@ -412,13 +417,13 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
           </section>
         </div>
 
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <section className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5">
             <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">Working rights</div>
             <div className="mt-5 space-y-3">
               <FieldShell label="Working rights category" hint="Maps to the working_rights_slug field on the worker record.">
                 <select
-                  className={`${inputClasses()} bg-[linear-gradient(180deg,rgba(8,17,28,0.98),rgba(7,20,34,0.98))] text-white [color-scheme:dark]`}
+                  className={selectClasses()}
                   value={profile.workingRightsSlug}
                   onChange={(event) => updateField("workingRightsSlug", event.target.value)}
                   style={selectOptionStyle()}
@@ -434,7 +439,7 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
 
           <section className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
+              <div className="min-w-0">
                 <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">Specialisations</div>
                 <p className="mt-2 text-sm leading-6 text-slate-400">Choose the same categories and services used across YouMine consultant profiles.</p>
               </div>
@@ -448,7 +453,7 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
                   className="group overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/15"
                 >
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 text-left marker:hidden transition hover:bg-white/[0.03]">
-                    <div>
+                    <div className="min-w-0">
                       <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{groupName}</div>
                       <div className="mt-1 text-xs text-slate-500">
                         {options.filter((option) => profile.roleCategoryIds.includes(option.id)).length} selected
@@ -461,14 +466,14 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
                     {options.map((option) => {
                       const checked = profile.roleCategoryIds.includes(option.id);
                       return (
-                        <label key={option.id} className={`flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3 text-sm transition ${checked ? "border-cyan-300/35 bg-cyan-400/10 text-cyan-50" : "border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.05]"}`}>
+                        <label key={option.id} className={`flex min-w-0 cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3 text-sm transition ${checked ? "border-cyan-300/35 bg-cyan-400/10 text-cyan-50" : "border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.05]"}`}>
                           <input
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleRole(option.id)}
                             className="mt-0.5 h-4 w-4 rounded border-white/20 bg-slate-950 text-cyan-300 focus:ring-cyan-300/30"
                           />
-                          <span>
+                          <span className="min-w-0">
                             <span className="block font-medium">{option.name}</span>
                             {option.description ? <span className="mt-1 block text-xs text-slate-400">{option.description}</span> : null}
                           </span>
@@ -490,6 +495,16 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
               <li>Experience entries should be ordered with the most relevant roles first.</li>
             </ul>
           </section>
+
+          {onDelete ? (
+            <section className="rounded-[1.75rem] border border-rose-400/25 bg-rose-500/[0.07] p-5">
+              <div className="text-sm font-semibold uppercase tracking-[0.18em] text-rose-100">Delete Talent Hub profile</div>
+              <p className="mt-3 text-sm leading-6 text-slate-300">This removes your public card, profile details, specialisations, experience, availability, and private resumes. Existing connection requests and conversations remain available to both people.</p>
+              <button type="button" onClick={() => setDeleteModalOpen(true)} className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl border border-rose-300/35 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-100 transition hover:bg-rose-500/20">
+                Delete profile
+              </button>
+            </section>
+          ) : null}
         </div>
       </div>
 
@@ -511,6 +526,23 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
           </button>
         </div>
       </div>
+
+      {deleteModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="delete-profile-title">
+          <div className="w-full max-w-md rounded-2xl border border-rose-400/30 bg-slate-950 p-6 shadow-2xl">
+            <h2 id="delete-profile-title" className="text-xl font-semibold text-white">Delete Talent Hub profile?</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">Your card and profile data will be removed immediately. Your account and existing connection conversations will remain.</p>
+            <label className="mt-5 block text-sm font-semibold text-white">
+              Type DELETE to confirm
+              <input value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} className={`${inputClasses()} mt-2`} autoComplete="off" disabled={deleting} />
+            </label>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => { setDeleteModalOpen(false); setDeleteConfirmation(""); }} disabled={deleting} className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-white/5">Cancel</button>
+              <button type="button" onClick={deleteProfile} disabled={deleteConfirmation !== "DELETE" || deleting} className="rounded-xl bg-rose-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-rose-400 disabled:cursor-not-allowed disabled:opacity-50">{deleting ? "Deleting..." : "Delete profile"}</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

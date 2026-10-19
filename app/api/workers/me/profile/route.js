@@ -170,7 +170,15 @@ export async function PUT(req) {
   const payload = await req.json().catch(() => ({}));
   const access = await getProfileAccess(req, payload);
   if (access.error) return access.error;
-  const { sb, workerId, isAdmin } = access;
+  const { sb, workerId } = access;
+
+  if (access.isOwnProfile) {
+    const { error: ensureWorkerError } = await sb.rpc("ensure_talent_hub_worker");
+    if (ensureWorkerError) {
+      return NextResponse.json({ error: `Unable to prepare your Talent Hub profile: ${ensureWorkerError.message}` }, { status: 400 });
+    }
+  }
+
   const requestedAlias = cleanText(payload.talentAlias);
   let talentAlias = isTalentAlias(requestedAlias) ? requestedAlias : generateTalentAlias();
   let aliasParts = getTalentAliasParts(talentAlias);
@@ -178,7 +186,6 @@ export async function PUT(req) {
   const bio = cleanText(payload.bio);
   const location = cleanText(payload.location);
   const visibility = cleanText(payload.visibility) || "public";
-  const requestedStatus = cleanText(payload.status);
   const opportunityStatus = cleanText(payload.opportunityStatus) || DEFAULT_TALENT_OPPORTUNITY_STATUS;
   const avatarBackground = cleanText(payload.avatarBackground) || "sage";
   const workingRightsSlug = cleanNullableText(payload.workingRightsSlug);
@@ -191,22 +198,7 @@ export async function PUT(req) {
     return NextResponse.json({ error: "Invalid visibility." }, { status: 400 });
   }
 
-  if (requestedStatus && !STATUS_VALUES.has(requestedStatus)) {
-    return NextResponse.json({ error: "Invalid status." }, { status: 400 });
-  }
-
-  const { data: existingTalentProfile, error: existingTalentProfileError } = await sb
-    .from("talent_hub_profiles")
-    .select("status")
-    .eq("worker_id", workerId)
-    .maybeSingle();
-  if (existingTalentProfileError) {
-    return NextResponse.json({ error: existingTalentProfileError.message }, { status: 400 });
-  }
-
-  const status = isAdmin
-    ? requestedStatus || existingTalentProfile?.status || "draft"
-    : existingTalentProfile?.status || "draft";
+  const status = "approved";
 
   if (!TALENT_OPPORTUNITY_STATUS_VALUES.has(opportunityStatus)) {
     return NextResponse.json({ error: "Invalid opportunity status." }, { status: 400 });
@@ -345,4 +337,39 @@ export async function PUT(req) {
       experiences: savedExperiences,
     },
   });
+}
+
+export async function DELETE() {
+  const sb = await supabaseFromCookies();
+  const {
+    data: { user },
+  } = await sb.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+
+  const { data: resumes, error: resumesError } = await sb
+    .from("talent_resume_files")
+    .select("id, object_path")
+    .eq("candidate_worker_id", user.id);
+  if (resumesError) return NextResponse.json({ error: resumesError.message }, { status: 400 });
+
+  const objectPaths = (resumes || []).map((resume) => resume.object_path).filter(Boolean);
+  if (objectPaths.length) {
+    const { error: storageError } = await sb.storage.from("talent-resumes").remove(objectPaths);
+    if (storageError) return NextResponse.json({ error: `Unable to remove private resume files: ${storageError.message}` }, { status: 400 });
+  }
+
+  const deletionSteps = [
+    ["resume records", sb.from("talent_resume_files").delete().eq("candidate_worker_id", user.id)],
+    ["experience", sb.from("worker_experiences").delete().eq("worker_id", user.id)],
+    ["specialisations", sb.from("worker_service_interests").delete().eq("worker_id", user.id)],
+    ["availability", sb.from("worker_availability").delete().eq("worker_id", user.id)],
+    ["Talent Hub profile", sb.from("talent_hub_profiles").delete().eq("worker_id", user.id)],
+  ];
+
+  for (const [resource, operation] of deletionSteps) {
+    const { error } = await operation;
+    if (error) return NextResponse.json({ error: `Unable to remove ${resource}: ${error.message}` }, { status: 400 });
+  }
+
+  return NextResponse.json({ ok: true });
 }

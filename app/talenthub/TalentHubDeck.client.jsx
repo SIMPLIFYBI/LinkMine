@@ -1,16 +1,24 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Eye, Pencil, UserRoundPlus } from "lucide-react";
+import { Eye, Pencil, Send } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 import { getTalentOpportunityStatus } from "@/lib/talentOpportunityStatuses";
+import { INITIAL_CONNECTION_CONTACT_DETAILS_MESSAGE, initialConnectionMessageHasContactDetails } from "@/lib/talentConnectionMessage";
 import WorkerFavouriteButton from "./WorkerFavouriteButton.client";
 import MyProfileForm from "./MyProfileForm.client";
 import TalentAvatar from "./TalentAvatar.client";
 
+const darkSelectStyle = { backgroundColor: "#08111c", color: "#f8fafc" };
+
+function darkSelectClasses(baseClasses) {
+  return `${baseClasses} appearance-auto bg-[linear-gradient(180deg,rgba(8,17,28,0.98),rgba(7,20,34,0.98))] text-white [color-scheme:dark]`;
+}
+
 const tabs = [
   { key: "candidates", label: "Candidates" },
   { key: "favourites", label: "Favourites" },
+  { key: "connections", label: "Connections" },
   { key: "my-profile", label: "My Profile" },
 ];
 
@@ -86,38 +94,35 @@ function createWorkerPreview(profile, roleOptions, workingRightsOptions) {
   };
 }
 
-function TalentHubTabs({ activeTab, onChange, showAddProfile = false }) {
+function TalentHubTabs({ activeTab, onChange, pendingRequestCount = 0, showAddProfile = false }) {
   return (
-    <div className={showAddProfile ? "mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" : ""}>
-      <nav className="flex gap-3 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1 text-sm text-slate-100">
-        {tabs.map((tab) => {
-          const isActive = tab.key === activeTab;
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => onChange(tab.key)}
-              className={`flex-1 whitespace-nowrap rounded-full px-4 py-2 font-semibold transition ${
-                isActive ? "bg-cyan-300 text-slate-950 shadow" : "text-slate-300 hover:bg-white/5"
-              }`}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
-      </nav>
-
-      {showAddProfile ? (
-        <button
-          type="button"
-          onClick={() => onChange("my-profile")}
-          className="group inline-flex min-h-14 items-center justify-center gap-3 rounded-xl border border-cyan-200/50 bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 shadow-[0_12px_30px_-12px_rgba(34,211,238,0.9)] transition hover:bg-cyan-200 focus:outline-none focus:ring-2 focus:ring-cyan-200 focus:ring-offset-2 focus:ring-offset-slate-950"
-        >
-          <UserRoundPlus className="h-7 w-7 transition-transform group-hover:scale-110" aria-hidden="true" />
-          <span>Add my profile</span>
-        </button>
-      ) : null}
-    </div>
+    <nav className="flex gap-3 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1 text-sm text-slate-100">
+      {tabs.map((tab) => {
+        const isActive = tab.key === activeTab;
+        const isCreateProfileTab = showAddProfile && tab.key === "my-profile";
+        return (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => onChange(tab.key)}
+            className={`flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-full px-4 py-2 font-semibold transition ${
+              isActive
+                ? "bg-cyan-300 text-slate-950 shadow"
+                : isCreateProfileTab
+                  ? "bg-cyan-300/10 text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,0.2)] hover:bg-cyan-300/16"
+                  : "text-slate-300 hover:bg-white/5"
+            }`}
+          >
+            <span>{isCreateProfileTab ? "Create Profile" : tab.label}</span>
+            {tab.key === "connections" && pendingRequestCount > 0 ? (
+              <span className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-bold leading-none ${isActive ? "bg-slate-950 text-cyan-100" : "bg-amber-300 text-slate-950"}`} aria-label={`${pendingRequestCount} pending connection ${pendingRequestCount === 1 ? "request" : "requests"}`}>
+                {pendingRequestCount > 99 ? "99+" : pendingRequestCount}
+              </span>
+            ) : null}
+          </button>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -136,7 +141,122 @@ function Badge({ children, tone = "neutral" }) {
   );
 }
 
-function WorkerDetailModal({ worker, onClose, isAdmin = false, onEdit, isEditing = false }) {
+function RequestConnectionPanel({ worker, onSent }) {
+  const [profile, setProfile] = useState({ displayName: "", companyName: "", roleTitle: "", contactEmail: "" });
+  const [request, setRequest] = useState({ intent: "role", opportunityTitle: "", opportunityLocation: "", opportunityUrl: "", message: "" });
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/talent/requester-profile")
+      .then((response) => response.json().then((data) => ({ response, data })))
+      .then(({ response, data }) => {
+        if (!active) return;
+        if (!response.ok) throw new Error(data?.error || "Unable to load requester profile.");
+        if (data.profile) {
+          setProfile({
+            displayName: data.profile.display_name || "",
+            companyName: data.profile.company_name || "",
+            roleTitle: data.profile.role_title || "",
+            contactEmail: data.profile.contact_email || "",
+          });
+        }
+      })
+      .catch((error) => active && setStatus({ ok: false, text: error.message || "Unable to load your details." }))
+      .finally(() => active && setLoadingProfile(false));
+    return () => { active = false; };
+  }, []);
+
+  function updateProfile(field, value) {
+    setProfile((current) => ({ ...current, [field]: value }));
+  }
+
+  function updateRequest(field, value) {
+    setRequest((current) => ({ ...current, [field]: value }));
+  }
+
+  const messageHasContactDetails = initialConnectionMessageHasContactDetails(request.message);
+
+  async function submit(event) {
+    event.preventDefault();
+    if (messageHasContactDetails) {
+      setStatus({ ok: false, text: INITIAL_CONNECTION_CONTACT_DETAILS_MESSAGE });
+      return;
+    }
+    setSaving(true);
+    setStatus(null);
+    try {
+      const profileResponse = await fetch("/api/talent/requester-profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profile),
+      });
+      const profileData = await profileResponse.json().catch(() => ({}));
+      if (!profileResponse.ok) throw new Error(profileData?.error || "Unable to save requester details.");
+
+      const requestResponse = await fetch("/api/talent/requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ candidateWorkerId: worker.id, ...request }),
+      });
+      const requestData = await requestResponse.json().catch(() => ({}));
+      if (!requestResponse.ok) throw new Error(requestData?.error || "Unable to send connection request.");
+      setStatus({ ok: true, text: "Request sent. The candidate can now decide whether to connect." });
+      onSent?.(requestData.request);
+    } catch (error) {
+      setStatus({ ok: false, text: error?.message || "Unable to send connection request." });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const fieldClass = "w-full rounded-xl border border-white/10 bg-slate-950/35 px-3 py-2.5 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-cyan-300/50 focus:ring-2 focus:ring-cyan-300/20";
+
+  return (
+    <form onSubmit={submit} className="mt-6 rounded-[1.5rem] border border-cyan-300/20 bg-cyan-400/[0.06] p-5">
+      <div className="flex items-start gap-3">
+        <Send className="mt-0.5 h-5 w-5 shrink-0 text-cyan-200" aria-hidden="true" />
+        <div>
+          <h3 className="text-sm font-semibold text-white">Request to connect</h3>
+          <p className="mt-1 text-sm leading-6 text-slate-300">Your identity and note go to {worker.displayName}. Contact details stay private unless they choose to share them.</p>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <input className={fieldClass} value={profile.displayName} onChange={(event) => updateProfile("displayName", event.target.value)} placeholder="Your name" disabled={loadingProfile || saving} required />
+        <input className={fieldClass} value={profile.companyName} onChange={(event) => updateProfile("companyName", event.target.value)} placeholder="Company" disabled={loadingProfile || saving} />
+        <input className={fieldClass} value={profile.roleTitle} onChange={(event) => updateProfile("roleTitle", event.target.value)} placeholder="Your role" disabled={loadingProfile || saving} />
+        <input type="email" className={fieldClass} value={profile.contactEmail} onChange={(event) => updateProfile("contactEmail", event.target.value)} placeholder="Work email (optional)" disabled={loadingProfile || saving} />
+      </div>
+
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <select className={darkSelectClasses(fieldClass)} value={request.intent} onChange={(event) => updateRequest("intent", event.target.value)} disabled={saving} style={darkSelectStyle}>
+          <option value="role" style={darkSelectStyle}>Permanent role</option>
+          <option value="contract" style={darkSelectStyle}>Contract</option>
+          <option value="consulting" style={darkSelectStyle}>Consulting</option>
+          <option value="exploratory" style={darkSelectStyle}>Exploratory conversation</option>
+        </select>
+        <input className={fieldClass} value={request.opportunityTitle} onChange={(event) => updateRequest("opportunityTitle", event.target.value)} placeholder="Opportunity title (optional)" disabled={saving} />
+        <input className={fieldClass} value={request.opportunityLocation} onChange={(event) => updateRequest("opportunityLocation", event.target.value)} placeholder="Location / work arrangement" disabled={saving} />
+        <input type="url" className={fieldClass} value={request.opportunityUrl} onChange={(event) => updateRequest("opportunityUrl", event.target.value)} placeholder="Opportunity link (optional)" disabled={saving} />
+      </div>
+      <textarea className={`${fieldClass} mt-3 min-h-28 resize-y ${messageHasContactDetails ? "border-rose-400/70 focus:border-rose-300/70 focus:ring-rose-300/20" : ""}`} value={request.message} onChange={(event) => updateRequest("message", event.target.value)} placeholder="Why would this be a worthwhile conversation?" disabled={saving} required maxLength={4000} aria-describedby="connection-message-guidance" />
+      <p id="connection-message-guidance" className={`mt-2 text-xs leading-5 ${messageHasContactDetails ? "text-rose-200" : "text-slate-400"}`}>
+        {messageHasContactDetails ? INITIAL_CONNECTION_CONTACT_DETAILS_MESSAGE : "Explain who you are and why you would like to connect. Contact details can be shared after acceptance."}
+      </p>
+
+      {status ? <p className={`mt-3 text-sm ${status.ok ? "text-emerald-200" : "text-rose-200"}`} role="status">{status.text}</p> : null}
+      <button type="submit" disabled={loadingProfile || saving || status?.ok || messageHasContactDetails} className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-cyan-300 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60">
+        <Send className="h-4 w-4" aria-hidden="true" />
+        {saving ? "Sending request" : status?.ok ? "Request sent" : "Send request"}
+      </button>
+    </form>
+  );
+}
+
+function WorkerDetailModal({ worker, onClose, isAdmin = false, onEdit, isEditing = false, onRequestSent }) {
   useEffect(() => {
     if (!worker) return undefined;
 
@@ -176,6 +296,7 @@ function WorkerDetailModal({ worker, onClose, isAdmin = false, onEdit, isEditing
           <div className="w-full">
             <p className="section-label">Profile summary</p>
             <h2 className="mt-4 text-3xl font-semibold text-white">{worker.displayName}</h2>
+            {worker.availability ? <div className="mt-3"><Badge tone={worker.availability.tone}>{worker.availability.label}</Badge></div> : null}
             <p className="mt-2 text-lg text-slate-200">{worker.headline}</p>
             {isAdmin ? (
               <button
@@ -194,8 +315,6 @@ function WorkerDetailModal({ worker, onClose, isAdmin = false, onEdit, isEditing
         <div className="mt-5 flex flex-wrap gap-2">
           <Badge tone="accent">{worker.location}</Badge>
           {worker.opportunityStatus ? <Badge tone="accent">{worker.opportunityStatus}</Badge> : null}
-          {worker.availability ? <Badge tone={worker.availability.tone}>{worker.availability.label}</Badge> : null}
-          {worker.workingRights ? <Badge>{worker.workingRights}</Badge> : null}
         </div>
 
         <section className="mt-8 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-5">
@@ -244,6 +363,7 @@ function WorkerDetailModal({ worker, onClose, isAdmin = false, onEdit, isEditing
             </div>
           </aside>
         </div>
+        <RequestConnectionPanel worker={worker} onSent={onRequestSent} />
       </div>
     </div>
   );
@@ -278,6 +398,12 @@ function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef =
             <TalentAvatar animal={worker.aliasAnimal} descriptor={worker.aliasDescriptor} alias={worker.displayName} background={worker.avatarBackground} size={compact ? "sm" : "md"} />
             <div className="w-full min-w-0 sm:pt-1">
               <p className="section-label truncate">{worker.displayName}</p>
+              {worker.availability || worker.opportunityStatus ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {worker.availability ? <Badge tone={worker.availability.tone}>{worker.availability.label}</Badge> : null}
+                  {worker.opportunityStatus ? <Badge tone="accent">{worker.opportunityStatus}</Badge> : null}
+                </div>
+              ) : null}
             </div>
           </div>
           <p className={`${compact ? "mt-2 line-clamp-2 text-sm" : "mt-2 text-sm sm:text-base"} leading-7 text-slate-200`}>{worker.headline}</p>
@@ -293,9 +419,6 @@ function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef =
 
         <div className="mt-5 flex flex-wrap gap-2">
           <Badge tone="accent">{worker.location}</Badge>
-          {worker.opportunityStatus ? <Badge tone="accent">{worker.opportunityStatus}</Badge> : null}
-          {worker.availability ? <Badge tone={worker.availability.tone}>{worker.availability.label}</Badge> : null}
-          {worker.workingRights ? <Badge>{worker.workingRights}</Badge> : null}
         </div>
 
         <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-3 text-xs uppercase tracking-[0.18em] text-slate-400 sm:mt-5 sm:pt-4">
@@ -340,6 +463,273 @@ function MyCardPreviewModal({ worker, onClose }) {
   );
 }
 
+function ConnectionThread({ requestId, onClose }) {
+  const [messages, setMessages] = useState([]);
+  const [body, setBody] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    fetch(`/api/talent/requests/${requestId}/messages`)
+      .then((response) => response.json().then((data) => ({ response, data })))
+      .then(({ response, data }) => {
+        if (!response.ok) throw new Error(data?.error || "Unable to load messages.");
+        if (active) setMessages(data.messages || []);
+      })
+      .catch((messageError) => active && setError(messageError.message || "Unable to load messages."))
+      .finally(() => active && setLoading(false));
+    return () => { active = false; };
+  }, [requestId]);
+
+  async function sendMessage(event) {
+    event.preventDefault();
+    const text = body.trim();
+    if (!text || sending) return;
+    setSending(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/talent/requests/${requestId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: text }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.error || "Unable to send message.");
+      setMessages((current) => [...current, data.message]);
+      setBody("");
+    } catch (messageError) {
+      setError(messageError.message || "Unable to send message.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="mt-5 rounded-2xl border border-cyan-300/20 bg-slate-950/35 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-white">YouMine conversation</h3>
+        <button type="button" onClick={onClose} className="rounded-lg px-2 py-1 text-xs font-semibold text-slate-300 transition hover:bg-white/5">Close</button>
+      </div>
+      <div className="mt-4 max-h-72 space-y-3 overflow-y-auto pr-1">
+        {loading ? <p className="text-sm text-slate-400">Loading conversation...</p> : null}
+        {!loading && !messages.length ? <p className="text-sm text-slate-400">No messages yet. Start the conversation here.</p> : null}
+        {messages.map((message) => <p key={message.id} className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm leading-6 text-slate-200">{message.body}</p>)}
+      </div>
+      {error ? <p className="mt-3 text-sm text-rose-200">{error}</p> : null}
+      <form onSubmit={sendMessage} className="mt-4 flex gap-2">
+        <textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={4000} placeholder="Write a message" className="min-h-11 flex-1 resize-y rounded-xl border border-white/10 bg-slate-950/35 px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-cyan-300/50" />
+        <button type="submit" disabled={sending || !body.trim()} className="h-11 self-end rounded-xl bg-cyan-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-cyan-200 disabled:opacity-60">Send</button>
+      </form>
+    </div>
+  );
+}
+
+function ConnectionRequests({ isCandidate }) {
+  const [view, setView] = useState(isCandidate ? "received" : "sent");
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [busyId, setBusyId] = useState(null);
+  const [openThreadId, setOpenThreadId] = useState(null);
+
+  useEffect(() => {
+    setView(isCandidate ? "received" : "sent");
+  }, [isCandidate]);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError("");
+    fetch(`/api/talent/requests?view=${view}`)
+      .then((response) => response.json().then((data) => ({ response, data })))
+      .then(({ response, data }) => {
+        if (!response.ok) throw new Error(data?.error || "Unable to load connection requests.");
+        if (active) setRequests(data.requests || []);
+      })
+      .catch((requestError) => active && setError(requestError.message || "Unable to load connection requests."))
+      .finally(() => active && setLoading(false));
+    return () => { active = false; };
+  }, [view]);
+
+  async function updateRequest(requestId, status) {
+    setBusyId(requestId);
+    setError("");
+    try {
+      const response = await fetch(`/api/talent/requests/${requestId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.error || "Unable to update this request.");
+      setRequests((current) => current.map((request) => request.id === requestId ? { ...request, ...data.request } : request));
+    } catch (requestError) {
+      setError(requestError.message || "Unable to update this request.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function shareResume(requestId) {
+    setBusyId(requestId);
+    setError("");
+    try {
+      const response = await fetch(`/api/talent/requests/${requestId}/resume`, { method: "POST" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.error || "Unable to share your resume.");
+      setRequests((current) => current.map((request) => request.id === requestId ? { ...request, resumeShared: true } : request));
+    } catch (requestError) {
+      setError(requestError.message || "Unable to share your resume.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function downloadResume(requestId) {
+    setBusyId(requestId);
+    setError("");
+    try {
+      const response = await fetch(`/api/talent/requests/${requestId}/resume`);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.error || "Unable to check the shared resume.");
+      if (!data.shared) throw new Error("The candidate has not shared a resume yet.");
+      window.open(data.url, "_blank", "noopener,noreferrer");
+    } catch (requestError) {
+      setError(requestError.message || "Unable to download the resume.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  return (
+    <section className="mt-6 rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.54),rgba(2,6,23,0.18))] p-5 shadow-[0_36px_110px_-54px_rgba(8,145,178,0.95)] sm:p-7">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="section-label">Private connection requests</p>
+          <h2 className="mt-2 text-2xl font-semibold text-white">{view === "received" ? "Requests for you" : "Your requests"}</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">{view === "received" ? "Review who wants to connect before deciding. Accepting keeps the first conversation in YouMine." : "Track the connection requests you have sent. Candidates decide whether to accept."}</p>
+        </div>
+        {isCandidate ? (
+          <div className="flex rounded-xl border border-white/10 p-1 text-sm">
+            {["received", "sent"].map((nextView) => (
+              <button key={nextView} type="button" onClick={() => setView(nextView)} className={`rounded-lg px-3 py-2 font-semibold transition ${view === nextView ? "bg-cyan-300 text-slate-950" : "text-slate-300 hover:bg-white/5"}`}>
+                {nextView === "received" ? "Received" : "Sent"}
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      {error ? <p className="mt-5 rounded-xl border border-rose-400/25 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">{error}</p> : null}
+      {loading ? <p className="mt-6 text-sm text-slate-400">Loading requests...</p> : null}
+      {!loading && !requests.length ? <p className="mt-6 rounded-xl border border-dashed border-white/15 px-4 py-10 text-center text-sm text-slate-400">{view === "received" ? "No connection requests yet." : "You have not sent any connection requests yet."}</p> : null}
+      <div className="mt-6 space-y-4">
+        {requests.map((request) => {
+          const requester = request.requesterProfile;
+          const pending = request.status === "pending";
+          return (
+            <article key={request.id} className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-white">{view === "received" ? requester?.display_name || "YouMine member" : request.opportunity_title || "Connection request"}</p>
+                  {view === "received" ? <p className="mt-1 text-sm text-slate-300">{[requester?.role_title, requester?.company_name].filter(Boolean).join(" at ") || "Opportunity details included below"}</p> : null}
+                  <p className="mt-2 text-xs uppercase tracking-[0.16em] text-cyan-100">{request.intent.replace("_", " ")}</p>
+                </div>
+                <span className={`inline-flex w-fit rounded-full border px-3 py-1 text-xs font-semibold capitalize ${request.status === "accepted" ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-100" : request.status === "declined" || request.status === "blocked" ? "border-rose-400/30 bg-rose-400/10 text-rose-100" : "border-amber-400/30 bg-amber-400/10 text-amber-100"}`}>{request.status}</span>
+              </div>
+              {request.opportunity_location ? <p className="mt-3 text-sm text-slate-400">{request.opportunity_location}</p> : null}
+              <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-200">{request.message}</p>
+              {pending ? (
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {view === "received" ? (
+                    <>
+                      <button type="button" disabled={busyId === request.id} onClick={() => updateRequest(request.id, "accepted")} className="rounded-xl bg-cyan-300 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-cyan-200 disabled:opacity-60">Accept</button>
+                      <button type="button" disabled={busyId === request.id} onClick={() => updateRequest(request.id, "declined")} className="rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/5 disabled:opacity-60">Decline</button>
+                      <button type="button" disabled={busyId === request.id} onClick={() => updateRequest(request.id, "blocked")} className="rounded-xl px-3 py-2 text-sm font-semibold text-rose-200 transition hover:bg-rose-500/10 disabled:opacity-60">Block</button>
+                    </>
+                  ) : <button type="button" disabled={busyId === request.id} onClick={() => updateRequest(request.id, "withdrawn")} className="rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/5 disabled:opacity-60">Withdraw request</button>}
+                </div>
+              ) : null}
+              {request.status === "accepted" ? (
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <button type="button" onClick={() => setOpenThreadId((current) => current === request.id ? null : request.id)} className="rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/5">{openThreadId === request.id ? "Close conversation" : "Open conversation"}</button>
+                  {view === "received" ? (
+                    <button type="button" disabled={busyId === request.id || request.resumeShared} onClick={() => shareResume(request.id)} className="rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/16 disabled:opacity-60">
+                      {request.resumeShared ? "Resume shared" : "Share current resume"}
+                    </button>
+                  ) : (
+                    <button type="button" disabled={busyId === request.id} onClick={() => downloadResume(request.id)} className="rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/16 disabled:opacity-60">View shared resume</button>
+                  )}
+                </div>
+              ) : null}
+              {openThreadId === request.id ? <ConnectionThread requestId={request.id} onClose={() => setOpenThreadId(null)} /> : null}
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function ResumeManager({ hasProfile }) {
+  const [resumes, setResumes] = useState([]);
+  const [status, setStatus] = useState("");
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    if (!hasProfile) return;
+    let active = true;
+    fetch("/api/talent/resumes")
+      .then((response) => response.json().then((data) => ({ response, data })))
+      .then(({ response, data }) => {
+        if (!response.ok) throw new Error(data?.error || "Unable to load resume.");
+        if (active) setResumes(data.resumes || []);
+      })
+      .catch((error) => active && setStatus(error.message || "Unable to load resume."));
+    return () => { active = false; };
+  }, [hasProfile]);
+
+  async function uploadResume(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setStatus("");
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const response = await fetch("/api/talent/resumes", { method: "POST", body: form });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.error || "Unable to upload resume.");
+      setResumes((current) => [data.resume, ...current.map((resume) => ({ ...resume, is_current: false }))]);
+      setStatus("Current resume updated. It remains private until you share it with a match.");
+    } catch (error) {
+      setStatus(error.message || "Unable to upload resume.");
+    } finally {
+      setUploading(false);
+      event.target.value = "";
+    }
+  }
+
+  const current = resumes.find((resume) => resume.is_current);
+  return (
+    <section className="mt-6 rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">Private resume</div>
+          <p className="mt-2 text-sm leading-6 text-slate-300">{current ? `Current file: ${current.file_name}` : "Upload a current resume to share only with connections you accept."}</p>
+        </div>
+        <label className={`inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/16 ${uploading ? "pointer-events-none opacity-60" : ""}`}>
+          <input type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={uploadResume} className="sr-only" disabled={!hasProfile || uploading} />
+          {uploading ? "Uploading resume" : current ? "Replace resume" : "Upload resume"}
+        </label>
+      </div>
+      {status ? <p className="mt-3 text-sm text-cyan-100" role="status">{status}</p> : null}
+    </section>
+  );
+}
+
 export default function TalentHubDeck({ workers, currentProfile, roleOptions, workingRightsOptions, market, isAdmin = false }) {
   const sb = supabaseBrowser();
   const [activeTab, setActiveTab] = useState("candidates");
@@ -353,6 +743,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
   const [isMyCardPreviewOpen, setIsMyCardPreviewOpen] = useState(false);
   const [adminEditingProfile, setAdminEditingProfile] = useState(null);
   const [isLoadingAdminProfile, setIsLoadingAdminProfile] = useState(false);
+  const [pendingRequestCount, setPendingRequestCount] = useState(0);
   const trackRef = useRef(null);
   const itemRefs = useRef([]);
   const displayedWorkers = activeTab === "favourites"
@@ -426,6 +817,41 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
     window.addEventListener("worker-favourite-changed", onFavouriteChanged);
     return () => window.removeEventListener("worker-favourite-changed", onFavouriteChanged);
   }, []);
+
+  useEffect(() => {
+    if (!currentProfileState?.id) {
+      setPendingRequestCount(0);
+      return undefined;
+    }
+
+    let mounted = true;
+    async function loadPendingRequestCount() {
+      try {
+        const response = await fetch("/api/talent/requests?view=received");
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data?.error || "Unable to load pending requests.");
+        if (mounted) setPendingRequestCount((data.requests || []).filter((request) => request.status === "pending").length);
+      } catch {
+        if (mounted) setPendingRequestCount(0);
+      }
+    }
+
+    loadPendingRequestCount();
+    window.addEventListener("focus", loadPendingRequestCount);
+    return () => {
+      mounted = false;
+      window.removeEventListener("focus", loadPendingRequestCount);
+    };
+  }, [currentProfileState?.id]);
+
+  useEffect(() => {
+    if (activeTab === "connections") {
+      fetch("/api/talent/requests?view=received")
+        .then((response) => response.json())
+        .then((data) => setPendingRequestCount((data.requests || []).filter((request) => request.status === "pending").length))
+        .catch(() => {});
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     setActiveIndex(0);
@@ -545,16 +971,51 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
     )));
   }
 
+  function handleProfileDeleted() {
+    const deletedWorkerId = currentProfileState?.id;
+    setCurrentProfileState({
+      id: null,
+      talentAlias: "",
+      aliasDescriptor: "",
+      aliasAnimal: "",
+      headline: "",
+      bio: "",
+      location: "",
+      visibility: "public",
+      status: "approved",
+      opportunityStatus: "open_to_opportunities",
+      avatarBackground: "sage",
+      workingRightsSlug: "",
+      availableNow: false,
+      availableFrom: "",
+      roleCategoryIds: [],
+      experiences: [],
+    });
+    setWorkersState((current) => current.filter((worker) => worker.id !== deletedWorkerId));
+    setFavouriteIds((current) => current.filter((workerId) => workerId !== deletedWorkerId));
+    setPendingRequestCount(0);
+    setActiveTab("candidates");
+  }
+
   const emptyCandidates = !workersState.length;
   const emptyFavourites = favouritesLoaded && favouriteIds.length === 0;
   const showAddProfile = !currentProfileState?.id;
   const myCardPreview = createWorkerPreview(currentProfileState, roleOptions, workingRightsOptions);
 
+  if (activeTab === "connections") {
+    return (
+      <div>
+        <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} pendingRequestCount={pendingRequestCount} showAddProfile={showAddProfile} />
+        <ConnectionRequests isCandidate={Boolean(currentProfileState?.id)} />
+      </div>
+    );
+  }
+
   if (activeTab === "my-profile") {
     return (
       <>
         <div>
-          <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} />
+          <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} pendingRequestCount={pendingRequestCount} showAddProfile={showAddProfile} />
           <div className="mt-4 flex justify-end">
             <button
               type="button"
@@ -574,7 +1035,9 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
             profileEndpoint={adminEditingProfile ? `/api/workers/me/profile?workerId=${encodeURIComponent(adminEditingProfile.id)}` : undefined}
             title={adminEditingProfile ? "Edit candidate profile" : "My Profile"}
             onSave={adminEditingProfile ? handleAdminProfileSaved : handleProfileSaved}
+            onDelete={adminEditingProfile ? undefined : handleProfileDeleted}
           />
+          {!adminEditingProfile ? <ResumeManager hasProfile={Boolean(currentProfileState?.id)} /> : null}
         </div>
 
         <WorkerDetailModal worker={selectedWorker} onClose={() => setSelectedWorkerId(null)} isAdmin={isAdmin} onEdit={handleAdminProfileEdit} isEditing={isLoadingAdminProfile} />
@@ -587,7 +1050,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
     return (
       <>
         <div>
-          <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} showAddProfile={showAddProfile} />
+          <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} pendingRequestCount={pendingRequestCount} showAddProfile={showAddProfile} />
 
           <div className="mt-6 rounded-[2rem] border border-white/10 bg-white/[0.04] px-6 py-16 text-center text-slate-300 shadow-[0_28px_80px_-44px_rgba(15,23,42,0.9)]">
             <h2 className="text-xl font-semibold text-white">
@@ -609,7 +1072,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
   return (
     <>
       <div>
-        <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} showAddProfile={showAddProfile} />
+        <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} pendingRequestCount={pendingRequestCount} showAddProfile={showAddProfile} />
 
         <section className="relative mt-6 overflow-hidden rounded-[2.25rem] border border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.54),rgba(2,6,23,0.12))] px-4 py-6 shadow-[0_36px_110px_-54px_rgba(8,145,178,0.95)] sm:px-6 sm:py-8">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.12),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(56,189,248,0.1),transparent_18%)]" />
