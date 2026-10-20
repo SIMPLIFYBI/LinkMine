@@ -2,6 +2,7 @@ import TalentHubDeck from "./TalentHubDeck.client";
 import { notFound } from "next/navigation";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
+import { supabaseAdminClient } from "@/lib/supabaseAdminClient";
 import { getResolvedSiteMarket } from "@/lib/siteMarketServer";
 import { getTalentAliasParts } from "@/lib/talentAliases";
 import { DEFAULT_TALENT_OPPORTUNITY_STATUS, getTalentOpportunityStatus } from "@/lib/talentOpportunityStatuses";
@@ -170,6 +171,21 @@ export default async function TalentHubPage() {
       : Promise.resolve({ data: [] }),
   ]);
 
+  let testWorkerIds = new Set();
+  if (isAdmin && workerIds.length) {
+    try {
+      const { data: testProfiles, error } = await supabaseAdminClient()
+        .from("talent_hub_profiles")
+        .select("worker_id")
+        .in("worker_id", workerIds)
+        .eq("is_test_profile", true);
+      if (error) throw error;
+      testWorkerIds = new Set((testProfiles || []).map((profile) => profile.worker_id));
+    } catch (error) {
+      console.error("Unable to load Talent Hub test profile markers:", error);
+    }
+  }
+
   const rolesByWorker = new Map();
   for (const row of rolesResult.data || []) {
     const current = rolesByWorker.get(row.worker_id) || [];
@@ -296,6 +312,7 @@ export default async function TalentHubPage() {
         ? workingRightsBySlug.get(worker.working_rights_slug) || null
         : null,
       experiences: experiencesByWorker.get(worker.id) || [],
+      isTestProfile: testWorkerIds.has(worker.worker_id),
     };
   });
 

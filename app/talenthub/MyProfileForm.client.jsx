@@ -79,7 +79,7 @@ function createProfileIdentity(initialProfile, currentProfile = {}) {
   };
 }
 
-export default function MyProfileForm({ initialProfile, roleOptions, workingRightsOptions, market, onSave, onDelete, profileEndpoint = "/api/workers/me/profile", title = "My Profile" }) {
+export default function MyProfileForm({ initialProfile, roleOptions, workingRightsOptions, market, onSave, onDelete, canManageTestProfile = false, profileEndpoint = "/api/workers/me/profile", title = "My Profile" }) {
   const [profile, setProfile] = useState(() => createProfileIdentity(initialProfile));
   const [saving, setSaving] = useState(false);
   const [aliasChangeVersion, setAliasChangeVersion] = useState(0);
@@ -495,6 +495,24 @@ export default function MyProfileForm({ initialProfile, roleOptions, workingRigh
               <li>Experience entries should be ordered with the most relevant roles first.</li>
             </ul>
           </section>
+
+          {canManageTestProfile ? (
+            <section className="rounded-[1.75rem] border border-amber-400/25 bg-amber-500/[0.08] p-5">
+              <div className="text-sm font-semibold uppercase tracking-[0.18em] text-amber-100">Administrator</div>
+              <label className="mt-4 flex cursor-pointer items-start gap-3 text-sm text-slate-200">
+                <input
+                  type="checkbox"
+                  checked={Boolean(profile.isTestProfile)}
+                  onChange={(event) => updateField("isTestProfile", event.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-white/20 bg-slate-950 text-amber-300 focus:ring-amber-300/30"
+                />
+                <span>
+                  <span className="block font-semibold text-amber-100">Test profile</span>
+                  <span className="mt-1 block leading-6 text-slate-400">Marks seeded or generated candidates so administrators can identify and remove them later. This is never shown to candidates.</span>
+                </span>
+              </label>
+            </section>
+          ) : null}
 
           {onDelete ? (
             <section className="rounded-[1.75rem] border border-rose-400/25 bg-rose-500/[0.07] p-5">

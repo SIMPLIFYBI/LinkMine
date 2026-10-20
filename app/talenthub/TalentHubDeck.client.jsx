@@ -91,6 +91,7 @@ function createWorkerPreview(profile, roleOptions, workingRightsOptions) {
     availability: formatAvailabilityPreview(profile),
     workingRights,
     experiences,
+    isTestProfile: Boolean(profile?.isTestProfile),
   };
 }
 
@@ -296,7 +297,12 @@ function WorkerDetailModal({ worker, onClose, isAdmin = false, onEdit, isEditing
           <div className="w-full">
             <p className="section-label">Profile summary</p>
             <h2 className="mt-4 text-3xl font-semibold text-white">{worker.displayName}</h2>
-            {worker.availability ? <div className="mt-3"><Badge tone={worker.availability.tone}>{worker.availability.label}</Badge></div> : null}
+            {worker.availability || worker.isTestProfile ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {worker.availability ? <Badge tone={worker.availability.tone}>{worker.availability.label}</Badge> : null}
+                {worker.isTestProfile ? <Badge tone="later">Test profile</Badge> : null}
+              </div>
+            ) : null}
             <p className="mt-2 text-lg text-slate-200">{worker.headline}</p>
             {isAdmin ? (
               <button
@@ -402,8 +408,9 @@ function WorkerCard({ worker, onOpen, className = "", compact = false, cardRef =
                 <div className="mt-2 flex flex-wrap gap-2">
                   {worker.availability ? <Badge tone={worker.availability.tone}>{worker.availability.label}</Badge> : null}
                   {worker.opportunityStatus ? <Badge tone="accent">{worker.opportunityStatus}</Badge> : null}
+                  {worker.isTestProfile ? <Badge tone="later">Test profile</Badge> : null}
                 </div>
-              ) : null}
+              ) : worker.isTestProfile ? <div className="mt-2"><Badge tone="later">Test profile</Badge></div> : null}
             </div>
           </div>
           <p className={`${compact ? "mt-2 line-clamp-2 text-sm" : "mt-2 text-sm sm:text-base"} leading-7 text-slate-200`}>{worker.headline}</p>
@@ -1036,6 +1043,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
             title={adminEditingProfile ? "Edit candidate profile" : "My Profile"}
             onSave={adminEditingProfile ? handleAdminProfileSaved : handleProfileSaved}
             onDelete={adminEditingProfile ? undefined : handleProfileDeleted}
+            canManageTestProfile={Boolean(adminEditingProfile) && isAdmin}
           />
           {!adminEditingProfile ? <ResumeManager hasProfile={Boolean(currentProfileState?.id)} /> : null}
         </div>
@@ -1102,7 +1110,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
           <div className="relative talenthub-carousel-mask">
             <div
               ref={trackRef}
-              className="no-scrollbar flex touch-pan-x snap-x snap-mandatory gap-5 overflow-x-auto px-[10vw] py-2 scroll-smooth md:px-[16vw]"
+              className="no-scrollbar flex touch-auto snap-x snap-mandatory gap-5 overflow-x-auto px-[10vw] py-2 scroll-smooth md:px-[16vw]"
             >
               {displayedWorkers.map((worker, index) => (
                 <WorkerCard

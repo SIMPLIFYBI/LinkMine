@@ -126,7 +126,7 @@ export async function GET(req) {
   if (access.error) return access.error;
 
   const [profileResult, availabilityResult, servicesResult, experiencesResult] = await Promise.all([
-    access.sb.from("talent_hub_profiles").select("worker_id, talent_alias, headline, bio, location, visibility, status, opportunity_status, avatar_background, working_rights_slug").eq("worker_id", access.workerId).maybeSingle(),
+    access.sb.from("talent_hub_profiles").select("worker_id, talent_alias, headline, bio, location, visibility, status, opportunity_status, avatar_background, working_rights_slug, is_test_profile").eq("worker_id", access.workerId).maybeSingle(),
     access.sb.from("worker_availability").select("available_now, available_from").eq("worker_id", access.workerId).maybeSingle(),
     access.sb.from("worker_service_interests").select("service_id").eq("worker_id", access.workerId),
     access.sb.from("worker_experiences").select("id, role_title, company, description, location, start_date, end_date, is_current, achievements, position").eq("worker_id", access.workerId).order("position", { ascending: true }),
@@ -158,6 +158,7 @@ export async function GET(req) {
       opportunityStatus: profile.opportunity_status || DEFAULT_TALENT_OPPORTUNITY_STATUS,
       avatarBackground: profile.avatar_background || "sage",
       workingRightsSlug: profile.working_rights_slug || "",
+      isTestProfile: access.isAdmin ? Boolean(profile.is_test_profile) : false,
       availableNow: Boolean(availabilityResult.data?.available_now),
       availableFrom: availabilityResult.data?.available_from || "",
       roleCategoryIds: (servicesResult.data || []).map((row) => row.service_id).filter(Boolean),
@@ -170,7 +171,7 @@ export async function PUT(req) {
   const payload = await req.json().catch(() => ({}));
   const access = await getProfileAccess(req, payload);
   if (access.error) return access.error;
-  const { sb, workerId } = access;
+  const { sb, workerId, isAdmin } = access;
 
   if (access.isOwnProfile) {
     const { error: ensureWorkerError } = await sb.rpc("ensure_talent_hub_worker");
@@ -230,6 +231,10 @@ export async function PUT(req) {
     working_rights_slug: workingRightsSlug,
     updated_at: new Date().toISOString(),
   };
+
+  if (isAdmin) {
+    talentProfileRow.is_test_profile = Boolean(payload.isTestProfile);
+  }
 
   let talentProfileError = null;
   for (let attempt = 0; attempt < 5; attempt += 1) {
@@ -331,6 +336,7 @@ export async function PUT(req) {
       opportunityStatus: talentProfileRow.opportunity_status,
       avatarBackground: talentProfileRow.avatar_background,
       workingRightsSlug: talentProfileRow.working_rights_slug || "",
+      isTestProfile: isAdmin ? Boolean(talentProfileRow.is_test_profile) : false,
       availableNow,
       availableFrom: availableFrom || "",
       roleCategoryIds,
