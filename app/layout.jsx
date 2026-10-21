@@ -55,12 +55,7 @@ export default async function RootLayout({ children }) {
           dangerouslySetInnerHTML={{
             __html: `
               (function () {
-                try {
-                  var theme = localStorage.getItem("youmine-theme") === "light" ? "light" : "dark";
-                  document.documentElement.setAttribute("data-theme", theme);
-                } catch (error) {
-                  document.documentElement.setAttribute("data-theme", "dark");
-                }
+                document.documentElement.setAttribute("data-theme", "dark");
               })();
             `,
           }}

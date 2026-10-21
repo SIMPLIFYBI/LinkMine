@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 import NotificationsPreferences from "./NotificationsPreferences.client.jsx";
 import AccountTabs from "./AccountTabs.jsx";
-import { useTheme } from "@/app/components/ThemeProvider";
 
 const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "")
   .split(",")
@@ -37,7 +36,6 @@ const organisationSizes = [
 export default function AccountPageClient({ initialTab = "account" }) {
   const router = useRouter();
   const sbRef = useRef(null);
-  const { theme, setTheme } = useTheme();
 
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
@@ -212,19 +210,6 @@ export default function AccountPageClient({ initialTab = "account" }) {
     !profileForm.organisationSize ||
     !profileForm.profession ||
     isSavingProfile;
-
-  const appearanceOptions = [
-    {
-      value: "dark",
-      label: "Dark",
-      description: "Current default with deep slate surfaces and bright cyan accents.",
-    },
-    {
-      value: "light",
-      label: "Light",
-      description: "Airy glass surfaces, softer shadows, and a brighter workspace.",
-    },
-  ];
 
   if (loading) {
     return (
@@ -500,57 +485,6 @@ export default function AccountPageClient({ initialTab = "account" }) {
                 </dl>
               </section>
 
-              <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 shadow-lg shadow-black/20 ring-1 ring-white/10">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-300">
-                      Appearance
-                    </h2>
-                    <p className="mt-2 text-sm text-slate-300">
-                      Choose the workspace tone that feels best for this device.
-                    </p>
-                  </div>
-                  <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-slate-300">
-                    {theme} mode
-                  </div>
-                </div>
-
-                <div className="mt-4 grid gap-3">
-                  {appearanceOptions.map((option) => {
-                    const active = theme === option.value;
-
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => setTheme(option.value)}
-                        className={`flex items-start justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition ${
-                          active
-                            ? "border-sky-400/70 bg-sky-500/10 shadow-[0_20px_40px_-28px_rgba(14,165,233,0.65)]"
-                            : "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.05]"
-                        }`}
-                        aria-pressed={active}
-                      >
-                        <div>
-                          <div className="text-sm font-semibold text-white">{option.label}</div>
-                          <div className="mt-1 text-xs leading-relaxed text-slate-300">
-                            {option.description}
-                          </div>
-                        </div>
-                        <span
-                          className={`mt-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-                            active
-                              ? "border-sky-400 bg-sky-400/20 text-sky-200"
-                              : "border-white/15 text-transparent"
-                          }`}
-                        >
-                          •
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
             </aside>
           </div>
         </section>
