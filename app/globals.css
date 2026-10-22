@@ -285,6 +285,37 @@ html[data-theme="light"] :is(input, textarea)::placeholder {
 .welcome-modal-glow-one { animation: welcomeModalGlowDrift 7s ease-in-out 500ms infinite; }
 .welcome-modal-glow-two { animation: welcomeModalGlowDrift 8s ease-in-out 800ms infinite reverse; }
 
+@keyframes talentMatchBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes talentMatchSheetIn {
+  from { opacity: 0; transform: translateY(18px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes talentMatchHaloPulse {
+  0%, 100% { opacity: 0.45; transform: translateX(-50%) translateY(-50%) scale(0.92); }
+  50% { opacity: 0.8; transform: translateX(-50%) translateY(-50%) scale(1.08); }
+}
+
+.talent-match-backdrop { animation: talentMatchBackdropIn 220ms ease-out both; }
+.talent-match-sheet { animation: talentMatchSheetIn 420ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.talent-match-halo { animation: talentMatchHaloPulse 4s ease-in-out infinite; }
+.talent-match-copy { animation: welcomeModalItemIn 420ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.talent-match-copy:nth-child(2) { animation-delay: 80ms; }
+.talent-match-copy:nth-child(3) { animation-delay: 140ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .talent-match-backdrop,
+  .talent-match-sheet,
+  .talent-match-halo,
+  .talent-match-copy {
+    animation: none;
+  }
+}
+
 .discovery-pillar {
   background: linear-gradient(145deg, rgba(15, 33, 52, 0.94), rgba(8, 20, 35, 0.88));
   border-color: rgba(148, 163, 184, 0.2);

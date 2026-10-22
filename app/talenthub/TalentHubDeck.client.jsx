@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Eye, Pencil, Send } from "lucide-react";
+import { Eye, HeartHandshake, Pencil, Send } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 import { getTalentOpportunityStatus } from "@/lib/talentOpportunityStatuses";
 import { INITIAL_CONNECTION_CONTACT_DETAILS_MESSAGE, initialConnectionMessageHasContactDetails } from "@/lib/talentConnectionMessage";
@@ -139,6 +139,41 @@ function Badge({ children, tone = "neutral" }) {
     <span className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium ${classes[tone] || classes.neutral}`}>
       {children}
     </span>
+  );
+}
+
+function NewConnectionMatchModal({ request, onDismiss, onReview }) {
+  if (!request) return null;
+
+  const requester = request.requesterProfile;
+  const requesterName = requester?.display_name || "A YouMine member";
+  const requesterDetail = [requester?.role_title, requester?.company_name].filter(Boolean).join(" at ");
+
+  return (
+    <div className="talent-match-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="talent-match-title">
+      <div className="talent-match-sheet relative w-full max-w-md overflow-hidden rounded-[2rem] border border-cyan-300/25 bg-[linear-gradient(160deg,rgba(8,30,44,0.98),rgba(8,17,28,0.99))] p-6 shadow-[0_36px_120px_-36px_rgba(8,145,178,0.85)] sm:p-8">
+        <div className="talent-match-halo pointer-events-none absolute left-1/2 top-0 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300/20 blur-3xl" />
+        <div className="relative">
+          <div className="talent-match-icon mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-200/35 bg-cyan-300/10 text-cyan-100 shadow-[0_0_32px_rgba(34,211,238,0.2)]">
+            <HeartHandshake className="h-8 w-8" aria-hidden="true" />
+          </div>
+          <p className="talent-match-copy mt-6 text-center text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100/80">Talent Hub</p>
+          <h2 id="talent-match-title" className="talent-match-copy mt-3 text-center text-3xl font-semibold text-white">You have a match</h2>
+          <p className="talent-match-copy mt-3 text-center text-sm leading-6 text-slate-300">{requesterName} would like to connect with you.</p>
+          {requesterDetail || request.opportunity_title ? (
+            <div className="talent-match-copy mt-6 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-center">
+              <p className="text-sm font-semibold text-slate-100">{request.opportunity_title || requesterDetail}</p>
+              {request.opportunity_title && requesterDetail ? <p className="mt-1 text-xs text-slate-400">{requesterDetail}</p> : null}
+            </div>
+          ) : null}
+          <p className="talent-match-copy mt-5 text-center text-sm leading-6 text-slate-400">Review the request when you are ready. Your details remain private unless you choose to connect.</p>
+          <div className="talent-match-copy mt-7 grid gap-3 sm:grid-cols-2">
+            <button type="button" onClick={onDismiss} className="min-h-11 rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/5">Not now</button>
+            <button type="button" onClick={onReview} className="min-h-11 rounded-xl bg-cyan-300 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">Review request</button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -533,7 +568,7 @@ function ConnectionThread({ requestId, onClose }) {
   );
 }
 
-function ConnectionRequests({ isCandidate }) {
+function ConnectionRequests({ isCandidate, focusRequestId = null }) {
   const [view, setView] = useState(isCandidate ? "received" : "sent");
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -559,6 +594,12 @@ function ConnectionRequests({ isCandidate }) {
       .finally(() => active && setLoading(false));
     return () => { active = false; };
   }, [view]);
+
+  useEffect(() => {
+    if (!focusRequestId || loading || view !== "received") return;
+    const requestElement = document.getElementById(`talent-request-${focusRequestId}`);
+    requestElement?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [focusRequestId, loading, view]);
 
   async function updateRequest(requestId, status) {
     setBusyId(requestId);
@@ -637,7 +678,7 @@ function ConnectionRequests({ isCandidate }) {
           const requester = request.requesterProfile;
           const pending = request.status === "pending";
           return (
-            <article key={request.id} className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+            <article id={`talent-request-${request.id}`} key={request.id} className={`rounded-2xl border bg-white/[0.035] p-5 transition ${focusRequestId === request.id ? "border-cyan-300/60 shadow-[0_0_32px_-12px_rgba(34,211,238,0.55)]" : "border-white/10"}`}>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-white">{view === "received" ? requester?.display_name || "YouMine member" : request.opportunity_title || "Connection request"}</p>
@@ -751,6 +792,8 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
   const [adminEditingProfile, setAdminEditingProfile] = useState(null);
   const [isLoadingAdminProfile, setIsLoadingAdminProfile] = useState(false);
   const [pendingRequestCount, setPendingRequestCount] = useState(0);
+  const [newMatchRequest, setNewMatchRequest] = useState(null);
+  const [focusedRequestId, setFocusedRequestId] = useState(null);
   const trackRef = useRef(null);
   const itemRefs = useRef([]);
   const displayedWorkers = activeTab === "favourites"
@@ -837,7 +880,25 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
         const response = await fetch("/api/talent/requests?view=received");
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data?.error || "Unable to load pending requests.");
-        if (mounted) setPendingRequestCount((data.requests || []).filter((request) => request.status === "pending").length);
+        const pendingRequests = (data.requests || []).filter((request) => request.status === "pending");
+        if (!mounted) return;
+        setPendingRequestCount(pendingRequests.length);
+        let seenRequestIds = new Set();
+        try {
+          seenRequestIds = new Set(JSON.parse(window.sessionStorage.getItem("youmine-talent-match-seen") || "[]"));
+        } catch {
+          // Storage is optional; the candidate can still receive the prompt.
+        }
+        const nextMatch = pendingRequests.find((request) => !seenRequestIds.has(request.id));
+        if (nextMatch) {
+          seenRequestIds.add(nextMatch.id);
+          try {
+            window.sessionStorage.setItem("youmine-talent-match-seen", JSON.stringify([...seenRequestIds]));
+          } catch {
+            // Without storage, the request can be shown again after a refresh.
+          }
+          setNewMatchRequest(nextMatch);
+        }
       } catch {
         if (mounted) setPendingRequestCount(0);
       }
@@ -881,6 +942,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
     if (!container) return undefined;
 
     let frame = null;
+    let settleTimeout = null;
 
     function updateActiveCard() {
       frame = null;
@@ -907,6 +969,8 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
     function onScroll() {
       if (frame != null) cancelAnimationFrame(frame);
       frame = requestAnimationFrame(updateActiveCard);
+      if (settleTimeout != null) window.clearTimeout(settleTimeout);
+      settleTimeout = window.setTimeout(updateActiveCard, 140);
     }
 
     updateActiveCard();
@@ -917,6 +981,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
       container.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
       if (frame != null) cancelAnimationFrame(frame);
+      if (settleTimeout != null) window.clearTimeout(settleTimeout);
     };
   }, [displayedWorkers.length]);
 
@@ -1004,6 +1069,13 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
     setActiveTab("candidates");
   }
 
+  function reviewNewMatch() {
+    if (!newMatchRequest) return;
+    setFocusedRequestId(newMatchRequest.id);
+    setNewMatchRequest(null);
+    setActiveTab("connections");
+  }
+
   const emptyCandidates = !workersState.length;
   const emptyFavourites = favouritesLoaded && favouriteIds.length === 0;
   const showAddProfile = !currentProfileState?.id;
@@ -1013,7 +1085,8 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
     return (
       <div>
         <TalentHubTabs activeTab={activeTab} onChange={setActiveTab} pendingRequestCount={pendingRequestCount} showAddProfile={showAddProfile} />
-        <ConnectionRequests isCandidate={Boolean(currentProfileState?.id)} />
+        <ConnectionRequests isCandidate={Boolean(currentProfileState?.id)} focusRequestId={focusedRequestId} />
+        <NewConnectionMatchModal request={newMatchRequest} onDismiss={() => setNewMatchRequest(null)} onReview={reviewNewMatch} />
       </div>
     );
   }
@@ -1050,6 +1123,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
 
         <WorkerDetailModal worker={selectedWorker} onClose={() => setSelectedWorkerId(null)} isAdmin={isAdmin} onEdit={handleAdminProfileEdit} isEditing={isLoadingAdminProfile} />
         {isMyCardPreviewOpen ? <MyCardPreviewModal worker={myCardPreview} onClose={() => setIsMyCardPreviewOpen(false)} /> : null}
+        <NewConnectionMatchModal request={newMatchRequest} onDismiss={() => setNewMatchRequest(null)} onReview={reviewNewMatch} />
       </>
     );
   }
@@ -1073,6 +1147,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
         </div>
 
         <WorkerDetailModal worker={selectedWorker} onClose={() => setSelectedWorkerId(null)} isAdmin={isAdmin} onEdit={handleAdminProfileEdit} isEditing={isLoadingAdminProfile} />
+        <NewConnectionMatchModal request={newMatchRequest} onDismiss={() => setNewMatchRequest(null)} onReview={reviewNewMatch} />
       </>
     );
   }
@@ -1161,6 +1236,7 @@ export default function TalentHubDeck({ workers, currentProfile, roleOptions, wo
       </div>
 
       <WorkerDetailModal worker={selectedWorker} onClose={() => setSelectedWorkerId(null)} isAdmin={isAdmin} onEdit={handleAdminProfileEdit} isEditing={isLoadingAdminProfile} />
+      <NewConnectionMatchModal request={newMatchRequest} onDismiss={() => setNewMatchRequest(null)} onReview={reviewNewMatch} />
     </>
   );
 }
