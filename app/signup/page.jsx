@@ -2,6 +2,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 import { getAuthRedirectUrl, isNativeAppRuntime } from "@/lib/mobileRuntime";
 
@@ -114,10 +115,13 @@ function SignupForm() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-56px)] flex items-start justify-center">
-      <div className="w-full mx-auto max-w-sm px-4 pt-8 pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-8">
-        <h1 className="text-2xl font-semibold tracking-tight">Create account</h1>
-        <form onSubmit={onSubmit} className="mt-5 space-y-3">
+    <div className="auth-shell mx-auto w-full max-w-md rounded-2xl border border-white/10 bg-slate-950/55 p-6 shadow-2xl shadow-slate-950/30 backdrop-blur-xl sm:p-9">
+      <section>
+        <div className="mx-auto w-full max-w-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-300">Free to join</p>
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-white">Create your account</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-400">It takes less than a minute.</p>
+        <form onSubmit={onSubmit} className="mt-7 space-y-4">
           <div>
             <label className="block text-sm text-slate-300">Email</label>
             <input
@@ -126,7 +130,7 @@ function SignupForm() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-md bg-slate-900/60 border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sky-500/40"
+              className="mt-1.5 w-full rounded-lg border border-white/10 bg-slate-900/60 px-3.5 py-3 text-sm outline-none transition focus:border-sky-400/60 focus:ring-2 focus:ring-sky-500/25"
               placeholder="you@example.com"
             />
           </div>
@@ -138,7 +142,7 @@ function SignupForm() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-md bg-slate-900/60 border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sky-500/40"
+              className="mt-1.5 w-full rounded-lg border border-white/10 bg-slate-900/60 px-3.5 py-3 text-sm outline-none transition focus:border-sky-400/60 focus:ring-2 focus:ring-sky-500/25"
               placeholder="••••••••"
             />
           </div>
@@ -172,9 +176,10 @@ function SignupForm() {
           <button
             type="submit"
             disabled={submitting || !agree}
-            className="w-full rounded-md bg-gradient-to-r from-sky-600 to-indigo-600 px-4 py-2 text-sm font-medium disabled:opacity-60"
+            className="group flex w-full items-center justify-center gap-2 rounded-lg bg-sky-500 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-sky-950/25 transition hover:bg-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:opacity-60"
           >
-            {submitting ? "Creating…" : "Sign up"}
+            {submitting ? "Creating…" : "Create free account"}
+            {!submitting && <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />}
           </button>
 
           <div className="flex items-center gap-3 py-1" aria-hidden="true">
@@ -187,7 +192,7 @@ function SignupForm() {
             type="button"
             onClick={() => handleOAuthSignUp("google", "Google")}
             disabled={submitting || oauthSubmitting || !agree}
-            className="flex w-full items-center justify-center gap-2 rounded-md border border-white/15 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition-colors hover:bg-slate-100 disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-white px-4 py-3 text-sm font-medium text-slate-900 transition-colors hover:bg-slate-100 disabled:opacity-60"
           >
             <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
               <path fill="#4285F4" d="M21.35 12.23c0-.71-.06-1.4-.18-2.05H12v3.87h5.24a4.48 4.48 0 0 1-1.94 2.94v2.51h3.23c1.89-1.74 2.82-4.31 2.82-7.27Z" />
@@ -202,7 +207,7 @@ function SignupForm() {
             type="button"
             onClick={() => handleOAuthSignUp("azure", "Microsoft")}
             disabled={submitting || oauthSubmitting || !agree}
-            className="flex w-full items-center justify-center gap-2 rounded-md border border-white/15 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition-colors hover:bg-slate-100 disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-white px-4 py-3 text-sm font-medium text-slate-900 transition-colors hover:bg-slate-100 disabled:opacity-60"
           >
             <span className="grid grid-cols-2 gap-px" aria-hidden="true">
               <span className="h-2 w-2 bg-[#f25022]" />
@@ -214,18 +219,19 @@ function SignupForm() {
           </button>
         </form>
 
-        <div className="mt-4 text-sm text-slate-300">
-          <span className="mr-1">Already have an account?</span>
-          <Link href="/login" className="text-sky-300 hover:underline">Log in</Link>
+          <div className="mt-6 border-t border-white/10 pt-5 text-center text-sm text-slate-300">
+            <span className="mr-1">Already have an account?</span>
+            <Link href="/login" className="font-medium text-sky-300 hover:text-sky-200 hover:underline">Log in</Link>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
 
 export default function SignupPage() {
   return (
-    <main className="mx-auto max-w-md px-6 py-12">
+    <main className="px-4 py-6 sm:px-6 sm:py-10 lg:py-14">
       <Suspense fallback={null}>
         <SignupForm />
       </Suspense>

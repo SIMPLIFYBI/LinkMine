@@ -5,6 +5,7 @@ import ConsultantServicesManager from "@/app/components/ConsultantServicesManage
 import Link from "next/link";
 import EditTabs from "./EditTabs";
 import AbnSection from "./AbnSection.client.jsx"; // NEW
+import { BookOpen, BriefcaseBusiness, CalendarDays, FileText } from "lucide-react";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -81,7 +82,8 @@ export default async function EditConsultantPage({ params }) {
         </Link>
       </div>
 
-      <h1 className="mb-4 text-2xl font-semibold text-white">Edit profile</h1>
+      <h1 className="mb-1 text-2xl font-semibold text-white">Set up your provider profile</h1>
+      <p className="text-sm text-slate-400">Choose what you offer, then refine the details people see publicly.</p>
 
       <EditTabs consultantId={consultant.id} active="profile" />
 
@@ -111,16 +113,32 @@ export default async function EditConsultantPage({ params }) {
       <section className="relative mt-6 overflow-hidden rounded-2xl border border-cyan-200/20 bg-[linear-gradient(135deg,rgba(14,165,233,0.14),rgba(15,23,42,0.74)_54%,rgba(16,185,129,0.1))] p-5 shadow-[0_22px_50px_-38px_rgba(34,211,238,0.72)] ring-1 ring-white/5">
         <div aria-hidden="true" className="pointer-events-none absolute -right-8 -top-12 h-32 w-32 rounded-full border border-cyan-100/20 bg-cyan-300/10" />
         <div className="relative">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-100">Grow your profile</p>
-          <h2 className="mt-2 text-xl font-semibold text-white">One profile. Add the work you offer.</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Your profile appears in Consultant discovery when you add services, and in Vault Creators when you publish an approved resource. Training and events are also connected here.</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-100">Step 2: Choose what you offer</p>
+          <h2 className="mt-2 text-xl font-semibold text-white">Build your provider profile around your work.</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Choose one or more paths now, or return later. Your public profile is the same either way.</p>
           <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <Link href="#services" className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-3 text-sm font-semibold text-slate-100 transition hover:border-cyan-200/35 hover:bg-white/10">Add services</Link>
-            <Link href={`/consultants/${consultant.id}/resources/edit`} className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-3 text-sm font-semibold text-slate-100 transition hover:border-cyan-200/35 hover:bg-white/10">Publish resources</Link>
-            <Link href={`/consultants/${consultant.id}?training=manage`} className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-3 text-sm font-semibold text-slate-100 transition hover:border-cyan-200/35 hover:bg-white/10">Manage training</Link>
-            <Link href="/whats-on" className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-3 text-sm font-semibold text-slate-100 transition hover:border-cyan-200/35 hover:bg-white/10">Submit an event</Link>
+            <Link href="#services" className="group rounded-xl border border-white/10 bg-white/[0.05] p-3 transition hover:border-cyan-200/35 hover:bg-white/10">
+              <BriefcaseBusiness className="h-5 w-5 text-cyan-200" aria-hidden="true" />
+              <p className="mt-3 text-sm font-semibold text-slate-100">Offer services</p>
+              <p className="mt-1 text-xs leading-5 text-slate-400">Appear in Consultant discovery after approval.</p>
+            </Link>
+            <Link href={`/consultants/${consultant.id}/resources/edit`} className="group rounded-xl border border-white/10 bg-white/[0.05] p-3 transition hover:border-cyan-200/35 hover:bg-white/10">
+              <FileText className="h-5 w-5 text-cyan-200" aria-hidden="true" />
+              <p className="mt-3 text-sm font-semibold text-slate-100">Create resources</p>
+              <p className="mt-1 text-xs leading-5 text-slate-400">Publish to the Vault after approval.</p>
+            </Link>
+            <Link href={`/consultants/${consultant.id}?training=manage`} className="group rounded-xl border border-white/10 bg-white/[0.05] p-3 transition hover:border-cyan-200/35 hover:bg-white/10">
+              <BookOpen className="h-5 w-5 text-cyan-200" aria-hidden="true" />
+              <p className="mt-3 text-sm font-semibold text-slate-100">Offer training</p>
+              <p className="mt-1 text-xs leading-5 text-slate-400">Create courses, sessions, and bookings.</p>
+            </Link>
+            <Link href="/whats-on" className="group rounded-xl border border-white/10 bg-white/[0.05] p-3 transition hover:border-cyan-200/35 hover:bg-white/10">
+              <CalendarDays className="h-5 w-5 text-cyan-200" aria-hidden="true" />
+              <p className="mt-3 text-sm font-semibold text-slate-100">Add an event</p>
+              <p className="mt-1 text-xs leading-5 text-slate-400">Submit an event for What&apos;s On.</p>
+            </Link>
           </div>
-          {consultant.status !== "approved" ? <p className="mt-3 text-xs text-amber-100">Resource publishing and event submission unlock after your profile is approved.</p> : null}
+          {consultant.status !== "approved" ? <p className="mt-3 text-xs text-amber-100">You can set up services and training now. Resource publishing and event submission unlock after approval.</p> : null}
         </div>
       </section>
 
@@ -141,21 +159,15 @@ export default async function EditConsultantPage({ params }) {
         }}
       />
 
-      {["consultant", "both"].includes(String(consultant.profile_type || "consultant")) ? (
-        <section id="services" className="mt-10 space-y-3">
-          <h2 className="text-lg font-semibold text-slate-100">Services</h2>
-          <p className="text-sm text-slate-400">
-            Add or remove services offered by this consultancy.
-          </p>
-          <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4">
-            <ConsultantServicesManager consultantId={consultant.id} canEdit={true} />
-          </div>
-        </section>
-      ) : (
-        <section className="mt-10 rounded-2xl border border-sky-300/20 bg-sky-500/10 p-4 text-sm text-sky-100">
-          This profile is currently in creator mode, so services are hidden.
-        </section>
-      )}
+      <section id="services" className="mt-10 space-y-3">
+        <h2 className="text-lg font-semibold text-slate-100">Services</h2>
+        <p className="text-sm text-slate-400">
+          Add the services you offer. They determine where your approved profile appears in Consultant discovery.
+        </p>
+        <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4">
+          <ConsultantServicesManager consultantId={consultant.id} canEdit={true} />
+        </div>
+      </section>
     </main>
   );
 }

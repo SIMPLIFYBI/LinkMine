@@ -35,7 +35,7 @@ export async function POST(req) {
   // Parse + validate
   const body = await req.json().catch(() => ({}));
   const display_name = String(body?.display_name || "").trim();
-  const headline = String(body?.headline || "").trim();
+  const headline = String(body?.headline || display_name).trim();
   const location = String(body?.location || "").trim();
   const country_code = String(body?.country_code || "").trim().toUpperCase();
   const global_region = String(body?.global_region || "").trim();
@@ -43,7 +43,6 @@ export async function POST(req) {
   const services = Array.isArray(body?.services) ? body.services.slice(0, MAX_SERVICES) : [];
   const profile_type = "both";
   if (!display_name) return NextResponse.json({ stage: "validate", error: "Display name is required" }, { status: 400 });
-  if (!headline) return NextResponse.json({ stage: "validate", error: "Headline is required" }, { status: 400 });
   if (headline.length > MAX_HEADLINE) return NextResponse.json({ stage: "validate", error: `Headline must be ${MAX_HEADLINE} characters or fewer` }, { status: 400 });
   if (!location) return NextResponse.json({ stage: "validate", error: "Location is required" }, { status: 400 });
   if (!country_code || !isValidCountryCode(country_code)) {

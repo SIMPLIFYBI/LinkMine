@@ -5,7 +5,7 @@ export const viewport = { width: "device-width", initialScale: 1 };
 
 export default function LoginPage() {
   return (
-    <main className="mx-auto max-w-md px-6 py-12">
+    <main className="px-4 py-6 sm:px-6 sm:py-10 lg:py-14">
       <Suspense fallback={null}>
         <LoginForm />
       </Suspense>
