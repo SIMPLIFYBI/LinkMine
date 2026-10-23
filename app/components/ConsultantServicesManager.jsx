@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { authedFetch } from "@/lib/authedFetch";
 
 function marketLabel(value) {
@@ -12,6 +13,9 @@ function marketQueryValue(value) {
 }
 
 export default function ConsultantServicesManager({ consultantId, canEdit = false }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -22,6 +26,12 @@ export default function ConsultantServicesManager({ consultantId, canEdit = fals
 
   const assignedIds = useMemo(() => new Set(assigned.map(s => s.id)), [assigned]);
   const categories = categoriesByMarket[activeMarket] || [];
+
+  useEffect(() => {
+    if (searchParams.get("add") !== "services" || !canEdit) return;
+    setOpen(true);
+    router.replace(pathname, { scroll: false });
+  }, [canEdit, pathname, router, searchParams]);
 
   const filteredCategories = useMemo(() => {
     const q = query.trim().toLowerCase();

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BriefcaseBusiness, ChevronRight, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
-import { COUNTRY_OPTIONS, GLOBAL_REGION_OPTIONS } from "@/lib/geoOptions";
+import { COUNTRY_OPTIONS } from "@/lib/geoOptions";
 
 export default function ProfileSetupBasic() {
   const router = useRouter();
@@ -12,7 +12,6 @@ export default function ProfileSetupBasic() {
   const [displayName, setDisplayName] = useState("");
   const [location, setLocation] = useState("");
   const [countryCode, setCountryCode] = useState("");
-  const [globalRegion, setGlobalRegion] = useState("");
   const [contactEmail, setContactEmail] = useState("");
 
   const [saving, setSaving] = useState(false);
@@ -27,7 +26,6 @@ export default function ProfileSetupBasic() {
     if (!name) return setMsg({ ok: false, text: "Display name is required." });
     if (!loc) return setMsg({ ok: false, text: "Location is required." });
     if (!countryCode) return setMsg({ ok: false, text: "Country is required." });
-    if (!globalRegion) return setMsg({ ok: false, text: "Global region is required." });
     if (!email) return setMsg({ ok: false, text: "Contact email is required." });
     if (!emailOk) return setMsg({ ok: false, text: "Enter a valid email address." });
 
@@ -49,7 +47,6 @@ export default function ProfileSetupBasic() {
           display_name: name,
           location: loc,
           country_code: countryCode,
-          global_region: globalRegion,
           contact_email: email,
         }),
       });
@@ -102,14 +99,6 @@ export default function ProfileSetupBasic() {
             required
             options={COUNTRY_OPTIONS}
             placeholder="Select a country"
-          />
-          <SelectField
-            label="Global region"
-            value={globalRegion}
-            onChange={setGlobalRegion}
-            required
-            options={GLOBAL_REGION_OPTIONS}
-            placeholder="Select a region"
           />
           <Field
             label="Public contact email"

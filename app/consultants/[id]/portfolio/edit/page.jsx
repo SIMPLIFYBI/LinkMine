@@ -1,7 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import PortfolioEditor from "./PortfolioEditor.client";
-import EditTabs from "../../edit/EditTabs";
 import Link from "next/link";
 
 export const runtime = "nodejs";
@@ -75,8 +74,6 @@ export default async function EditPortfolioPage({ params }) {
           </div>
         </div>
       </section>
-
-      <EditTabs consultantId={consultant.id} active="portfolio" />
 
       {consultant.status === "pending" && (
         <div className="mb-6 mt-4 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4 text-yellow-200">

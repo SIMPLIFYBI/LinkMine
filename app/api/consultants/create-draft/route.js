@@ -3,7 +3,7 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import { sendNewConsultancyNotification } from "@/lib/emails/sendNewConsultancy";
-import { isValidCountryCode, isValidGlobalRegion } from "@/lib/geoOptions";
+import { getGlobalRegionForCountry, isValidCountryCode } from "@/lib/geoOptions";
 
 const MAX_HEADLINE = 120;
 const MAX_SERVICES = 15;
@@ -38,7 +38,7 @@ export async function POST(req) {
   const headline = String(body?.headline || display_name).trim();
   const location = String(body?.location || "").trim();
   const country_code = String(body?.country_code || "").trim().toUpperCase();
-  const global_region = String(body?.global_region || "").trim();
+  const global_region = getGlobalRegionForCountry(country_code);
   const contact_email = String(body?.contact_email || "").trim();
   const services = Array.isArray(body?.services) ? body.services.slice(0, MAX_SERVICES) : [];
   const profile_type = "both";
@@ -47,9 +47,6 @@ export async function POST(req) {
   if (!location) return NextResponse.json({ stage: "validate", error: "Location is required" }, { status: 400 });
   if (!country_code || !isValidCountryCode(country_code)) {
     return NextResponse.json({ stage: "validate", error: "Valid country is required" }, { status: 400 });
-  }
-  if (!global_region || !isValidGlobalRegion(global_region)) {
-    return NextResponse.json({ stage: "validate", error: "Valid global region is required" }, { status: 400 });
   }
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact_email);
   if (!contact_email || !emailOk) return NextResponse.json({ stage: "validate", error: "Valid contact email is required" }, { status: 400 });

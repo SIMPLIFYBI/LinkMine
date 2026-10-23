@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 import {
   COUNTRY_OPTIONS,
-  GLOBAL_REGION_OPTIONS,
+  getGlobalRegionForCountry,
   isValidCountryCode,
-  isValidGlobalRegion,
 } from "@/lib/geoOptions";
 
 const MARKET_FOCUS_OPTIONS = [
@@ -51,7 +50,6 @@ export default function EditConsultantForm({ consultant }) {
       : (consultant.display_name ?? ""),
     location: consultant.location ?? "",
     country_code: consultant.country_code ?? "",
-    global_region: consultant.global_region ?? "",
     contact_email: consultant.contact_email ?? "",
     website_url: consultant.website_url ?? "",
     bio: consultant.bio ?? "",
@@ -168,7 +166,7 @@ export default function EditConsultantForm({ consultant }) {
 
     const placeId = String(form.place_id || "").trim();
     const countryCode = String(form.country_code || "").trim().toUpperCase();
-    const globalRegion = String(form.global_region || "").trim();
+    const globalRegion = getGlobalRegionForCountry(countryCode);
     if (form.website_url && !isValidWebsiteUrl(form.website_url)) {
       setMessage({
         type: "error",
@@ -180,12 +178,6 @@ export default function EditConsultantForm({ consultant }) {
 
     if (!isValidCountryCode(countryCode)) {
       setMessage({ type: "error", text: "Select a valid country." });
-      setSaving(false);
-      return;
-    }
-
-    if (!isValidGlobalRegion(globalRegion)) {
-      setMessage({ type: "error", text: "Select a valid global region." });
       setSaving(false);
       return;
     }
@@ -276,13 +268,6 @@ export default function EditConsultantForm({ consultant }) {
             onChange={handleChange("country_code")}
             options={COUNTRY_OPTIONS}
             placeholder="Select a country"
-          />
-          <SelectField
-            label="Global region"
-            value={form.global_region}
-            onChange={handleChange("global_region")}
-            options={GLOBAL_REGION_OPTIONS}
-            placeholder="Select a region"
           />
           <Field label="Public contact email" type="email" value={form.contact_email} onChange={handleChange("contact_email")} hint="Shown on your public profile after it is approved." />
           <Field

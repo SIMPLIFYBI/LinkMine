@@ -12,7 +12,6 @@ import {
   TableSimple24Regular,
 } from "@fluentui/react-icons";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
-import EditTabs from "../../edit/EditTabs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -155,8 +154,6 @@ export default async function EditConsultantResourcesPage({ params }) {
           </div>
         </div>
       </section>
-
-      <EditTabs consultantId={consultant.id} active="resources" />
 
       {consultant.status === "pending" && (
         <div className="mb-6 mt-4 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4 text-yellow-200">

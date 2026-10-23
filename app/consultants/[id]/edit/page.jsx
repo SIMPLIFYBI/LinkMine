@@ -3,9 +3,8 @@ import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import EditConsultantForm from "./EditConsultantForm";
 import ConsultantServicesManager from "@/app/components/ConsultantServicesManager";
 import Link from "next/link";
-import EditTabs from "./EditTabs";
 import AbnSection from "./AbnSection.client.jsx"; // NEW
-import { BookOpen, BriefcaseBusiness, CalendarDays, FileText } from "lucide-react";
+import { BookOpen, BriefcaseBusiness, CalendarDays, FileText, Images } from "lucide-react";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -85,8 +84,6 @@ export default async function EditConsultantPage({ params }) {
       <h1 className="mb-1 text-2xl font-semibold text-white">Set up your provider profile</h1>
       <p className="text-sm text-slate-400">Choose what you offer, then refine the details people see publicly.</p>
 
-      <EditTabs consultantId={consultant.id} active="profile" />
-
       {consultant.status === "pending" && (
         <div className="mt-4 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4 text-yellow-200 mb-6">
           <p className="text-sm font-semibold">Your profile has been submitted and is awaiting approval.</p>
@@ -116,8 +113,8 @@ export default async function EditConsultantPage({ params }) {
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-100">Step 2: Choose what you offer</p>
           <h2 className="mt-2 text-xl font-semibold text-white">Build your provider profile around your work.</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Choose one or more paths now, or return later. Your public profile is the same either way.</p>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <Link href="#services" className="group rounded-xl border border-white/10 bg-white/[0.05] p-3 transition hover:border-cyan-200/35 hover:bg-white/10">
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <Link href={`/consultants/${consultant.id}/edit?add=services`} scroll={false} className="group rounded-xl border border-white/10 bg-white/[0.05] p-3 transition hover:border-cyan-200/35 hover:bg-white/10">
               <BriefcaseBusiness className="h-5 w-5 text-cyan-200" aria-hidden="true" />
               <p className="mt-3 text-sm font-semibold text-slate-100">Offer services</p>
               <p className="mt-1 text-xs leading-5 text-slate-400">Appear in Consultant discovery after approval.</p>
@@ -126,6 +123,11 @@ export default async function EditConsultantPage({ params }) {
               <FileText className="h-5 w-5 text-cyan-200" aria-hidden="true" />
               <p className="mt-3 text-sm font-semibold text-slate-100">Create resources</p>
               <p className="mt-1 text-xs leading-5 text-slate-400">Publish to the Vault after approval.</p>
+            </Link>
+            <Link href={`/consultants/${consultant.id}/portfolio/edit`} className="group rounded-xl border border-white/10 bg-white/[0.05] p-3 transition hover:border-cyan-200/35 hover:bg-white/10">
+              <Images className="h-5 w-5 text-cyan-200" aria-hidden="true" />
+              <p className="mt-3 text-sm font-semibold text-slate-100">Add portfolio</p>
+              <p className="mt-1 text-xs leading-5 text-slate-400">Showcase projects, documents, and relevant links.</p>
             </Link>
             <Link href={`/consultants/${consultant.id}?training=manage`} className="group rounded-xl border border-white/10 bg-white/[0.05] p-3 transition hover:border-cyan-200/35 hover:bg-white/10">
               <BookOpen className="h-5 w-5 text-cyan-200" aria-hidden="true" />
