@@ -32,9 +32,9 @@ export default async function NewConsultantPage({ searchParams }) {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-6 py-10">
-      <h1 className="text-2xl font-semibold text-white">Profile setup</h1>
+      <h1 className="text-2xl font-semibold text-white">Create your provider profile</h1>
       <p className="mt-2 text-sm text-slate-300">
-        Choose your profile type first, then complete your details.
+        This is your public presence on YouMine. Add services, resources, training, or events when you are ready.
       </p>
       <div className="mt-6 rounded-3xl border border-white/10 bg-white/[0.05] p-6">
         <ProfileSetupBasic services={services} initialProfileType={initialProfileType} />

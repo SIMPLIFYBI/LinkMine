@@ -2,34 +2,18 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { BriefcaseBusiness, Check, ChevronRight, Plus, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { COUNTRY_OPTIONS, GLOBAL_REGION_OPTIONS } from "@/lib/geoOptions";
 
 const MAX_HEADLINE = 120;
 const MAX_SERVICES = 15; // safety cap
-const PROFILE_TYPES = [
-  {
-    value: "consultant",
-    label: "Consultant / Service Provider",
-    description: "Offer field or professional services and appear in consultant search.",
-  },
-  {
-    value: "creator",
-    label: "Digital Creator",
-    description: "Publish and manage digital resources in Vault.",
-  },
-  {
-    value: "both",
-    label: "Both",
-    description: "Run consulting services and publish digital resources.",
-  },
-];
 
 function marketLabel(value) {
   return value === "oil_gas" ? "Oil & Gas" : "Mining";
 }
 
-export default function ProfileSetupBasic({ services = [], initialProfileType = "" }) {
+export default function ProfileSetupBasic({ services = [] }) {
   const router = useRouter();
 
   const [displayName, setDisplayName] = useState("");
@@ -38,7 +22,6 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
   const [countryCode, setCountryCode] = useState("");
   const [globalRegion, setGlobalRegion] = useState("");
   const [contactEmail, setContactEmail] = useState("");
-  const [profileType, setProfileType] = useState(initialProfileType || "");
 
   // Services state
   const [selected, setSelected] = useState(new Set()); // service ids
@@ -47,7 +30,6 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
 
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
-  const requiresServices = profileType === "consultant" || profileType === "both";
 
   const groupedByMarket = useMemo(() => {
     const byMarket = new Map();
@@ -99,7 +81,6 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
     const loc = location.trim();
     const email = contactEmail.trim();
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    if (!profileType) return setMsg({ ok: false, text: "Choose a profile type to continue." });
     if (!name) return setMsg({ ok: false, text: "Display name is required." });
     if (!head) return setMsg({ ok: false, text: "Headline is required." });
     if (head.length > MAX_HEADLINE) return setMsg({ ok: false, text: `Headline must be ${MAX_HEADLINE} characters or fewer.` });
@@ -108,7 +89,6 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
     if (!globalRegion) return setMsg({ ok: false, text: "Global region is required." });
     if (!email) return setMsg({ ok: false, text: "Contact email is required." });
     if (!emailOk) return setMsg({ ok: false, text: "Enter a valid email address." });
-    if (requiresServices && selected.size < 1) return setMsg({ ok: false, text: "Select at least one service you offer." });
 
     setSaving(true);
     setMsg(null);
@@ -125,7 +105,6 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
         method: "POST",
         headers: { "content-type": "application/json", ...authHeader },
         body: JSON.stringify({
-          profile_type: profileType,
           display_name: name,
           headline: head,
           location: loc,
@@ -152,32 +131,16 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
   return (
     <>
       <form onSubmit={onSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <p className="text-sm font-semibold text-slate-200">
-            Profile type <span className="text-rose-300">*</span>
-          </p>
-          <div className="grid gap-2 md:grid-cols-3">
-            {PROFILE_TYPES.map((option) => {
-              const active = option.value === profileType;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setProfileType(option.value)}
-                  className={[
-                    "rounded-2xl border px-3 py-3 text-left transition",
-                    active
-                      ? "border-sky-400/70 bg-sky-500/10 text-white"
-                      : "border-white/10 bg-white/[0.04] text-slate-200 hover:border-white/20 hover:bg-white/[0.08]",
-                  ].join(" ")}
-                >
-                  <div className="text-sm font-semibold">{option.label}</div>
-                  <div className="mt-1 text-xs text-slate-300">{option.description}</div>
-                </button>
-              );
-            })}
+        <section className="relative overflow-hidden rounded-2xl border border-sky-300/20 bg-[linear-gradient(135deg,rgba(14,165,233,0.16),rgba(15,23,42,0.72)_58%,rgba(16,185,129,0.13))] p-4 ring-1 ring-white/5">
+          <div aria-hidden="true" className="absolute -right-8 -top-10 h-28 w-28 rounded-full border border-cyan-100/20 bg-cyan-300/10" />
+          <div className="relative flex gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-sky-200/25 bg-sky-400/10 text-sky-100"><BriefcaseBusiness className="h-5 w-5" aria-hidden="true" /></div>
+            <div>
+              <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-sky-200"><Sparkles className="h-3.5 w-3.5" aria-hidden="true" />One profile, built around your work</div>
+              <p className="mt-2 text-sm leading-6 text-slate-200">Create your public presence first. Add services, resources, training, or events whenever they are relevant to you.</p>
+            </div>
           </div>
-        </div>
+        </section>
 
         <div className="grid gap-4 md:grid-cols-2">
           <Field
@@ -228,12 +191,10 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
           />
         </div>
 
-        {requiresServices ? (
+        <section className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-200">
-                Services you offer <span className="text-rose-300">*</span>
-              </p>
+              <p className="text-sm font-semibold text-slate-100">Services you offer <span className="text-slate-500">(optional)</span></p>
               <span className="text-xs text-slate-400">
                 {selectedCount > 0 ? `${selectedCount} selected` : "None selected"}
               </span>
@@ -245,10 +206,10 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
               aria-haspopup="dialog"
               aria-expanded={servicesOpen}
             >
-              {selectedCount > 0 ? "Edit services" : "Add services"}
+              <Plus className="h-4 w-4" aria-hidden="true" /> {selectedCount > 0 ? "Edit services" : "Add services"}
             </button>
             <p className="text-xs text-slate-400">
-              Pick at least one. You can add mining services, Oil & Gas services, or both.
+              Add services now to appear in Consultant discovery after approval, or do it later from your profile workspace.
             </p>
             {selectedCount > 0 ? (
               <p className="text-xs text-slate-500">
@@ -258,11 +219,7 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
               </p>
             ) : null}
           </div>
-        ) : (
-          <div className="rounded-2xl border border-sky-300/20 bg-sky-500/10 px-4 py-3 text-xs text-sky-100">
-            Services are optional for creator profiles and can be added later if you switch to consultant or both.
-          </div>
-        )}
+        </section>
 
         {msg && (
           <div
@@ -276,19 +233,20 @@ export default function ProfileSetupBasic({ services = [], initialProfileType = 
           </div>
         )}
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-3 border-t border-white/10 pt-5">
+          <p className="text-xs text-slate-400">Your profile is reviewed before it becomes public. You can keep building it while it is in review.</p>
           <button
             type="submit"
             disabled={saving || !displayName.trim()}
             className="rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
           >
-            {saving ? "Creating…" : "Create and continue"}
+            {saving ? "Creating…" : <><span>Create profile</span><ChevronRight className="h-4 w-4" aria-hidden="true" /></>}
           </button>
         </div>
       </form>
 
       {/* Services picker overlay */}
-      {requiresServices && servicesOpen && (
+      {servicesOpen && (
         <ServicesPicker
           activeMarket={activeMarket}
           groupedByMarket={groupedByMarket}

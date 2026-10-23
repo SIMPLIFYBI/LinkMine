@@ -125,10 +125,6 @@ export default async function EditConsultantResourcesPage({ params }) {
 
   const { data: resources = [] } = await resourcesQuery;
 
-  const isCreatorCapable = ["creator", "both"].includes(
-    String(consultant.profile_type || "consultant")
-  );
-
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-10">
       <section className="relative overflow-hidden rounded-[28px] border border-sky-200/20 bg-[radial-gradient(circle_at_88%_12%,rgba(34,211,238,0.2),transparent_28%),radial-gradient(circle_at_12%_100%,rgba(59,130,246,0.16),transparent_34%),linear-gradient(145deg,rgba(8,24,43,0.96),rgba(10,32,54,0.9))] p-5 shadow-[0_28px_70px_-46px_rgba(0,0,0,0.95)] ring-1 ring-white/10 sm:p-7">
@@ -200,12 +196,6 @@ export default async function EditConsultantResourcesPage({ params }) {
             Create new resource
           </Link>
         </div>
-
-        {!isCreatorCapable ? (
-          <p className="mt-4 rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-            This profile is set to consultant mode. You can still manage resources below, or switch the profile type to creator/both to highlight resources publicly.
-          </p>
-        ) : null}
 
         {resources.length === 0 ? (
           <p className="mt-5 text-sm text-slate-300">No resources found for this profile yet.</p>

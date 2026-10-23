@@ -7,7 +7,6 @@ import { isValidCountryCode, isValidGlobalRegion } from "@/lib/geoOptions";
 
 const MAX_HEADLINE = 120;
 const MAX_SERVICES = 15;
-const ALLOWED_PROFILE_TYPES = new Set(["consultant", "creator", "both"]);
 
 function slugify(s = "") {
   const base = s
@@ -42,12 +41,7 @@ export async function POST(req) {
   const global_region = String(body?.global_region || "").trim();
   const contact_email = String(body?.contact_email || "").trim();
   const services = Array.isArray(body?.services) ? body.services.slice(0, MAX_SERVICES) : [];
-  const profile_type = String(body?.profile_type || "").trim().toLowerCase();
-  const requiresServices = profile_type === "consultant" || profile_type === "both";
-
-  if (!ALLOWED_PROFILE_TYPES.has(profile_type)) {
-    return NextResponse.json({ stage: "validate", error: "Choose consultant, creator, or both." }, { status: 400 });
-  }
+  const profile_type = "both";
   if (!display_name) return NextResponse.json({ stage: "validate", error: "Display name is required" }, { status: 400 });
   if (!headline) return NextResponse.json({ stage: "validate", error: "Headline is required" }, { status: 400 });
   if (headline.length > MAX_HEADLINE) return NextResponse.json({ stage: "validate", error: `Headline must be ${MAX_HEADLINE} characters or fewer` }, { status: 400 });
@@ -60,9 +54,6 @@ export async function POST(req) {
   }
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact_email);
   if (!contact_email || !emailOk) return NextResponse.json({ stage: "validate", error: "Valid contact email is required" }, { status: 400 });
-  if (requiresServices && !services.length) {
-    return NextResponse.json({ stage: "validate", error: "Select at least one service" }, { status: 400 });
-  }
 
   // Validate services exist
   let svcIds = [];
@@ -78,9 +69,6 @@ export async function POST(req) {
     }
 
     svcIds = (validSvcs || []).map((s) => s.id);
-    if (requiresServices && !svcIds.length) {
-      return NextResponse.json({ stage: "services-validate", error: "No valid services selected" }, { status: 400 });
-    }
   }
 
   // Slug

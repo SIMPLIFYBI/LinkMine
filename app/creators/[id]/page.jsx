@@ -17,7 +17,6 @@ async function getCreator(id) {
 
   if (!creator) return null;
   if (creator.visibility !== "public" || creator.status !== "approved") return null;
-  if (!["creator", "both"].includes(String(creator.profile_type || "consultant"))) return null;
 
   let resourcesQuery = sb
     .from("resources")
@@ -33,6 +32,7 @@ async function getCreator(id) {
   }
 
   const { data: resources = [] } = await resourcesQuery;
+  if (!resources.length) return null;
 
   const { data: auth } = await sb.auth.getUser();
   const user = auth?.user || null;

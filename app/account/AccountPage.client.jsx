@@ -401,14 +401,10 @@ export default function AccountPageClient({ initialTab = "account" }) {
                     <div className="flex items-start justify-between gap-3">
                       <strong className="text-lg font-semibold tracking-tight text-white">{item.name}</strong>
                       <span className="inline-flex shrink-0 rounded-full border border-sky-200/20 bg-sky-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sky-100">
-                      {item.profileType === "both"
-                        ? "Both"
-                        : item.profileType === "creator"
-                          ? "Creator"
-                          : "Consultancy"}
+                        Provider profile
                       </span>
                     </div>
-                    <p className="mt-3 text-sm text-slate-300">{item.profileType === "both" ? "Consultancy and creator profile" : `${item.profileType === "creator" ? "Creator" : "Consultancy"} public profile`}</p>
+                    <p className="mt-3 text-sm text-slate-300">Your public presence for services, resources, training, and events.</p>
                     <div className="mt-6 flex flex-wrap gap-2 border-t border-white/10 pt-4">
                       <Link
                         href={`/consultants/${item.id}`}

@@ -108,6 +108,22 @@ export default async function EditConsultantPage({ params }) {
         </div>
       )}
 
+      <section className="relative mt-6 overflow-hidden rounded-2xl border border-cyan-200/20 bg-[linear-gradient(135deg,rgba(14,165,233,0.14),rgba(15,23,42,0.74)_54%,rgba(16,185,129,0.1))] p-5 shadow-[0_22px_50px_-38px_rgba(34,211,238,0.72)] ring-1 ring-white/5">
+        <div aria-hidden="true" className="pointer-events-none absolute -right-8 -top-12 h-32 w-32 rounded-full border border-cyan-100/20 bg-cyan-300/10" />
+        <div className="relative">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-100">Grow your profile</p>
+          <h2 className="mt-2 text-xl font-semibold text-white">One profile. Add the work you offer.</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Your profile appears in Consultant discovery when you add services, and in Vault Creators when you publish an approved resource. Training and events are also connected here.</p>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <Link href="#services" className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-3 text-sm font-semibold text-slate-100 transition hover:border-cyan-200/35 hover:bg-white/10">Add services</Link>
+            <Link href={`/consultants/${consultant.id}/resources/edit`} className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-3 text-sm font-semibold text-slate-100 transition hover:border-cyan-200/35 hover:bg-white/10">Publish resources</Link>
+            <Link href={`/consultants/${consultant.id}?training=manage`} className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-3 text-sm font-semibold text-slate-100 transition hover:border-cyan-200/35 hover:bg-white/10">Manage training</Link>
+            <Link href="/whats-on" className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-3 text-sm font-semibold text-slate-100 transition hover:border-cyan-200/35 hover:bg-white/10">Submit an event</Link>
+          </div>
+          {consultant.status !== "approved" ? <p className="mt-3 text-xs text-amber-100">Resource publishing and event submission unlock after your profile is approved.</p> : null}
+        </div>
+      </section>
+
       <EditConsultantForm consultant={consultant} />
 
       {/* NEW: ABN/ACN verify section (positive-only badge) */}
@@ -126,7 +142,7 @@ export default async function EditConsultantPage({ params }) {
       />
 
       {["consultant", "both"].includes(String(consultant.profile_type || "consultant")) ? (
-        <section className="mt-10 space-y-3">
+        <section id="services" className="mt-10 space-y-3">
           <h2 className="text-lg font-semibold text-slate-100">Services</h2>
           <p className="text-sm text-slate-400">
             Add or remove services offered by this consultancy.

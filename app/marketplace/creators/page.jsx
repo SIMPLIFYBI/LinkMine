@@ -17,14 +17,28 @@ export default async function MarketplaceCreatorsPage() {
   const authedSb = await supabaseServerClient();
   const { user, isAdmin } = await getResourceAuthContext(authedSb);
 
-  const { data: creators = [], error } = await sb
+  const { data: publicProfiles = [], error: profileError } = await sb
     .from("consultants")
-    .select("id, display_name, headline, location, metadata")
+    .select("id, display_name, headline, location, metadata, claimed_by")
     .eq("visibility", "public")
     .eq("status", "approved")
-    .in("profile_type", ["creator", "both"])
     .order("display_name", { ascending: true })
     .limit(200);
+
+  const { data: publishedResources = [], error: resourceError } = await sb
+    .from("resources")
+    .select("consultant_id, owner_user_id")
+    .eq("status", "approved")
+    .limit(1000);
+
+  const creatorIds = new Set();
+  for (const profile of publicProfiles) {
+    if (publishedResources.some((resource) => resource.consultant_id === profile.id || (profile.claimed_by && resource.owner_user_id === profile.claimed_by))) {
+      creatorIds.add(profile.id);
+    }
+  }
+  const creators = publicProfiles.filter((profile) => creatorIds.has(profile.id));
+  const error = profileError || resourceError;
 
   return (
     <MarketplaceRouteShell signedIn={Boolean(user)} isAdmin={isAdmin} activeKey="creators">
