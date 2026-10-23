@@ -4,7 +4,7 @@ import EditConsultantForm from "./EditConsultantForm";
 import ConsultantServicesManager from "@/app/components/ConsultantServicesManager";
 import Link from "next/link";
 import AbnSection from "./AbnSection.client.jsx"; // NEW
-import { BookOpen, BriefcaseBusiness, CalendarDays, FileText, Images } from "lucide-react";
+import { BookOpen, BriefcaseBusiness, CalendarDays, FileText } from "lucide-react";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -85,25 +85,9 @@ export default async function EditConsultantPage({ params }) {
       <p className="text-sm text-slate-400">Choose what you offer, then refine the details people see publicly.</p>
 
       {consultant.status === "pending" && (
-        <div className="mt-4 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4 text-yellow-200 mb-6">
-          <p className="text-sm font-semibold">Your profile has been submitted and is awaiting approval.</p>
-          <p className="mt-1 text-xs text-yellow-200/80">
-            While you wait, you can keep improving your profile or add a portfolio.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Link
-              href={`/consultants/${consultant.id}/portfolio/edit`}
-              className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-amber-50 hover:bg-white/15"
-            >
-              Add portfolio
-            </Link>
-            <Link
-              href="/consultants"
-              className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-amber-50 hover:bg-white/15"
-            >
-              Finish later
-            </Link>
-          </div>
+        <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-300/25 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-100">
+          <span className="h-2 w-2 rounded-full bg-amber-300" aria-hidden="true" />
+          Profile awaiting approval
         </div>
       )}
 
@@ -124,11 +108,6 @@ export default async function EditConsultantPage({ params }) {
               <p className="mt-3 text-sm font-semibold text-slate-100">Create resources</p>
               <p className="mt-1 text-xs leading-5 text-slate-400">Publish to the Vault after approval.</p>
             </Link>
-            <Link href={`/consultants/${consultant.id}/portfolio/edit`} className="group rounded-xl border border-white/10 bg-white/[0.05] p-3 transition hover:border-cyan-200/35 hover:bg-white/10">
-              <Images className="h-5 w-5 text-cyan-200" aria-hidden="true" />
-              <p className="mt-3 text-sm font-semibold text-slate-100">Add portfolio</p>
-              <p className="mt-1 text-xs leading-5 text-slate-400">Showcase projects, documents, and relevant links.</p>
-            </Link>
             <Link href={`/consultants/${consultant.id}?training=manage`} className="group rounded-xl border border-white/10 bg-white/[0.05] p-3 transition hover:border-cyan-200/35 hover:bg-white/10">
               <BookOpen className="h-5 w-5 text-cyan-200" aria-hidden="true" />
               <p className="mt-3 text-sm font-semibold text-slate-100">Offer training</p>
@@ -145,6 +124,19 @@ export default async function EditConsultantPage({ params }) {
       </section>
 
       <EditConsultantForm consultant={consultant} />
+
+      <section className="mt-8 flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/[0.035] p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-white">Show your work</h2>
+          <p className="mt-1 text-sm leading-6 text-slate-400">Add projects, supporting documents, and relevant links to strengthen your public profile.</p>
+        </div>
+        <Link
+          href={`/consultants/${consultant.id}/portfolio/edit`}
+          className="shrink-0 rounded-lg border border-sky-300/35 bg-sky-500/10 px-4 py-2.5 text-center text-sm font-semibold text-sky-100 transition hover:border-sky-200/60 hover:bg-sky-500/20"
+        >
+          Manage portfolio
+        </Link>
+      </section>
 
       {/* NEW: ABN/ACN verify section (positive-only badge) */}
       <AbnSection
