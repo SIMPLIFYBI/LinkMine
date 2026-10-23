@@ -162,63 +162,63 @@ export default function WelcomeAccountModal() {
           </div>
 
           <h2 className="welcome-modal-item welcome-modal-item-2 mt-4 text-2xl font-black tracking-tight text-white sm:text-3xl">
-            Your account is live. Here is what that means.
+            Your YouMine account is ready.
           </h2>
 
           <p className="welcome-modal-item welcome-modal-item-3 mt-3 max-w-2xl text-sm leading-7 text-slate-200 sm:text-[15px]">
-            A YouMine account lets you sign in, browse every area of the platform, open vault resources, contact consultants, and engage with other users. This is your secure login identity.
+            You can now explore consultants and creators, access Vault resources, save favourites, contact approved consultants, and book available training.
           </p>
 
           <div className="welcome-modal-item welcome-modal-item-4 mt-5 grid gap-3 sm:grid-cols-2">
             <article className="rounded-2xl border border-emerald-200/25 bg-emerald-400/10 p-4">
               <div className="flex items-center gap-2 text-emerald-100">
                 <VaultIcon className="h-5 w-5" />
-                <h3 className="text-sm font-bold uppercase tracking-[0.14em]">Account access</h3>
+                <h3 className="text-sm font-bold uppercase tracking-[0.14em]">Explore as a member</h3>
               </div>
               <ul className="mt-3 space-y-2 text-sm text-emerald-50/95">
-                <li className="flex items-start gap-2"><TickIcon className="mt-0.5 h-4 w-4 text-emerald-200" />Browse platform sections and vault content</li>
-                <li className="flex items-start gap-2"><TickIcon className="mt-0.5 h-4 w-4 text-emerald-200" />Message and engage with other users</li>
-                <li className="flex items-start gap-2"><TickIcon className="mt-0.5 h-4 w-4 text-emerald-200" />Save activity under your private account</li>
+                <li className="flex items-start gap-2"><TickIcon className="mt-0.5 h-4 w-4 text-emerald-200" />Browse the platform and access Vault content</li>
+                <li className="flex items-start gap-2"><TickIcon className="mt-0.5 h-4 w-4 text-emerald-200" />Contact approved consultants and book training</li>
+                <li className="flex items-start gap-2"><TickIcon className="mt-0.5 h-4 w-4 text-emerald-200" />Keep favourites and activity in one place</li>
               </ul>
             </article>
 
             <article className="rounded-2xl border border-sky-200/30 bg-sky-400/10 p-4">
               <div className="flex items-center gap-2 text-sky-100">
                 <ProfileIcon className="h-5 w-5" />
-                <h3 className="text-sm font-bold uppercase tracking-[0.14em]">Public profile</h3>
+                <h3 className="text-sm font-bold uppercase tracking-[0.14em]">Provider profile, later</h3>
               </div>
               <p className="mt-3 text-sm leading-6 text-sky-50/95">
-                A creator or consultant profile is separate from your account. It is your public presence where companies and users discover you, review your expertise, and contact you.
+                When you are ready to offer services, publish resources, run training, or submit events, create a provider profile from your Account area.
               </p>
             </article>
           </div>
 
           <div className="welcome-modal-item welcome-modal-item-5 mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link
-              href={canCreateProfile ? "/consultants/new" : "/account"}
-              onClick={() => {
-                markSeen(sessionUserId);
-                trackCta("create_public_profile");
-              }}
-              className="inline-flex items-center justify-center rounded-full border border-cyan-200/50 bg-[linear-gradient(130deg,#22d3ee,#38bdf8_42%,#0284c7)] px-6 py-3 text-sm font-bold text-slate-950 shadow-[0_18px_40px_-20px_rgba(34,211,238,0.9)] transition hover:brightness-110"
-            >
-              {canCreateProfile ? "Create a public profile" : "Open profile workspace"}
-            </Link>
-
-            <Link
               href="/vault"
               onClick={() => {
                 markSeen(sessionUserId);
-                trackCta("start_browsing");
+                trackCta("start_exploring");
+              }}
+              className="inline-flex items-center justify-center rounded-full border border-cyan-200/50 bg-[linear-gradient(130deg,#22d3ee,#38bdf8_42%,#0284c7)] px-6 py-3 text-sm font-bold text-slate-950 shadow-[0_18px_40px_-20px_rgba(34,211,238,0.9)] transition hover:brightness-110"
+            >
+              Start exploring
+            </Link>
+
+            <Link
+              href={canCreateProfile ? "/consultants/new?source=welcome" : "/account?tab=profiles"}
+              onClick={() => {
+                markSeen(sessionUserId);
+                trackCta("create_provider_profile");
               }}
               className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/18"
             >
-              Start browsing
+              {canCreateProfile ? "Create provider profile" : "Open profile workspace"}
             </Link>
           </div>
 
           <p className="welcome-modal-item welcome-modal-item-6 mt-3 text-xs text-slate-300/90">
-            You can create your public profile now or anytime later from your account area.
+            Your member account is private. A provider profile is a separate public presence.
           </p>
         </div>
       </section>

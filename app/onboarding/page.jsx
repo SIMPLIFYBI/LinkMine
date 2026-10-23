@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, Compass, LibraryBig, MessageCircle, Sparkles } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 
 export default function OnboardingPage() {
@@ -12,8 +13,8 @@ export default function OnboardingPage() {
     firstName: "",
     lastName: "",
   });
+  const [step, setStep] = useState("details");
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -63,7 +64,6 @@ export default function OnboardingPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
-    setMessage("");
 
     if (!form.firstName.trim()) {
       setError("Please add your first name.");
@@ -95,12 +95,19 @@ export default function OnboardingPage() {
           throw new Error(body.error || "Could not save profile.");
         }
 
-        setMessage("Profile saved! Redirecting…");
-        setTimeout(() => router.replace("/?welcome=1"), 900);
+        setStep("path");
       } catch (err) {
         setError(err.message || "Unable to save your profile.");
       }
     });
+  }
+
+  function startBrowsing() {
+    router.replace("/?welcome=1");
+  }
+
+  function createProviderProfile() {
+    router.replace("/consultants/new?source=onboarding");
   }
 
   if (!sessionChecked) {
@@ -109,6 +116,10 @@ export default function OnboardingPage() {
         <p className="text-sm text-slate-300">Preparing your onboarding…</p>
       </main>
     );
+  }
+
+  if (step === "path") {
+    return <NextStepChoice onBack={() => setStep("details")} onBrowse={startBrowsing} onCreateProfile={createProviderProfile} />;
   }
 
   return (
@@ -186,10 +197,6 @@ export default function OnboardingPage() {
           {error ? (
             <p className="text-sm text-rose-300">{error}</p>
           ) : null}
-          {message ? (
-            <p className="text-sm text-emerald-300">{message}</p>
-          ) : null}
-
           <div className="flex justify-end border-t border-white/10 pt-5">
             <button
               type="submit"
@@ -197,11 +204,48 @@ export default function OnboardingPage() {
               className="min-h-11 rounded-full border border-cyan-100/35 bg-[linear-gradient(135deg,#22d3ee,#0284c7_55%,#1d4ed8)] px-5 py-2.5 text-sm font-bold text-white shadow-[0_16px_34px_-18px_rgba(34,211,238,0.9)] transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
               aria-label="Continue to YouMine"
             >
-              {isPending ? "Saving…" : "Continue"}
+              {isPending ? "Saving…" : <><span>Continue</span><ArrowRight className="h-4 w-4" aria-hidden="true" /></>}
             </button>
           </div>
         </form>
       </section>
+    </main>
+  );
+}
+
+function NextStepChoice({ onBack, onBrowse, onCreateProfile }) {
+  return (
+    <main className="relative mx-auto max-w-5xl overflow-hidden px-4 py-8 sm:py-12">
+      <div aria-hidden="true" className="pointer-events-none absolute left-[12%] top-8 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl" />
+      <div aria-hidden="true" className="pointer-events-none absolute right-[8%] top-20 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl" />
+      <header className="relative mx-auto max-w-2xl text-center">
+        <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200/25 bg-cyan-300/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-100">
+          <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Your account is ready
+        </div>
+        <h1 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-5xl">Choose your next step</h1>
+        <p className="mt-3 text-sm leading-6 text-slate-300 sm:text-base">You can use YouMine as a member today, or build a provider presence for the work you offer.</p>
+      </header>
+
+      <section className="relative mt-8 grid gap-4 md:grid-cols-2 sm:mt-10 sm:gap-6">
+        <button type="button" onClick={onBrowse} className="group relative overflow-hidden rounded-[28px] border border-emerald-200/25 bg-[linear-gradient(145deg,rgba(5,150,105,0.2),rgba(15,23,42,0.93)_62%)] p-5 text-left text-slate-100 shadow-[0_25px_60px_-40px_rgba(16,185,129,0.8)] ring-1 ring-emerald-200/10 transition duration-300 hover:-translate-y-1 hover:border-emerald-100/55 hover:shadow-[0_30px_65px_-35px_rgba(16,185,129,0.92)] sm:p-7">
+          <div aria-hidden="true" className="absolute -right-10 -top-8 h-40 w-40 rounded-full border border-emerald-100/20 bg-emerald-300/10 blur-sm transition duration-500 group-hover:scale-125" />
+          <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-100/30 bg-emerald-300/15 text-emerald-100 shadow-lg shadow-emerald-950/30"><Compass className="h-6 w-6" aria-hidden="true" /></div>
+          <div className="relative mt-8 flex items-center justify-between gap-4"><div><div className="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-200">Member access</div><h2 className="mt-2 text-2xl font-bold tracking-tight text-white">Browse YouMine</h2></div><ArrowRight className="h-5 w-5 text-emerald-100 transition group-hover:translate-x-1" aria-hidden="true" /></div>
+          <p className="relative mt-3 text-sm leading-6 text-emerald-50/90">Explore the platform now. Your account keeps your activity personal.</p>
+          <div className="relative mt-5 grid gap-2 text-xs leading-5 text-emerald-50/90"><span className="flex items-start gap-2"><LibraryBig className="mt-0.5 h-4 w-4 shrink-0 text-emerald-200" aria-hidden="true" />Open Vault resources and save favourites</span><span className="flex items-start gap-2"><MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-200" aria-hidden="true" />Contact approved consultants and book training</span></div>
+          <span className="relative mt-7 inline-flex items-center gap-2 text-sm font-bold text-emerald-100">Start exploring <ArrowRight className="h-4 w-4" aria-hidden="true" /></span>
+        </button>
+
+        <button type="button" onClick={onCreateProfile} className="group relative overflow-hidden rounded-[28px] border border-cyan-200/35 bg-[linear-gradient(145deg,rgba(14,165,233,0.24),rgba(30,41,59,0.95)_60%,rgba(15,23,42,0.98))] p-5 text-left text-slate-100 shadow-[0_25px_60px_-40px_rgba(34,211,238,0.9)] ring-1 ring-cyan-100/15 transition duration-300 hover:-translate-y-1 hover:border-cyan-100/70 hover:shadow-[0_30px_65px_-35px_rgba(34,211,238,0.98)] sm:p-7">
+          <div aria-hidden="true" className="absolute -right-10 -top-8 h-40 w-40 rounded-full border border-cyan-100/20 bg-cyan-300/10 blur-sm transition duration-500 group-hover:scale-125" />
+          <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-cyan-100/35 bg-cyan-300/15 text-cyan-50 shadow-lg shadow-cyan-950/30"><BriefcaseBusiness className="h-6 w-6" aria-hidden="true" /></div>
+          <div className="relative mt-8 flex items-center justify-between gap-4"><div><div className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-100">Offer on YouMine</div><h2 className="mt-2 text-2xl font-bold tracking-tight text-white">Create a provider profile</h2></div><ArrowRight className="h-5 w-5 text-cyan-100 transition group-hover:translate-x-1" aria-hidden="true" /></div>
+          <p className="relative mt-3 text-sm leading-6 text-cyan-50/90">Set up a Consultant, Creator, or Both profile and make your work discoverable.</p>
+          <div className="relative mt-5 grid gap-2 text-xs leading-5 text-cyan-50/90"><span className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-cyan-200" aria-hidden="true" />Offer services, build training, and manage bookings</span><span className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-cyan-200" aria-hidden="true" />Publish resources and submit events after approval</span></div>
+          <span className="relative mt-7 inline-flex items-center gap-2 text-sm font-bold text-cyan-100">Set up my profile <ArrowRight className="h-4 w-4" aria-hidden="true" /></span>
+        </button>
+      </section>
+      <button type="button" onClick={onBack} className="relative mx-auto mt-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-400 transition hover:text-white"><ArrowLeft className="h-4 w-4" aria-hidden="true" />Back to account details</button>
     </main>
   );
 }
