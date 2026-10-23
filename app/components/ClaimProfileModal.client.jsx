@@ -88,37 +88,22 @@ export default function ClaimProfileModal({
 
       const accessToken = signInData.session.access_token;
 
-      // Fetch existing profile row for required fields
       setStageMsg("Updating profile details…");
-      const { data: existingProfile } = await sb
-        .from("user_profiles")
-        .select("user_type, organisation_size, organisation_name, profession")
-        .eq("id", signInData.session.user.id)
-        .maybeSingle();
-
-      if (existingProfile) {
-        // Patch names along with required existing fields
-        const patchRes = await fetch("/api/profile", {
-          method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${accessToken}`
-            },
-          body: JSON.stringify({
-            userType: existingProfile.user_type,
-            organisationSize: existingProfile.organisation_size,
-            organisationName: existingProfile.organisation_name,
-            profession: existingProfile.profession,
-            firstName: firstName.trim(),
-            lastName: lastName.trim()
-          })
-        });
-        if (!patchRes.ok) {
-          const body = await patchRes.json().catch(() => ({}));
-          throw new Error(body.error || "Failed updating profile names.");
-        }
+      const patchRes = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+        }),
+      });
+      if (!patchRes.ok) {
+        const body = await patchRes.json().catch(() => ({}));
+        throw new Error(body.error || "Failed updating profile names.");
       }
-      // else: skip name patch (user hasn't onboarded yet)
 
       if (!contactEmail) {
         throw new Error("No contact email is stored for this profile.");

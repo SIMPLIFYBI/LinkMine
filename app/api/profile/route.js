@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { isValidStoredUserType } from "@/lib/userTypeSelections";
 
-const ORG_SIZES = new Set(["individual", "1-8", "8-25", "26-100", "101+"]);
 const NAME_MAX = 60;
 
 function validateName(label, value) {
@@ -44,56 +42,34 @@ export async function PATCH(req) {
 
   const payload = await req.json().catch(() => ({}));
   const {
-    userType,
-    organisationSize,
     organisationName,
-    profession,
-    firstName,      // NEW
-    lastName        // NEW
+    firstName,
+    lastName,
   } = payload;
 
   const organisationNameTrimmed =
     typeof organisationName === "string" ? organisationName.trim() : "";
-  const professionTrimmed = typeof profession === "string" ? profession.trim() : "";
-
-  if (!isValidStoredUserType(userType)) {
-    return NextResponse.json({ error: "Invalid user type." }, { status: 400 });
-  }
-
-  if (!ORG_SIZES.has(organisationSize)) {
-    return NextResponse.json({ error: "Invalid organisation size." }, { status: 400 });
-  }
 
   if (organisationName != null && typeof organisationName !== "string") {
     return NextResponse.json({ error: "Organisation name must be a string." }, { status: 400 });
   }
 
-  if (profession != null && typeof profession !== "string") {
-    return NextResponse.json({ error: "Profession must be a string." }, { status: 400 });
-  }
-
-  if (!organisationNameTrimmed && !professionTrimmed) {
-    return NextResponse.json(
-      { error: "Please provide either an organisation name or profession." },
-      { status: 400 }
-    );
-  }
-
-  // Validate names only if provided
   const firstErr = validateName("First name", firstName);
   if (firstErr) return NextResponse.json({ error: firstErr }, { status: 400 });
+  if (!firstName?.trim()) {
+    return NextResponse.json({ error: "First name is required." }, { status: 400 });
+  }
   const lastErr = validateName("Last name", lastName);
   if (lastErr) return NextResponse.json({ error: lastErr }, { status: 400 });
 
   const upsertRow = {
     id: user.id,
-    user_type: userType,
-    organisation_size: organisationSize,
-    organisation_name: organisationNameTrimmed || null,
-    profession: professionTrimmed || "unspecified",
-    ...(firstName ? { first_name: firstName.trim() } : {}),
-    ...(lastName ? { last_name: lastName.trim() } : {}),
+    first_name: firstName.trim(),
+    last_name: lastName?.trim() || null,
   };
+  if (organisationName !== undefined) {
+    upsertRow.organisation_name = organisationNameTrimmed || null;
+  }
 
   const { error } = await sb.from("user_profiles").upsert(upsertRow, { onConflict: "id" });
 
@@ -104,12 +80,9 @@ export async function PATCH(req) {
   return NextResponse.json({
     ok: true,
     saved: {
-      userType,
-      organisationSize,
       organisationName: organisationNameTrimmed || null,
-      profession: professionTrimmed || "unspecified",
-      firstName: firstName ? firstName.trim() : null,
-      lastName: lastName ? lastName.trim() : null
+      firstName: firstName.trim(),
+      lastName: lastName?.trim() || null,
     }
   });
 }

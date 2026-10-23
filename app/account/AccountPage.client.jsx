@@ -19,20 +19,6 @@ const TABS = [
   { key: "profiles", label: "Profile" },
 ];
 
-const userTypes = [
-  { value: "consultant", label: "Consultant / Contractor" },
-  { value: "client", label: "Client" },
-  { value: "both", label: "Both" },
-];
-
-const organisationSizes = [
-  { value: "individual", label: "Individual" },
-  { value: "1-8", label: "1–8 people" },
-  { value: "8-25", label: "8–25 people" },
-  { value: "26-100", label: "26–100 people" },
-  { value: "101+", label: "101+ people" },
-];
-
 export default function AccountPageClient({ initialTab = "account" }) {
   const router = useRouter();
   const sbRef = useRef(null);
@@ -49,10 +35,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
 
   // NEW: profile form state for the Account tab
   const [profileForm, setProfileForm] = useState({
-    userType: "",
-    organisationSize: "",
     organisationName: "",
-    profession: "",
     firstName: "",
     lastName: "",
   });
@@ -95,7 +78,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
         sb
           .from("user_profiles")
           .select(
-            "user_type, organisation_size, organisation_name, profession, first_name, last_name"
+            "organisation_name, first_name, last_name"
           )
           .eq("id", userId)
           .maybeSingle(),
@@ -119,10 +102,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
       } else if (profileRow) {
         setProfileForm((prev) => ({
           ...prev,
-          userType: profileRow.user_type ?? "",
-          organisationSize: profileRow.organisation_size ?? "",
           organisationName: profileRow.organisation_name ?? "",
-          profession: profileRow.profession ?? "",
           firstName: profileRow.first_name ?? "",
           lastName: profileRow.last_name ?? "",
         }));
@@ -184,12 +164,9 @@ export default function AccountPageClient({ initialTab = "account" }) {
             Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            userType: profileForm.userType,
-            organisationSize: profileForm.organisationSize,
             organisationName: profileForm.organisationName?.trim() || null,
-            profession: profileForm.profession.trim(),
-            firstName: profileForm.firstName?.trim() || undefined,
-            lastName: profileForm.lastName?.trim() || undefined,
+            firstName: profileForm.firstName?.trim(),
+            lastName: profileForm.lastName?.trim(),
           }),
         });
 
@@ -206,9 +183,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
   }
 
   const isProfileSubmitDisabled =
-    !profileForm.userType ||
-    !profileForm.organisationSize ||
-    !profileForm.profession ||
+    !profileForm.firstName.trim() ||
     isSavingProfile;
 
   if (loading) {
@@ -305,13 +280,14 @@ export default function AccountPageClient({ initialTab = "account" }) {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-xs font-medium text-slate-300">
-                    First name <span className="text-slate-500">(optional)</span>
+                    First name <span className="text-rose-300">*</span>
                   </label>
                   <input
                     type="text"
                     value={profileForm.firstName}
                     onChange={(e) => updateProfileField("firstName", e.target.value)}
                     maxLength={60}
+                    required
                     className="mt-1 w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/40"
                     placeholder="Jane"
                   />
@@ -331,61 +307,6 @@ export default function AccountPageClient({ initialTab = "account" }) {
                 </div>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="block text-xs font-medium text-slate-300">
-                    I’m here as a…
-                  </label>
-                  <div className="mt-2 grid gap-2">
-                    {userTypes.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => updateProfileField("userType", option.value)}
-                        className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-xs sm:text-sm transition ${
-                          profileForm.userType === option.value
-                            ? "border-sky-400/70 bg-sky-500/10 text-white"
-                            : "border-white/10 bg-white/[0.02] text-slate-200 hover:border-white/25"
-                        }`}
-                      >
-                        <span>{option.label}</span>
-                        <span
-                          className={`h-4 w-4 rounded-full border ${
-                            profileForm.userType === option.value
-                              ? "border-sky-400 bg-sky-500/60"
-                              : "border-slate-500"
-                          }`}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-300">
-                    Organisation size
-                  </label>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    {organisationSizes.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() =>
-                          updateProfileField("organisationSize", option.value)
-                        }
-                        className={`rounded-xl border px-3 py-2 text-xs sm:text-sm text-left transition ${
-                          profileForm.organisationSize === option.value
-                            ? "border-sky-400/70 bg-sky-500/10 text-white"
-                            : "border-white/10 bg-white/[0.02] text-slate-200 hover:border-white/25"
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
               <div>
                 <label className="block text-xs font-medium text-slate-300">
                   Organisation name <span className="text-slate-500">(optional)</span>
@@ -398,20 +319,6 @@ export default function AccountPageClient({ initialTab = "account" }) {
                   }
                   className="mt-1 w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/40"
                   placeholder="YouMine Pty Ltd"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-300">
-                  Profession / role
-                </label>
-                <input
-                  type="text"
-                  value={profileForm.profession}
-                  onChange={(e) => updateProfileField("profession", e.target.value)}
-                  required
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/40"
-                  placeholder="e.g. Principal Mining Engineer"
                 />
               </div>
 
@@ -431,7 +338,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
                   {isSavingProfile ? "Saving…" : "Save changes"}
                 </button>
                 <p className="text-xs text-slate-400">
-                  These details help us personalise your YouMine experience.
+                  These are private account details. Public profile details are managed separately.
                 </p>
               </div>
             </form>
@@ -452,34 +359,9 @@ export default function AccountPageClient({ initialTab = "account" }) {
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-3">
-                    <dt className="text-slate-400">User type</dt>
-                    <dd className="text-right text-slate-100">
-                      {
-                        (userTypes.find((u) => u.value === profileForm.userType) || {})
-                          .label || "Not set"
-                      }
-                    </dd>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
                     <dt className="text-slate-400">Organisation</dt>
                     <dd className="text-right text-slate-100">
                       {profileForm.organisationName || "Not set"}
-                    </dd>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <dt className="text-slate-400">Size</dt>
-                    <dd className="text-right text-slate-100">
-                      {
-                        (organisationSizes.find(
-                          (o) => o.value === profileForm.organisationSize
-                        ) || {}).label || "Not set"
-                      }
-                    </dd>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <dt className="text-slate-400">Profession</dt>
-                    <dd className="text-right text-slate-100">
-                      {profileForm.profession || "Not set"}
                     </dd>
                   </div>
                 </dl>
