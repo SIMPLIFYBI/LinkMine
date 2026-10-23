@@ -69,7 +69,7 @@ export default async function EditConsultantPage({ params }) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-8">
+    <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
       {/* New back button */}
       <div className="mb-4">
         <Link
@@ -97,7 +97,7 @@ export default async function EditConsultantPage({ params }) {
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-100">Step 2: Choose what you offer</p>
           <h2 className="mt-2 text-xl font-semibold text-white">Build your provider profile around your work.</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Choose one or more paths now, or return later. Your public profile is the same either way.</p>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Link href={`/consultants/${consultant.id}/edit?add=services`} scroll={false} className="group rounded-xl border border-white/10 bg-white/[0.05] p-3 transition hover:border-cyan-200/35 hover:bg-white/10">
               <BriefcaseBusiness className="h-5 w-5 text-cyan-200" aria-hidden="true" />
               <p className="mt-3 text-sm font-semibold text-slate-100">Offer services</p>
