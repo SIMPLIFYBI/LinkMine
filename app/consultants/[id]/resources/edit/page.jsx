@@ -131,11 +131,11 @@ export default async function EditConsultantResourcesPage({ params }) {
         <div className="relative">
           <div className="mb-4">
             <Link
-              href={`/consultants/${consultant.id}`}
+              href={`/consultants/${consultant.id}/edit`}
               className="inline-flex items-center gap-1.5 text-sm font-medium text-cyan-100 transition hover:text-white"
             >
               <span aria-hidden className="text-lg leading-none">←</span>
-              <span>Back to profile</span>
+              <span>Back to profile editor</span>
             </Link>
           </div>
 

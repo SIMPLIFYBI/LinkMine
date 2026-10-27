@@ -3,12 +3,12 @@ import MyActivityPage from "@/app/activity/page";
 
 export const dynamic = "force-dynamic";
 
-const ALLOWED_TABS = new Set(["account", "notifications", "profiles"]);
+const ALLOWED_TABS = new Set(["account", "notifications"]);
 
 export default async function Page({ searchParams }) {
   const params = await searchParams;
   const rawTab = params?.tab;
-  const tab = rawTab === "consultants" || rawTab === "creators" ? "profiles" : rawTab;
+  const tab = rawTab;
   const activityTab = params?.activityTab;
 
   if (rawTab === "activity") {

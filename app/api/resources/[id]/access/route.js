@@ -38,10 +38,6 @@ export async function POST(req, { params }) {
 
   const sb = await supabaseServerClient();
   const { userId, isAdmin } = await getResourceAuthContext(sb);
-  if (!userId) {
-    return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
-  }
-
   const payload = await req.json().catch(() => ({}));
   const sourceSurface = normalizeSourceSurface(payload?.sourceSurface);
 
@@ -57,6 +53,10 @@ export async function POST(req, { params }) {
 
   if (!resource) {
     return NextResponse.json({ ok: false, error: "Resource not found." }, { status: 404 });
+  }
+
+  if (!userId && resource.resource_type !== "external") {
+    return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
   }
 
   const canAccess = resource.status === "approved" || resource.owner_user_id === userId || isAdmin;

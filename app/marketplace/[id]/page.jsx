@@ -370,7 +370,11 @@ export default async function MarketplaceResourcePage({ params }) {
             <aside className="border-t border-white/10 bg-slate-950/25 xl:border-l xl:border-t-0">
               <div className="p-5 sm:p-6 xl:p-7">
                 <div className="mb-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-sky-100/75">Resource access</div>
-                <ResourceDetailActions resource={resource} requiresAuth={!user} />
+                <ResourceDetailActions
+                  resource={resource}
+                  requiresAuth={!user && resource.resourceType !== "external"}
+                  hasAccess={resource.resourceType === "external"}
+                />
               </div>
               <div className="grid grid-cols-2 divide-x divide-white/10 border-t border-white/10">
                 <div className="p-5 xl:p-6">

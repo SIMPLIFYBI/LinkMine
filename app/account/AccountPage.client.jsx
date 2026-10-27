@@ -16,7 +16,6 @@ const TABS = [
   { key: "account", label: "Account" },
   { key: "activity", label: "Activity", href: "/account?tab=activity" },
   { key: "notifications", label: "Notifications" },
-  { key: "profiles", label: "Profile" },
 ];
 
 export default function AccountPageClient({ initialTab = "account" }) {
@@ -26,7 +25,6 @@ export default function AccountPageClient({ initialTab = "account" }) {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
   const [consultants, setConsultants] = useState([]);
-  const [profileError, setProfileError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAppAdmin, setIsAppAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState(
@@ -90,7 +88,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
       setIsAdmin(Boolean(adminRow) || (email && adminEmails.includes(email)));
 
       if (consultantError) {
-        setProfileError(consultantError.message);
+        console.error("Error loading public profiles:", consultantError.message);
         setConsultants([]);
       } else {
         setConsultants(consultantRows ?? []);
@@ -143,6 +141,9 @@ export default function AccountPageClient({ initialTab = "account" }) {
         isOwner: row.claimed_by === userId,
       }));
   }, [consultants, userId]);
+
+  const hasPublicProfile = ownedProfiles.length > 0;
+  const primaryPublicProfile = ownedProfiles.find((profile) => profile.isOwner) || ownedProfiles[0];
 
   function updateProfileField(field, value) {
     setProfileForm((prev) => ({ ...prev, [field]: value }));
@@ -240,6 +241,24 @@ export default function AccountPageClient({ initialTab = "account" }) {
           </button>
         </div>
       </div>
+
+      <section className="relative mb-10 overflow-hidden rounded-3xl border border-cyan-200/30 bg-[linear-gradient(135deg,rgba(8,145,178,0.28),rgba(15,23,42,0.92)_58%,rgba(30,41,59,0.92))] px-5 py-6 shadow-[0_22px_48px_-32px_rgba(34,211,238,0.72)] ring-1 ring-cyan-100/10 sm:px-7">
+        <div className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full border border-cyan-100/20 bg-cyan-300/10 blur-xl" aria-hidden="true" />
+        <div className="relative flex flex-wrap items-center justify-between gap-5">
+          <div className="max-w-2xl">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-100">{hasPublicProfile ? "Your public presence" : "Share your work"}</p>
+            <h2 className="mt-2 text-xl font-semibold tracking-tight text-white">{hasPublicProfile ? "Keep your public profile current" : "Create a public profile"}</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-200">{hasPublicProfile ? "Update the profile clients use to discover your services, resources, training, or events on YouMine." : "Help clients discover your services, resources, training, or events on YouMine."}</p>
+          </div>
+          <Link
+            href={hasPublicProfile ? `/consultants/${primaryPublicProfile.id}/edit` : "/consultants/new?source=account"}
+            className="inline-flex shrink-0 items-center gap-2 rounded-full border border-cyan-100/45 bg-cyan-300 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-[0_14px_28px_-18px_rgba(103,232,249,0.95)] transition hover:-translate-y-0.5 hover:border-white hover:bg-cyan-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
+          >
+            {hasPublicProfile ? "Edit public profile" : "Create a public profile"}
+            <span className="text-base leading-none" aria-hidden="true">&#8594;</span>
+          </Link>
+        </div>
+      </section>
 
       {/* Account tab: modern profile card + editable details */}
       {activeTab === "account" && (
@@ -369,63 +388,6 @@ export default function AccountPageClient({ initialTab = "account" }) {
 
             </aside>
           </div>
-        </section>
-      )}
-
-      {activeTab === "profiles" && (
-        <section className="mb-12 space-y-6">
-          <header className="relative overflow-hidden rounded-3xl border border-sky-300/20 bg-[linear-gradient(118deg,rgba(14,116,144,0.26),rgba(15,23,42,0.82)_48%,rgba(30,41,59,0.68))] px-6 py-7 shadow-[0_24px_60px_-38px_rgba(56,189,248,0.7)] ring-1 ring-white/10 sm:px-8">
-            <div className="pointer-events-none absolute -right-14 -top-20 h-52 w-52 rounded-full border border-sky-200/15 bg-sky-300/10 blur-2xl" />
-            <div className="relative max-w-2xl">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-200">Public profile</p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Your public presence</h1>
-              <p className="mt-3 text-sm leading-6 text-slate-200 sm:text-base">This is the profile people see when they discover your consultancy or creator work on YouMine.</p>
-            </div>
-          </header>
-          {profileError ? (
-            <p className="text-sm text-red-400">{profileError}</p>
-          ) : ownedProfiles.length === 0 ? (
-            <section className="rounded-2xl border border-dashed border-white/15 bg-white/[0.03] px-6 py-10 text-center shadow-[0_22px_48px_-38px_rgba(0,0,0,0.85)]">
-              <p className="text-sm font-medium text-slate-100">No public profile yet</p>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-300">Create a consultancy or creator profile to give people a clear way to find and connect with you.</p>
-            </section>
-          ) : (
-            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {ownedProfiles.map((item) => (
-                <li
-                  key={item.id}
-                  className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.09),rgba(255,255,255,0.025))] p-5 shadow-[0_20px_42px_-34px_rgba(0,0,0,0.95)] transition duration-200 hover:-translate-y-1 hover:border-sky-300/45 hover:shadow-[0_24px_50px_-30px_rgba(14,165,233,0.5)]"
-                >
-                  <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-200/60 to-transparent" />
-                  <div className="text-slate-100">
-                    <div className="flex items-start justify-between gap-3">
-                      <strong className="text-lg font-semibold tracking-tight text-white">{item.name}</strong>
-                      <span className="inline-flex shrink-0 rounded-full border border-sky-200/20 bg-sky-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-sky-100">
-                        Provider profile
-                      </span>
-                    </div>
-                    <p className="mt-3 text-sm text-slate-300">Your public presence for services, resources, training, and events.</p>
-                    <div className="mt-6 flex flex-wrap gap-2 border-t border-white/10 pt-4">
-                      <Link
-                        href={`/consultants/${item.id}`}
-                        className="inline-flex items-center justify-center rounded-full border border-sky-200/30 bg-sky-400/10 px-3.5 py-2 text-xs font-semibold text-sky-100 transition hover:border-sky-100/60 hover:bg-sky-400 hover:text-slate-950"
-                      >
-                        View profile
-                      </Link>
-                      {item.isOwner ? (
-                        <Link
-                          href={`/consultants/${item.id}/edit`}
-                          className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/[0.06] px-3.5 py-2 text-xs font-semibold text-white transition hover:border-white/30 hover:bg-white/[0.12]"
-                        >
-                          Edit profile
-                        </Link>
-                      ) : null}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
         </section>
       )}
 
