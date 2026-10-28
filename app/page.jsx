@@ -20,9 +20,9 @@ const heroImage = "/Pictures/pexels-urtimud-89-76108288-14263363.jpg";
 function getHomeCopy(market) {
   if (market === "oil_gas") {
     return {
-      title: "YouMine — Find oil & gas consultants and contractors fast",
+      title: "YouMine — The Resources Industry. Connected.",
       description:
-        "YouMine connects oil & gas teams with trusted consultants and contractors. Browse services, view portfolios, and contact experts directly.",
+        "YouMine is the central digital platform for the resources industry, connecting oil & gas talent, jobs, training, events, and practical digital resources.",
       heroAlt: "YouMine — consultants and contractors in oil and gas",
       heroTitle: "The resources industry, connected.",
       heroDescription:
@@ -37,9 +37,9 @@ function getHomeCopy(market) {
 
   if (market === "both") {
     return {
-      title: "YouMine — Find mining and oil & gas consultants fast",
+      title: "YouMine — The Resources Industry. Connected.",
       description:
-        "YouMine connects mining and oil & gas teams with trusted consultants and contractors. Browse services, view portfolios, and contact experts directly.",
+        "YouMine is the central digital platform for the resources industry, connecting specialist talent, jobs, training, events, and practical digital resources across mining and oil & gas.",
       heroAlt: "YouMine — consultants and contractors across mining and oil and gas",
       heroTitle: "The resources industry, connected.",
       heroDescription:
@@ -53,9 +53,9 @@ function getHomeCopy(market) {
   }
 
   return {
-    title: "YouMine — Find mining consultants and contractors fast",
+    title: "YouMine — The Resources Industry. Connected.",
     description:
-      "YouMine connects mining clients with trusted consultants and contractors. Browse services, view portfolios, and contact experts directly.",
+      "YouMine is the central digital platform for the resources industry, connecting mining talent, jobs, training, events, and practical digital resources.",
     heroAlt: "YouMine — consultants and contractors in mining",
     heroTitle: "The resources industry, connected.",
     heroDescription:

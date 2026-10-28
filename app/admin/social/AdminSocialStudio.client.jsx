@@ -527,6 +527,61 @@ function ConsultantFeaturePreview({ data }) {
   );
 }
 
+function DigitalResourcesPreview({ data }) {
+  return (
+    <div className="relative h-full overflow-hidden rounded-[40px] bg-[#0d1620] text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_16%,rgba(34,211,238,0.26),transparent_30%),radial-gradient(circle_at_84%_12%,rgba(59,130,246,0.28),transparent_26%),linear-gradient(160deg,#0b1720_0%,#101b38_52%,#090d14_100%)]" />
+      <div className="absolute right-[-110px] top-[180px] h-[410px] w-[410px] rounded-full border border-white/10 bg-white/5 blur-3xl" />
+      <div className="relative flex h-full flex-col px-20 py-20">
+        <div className="flex items-start justify-between gap-10">
+          <div className="max-w-[740px]">
+            <div className="text-[22px] uppercase tracking-[0.42em] text-cyan-100/90">Digital resources</div>
+            <h2 className="mt-8 text-[78px] font-semibold leading-[0.92] tracking-[-0.06em]">{data.title}</h2>
+            <p className="mt-6 max-w-[680px] text-[30px] leading-[1.25] text-slate-200">{data.summary}</p>
+          </div>
+          <div className="relative flex h-[160px] w-[160px] shrink-0 items-center justify-center overflow-hidden rounded-[32px] border border-cyan-100/20 bg-cyan-300/10 text-[62px] font-semibold text-cyan-100">
+            <span aria-hidden={Boolean(data.creatorIconUrl)}>{data.title?.slice(0, 1) || "R"}</span>
+            {data.creatorIconUrl ? (
+              <img src={data.creatorIconUrl} alt="" className="absolute inset-0 h-full w-full object-cover" crossOrigin="anonymous" />
+            ) : null}
+          </div>
+        </div>
+
+        <div className="mt-12 grid grid-cols-[1.3fr_0.9fr] gap-8">
+          <div className="rounded-[34px] border border-white/10 bg-black/20 p-8 backdrop-blur-sm">
+            <div className="text-[14px] uppercase tracking-[0.32em] text-slate-400">Resource snapshot</div>
+            <div className="mt-6 flex flex-wrap gap-4">
+              <div className="rounded-full border border-cyan-200/20 bg-cyan-300/10 px-5 py-3 text-[20px] font-medium text-cyan-50">{data.category}</div>
+              <div className="rounded-full border border-blue-200/20 bg-blue-300/10 px-5 py-3 text-[20px] font-medium text-blue-50">{data.format}</div>
+            </div>
+            <div className="mt-10 rounded-[28px] border border-white/10 bg-white/5 px-6 py-6 text-[24px] leading-[1.45] text-slate-200">
+              Practical tools and knowledge for the mining industry.
+            </div>
+          </div>
+
+          <div className="rounded-[34px] border border-white/10 bg-white/7 p-8 backdrop-blur-sm">
+            <div className="text-[14px] uppercase tracking-[0.32em] text-slate-400">Explore on YouMine</div>
+            <div className="mt-6">
+              <div className="text-[12px] uppercase tracking-[0.22em] text-slate-500">Link</div>
+              <div className="mt-2 break-all text-[20px] text-cyan-100">youmine.io{data.resourceUrl}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-auto rounded-[34px] border border-white/10 bg-gradient-to-r from-cyan-400/18 to-blue-400/12 px-8 py-7 backdrop-blur-sm">
+          <div className="flex items-end justify-between gap-8">
+            <div>
+              <div className="text-[16px] uppercase tracking-[0.34em] text-cyan-100/80">Built for better mining work</div>
+              <div className="mt-3 text-[36px] font-semibold tracking-[-0.04em] text-white">Discover specialist resources, tools, and insights on YouMine.</div>
+            </div>
+            <img src="/brand/youmine-wordmark-white.svg" alt="YouMine" className="h-auto w-[150px] shrink-0 object-contain" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function JobsPreview({ data }) {
   return (
     <div className="relative h-full overflow-hidden rounded-[40px] bg-[#08131a] text-white">
@@ -698,6 +753,9 @@ export default function AdminSocialStudio({ data }) {
   const [selectedConsultantId, setSelectedConsultantId] = useState(data.consultantFeature.selectedId || "");
   const [consultantSearch, setConsultantSearch] = useState("");
   const [isConsultantMenuOpen, setIsConsultantMenuOpen] = useState(false);
+  const [selectedResourceId, setSelectedResourceId] = useState(data.digitalResources?.selectedId || "");
+  const [resourceSearch, setResourceSearch] = useState("");
+  const [isResourceMenuOpen, setIsResourceMenuOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState(data.singleJob?.selectedId || "");
   const [jobSearch, setJobSearch] = useState("");
   const [isJobMenuOpen, setIsJobMenuOpen] = useState(false);
@@ -706,6 +764,7 @@ export default function AdminSocialStudio({ data }) {
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const previewRefs = useRef({});
   const consultantPickerRef = useRef(null);
+  const resourcePickerRef = useRef(null);
   const jobPickerRef = useRef(null);
 
   const brandingGroups = useMemo(() => {
@@ -745,6 +804,15 @@ export default function AdminSocialStudio({ data }) {
     return (data.consultantFeature?.options || []).find((option) => option.id === selectedConsultantId) || null;
   }, [data.consultantFeature, selectedConsultantId]);
 
+  const activeDigitalResource = useMemo(() => {
+    if (!data.digitalResources?.byId) return data.digitalResources?.active;
+    return data.digitalResources.byId[selectedResourceId] || data.digitalResources.active;
+  }, [data.digitalResources, selectedResourceId]);
+
+  const selectedResourceOption = useMemo(() => {
+    return (data.digitalResources?.options || []).find((option) => option.id === selectedResourceId) || null;
+  }, [data.digitalResources, selectedResourceId]);
+
   const activeSingleJob = useMemo(() => {
     if (!data.singleJob?.byId) return data.singleJob?.active;
     return data.singleJob.byId[selectedJobId] || data.singleJob.active;
@@ -780,6 +848,15 @@ export default function AdminSocialStudio({ data }) {
     });
   }, [data.singleJob, jobSearch]);
 
+  const filteredResourceOptions = useMemo(() => {
+    const options = data.digitalResources?.options || [];
+    const query = resourceSearch.trim().toLowerCase();
+
+    if (!query) return options;
+
+    return options.filter((option) => `${option.title || ""} ${option.category || ""}`.toLowerCase().includes(query));
+  }, [data.digitalResources, resourceSearch]);
+
   useEffect(() => {
     if (!isConsultantMenuOpen) return undefined;
 
@@ -805,6 +882,32 @@ export default function AdminSocialStudio({ data }) {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isConsultantMenuOpen]);
+
+  useEffect(() => {
+    if (!isResourceMenuOpen) return undefined;
+
+    function handlePointerDown(event) {
+      if (resourcePickerRef.current && !resourcePickerRef.current.contains(event.target)) {
+        setIsResourceMenuOpen(false);
+        setResourceSearch("");
+      }
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setIsResourceMenuOpen(false);
+        setResourceSearch("");
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isResourceMenuOpen]);
 
   useEffect(() => {
     if (!isJobMenuOpen) return undefined;
@@ -859,6 +962,18 @@ export default function AdminSocialStudio({ data }) {
         content: <ConsultantFeaturePreview data={activeConsultantFeature} />,
       },
       {
+        id: "digitalResources",
+        label: "Digital Resources",
+        description: "Rotating featured resource card from the marketplace.",
+        caption: activeDigitalResource?.caption || "",
+        insights: [
+          activeDigitalResource?.title || "Resource unavailable",
+          activeDigitalResource?.category || "Digital resource",
+          activeDigitalResource?.format || "Digital resource",
+        ],
+        content: <DigitalResourcesPreview data={activeDigitalResource} />,
+      },
+      {
         id: "jobs",
         label: "Jobs Posted",
         description: "Recent jobs and current board activity.",
@@ -903,7 +1018,7 @@ export default function AdminSocialStudio({ data }) {
         content: <BrandingGallery assets={BRANDING_ASSETS} onDownload={handleBrandDownload} />,
       },
     ],
-    [activeConsultantFeature, activeSingleJob, brandingGroups, data]
+    [activeConsultantFeature, activeDigitalResource, activeSingleJob, brandingGroups, data]
   );
 
   const active = tabs.find((tab) => tab.id === activeTab) || tabs[0];
@@ -1038,6 +1153,49 @@ export default function AdminSocialStudio({ data }) {
                       ) : (
                         <div className="rounded-xl px-3 py-3 text-sm text-slate-400">No consultants match this search</div>
                       )}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+          {active.id === "digitalResources" && data.digitalResources?.options?.length ? (
+            <div className="mt-4">
+              <label className="block text-[11px] uppercase tracking-[0.24em] text-slate-500">Choose resource</label>
+              <div className="relative mt-2" ref={resourcePickerRef}>
+                <input
+                  type="search"
+                  value={isResourceMenuOpen ? resourceSearch : selectedResourceOption?.title || ""}
+                  onFocus={() => setIsResourceMenuOpen(true)}
+                  onChange={(event) => {
+                    setResourceSearch(event.target.value);
+                    setIsResourceMenuOpen(true);
+                  }}
+                  placeholder="Search by title or category"
+                  className="w-full rounded-2xl border border-white/12 bg-black/25 px-4 py-3 pr-10 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300/40"
+                  aria-expanded={isResourceMenuOpen}
+                  aria-haspopup="listbox"
+                />
+                <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">
+                  <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4 fill-current"><path d="M5.5 7.5 10 12l4.5-4.5" /></svg>
+                </div>
+                {isResourceMenuOpen ? (
+                  <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-white/12 bg-slate-950/98 shadow-2xl ring-1 ring-white/10 backdrop-blur">
+                    <div className="border-b border-white/8 px-4 py-2 text-xs text-slate-400">{filteredResourceOptions.length} resource{filteredResourceOptions.length === 1 ? "" : "s"} shown</div>
+                    <div role="listbox" className="max-h-72 overflow-auto p-2">
+                      {filteredResourceOptions.length ? filteredResourceOptions.map((option) => {
+                        const isSelected = option.id === selectedResourceId;
+                        return (
+                          <button key={option.id} type="button" role="option" aria-selected={isSelected} onMouseDown={(event) => event.preventDefault()} onClick={() => {
+                            setSelectedResourceId(option.id);
+                            setResourceSearch("");
+                            setIsResourceMenuOpen(false);
+                          }} className={["w-full rounded-xl px-3 py-3 text-left transition", isSelected ? "bg-cyan-400/15 text-cyan-50 ring-1 ring-cyan-300/30" : "text-slate-100 hover:bg-white/5"].join(" ")}>
+                            <div className="text-sm font-medium">{option.title}</div>
+                            <div className="mt-1 text-xs text-slate-400">{option.category}</div>
+                          </button>
+                        );
+                      }) : <div className="rounded-xl px-3 py-3 text-sm text-slate-400">No resources match this search</div>}
                     </div>
                   </div>
                 ) : null}

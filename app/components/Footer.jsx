@@ -23,7 +23,7 @@ export default function Footer({ currentMarket = "mining" }) {
           <div>
             <Logo className="inline-block" />
             <p className={isLight ? "mt-3 text-sm text-slate-600" : "mt-3 text-sm text-slate-300"}>
-              Connect {industryLabel} clients with trusted consultants and contractors.
+              The central digital platform for {industryLabel}: talent, opportunities, training, events, and digital resources.
             </p>
           </div>
 

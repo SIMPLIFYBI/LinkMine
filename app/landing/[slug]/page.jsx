@@ -18,7 +18,7 @@ export async function generateMetadata({ params }) {
   const resolvedParams = await params;
   const entry = getLandingEntry(resolvedParams.slug);
   if (!entry) {
-    return { title: "YouMine", description: "Consultants marketplace" };
+    return { title: "YouMine", description: "The central digital platform for the resources industry." };
   }
   return {
     title: entry.title,
