@@ -152,13 +152,14 @@ export async function PATCH(req, { params }) {
     if (typeof body.category === "string") patch.category = body.category;
     if (typeof body.level === "string") patch.level = body.level;
     if (typeof body.delivery_default === "string") patch.delivery_default = body.delivery_default;
+    if (["draft", "published"].includes(body.status)) patch.status = body.status;
     if (body.duration_hours != null) patch.duration_hours = Number(body.duration_hours);
 
     if (Array.isArray(body.tags)) {
       patch.tags = body.tags.map((t) => String(t).trim()).filter(Boolean);
     }
 
-    if (!patch.title) {
+    if ("title" in patch && !patch.title) {
       return NextResponse.json({ error: "Title is required." }, { status: 400 });
     }
 

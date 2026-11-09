@@ -4,6 +4,8 @@ import AddCourseForm from "@/app/training/schedule/AddCourseForm.client.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
+import toast from "react-hot-toast";
+import { supabase } from "@/lib/supabaseClient";
 
 function classNames(...parts) {
   return parts.filter(Boolean).join(" ");
@@ -313,6 +315,20 @@ export default function CourseEditorModal({
     };
   }, [courses.length, sessions, sessionBookingCounts]);
 
+  const isCourseDirty = useMemo(() => {
+    if (!selectedCourse) return false;
+    const currentTags = tags.split(",").map((tag) => tag.trim()).filter(Boolean).join(",");
+    const savedTags = (Array.isArray(selectedCourse.tags) ? selectedCourse.tags : []).join(",");
+    return title !== (selectedCourse.title || "")
+      || summary !== (selectedCourse.summary || "")
+      || description !== (selectedCourse.description || "")
+      || category !== (selectedCourse.category || "")
+      || level !== (selectedCourse.level || "")
+      || durationHours !== (selectedCourse.duration_hours != null ? String(selectedCourse.duration_hours) : "")
+      || deliveryDefault !== (selectedCourse.delivery_default || "in_person")
+      || currentTags !== savedTags;
+  }, [category, deliveryDefault, description, durationHours, level, selectedCourse, summary, tags, title]);
+
   function resetNewSessionForm() {
     setNDate("");
     setNStart("");
@@ -385,7 +401,12 @@ export default function CourseEditorModal({
     setError("");
 
     try {
-      const res = await fetch(`/api/consultants/${encodeURIComponent(consultantId)}/courses`, { cache: "no-store" });
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      const res = await fetch(`/api/consultants/${encodeURIComponent(consultantId)}/courses`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        cache: "no-store",
+      });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || "Failed to load training.");
 
@@ -436,17 +457,11 @@ export default function CourseEditorModal({
     setActiveTab(defaultTab);
     setSelectedCourseId(courseId || null);
     setShowNewSessionForm(false);
-    setShowCreateCourseForm(Boolean(!courseId));
+    setShowCreateCourseForm(false);
     resetNewSessionForm();
     loadCourses(courseId || null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, courseId, consultantId]);
-
-  useEffect(() => {
-    if (!courses.length) {
-      setShowCreateCourseForm(true);
-    }
-  }, [courses.length]);
 
   useEffect(() => {
     if (!selectedCourse) {
@@ -492,6 +507,20 @@ export default function CourseEditorModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, canManage, activeSessionId]);
 
+  useEffect(() => {
+    if (!open) return undefined;
+    function handleKeyDown(event) {
+      if (event.key !== "Escape") return;
+      if (showCreateCourseForm) {
+        setShowCreateCourseForm(false);
+      } else {
+        closeManager();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, showCreateCourseForm, isCourseDirty]);
+
   async function saveCourse() {
     if (!selectedCourseId) return;
 
@@ -521,11 +550,63 @@ export default function CourseEditorModal({
 
       await loadCourses(selectedCourseId);
       onChanged?.();
+      toast.success("Course saved.", { id: "course-editor" });
     } catch (e) {
       setError(e.message || "Failed to save course.");
     } finally {
       setSavingCourse(false);
     }
+  }
+
+  async function publishCourse() {
+    if (!selectedCourseId || !title.trim()) return;
+
+    setSavingCourse(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/training/courses/${encodeURIComponent(selectedCourseId)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title.trim(),
+          summary: summary.trim(),
+          description: description.trim(),
+          category,
+          level,
+          duration_hours: durationHours === "" ? null : Number(durationHours),
+          delivery_default: deliveryDefault,
+          tags: tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+          status: "published",
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || "Failed to publish course.");
+
+      await loadCourses(selectedCourseId);
+      onChanged?.();
+      toast.success("Course published.", { id: "course-editor" });
+    } catch (e) {
+      const message = e.message || "Failed to publish course.";
+      setError(message);
+      toast.error(message, { id: "course-editor" });
+    } finally {
+      setSavingCourse(false);
+    }
+  }
+
+  function confirmDiscard() {
+    return !isCourseDirty || window.confirm("Discard unsaved course changes?");
+  }
+
+  function closeManager() {
+    if (!confirmDiscard()) return;
+    onClose?.();
+  }
+
+  function selectCourse(courseIdToSelect) {
+    if (courseIdToSelect === selectedCourseId || !confirmDiscard()) return;
+    setSelectedCourseId(courseIdToSelect);
+    setShowNewSessionForm(false);
   }
 
   async function saveSession() {
@@ -709,7 +790,7 @@ export default function CourseEditorModal({
       <div
         ref={overlayRef}
         onClick={(event) => {
-          if (event.target === overlayRef.current) onClose?.();
+          if (event.target === overlayRef.current) closeManager();
         }}
         className={classNames(
           "absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-300",
@@ -722,7 +803,7 @@ export default function CourseEditorModal({
           role="dialog"
           aria-modal="true"
           className={classNames(
-            "flex max-h-[calc(100vh-2rem)] w-full max-w-7xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-slate-950 shadow-[0_30px_120px_rgba(2,6,23,0.65)] ring-1 ring-white/10 transition-all duration-300 sm:max-h-[calc(100vh-3rem)]",
+            "relative flex max-h-[calc(100vh-2rem)] w-full max-w-7xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-slate-950 shadow-[0_30px_120px_rgba(2,6,23,0.65)] ring-1 ring-white/10 transition-all duration-300 sm:max-h-[calc(100vh-3rem)]",
             open ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
           )}
         >
@@ -736,7 +817,7 @@ export default function CourseEditorModal({
 
             <button
               type="button"
-              onClick={onClose}
+              onClick={closeManager}
               className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-medium text-slate-200 hover:bg-white/10"
             >
               Close
@@ -757,27 +838,6 @@ export default function CourseEditorModal({
               </div>
             ) : (
               <>
-                <div className="mb-4 rounded-[24px] border border-white/10 bg-slate-950/80 p-2 shadow-[0_18px_50px_rgba(2,6,23,0.28)] ring-1 ring-white/10 backdrop-blur">
-                  <div className="grid grid-cols-3 gap-2">
-                    {tabs.map((tab) => (
-                      <button
-                        key={tab.key}
-                        type="button"
-                        onClick={() => setActiveTab(tab.key)}
-                        className={classNames(
-                          "rounded-[18px] px-3 py-3 text-left transition sm:px-4",
-                          activeTab === tab.key
-                            ? "bg-[linear-gradient(135deg,rgba(56,189,248,0.28),rgba(14,165,233,0.16))] shadow-[inset_0_0_0_1px_rgba(125,211,252,0.35),0_12px_30px_rgba(14,165,233,0.14)]"
-                            : "bg-transparent hover:bg-white/[0.05]"
-                        )}
-                      >
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">{tab.eyebrow}</div>
-                        <div className="mt-1 text-sm font-semibold text-white sm:text-base">{tab.label}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 <div className="mb-5 overflow-hidden rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.18),rgba(15,23,42,0.92)_48%,rgba(2,6,23,0.98)_100%)] p-5 shadow-[0_24px_80px_rgba(2,6,23,0.45)] sm:p-6">
                   <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                     <div className="max-w-3xl">
@@ -804,6 +864,27 @@ export default function CourseEditorModal({
                   </div>
                 </div>
 
+                <div className="mb-4 rounded-[24px] border border-white/10 bg-slate-950/80 p-2 shadow-[0_18px_50px_rgba(2,6,23,0.28)] ring-1 ring-white/10 backdrop-blur">
+                  <div className="grid grid-cols-3 gap-2">
+                    {tabs.map((tab) => (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        onClick={() => setActiveTab(tab.key)}
+                        className={classNames(
+                          "rounded-[18px] px-3 py-3 text-left transition sm:px-4",
+                          activeTab === tab.key
+                            ? "bg-[linear-gradient(135deg,rgba(56,189,248,0.28),rgba(14,165,233,0.16))] shadow-[inset_0_0_0_1px_rgba(125,211,252,0.35),0_12px_30px_rgba(14,165,233,0.14)]"
+                            : "bg-transparent hover:bg-white/[0.05]"
+                        )}
+                      >
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">{tab.eyebrow}</div>
+                        <div className="mt-1 text-sm font-semibold text-white sm:text-base">{tab.label}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {activeTab === "courses" ? (
                   <div className="grid gap-4 xl:grid-cols-[340px_minmax(0,1fr)]">
                     <div className="space-y-4 xl:sticky xl:top-0 xl:self-start">
@@ -816,46 +897,13 @@ export default function CourseEditorModal({
                           {canManage ? (
                             <button
                               type="button"
-                              onClick={() => setShowCreateCourseForm((current) => !current)}
+                              onClick={() => setShowCreateCourseForm(true)}
                               className="rounded-full border border-sky-300/20 bg-sky-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-sky-100 hover:bg-sky-500/20"
                             >
-                              {showCreateCourseForm ? "Hide form" : "+ Add course"}
+                              + Add course
                             </button>
                           ) : null}
                         </div>
-
-                        {showCreateCourseForm ? (
-                          <div className="mt-4 rounded-[24px] border border-sky-400/20 bg-[linear-gradient(180deg,rgba(14,165,233,0.10),rgba(15,23,42,0.65))] p-4 ring-1 ring-sky-300/10">
-                            <div className="mb-3 flex items-center justify-between gap-3">
-                              <div>
-                                <div className="text-base font-semibold text-white">Add training</div>
-                                <div className="text-sm text-slate-300">Create a new course without leaving the manager.</div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => setShowCreateCourseForm(false)}
-                                className="rounded-xl border border-white/10 px-3 py-2 text-sm text-slate-200 hover:bg-white/10"
-                              >
-                                Close
-                              </button>
-                            </div>
-
-                            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_18px_60px_-36px_rgba(56,189,248,0.45)] ring-1 ring-white/10">
-                              <AddCourseForm
-                                consultantId={consultantId}
-                                reloadOnSuccess={false}
-                                onDone={async (payload) => {
-                                  await loadCourses(payload?.id || null);
-                                  setSelectedCourseId(payload?.id || null);
-                                  setActiveTab("courses");
-                                  setShowCreateCourseForm(false);
-                                  onCreated?.(payload);
-                                  onChanged?.();
-                                }}
-                              />
-                            </div>
-                          </div>
-                        ) : null}
 
                         <div className="mt-4 space-y-2">
                           {courses.length ? (
@@ -864,16 +912,13 @@ export default function CourseEditorModal({
                                 key={course.id}
                                 course={course}
                                 active={selectedCourseId === course.id}
-                                onSelect={() => {
-                                  setSelectedCourseId(course.id);
-                                  setShowNewSessionForm(false);
-                                }}
+                                onSelect={() => selectCourse(course.id)}
                               />
                             ))
                           ) : (
                             <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 px-4 py-8 text-center">
                               <div className="text-lg font-semibold text-white">No courses yet</div>
-                              <p className="mt-2 text-sm text-slate-400">Use the add course form to publish your first training offer.</p>
+                              <p className="mt-2 text-sm text-slate-400">Create a draft course, then add sessions and publish when it is ready.</p>
                             </div>
                           )}
                         </div>
@@ -890,6 +935,9 @@ export default function CourseEditorModal({
                               ? "Choose a course from the library to edit its details, then switch to sessions or bookings when you are ready."
                               : "Start by adding a course, then build out sessions and attendee workflows from here."}
                           </p>
+                          {canManage ? (
+                            <button type="button" onClick={() => setShowCreateCourseForm(true)} className="mt-5 rounded-xl border border-sky-300/30 bg-sky-500/10 px-4 py-2.5 text-sm font-semibold text-sky-100 hover:bg-sky-500/20">+ Add course</button>
+                          ) : null}
                         </div>
                       ) : null}
 
@@ -903,6 +951,9 @@ export default function CourseEditorModal({
                                 <div className="mt-4 flex flex-wrap gap-2">
                                   <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-200">
                                     {selectedCourse.category || "Training course"}
+                                  </span>
+                                  <span className={classNames("rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em]", selectedCourse.status === "published" ? "border-emerald-300/25 bg-emerald-400/10 text-emerald-100" : "border-amber-300/25 bg-amber-400/10 text-amber-100")}>
+                                    {selectedCourse.status === "published" ? "Published" : "Draft"}
                                   </span>
                                   {selectedCourse.level ? (
                                     <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-200">
@@ -919,6 +970,9 @@ export default function CourseEditorModal({
                               </div>
 
                               <div className="flex flex-wrap gap-2 xl:justify-end">
+                                {canManage && selectedCourse.status !== "published" ? (
+                                  <button type="button" onClick={publishCourse} disabled={savingCourse || !title.trim()} className="rounded-xl border border-emerald-300/30 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/20 disabled:opacity-50">Publish course</button>
+                                ) : null}
                                 {canManage ? (
                                   <button
                                     type="button"
@@ -1438,6 +1492,23 @@ export default function CourseEditorModal({
                 )}
               </>
             )}
+          </div>
+
+          <div className={classNames("absolute inset-y-0 left-0 z-30 flex w-full max-w-2xl flex-col border-r border-sky-300/20 bg-slate-950 shadow-[28px_0_70px_rgba(2,6,23,0.52)] transition-transform duration-300 ease-out", showCreateCourseForm ? "pointer-events-auto translate-x-0" : "pointer-events-none -translate-x-full")} aria-hidden={!showCreateCourseForm}>
+            <AddCourseForm
+              compact
+              consultantId={consultantId}
+              reloadOnSuccess={false}
+              onCancel={() => setShowCreateCourseForm(false)}
+              onDone={async (payload) => {
+                await loadCourses(payload?.id || null);
+                setSelectedCourseId(payload?.id || null);
+                setActiveTab("courses");
+                setShowCreateCourseForm(false);
+                onCreated?.(payload);
+                onChanged?.();
+              }}
+            />
           </div>
         </aside>
       </div>

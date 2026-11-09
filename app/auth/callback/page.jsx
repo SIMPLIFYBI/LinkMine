@@ -7,6 +7,10 @@ import { AlertCircle, Check, LoaderCircle } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { claimAndTrackSignup, getSignupMethod } from "@/lib/ga4Client";
 
+function safeRedirectPath(value) {
+  return value?.startsWith("/") && !value.startsWith("//") ? value : "/";
+}
+
 export default function AuthCallbackPage() {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -15,6 +19,7 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     (async () => {
       const callbackParams = new URLSearchParams(`${window.location.search}&${window.location.hash.replace(/^#/, "")}`);
+      const redirectTo = safeRedirectPath(callbackParams.get("redirect"));
       const providerError = callbackParams.get("error_description");
       if (providerError) {
         setError(providerError);
@@ -59,7 +64,7 @@ export default function AuthCallbackPage() {
         .maybeSingle();
 
       setComplete(true);
-      router.replace(profile?.id ? "/?welcome=1" : "/onboarding");
+      router.replace(profile?.id ? redirectTo : "/onboarding");
     })();
   }, [router]);
 

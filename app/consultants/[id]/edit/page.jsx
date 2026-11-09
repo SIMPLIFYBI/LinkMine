@@ -124,7 +124,9 @@ export default async function EditConsultantPage({ params }) {
         </div>
       </section>
 
-      <EditConsultantForm consultant={consultant} />
+      <div className="mt-6">
+        <EditConsultantForm consultant={consultant} />
+      </div>
 
       <section className="mt-8 flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/[0.035] p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>

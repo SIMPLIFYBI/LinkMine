@@ -2,6 +2,10 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
+import { supabaseAdminClient } from "@/lib/supabaseAdminClient";
+import { sendEmail } from "@/lib/emailPostmark";
+import { buildResourceApprovedEmail } from "@/lib/emails/resourceApproved";
+import { siteUrl } from "@/lib/siteUrl";
 import {
   buildResourceRoutePayload,
   cleanNullableText,
@@ -37,7 +41,7 @@ export async function PATCH(req, { params }) {
 
   const { data: existing, error: selectError } = await sb
     .from("resources")
-    .select("id, status, submitted_at")
+    .select("id, title, owner_user_id, status, submitted_at")
     .eq("id", id)
     .maybeSingle();
 
@@ -83,8 +87,32 @@ export async function PATCH(req, { params }) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
   }
 
+  let emailStatus = "skipped";
+  if (nextStatus === "approved" && existing.status !== "approved" && existing.owner_user_id) {
+    try {
+      const admin = supabaseAdminClient();
+      const { data: ownerData, error: ownerError } = await admin.auth.admin.getUserById(existing.owner_user_id);
+      const recipient = ownerData?.user?.email?.trim();
+      if (ownerError) throw ownerError;
+      if (!recipient) throw new Error("Resource owner has no email address.");
+
+      const destination = `/vault/${data.id}`;
+      const resourceUrl = siteUrl(`/login?redirect=${encodeURIComponent(destination)}`, req);
+      const { Subject, HtmlBody, TextBody } = buildResourceApprovedEmail({
+        resourceTitle: data.title,
+        resourceUrl,
+      });
+      const result = await sendEmail({ to: recipient, subject: Subject, html: HtmlBody, text: TextBody });
+      emailStatus = result.ok ? "sent_approved" : `not_sent:${result.error || "email unavailable"}`;
+    } catch (emailError) {
+      console.error("resource approval email error:", emailError);
+      emailStatus = `error:${emailError?.message || "send failed"}`;
+    }
+  }
+
   return NextResponse.json({
     ok: true,
+    emailStatus,
     resource: buildResourceRoutePayload(data, data.resource_tag_links || []),
   });
 }

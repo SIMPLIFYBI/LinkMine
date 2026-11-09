@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { fromZonedTime } from "date-fns-tz";
+import toast from "react-hot-toast";
 
-export default function AddCourseForm({ consultantId, onDone, reloadOnSuccess = true }) {
+export default function AddCourseForm({ consultantId, onDone, onCancel, reloadOnSuccess = true, compact = false }) {
   // Course fields
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
@@ -116,11 +117,11 @@ export default function AddCourseForm({ consultantId, onDone, reloadOnSuccess = 
       summary: summary.trim() || null,
       description: desc.trim() || null,
       category: category.trim() || null,
-      tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+      tags: compact ? [] : tags.split(",").map((t) => t.trim()).filter(Boolean),
       level: level || null,
       duration_hours: Number.isFinite(Number(duration)) ? Number(duration) : null,
       delivery_default: deliveryDefault,
-      status: "published",
+      status: "draft",
     };
 
     if (!body.title) {
@@ -162,6 +163,7 @@ export default function AddCourseForm({ consultantId, onDone, reloadOnSuccess = 
       });
       const json = await res.json();
       if (!res.ok || json.error) throw new Error(json.error || "Failed to create course");
+      toast.success("Course draft created.", { id: "course-editor" });
       onDone?.({ id: json.id, title: body.title });
       if (reloadOnSuccess) {
         window.location.reload();
@@ -172,6 +174,74 @@ export default function AddCourseForm({ consultantId, onDone, reloadOnSuccess = 
       setError(err.message || "Something went wrong");
       setBusy(false);
     }
+  }
+
+  if (compact) {
+    return (
+      <form onSubmit={onSubmit} className="flex min-h-full flex-col">
+        <div className="flex-1 space-y-7 overflow-y-auto px-5 py-6 sm:px-7">
+          {error ? <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
+
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-sky-300">New training offer</div>
+            <h3 className="mt-2 text-2xl font-semibold text-white">Create a course draft</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-300">Start with the offer itself. You can add dates, delivery details and booking settings in Sessions afterwards.</p>
+          </div>
+
+          <section className="rounded-[24px] border border-white/10 bg-slate-950/45 p-4 sm:p-5">
+            <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">Course details</div>
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="block text-sm text-slate-200">Course title <span className="text-sky-200">*</span></label>
+                <input autoFocus className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 p-3 text-white outline-none transition focus:border-sky-400/60 focus:ring-2 focus:ring-sky-400/20" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Underground safety essentials" required />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-200">Short summary</label>
+                <input className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 p-3 text-white outline-none transition focus:border-sky-400/60 focus:ring-2 focus:ring-sky-400/20" value={summary} onChange={(e) => setSummary(e.target.value)} placeholder="What will attendees learn?" />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-200">Description</label>
+                <textarea rows={5} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950/60 p-3 text-white outline-none transition focus:border-sky-400/60 focus:ring-2 focus:ring-sky-400/20" value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Outline the course, outcomes and intended audience." />
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 sm:p-5">
+            <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-300">Course setup</div>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm text-slate-200">Category</label>
+                <input className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" value={category} onChange={(e) => setCategory(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-200">Level</label>
+                <select className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" value={level} onChange={(e) => setLevel(e.target.value)}>
+                  <option>Beginner</option><option>Intermediate</option><option>Advanced</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-slate-200">Duration (hours)</label>
+                <input type="number" min="0" step="0.5" className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" value={duration} onChange={(e) => setDuration(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-200">Delivery</label>
+                <select className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white" value={deliveryDefault} onChange={(e) => setDeliveryDefault(e.target.value)}>
+                  <option value="in_person">In person</option><option value="online">Online</option><option value="hybrid">Hybrid</option>
+                </select>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-slate-950/90 px-5 py-4 sm:px-7">
+          <div className="text-xs text-slate-400">Saved as a draft. Publish when the course is ready to appear publicly.</div>
+          <div className="flex gap-2">
+            <button type="button" onClick={onCancel} disabled={busy} className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold text-slate-200 hover:bg-white/10 disabled:opacity-50">Cancel</button>
+            <button type="submit" disabled={busy} className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_18px_40px_-18px_rgba(14,165,233,0.65)] hover:bg-sky-500 disabled:opacity-50">{busy ? "Creating..." : "Create draft"}</button>
+          </div>
+        </div>
+      </form>
+    );
   }
 
   return (

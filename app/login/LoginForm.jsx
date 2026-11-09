@@ -6,10 +6,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 import { getAuthRedirectUrl, isNativeAppRuntime } from "@/lib/mobileRuntime";
 
+function safeRedirectPath(value) {
+  return value?.startsWith("/") && !value.startsWith("//") ? value : "/account";
+}
+
 export default function LoginForm() {
   const router = useRouter();
   const sp = useSearchParams();
-  const redirectTo = sp.get("redirect") || "/account";
+  const redirectTo = safeRedirectPath(sp.get("redirect"));
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,6 +31,12 @@ export default function LoginForm() {
     // Prefill forgot email with login email if present
     if (email && !forgotEmail) setForgotEmail(email);
   }, [email, forgotEmail]);
+
+  useEffect(() => {
+    supabaseBrowser().auth.getSession().then(({ data }) => {
+      if (data?.session) router.replace(redirectTo);
+    });
+  }, [redirectTo, router]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -97,7 +107,7 @@ export default function LoginForm() {
 
     const redirectTo = isNativeAppRuntime()
       ? getAuthRedirectUrl()
-      : `${window.location.origin}/auth/callback`;
+      : `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`;
     const { error: oauthError } = await supabaseBrowser().auth.signInWithOAuth({
       provider,
       options: { redirectTo },

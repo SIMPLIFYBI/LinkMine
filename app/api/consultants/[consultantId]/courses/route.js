@@ -2,7 +2,7 @@ import { supabaseServerClient } from "@/lib/supabaseServerClient";
 
 export const runtime = "nodejs";
 
-export async function GET(_req, { params }) {
+export async function GET(req, { params }) {
   try {
     const p = await params;
     const consultantId = p?.consultantId;
@@ -13,8 +13,28 @@ export async function GET(_req, { params }) {
       });
     }
 
-    const sb = await supabaseServerClient();
-    const { data, error } = await sb
+    const authHeader = req.headers.get("authorization") || "";
+    const sb = await supabaseServerClient({
+      global: authHeader ? { headers: { Authorization: authHeader } } : undefined,
+    });
+    const { data: auth } = await sb.auth.getUser();
+    const userId = auth?.user?.id || null;
+
+    let canManage = false;
+    if (userId) {
+      const [{ data: ownerRow }, { data: adminRow }] = await Promise.all([
+        sb
+          .from("consultants")
+          .select("id")
+          .eq("id", consultantId)
+          .or(`user_id.eq.${userId},claimed_by.eq.${userId}`)
+          .maybeSingle(),
+        sb.from("app_admins").select("user_id").eq("user_id", userId).maybeSingle(),
+      ]);
+      canManage = Boolean(ownerRow || adminRow);
+    }
+
+    let query = sb
       .from("training_courses")
       .select(`
         id,
@@ -50,8 +70,11 @@ export async function GET(_req, { params }) {
           status
         )
       `)
-      .eq("consultant_id", consultantId)
-      .eq("status", "published");
+      .eq("consultant_id", consultantId);
+
+    if (!canManage) query = query.eq("status", "published");
+
+    const { data, error } = await query;
 
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), {
@@ -107,7 +130,7 @@ export async function POST(req, { params }) {
       level: payload?.level ?? null,
       duration_hours: typeof payload?.duration_hours === "number" ? payload.duration_hours : null,
       delivery_default: payload?.delivery_default ?? null,
-      status: "published",
+      status: "draft",
     };
 
     const sb = await supabaseServerClient();
