@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toPng } from "html-to-image";
+import JSZip from "jszip";
 
 const EXPORT_WIDTH = 1080;
 const EXPORT_HEIGHT = 1350;
@@ -1033,6 +1034,50 @@ export default function AdminSocialStudio({ data }) {
     setStatus(`${filename} download started.`);
   }
 
+  async function handleBrandBundleDownload() {
+    setIsDownloading(true);
+    setStatus("Preparing branding bundle (0 of 22)...");
+
+    try {
+      const zip = new JSZip();
+      const formats = [
+        { directory: "svg", key: "svgHref", extension: "svg" },
+        { directory: "png", key: "pngHref", extension: "png" },
+      ];
+      const downloads = formats.flatMap((format) =>
+        BRANDING_ASSETS.map((asset) => ({
+          ...format,
+          asset,
+        }))
+      );
+
+      for (const [index, download] of downloads.entries()) {
+        setStatus(`Preparing branding bundle (${index + 1} of ${downloads.length})...`);
+        const response = await fetch(download.asset[download.key]);
+        if (!response.ok) {
+          throw new Error(`Could not add ${download.asset.label} ${download.extension.toUpperCase()}.`);
+        }
+        zip.file(`${download.directory}/${download.asset.id}.${download.extension}`, await response.blob());
+      }
+
+      setStatus("Compressing branding bundle...");
+      const bundle = await zip.generateAsync({ type: "blob" });
+      const link = document.createElement("a");
+      const bundleUrl = URL.createObjectURL(bundle);
+      link.href = bundleUrl;
+      link.download = `youmine-branding-${new Date().toISOString().slice(0, 10)}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(bundleUrl);
+      setStatus("Branding bundle downloaded: 11 SVGs and 11 PNGs.");
+    } catch (error) {
+      setStatus(error.message || "Could not prepare the branding bundle.");
+    } finally {
+      setIsDownloading(false);
+    }
+  }
+
   async function handleDownload() {
     if (active.id === "branding") {
       setStatus("Use the SVG and PNG buttons on each branding card to download the exact variant you need.");
@@ -1270,9 +1315,20 @@ export default function AdminSocialStudio({ data }) {
           ) : null}
           <div className="mt-4 flex flex-col gap-3">
             {active.id === "branding" ? (
-              <div className="rounded-2xl border border-white/8 bg-white/5 px-4 py-4 text-sm leading-6 text-slate-300">
-                Pick a variant in the Branding tab and download either the SVG or the transparent PNG directly from its card.
-              </div>
+              <>
+                <button
+                  type="button"
+                  onClick={handleBrandBundleDownload}
+                  disabled={isDownloading}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <DownloadIcon />
+                  {isDownloading ? "Preparing bundle..." : "Download all branding"}
+                </button>
+                <div className="rounded-2xl border border-white/8 bg-white/5 px-4 py-4 text-sm leading-6 text-slate-300">
+                  Get all {BRANDING_ASSETS.length} logo variants as SVG and transparent PNG in one ZIP, or download individual files below.
+                </div>
+              </>
             ) : (
               <>
                 <button

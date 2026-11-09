@@ -38,6 +38,7 @@ export default async function EditConsultantPage({ params }) {
       instagram_url,
       place_id,
       status,
+      visibility,
       provider_kind,
       profile_type,
       abn,
@@ -81,8 +82,8 @@ export default async function EditConsultantPage({ params }) {
         </Link>
       </div>
 
-      <h1 className="mb-1 text-2xl font-semibold text-white">Set up your provider profile</h1>
-      <p className="text-sm text-slate-400">Choose what you offer, then refine the details people see publicly.</p>
+      <h1 className="mb-1 text-2xl font-semibold text-white">Manage your provider profile</h1>
+      <p className="text-sm text-slate-400">Update your public details and the work connected to your profile.</p>
 
       {consultant.status === "pending" && (
         <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-300/25 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-100">
@@ -94,29 +95,29 @@ export default async function EditConsultantPage({ params }) {
       <section className="relative mt-6 overflow-hidden rounded-2xl border border-cyan-200/20 bg-[linear-gradient(135deg,rgba(14,165,233,0.14),rgba(15,23,42,0.74)_54%,rgba(16,185,129,0.1))] p-5 shadow-[0_22px_50px_-38px_rgba(34,211,238,0.72)] ring-1 ring-white/5">
         <div aria-hidden="true" className="pointer-events-none absolute -right-8 -top-12 h-32 w-32 rounded-full border border-cyan-100/20 bg-cyan-300/10" />
         <div className="relative">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-100">Step 2: Choose what you offer</p>
-          <h2 className="mt-2 text-xl font-semibold text-white">Build your provider profile around your work.</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Choose one or more paths now, or return later. Your public profile is the same either way.</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-100">Profile workspace</p>
+          <h2 className="mt-2 text-xl font-semibold text-white">Manage the work connected to your profile.</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Create, edit, and review the services, resources, training, and events people see alongside your profile.</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Link href={`/consultants/${consultant.id}/edit?add=services`} scroll={false} className="group rounded-xl border border-white/10 bg-white/[0.05] p-3 transition hover:border-cyan-200/35 hover:bg-white/10">
               <BriefcaseBusiness className="h-5 w-5 text-cyan-200" aria-hidden="true" />
-              <p className="mt-3 text-sm font-semibold text-slate-100">Offer services</p>
-              <p className="mt-1 text-xs leading-5 text-slate-400">Appear in Consultant discovery after approval.</p>
+              <p className="mt-3 text-sm font-semibold text-slate-100">Manage services</p>
+              <p className="mt-1 text-xs leading-5 text-slate-400">Add or update services shown in Consultant discovery.</p>
             </Link>
             <Link href={`/consultants/${consultant.id}/resources/edit`} className="group rounded-xl border border-white/10 bg-white/[0.05] p-3 transition hover:border-cyan-200/35 hover:bg-white/10">
               <FileText className="h-5 w-5 text-cyan-200" aria-hidden="true" />
-              <p className="mt-3 text-sm font-semibold text-slate-100">Create resources</p>
-              <p className="mt-1 text-xs leading-5 text-slate-400">Publish to the Vault after approval.</p>
+              <p className="mt-3 text-sm font-semibold text-slate-100">Manage Vault resources</p>
+              <p className="mt-1 text-xs leading-5 text-slate-400">Create, edit, and submit resources for approval.</p>
             </Link>
             <Link href={`/consultants/${consultant.id}?training=manage`} className="group rounded-xl border border-white/10 bg-white/[0.05] p-3 transition hover:border-cyan-200/35 hover:bg-white/10">
               <BookOpen className="h-5 w-5 text-cyan-200" aria-hidden="true" />
-              <p className="mt-3 text-sm font-semibold text-slate-100">Offer training</p>
-              <p className="mt-1 text-xs leading-5 text-slate-400">Create courses, sessions, and bookings.</p>
+              <p className="mt-3 text-sm font-semibold text-slate-100">Manage training</p>
+              <p className="mt-1 text-xs leading-5 text-slate-400">Create or update courses, sessions, and bookings.</p>
             </Link>
             <Link href="/whats-on" className="group rounded-xl border border-white/10 bg-white/[0.05] p-3 transition hover:border-cyan-200/35 hover:bg-white/10">
               <CalendarDays className="h-5 w-5 text-cyan-200" aria-hidden="true" />
-              <p className="mt-3 text-sm font-semibold text-slate-100">Add an event</p>
-              <p className="mt-1 text-xs leading-5 text-slate-400">Submit an event for What&apos;s On.</p>
+              <p className="mt-3 text-sm font-semibold text-slate-100">Manage events</p>
+              <p className="mt-1 text-xs leading-5 text-slate-400">Create and update your What&apos;s On submissions.</p>
             </Link>
           </div>
           {consultant.status !== "approved" ? <p className="mt-3 text-xs text-amber-100">You can set up services and training now. Resource publishing and event submission unlock after approval.</p> : null}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 import { COUNTRY_OPTIONS, GLOBAL_REGION_OPTIONS } from "@/lib/geoOptions";
+import CreatorProvisioningPanel from "./CreatorProvisioningPanel.client";
 
 const MAX_LOGO_BYTES = 300_000;
 const ALLOWED_LOGO_TYPES = ["image/png", "image/jpeg", "image/webp"];
@@ -350,6 +351,8 @@ export default function InProgressClient() {
         </div>
       )}
 
+      <CreatorProvisioningPanel onCreated={loadList} />
+
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-slate-200">All consultants</h2>
         <div className="overflow-x-auto rounded border border-white/10">
@@ -427,12 +430,12 @@ export default function InProgressClient() {
                     <td className="px-3 py-2">
                       <div className="flex gap-2">
                         <a
-                          href={`/consultants/${it.id}`}
+                          href={it.visibility === "public" ? `/consultants/${it.id}` : `/consultants/${it.id}/edit`}
                           target="_blank"
                           rel="noreferrer"
                           className="rounded border border-sky-400/30 bg-sky-500/10 px-3 py-1 text-xs text-sky-200 hover:bg-sky-500/20"
                         >
-                          View Profile
+                          {it.visibility === "public" ? "View Profile" : "Edit Draft"}
                         </a>
                         <button
                           className="rounded bg-white/10 px-3 py-1 text-xs text-white hover:bg-white/20"

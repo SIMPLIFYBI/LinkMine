@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AlertCircle, Check, LoaderCircle } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import { claimAndTrackSignup, getSignupMethod } from "@/lib/ga4Client";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -43,6 +44,12 @@ export default function AuthCallbackPage() {
       if (!userId) {
         setError("The sign-in provider did not return a signed-in account. Please try again.");
         return;
+      }
+
+      try {
+        await claimAndTrackSignup(session, getSignupMethod(session.user));
+      } catch {
+        // Analytics must not prevent a successful OAuth sign-in.
       }
 
       const { data: profile } = await supabase

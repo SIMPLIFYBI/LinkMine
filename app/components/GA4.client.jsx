@@ -1,18 +1,22 @@
 "use client";
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { getGaPageLocation, sendGaEvent } from "@/lib/ga4Client";
 
-export default function GA4({ measurementId, anonymizeIp = true }) {
+export default function GA4({ measurementId }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!measurementId || !window.gtag) return;
-    window.gtag("event", "page_view", {
+    if (!measurementId) return;
+
+    sendGaEvent("page_view", {
+      page_location: getGaPageLocation(),
       page_path: pathname,
-      anonymize_ip: anonymizeIp,
+      page_title: document.title,
     });
-  }, [pathname, measurementId, anonymizeIp]);
+  }, [pathname, searchParams, measurementId]);
 
   return null;
 }

@@ -178,7 +178,7 @@ export default async function EditConsultantResourcesPage({ params }) {
         </div>
       )}
 
-      <section className="rounded-2xl border border-white/10 bg-white/[0.05] p-5">
+      <section className="mt-4 rounded-2xl border border-white/10 bg-white/[0.05] p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold text-slate-100">Manage your vault resources</h2>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { formatResourceBytes } from "@/lib/resourceHub";
 import { RESOURCE_LAUNCH_LIMITS } from "@/lib/resourceHub";
 import MarketplaceRouteShell from "@/app/marketplace/MarketplaceRouteShell.client.jsx";
@@ -135,6 +136,7 @@ export default function EditResourcePageClient({ initialResource, categories, co
   const [busy, startBusy] = useTransition();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [justSaved, setJustSaved] = useState(false);
   const [resource, setResource] = useState(initialResource);
   const [form, setForm] = useState(() => buildForm(initialResource));
   const [replacementFile, setReplacementFile] = useState(null);
@@ -145,6 +147,16 @@ export default function EditResourcePageClient({ initialResource, categories, co
   function resetMessages() {
     setError("");
     setSuccess("");
+  }
+
+  function showSuccess(message) {
+    setSuccess(message);
+    toast.success(message, { id: "resource-editor" });
+  }
+
+  function showError(message) {
+    setError(message);
+    toast.error(message, { id: "resource-editor" });
   }
 
   function validate() {
@@ -240,10 +252,13 @@ export default function EditResourcePageClient({ initialResource, categories, co
         setResource(updated);
         setForm(buildForm(updated));
         setReplacementFile(null);
-        setSuccess("Resource changes saved.");
+        showSuccess("Resource changes saved.");
+        setJustSaved(true);
+        window.setTimeout(() => setJustSaved(false), 2200);
         router.refresh();
       } catch (nextError) {
-        setError(nextError.message || "Unable to save resource changes.");
+        const message = nextError.message || "Unable to save resource changes.";
+        showError(message);
       }
     });
   }
@@ -260,7 +275,7 @@ export default function EditResourcePageClient({ initialResource, categories, co
         router.push("/vault");
         router.refresh();
       } catch (nextError) {
-        setError(nextError.message || "Unable to delete this resource.");
+        showError(nextError.message || "Unable to delete this resource.");
       }
     });
   }
@@ -276,10 +291,10 @@ export default function EditResourcePageClient({ initialResource, categories, co
         await apiSend(`/api/resources/${form.id}`, "DELETE");
         setResource((prev) => ({ ...prev, status: "archived" }));
         setForm((prev) => ({ ...prev, status: "archived" }));
-        setSuccess("Resource archived.");
+        showSuccess("Resource archived.");
         router.refresh();
       } catch (nextError) {
-        setError(nextError.message || "Unable to archive this resource.");
+        showError(nextError.message || "Unable to archive this resource.");
       }
     });
   }
@@ -296,20 +311,20 @@ export default function EditResourcePageClient({ initialResource, categories, co
     const availableSlots = Math.max(0, MAX_PREVIEW_IMAGES - resourceImages.length);
     if (availableSlots <= 0) {
       setPendingImageFiles([]);
-      setError(`This resource already has the maximum of ${MAX_PREVIEW_IMAGES} preview images.`);
+      showError(`This resource already has the maximum of ${MAX_PREVIEW_IMAGES} preview images.`);
       return;
     }
 
     const invalidBySize = selected.find((file) => Number(file?.size || 0) > MAX_PREVIEW_IMAGE_BYTES);
     if (invalidBySize) {
       setPendingImageFiles([]);
-      setError(`Image \"${invalidBySize.name}\" is too large. Max ${Math.round(MAX_PREVIEW_IMAGE_BYTES / (1024 * 1024))} MB per image.`);
+      showError(`Image \"${invalidBySize.name}\" is too large. Max ${Math.round(MAX_PREVIEW_IMAGE_BYTES / (1024 * 1024))} MB per image.`);
       return;
     }
 
     if (selected.length > availableSlots) {
       setPendingImageFiles(selected.slice(0, availableSlots));
-      setError(`Only ${availableSlots} more preview image(s) can be added.`);
+      showError(`Only ${availableSlots} more preview image(s) can be added.`);
       return;
     }
 
@@ -319,7 +334,7 @@ export default function EditResourcePageClient({ initialResource, categories, co
   function uploadPreviewImages() {
     resetMessages();
     if (!pendingImageFiles.length) {
-      setError("Select one or more images to upload.");
+      showError("Select one or more images to upload.");
       return;
     }
 
@@ -343,10 +358,10 @@ export default function EditResourcePageClient({ initialResource, categories, co
         }
 
         setPendingImageFiles([]);
-        setSuccess(`Uploaded ${insertedImages.length || pendingImageFiles.length} preview image(s).`);
+        showSuccess(`Uploaded ${insertedImages.length || pendingImageFiles.length} preview image(s).`);
         router.refresh();
       } catch (nextError) {
-        setError(nextError.message || "Unable to upload preview images.");
+        showError(nextError.message || "Unable to upload preview images.");
       }
     });
   }
@@ -360,10 +375,10 @@ export default function EditResourcePageClient({ initialResource, categories, co
       try {
         await apiSend(`/api/resources/${form.id}/images`, "DELETE", { imageId });
         setResourceImages((prev) => prev.filter((image) => image.id !== imageId));
-        setSuccess("Preview image removed.");
+        showSuccess("Preview image removed.");
         router.refresh();
       } catch (nextError) {
-        setError(nextError.message || "Unable to remove preview image.");
+        showError(nextError.message || "Unable to remove preview image.");
       }
     });
   }
@@ -380,10 +395,10 @@ export default function EditResourcePageClient({ initialResource, categories, co
     startBusy(async () => {
       try {
         await apiSend(`/api/resources/${form.id}/images`, "PATCH", { imageIds: nextImages.map((image) => image.id) });
-        setSuccess("Preview image order updated.");
+        showSuccess("Preview image order updated.");
         router.refresh();
       } catch (nextError) {
-        setError(nextError.message || "Unable to reorder preview images.");
+        showError(nextError.message || "Unable to reorder preview images.");
       }
     });
   }
@@ -672,8 +687,12 @@ export default function EditResourcePageClient({ initialResource, categories, co
                     <div className="inline-flex items-center rounded-full border border-sky-300/30 bg-sky-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-sky-100">
                       Current mode: {form.resourceType === "hosted" ? "Hosted pack" : "External source"}
                     </div>
-                    <button type="submit" disabled={busy} className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60">
-                      {busy ? "Saving..." : "Save changes"}
+                    <button
+                      type="submit"
+                      disabled={busy}
+                      className={`rounded-full px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${justSaved ? "bg-emerald-300 text-emerald-950" : "bg-white text-slate-950 hover:bg-slate-100"}`}
+                    >
+                      {busy ? "Saving..." : justSaved ? "Saved" : "Save changes"}
                     </button>
                     <Link href="/vault" className="rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.1]">
                       Exit editor

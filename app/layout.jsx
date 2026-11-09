@@ -84,7 +84,7 @@ export default async function RootLayout({ children }) {
                   function gtag(){dataLayer.push(arguments);}
                   window.gtag = window.gtag || gtag;
                   gtag('js', new Date());
-                  gtag('config', '${GA_ID}', { anonymize_ip: true });
+                  gtag('config', '${GA_ID}', { anonymize_ip: true, send_page_view: false });
                 `,
               }}
             />

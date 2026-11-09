@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import toast from "react-hot-toast";
 import { supabaseBrowser } from "@/lib/supabaseBrowser"; // keep only the browser factory
 
 function getClient() {
@@ -108,13 +109,12 @@ export default function NotificationsPreferences({ userId }) {
         }
       } catch (e) {
         failed = true;
+        const message = (isSubscribed ? "Failed to unsubscribe: " : "Failed to subscribe: ") + (e.message || String(e));
         setBanner({
           type: "error",
-          message:
-            (isSubscribed
-              ? "Failed to unsubscribe: "
-              : "Failed to subscribe: ") + (e.message || String(e)),
+          message,
         });
+        toast.error(message);
         // Rollback
         setSubs(subs);
       } finally {
@@ -124,12 +124,12 @@ export default function NotificationsPreferences({ userId }) {
           return next;
         });
         if (!failed) {
+          const message = isSubscribed ? "Unsubscribed from category." : "Subscribed to category.";
           setBanner({
             type: "success",
-            message: isSubscribed
-              ? "Unsubscribed from category."
-              : "Subscribed to category.",
+            message,
           });
+          toast.success(message);
         }
       }
     },
@@ -149,11 +149,14 @@ export default function NotificationsPreferences({ userId }) {
         .insert(rows, { upsert: true });
       if (err) throw new Error(err.message);
       setBanner({ type: "success", message: "Subscribed to all categories." });
+      toast.success("Subscribed to all categories.");
     } catch (e) {
+      const message = "Failed bulk subscribe: " + (e.message || String(e));
       setBanner({
         type: "error",
-        message: "Failed bulk subscribe: " + (e.message || String(e)),
+        message,
       });
+      toast.error(message);
     } finally {
       setBulkBusy(false);
     }
@@ -171,11 +174,14 @@ export default function NotificationsPreferences({ userId }) {
         .eq("user_id", userId);
       if (err) throw new Error(err.message);
       setBanner({ type: "success", message: "Cleared all subscriptions." });
+      toast.success("Cleared all subscriptions.");
     } catch (e) {
+      const message = "Failed to clear: " + (e.message || String(e));
       setBanner({
         type: "error",
-        message: "Failed to clear: " + (e.message || String(e)),
+        message,
       });
+      toast.error(message);
       setSubs(prev);
     } finally {
       setBulkBusy(false);

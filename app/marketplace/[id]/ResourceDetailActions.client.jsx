@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import toast from "react-hot-toast";
 
 async function readJson(response) {
   const raw = await response.text();
@@ -80,6 +81,7 @@ export default function ResourceDetailActions({ resource, requiresAuth = false, 
         if (result.order?.status === "paid") {
           setPaymentPending(false);
           setSuccess("Purchase confirmed. This resource is now in your vault.");
+          toast.success("Purchase confirmed. This resource is now in your vault.", { id: "resource-purchase" });
           if (confirmedOrderIdRef.current !== orderId) {
             confirmedOrderIdRef.current = orderId;
             router.refresh();
@@ -91,7 +93,11 @@ export default function ResourceDetailActions({ resource, requiresAuth = false, 
         attempts += 1;
         if (attempts < 6) retryTimer = window.setTimeout(confirmPayment, 2000);
       } catch (nextError) {
-        if (!cancelled) setError(nextError.message || "Unable to confirm your purchase yet.");
+        if (!cancelled) {
+          const message = nextError.message || "Unable to confirm your purchase yet.";
+          setError(message);
+          toast.error(message, { id: "resource-purchase" });
+        }
       }
     }
 
@@ -169,6 +175,7 @@ export default function ResourceDetailActions({ resource, requiresAuth = false, 
           const orderResult = await apiSend("/api/resources/orders", "POST", { resourceIds: [resource.id] });
           if (orderResult.order?.status !== "paid") throw new Error("Free resource access was not confirmed.");
           setSuccess("Added to your vault.");
+          toast.success("Added to your vault.", { id: "resource-action" });
           router.refresh();
           return;
         }
@@ -188,12 +195,15 @@ export default function ResourceDetailActions({ resource, requiresAuth = false, 
           link.click();
           document.body.removeChild(link);
           setSuccess("Download started.");
+          toast.success("Download started.", { id: "resource-action" });
           return;
         }
 
         window.open(targetUrl, "_blank", "noopener,noreferrer");
       } catch (nextError) {
-        setError(nextError.message || "Unable to open resource.");
+        const message = nextError.message || "Unable to open resource.";
+        setError(message);
+        toast.error(message, { id: "resource-action" });
       } finally {
         checkoutStartRef.current = false;
         setCheckoutStarting(false);

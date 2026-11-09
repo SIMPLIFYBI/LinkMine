@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 
 const emptyImage = { url: "", title: "", caption: "", alt: "", path: "" };
@@ -78,11 +79,15 @@ export default function PortfolioEditor({ consultantId, initialData }) {
   async function handleImageFile(idx, file) {
     if (!file) return;
     if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
-      setMsg({ ok: false, text: "Image must be JPG, PNG, or WEBP." });
+      const message = "Image must be JPG, PNG, or WEBP.";
+      setMsg({ ok: false, text: message });
+      toast.error(message);
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      setMsg({ ok: false, text: "Image too large (max ~2 MB)." });
+      const message = "Image too large (max ~2 MB).";
+      setMsg({ ok: false, text: message });
+      toast.error(message);
       return;
     }
     setBusyIdx(idx);
@@ -97,8 +102,11 @@ export default function PortfolioEditor({ consultantId, initialData }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Upload failed");
       updateImage(idx, { url: data.publicUrl, path: data.path });
+      toast.success("Portfolio image uploaded.");
     } catch (e) {
-      setMsg({ ok: false, text: e.message || "Upload failed." });
+      const message = e.message || "Upload failed.";
+      setMsg({ ok: false, text: message });
+      toast.error(message);
     } finally {
       setBusyIdx(null);
     }
@@ -108,11 +116,15 @@ export default function PortfolioEditor({ consultantId, initialData }) {
     if (!file) return;
     const isPdf = file.type === "application/pdf" || (file.name || "").toLowerCase().endsWith(".pdf");
     if (!isPdf) {
-      setMsg({ ok: false, text: "Attachment must be a PDF." });
+      const message = "Attachment must be a PDF.";
+      setMsg({ ok: false, text: message });
+      toast.error(message);
       return;
     }
     if (file.size > MAX_PDF_BYTES) {
-      setMsg({ ok: false, text: "PDF too large (max ~5 MB)." });
+      const message = "PDF too large (max ~5 MB).";
+      setMsg({ ok: false, text: message });
+      toast.error(message);
       return;
     }
     setBusyAttachment(true);
@@ -133,8 +145,11 @@ export default function PortfolioEditor({ consultantId, initialData }) {
         mime: data.mime,
         path: data.path,
       }));
+      toast.success("Portfolio PDF uploaded.");
     } catch (e) {
-      setMsg({ ok: false, text: e.message || "Upload failed." });
+      const message = e.message || "Upload failed.";
+      setMsg({ ok: false, text: message });
+      toast.error(message);
     } finally {
       setBusyAttachment(false);
     }
@@ -184,7 +199,9 @@ export default function PortfolioEditor({ consultantId, initialData }) {
     for (const l of cleanedLinks) {
       if (!isHttpsUrl(l.url)) {
         setSaving(false);
-        setMsg({ ok: false, text: "Links must be full https URLs (e.g. https://example.com/article)." });
+        const message = "Links must be full https URLs (e.g. https://example.com/article).";
+        setMsg({ ok: false, text: message });
+        toast.error(message, { id: "portfolio-save" });
         return;
       }
     }
@@ -211,10 +228,13 @@ export default function PortfolioEditor({ consultantId, initialData }) {
 
     setSaving(false);
     if (error) {
-      setMsg({ ok: false, text: error.message || "Save failed." });
+      const message = error.message || "Save failed.";
+      setMsg({ ok: false, text: message });
+      toast.error(message, { id: "portfolio-save" });
       return;
     }
     setMsg({ ok: true, text: "Portfolio saved." });
+    toast.success("Portfolio saved.", { id: "portfolio-save" });
     setTimeout(() => {
       router.replace(`/consultants/${consultantId}/portfolio`);
       router.refresh();

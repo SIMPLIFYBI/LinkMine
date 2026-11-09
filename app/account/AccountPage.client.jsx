@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 import NotificationsPreferences from "./NotificationsPreferences.client.jsx";
 import AccountTabs from "./AccountTabs.jsx";
@@ -177,8 +178,11 @@ export default function AccountPageClient({ initialTab = "account" }) {
         }
 
         setProfileSaveMessage("Details updated.");
+        toast.success("Account details updated.");
       } catch (err) {
-        setProfileSaveError(err.message || "Unable to save your details.");
+        const message = err.message || "Unable to save your details.";
+        setProfileSaveError(message);
+        toast.error(message);
       }
     });
   }

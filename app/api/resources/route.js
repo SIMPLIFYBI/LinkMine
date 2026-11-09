@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { supabaseAdminClient } from "@/lib/supabaseAdminClient";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
+import { sendNewResourceNotification } from "@/lib/emails/sendNewResource";
 import {
   buildResourceRoutePayload,
   cleanNullableText,
@@ -323,6 +324,12 @@ export async function POST(req) {
 
   if (reloadError) {
     return NextResponse.json({ ok: false, error: reloadError.message }, { status: 400 });
+  }
+
+  if (requestedStatus === "pending") {
+    sendNewResourceNotification({ resource: hydrated, createdBy: user })
+      .then(() => console.log("admin notified for resource:", hydrated.id))
+      .catch((error) => console.error("new resource notification error:", error));
   }
 
   return NextResponse.json({

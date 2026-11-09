@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 import { getAuthRedirectUrl, isNativeAppRuntime } from "@/lib/mobileRuntime";
+import { claimAndTrackSignup } from "@/lib/ga4Client";
 
 function SignupForm() {
   const router = useRouter();
@@ -84,6 +85,12 @@ function SignupForm() {
         });
       } catch (e) {
         console.error("welcome email trigger error:", e);
+      }
+
+      try {
+        await claimAndTrackSignup(signInData.session, "email");
+      } catch {
+        // Analytics must not affect signup or welcome-email delivery.
       }
     }
 

@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { supabase } from "@/lib/supabaseClient";
 import { getAuthExchangeUrl, getAuthRedirectUrl } from "@/lib/mobileRuntime";
 import { getBlockedUserMessage, isBlockedEmail } from "@/lib/blockedUsers";
+import { claimAndTrackSignup, getSignupMethod } from "@/lib/ga4Client";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,13 @@ function AuthInner() {
               toast.error(getBlockedUserMessage());
               router.replace("/");
               return;
+            }
+
+            const { data: sessionData } = await supabase.auth.getSession();
+            try {
+              await claimAndTrackSignup(sessionData.session, getSignupMethod(signedInUser));
+            } catch {
+              // Analytics must not prevent authentication from completing.
             }
 
             let hasProfile = false;

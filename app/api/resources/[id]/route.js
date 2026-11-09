@@ -164,6 +164,16 @@ export async function PATCH(req, { params }) {
   if (requestedConsultantId !== undefined) {
     if (!requestedConsultantId) {
       update.consultant_id = null;
+    } else if (isAdmin) {
+      const { data: selectedConsultant, error: consultantError } = await sb
+        .from("consultants")
+        .select("id, profile_type")
+        .eq("id", requestedConsultantId)
+        .maybeSingle();
+      if (consultantError || !selectedConsultant || !["consultant", "creator", "both"].includes(selectedConsultant.profile_type || "consultant")) {
+        return NextResponse.json({ ok: false, error: "Selected profile is not available." }, { status: 400 });
+      }
+      update.consultant_id = requestedConsultantId;
     } else {
       const availableConsultants = await listSelectableConsultantsForUser(sb, existing.owner_user_id);
       const allowedIds = new Set(availableConsultants.map((item) => item.id));

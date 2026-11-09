@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 import {
   COUNTRY_OPTIONS,
@@ -76,9 +77,23 @@ export default function EditConsultantForm({ consultant }) {
   const [busyLogo, setBusyLogo] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [fieldError, setFieldError] = useState({ field: "", text: "" });
 
-  const handleChange = (field) => (event) =>
+  const handleChange = (field) => (event) => {
     setForm((prev) => ({ ...prev, [field]: event.target.value }));
+    if (fieldError.field === field) setFieldError({ field: "", text: "" });
+  };
+
+  function showFieldError(field, text) {
+    setFieldError({ field, text });
+    setMessage({ type: "error", text });
+    toast.error(text, { id: "consultant-profile-save" });
+    requestAnimationFrame(() => {
+      const input = document.getElementById(`consultant-${field}`);
+      input?.scrollIntoView({ behavior: "smooth", block: "center" });
+      input?.focus({ preventScroll: true });
+    });
+  }
 
   function isValidSocialUrl(network, value) {
     const v = String(value || "").trim();
@@ -145,6 +160,7 @@ export default function EditConsultantForm({ consultant }) {
     event.preventDefault();
     setSaving(true);
     setMessage({ type: "", text: "" });
+    setFieldError({ field: "", text: "" });
 
     // Social validation (unchanged)
     for (const [net, key] of [
@@ -155,10 +171,7 @@ export default function EditConsultantForm({ consultant }) {
     ]) {
       const val = form[key];
       if (val && !isValidSocialUrl(net, val)) {
-        setMessage({
-          type: "error",
-          text: `${net[0].toUpperCase() + net.slice(1)} URL must be a full https URL.`,
-        });
+        showFieldError(key, `${net[0].toUpperCase() + net.slice(1)} URL must be a full https URL.`);
         setSaving(false);
         return;
       }
@@ -168,26 +181,19 @@ export default function EditConsultantForm({ consultant }) {
     const countryCode = String(form.country_code || "").trim().toUpperCase();
     const globalRegion = getGlobalRegionForCountry(countryCode);
     if (form.website_url && !isValidWebsiteUrl(form.website_url)) {
-      setMessage({
-        type: "error",
-        text: "Website URL must be a full https URL.",
-      });
+      showFieldError("website_url", "Website URL must be a full https URL.");
       setSaving(false);
       return;
     }
 
     if (!isValidCountryCode(countryCode)) {
-      setMessage({ type: "error", text: "Select a valid country." });
+      showFieldError("country_code", "Select a valid country.");
       setSaving(false);
       return;
     }
 
     if (placeId && placeId.length < 10) {
-      setMessage({
-        type: "error",
-        text:
-          "Place ID looks too short. Paste the full ID (e.g. starting with ChIJ...). Leave blank if unsure.",
-      });
+      showFieldError("place_id", "Place ID looks too short. Paste the full ID (e.g. starting with ChIJ...). Leave blank if unsure.");
       setSaving(false);
       return;
     }
@@ -214,7 +220,7 @@ export default function EditConsultantForm({ consultant }) {
       instagram_url: form.instagram_url.trim() || null,
       place_id: placeId || null,
       provider_kind: "both",
-      profile_type: "both",
+      profile_type: consultant.profile_type || "consultant",
       metadata: {
         ...(consultant.metadata || {}),
         market_focus: form.market_focus || "mining",
@@ -225,15 +231,25 @@ export default function EditConsultantForm({ consultant }) {
 
     const { error } = await sb.from("consultants").update(payload).eq("id", consultant.id);
     if (error) {
-      setMessage({ type: "error", text: error.message || "Update failed." });
+      const message = error.message || "Update failed.";
+      setMessage({ type: "error", text: message });
+      toast.error(message, { id: "consultant-profile-save" });
       setSaving(false);
       return;
     }
 
-    setMessage({ type: "success", text: "Profile updated. Redirecting…" });
+    const isPublicProfile = consultant.visibility === "public";
+    setMessage({
+      type: "success",
+      text: isPublicProfile ? "Profile updated. Redirecting…" : "Profile draft saved.",
+    });
+    toast.success(isPublicProfile ? "Profile updated." : "Profile draft saved.", { id: "consultant-profile-save" });
+    setSaving(false);
     setTimeout(() => {
-      router.replace(`/consultants/${consultant.id}`);
-      router.refresh();
+      if (isPublicProfile) {
+        router.replace(`/consultants/${consultant.id}`);
+        router.refresh();
+      }
     }, 900);
   };
 
@@ -268,6 +284,8 @@ export default function EditConsultantForm({ consultant }) {
             onChange={handleChange("country_code")}
             options={COUNTRY_OPTIONS}
             placeholder="Select a country"
+            id="consultant-country_code"
+            error={fieldError.field === "country_code" ? fieldError.text : ""}
           />
           <Field label="Public contact email" type="email" value={form.contact_email} onChange={handleChange("contact_email")} hint="Shown on your public profile after it is approved." />
           <Field
@@ -275,6 +293,8 @@ export default function EditConsultantForm({ consultant }) {
             placeholder="https://your-site.example.com"
             value={form.website_url}
             onChange={handleChange("website_url")}
+            id="consultant-website_url"
+            error={fieldError.field === "website_url" ? fieldError.text : ""}
           />
           <div className="md:col-span-2">
             <Field
@@ -354,24 +374,32 @@ export default function EditConsultantForm({ consultant }) {
             placeholder="https://www.linkedin.com/in/your-handle"
             value={form.linkedin_url}
             onChange={handleChange("linkedin_url")}
+            id="consultant-linkedin_url"
+            error={fieldError.field === "linkedin_url" ? fieldError.text : ""}
           />
           <Field
             label="Facebook"
             placeholder="https://www.facebook.com/your-page"
             value={form.facebook_url}
             onChange={handleChange("facebook_url")}
+            id="consultant-facebook_url"
+            error={fieldError.field === "facebook_url" ? fieldError.text : ""}
           />
           <Field
             label="Twitter/X"
             placeholder="https://x.com/your-handle"
             value={form.twitter_url}
             onChange={handleChange("twitter_url")}
+            id="consultant-twitter_url"
+            error={fieldError.field === "twitter_url" ? fieldError.text : ""}
           />
           <Field
             label="Instagram"
             placeholder="https://www.instagram.com/your-handle"
             value={form.instagram_url}
             onChange={handleChange("instagram_url")}
+            id="consultant-instagram_url"
+            error={fieldError.field === "instagram_url" ? fieldError.text : ""}
           />
         </div>
       </section>
@@ -396,25 +424,14 @@ export default function EditConsultantForm({ consultant }) {
             value={form.place_id}
             onChange={handleChange("place_id")}
             hint="Paste the full Place ID. Leave blank if unsure."
+            id="consultant-place_id"
+            error={fieldError.field === "place_id" ? fieldError.text : ""}
           />
           <div className="self-end">
             <InfoPopover />
           </div>
         </div>
       </section>
-
-      {/* Status message (global) */}
-      {message.text && (
-        <div
-          className={`rounded-xl px-4 py-3 text-sm ${
-            message.type === "success"
-              ? "border border-emerald-400/40 bg-emerald-500/10 text-emerald-100"
-              : "border border-rose-400/40 bg-rose-500/10 text-rose-100"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
 
       {/* Global action bar */}
       <div
@@ -438,9 +455,15 @@ export default function EditConsultantForm({ consultant }) {
         >
           Cancel
         </button>
-        <span className="ml-auto text-[11px] font-medium text-slate-400">
-          Changes apply to all sections
-        </span>
+        <div className="ml-auto min-w-0 text-right">
+          {message.text ? (
+            <p role="alert" className={`text-xs font-medium ${message.type === "success" ? "text-emerald-200" : "text-rose-200"}`}>
+              {message.text}
+            </p>
+          ) : (
+            <span className="text-[11px] font-medium text-slate-400">Changes apply to all sections</span>
+          )}
+        </div>
       </div>
     </form>
   );
@@ -485,26 +508,29 @@ function InfoPopover() {
   );
 }
 
-function Field({ label, as = "input", hint, ...props }) {
+function Field({ label, as = "input", hint, error, ...props }) {
   const Component = as;
   const shared =
-    "mt-1 w-full rounded-xl border border-white/10 bg-white/[0.07] px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:border-sky-400/60 focus:outline-none focus:ring-2 focus:ring-sky-400/30";
+    `mt-1 w-full rounded-xl border bg-white/[0.07] px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 ${error ? "border-rose-400/80 focus:border-rose-300 focus:ring-rose-400/30" : "border-white/10 focus:border-sky-400/60 focus:ring-sky-400/30"}`;
   return (
     <label className="block text-sm text-slate-300">
       {label}
-      <Component className={shared} {...props} />
+      <Component className={shared} aria-invalid={Boolean(error)} aria-describedby={error ? `${props.id}-error` : undefined} {...props} />
+      {error ? <p id={`${props.id}-error`} className="mt-1 text-xs text-rose-200">{error}</p> : null}
       {hint ? <p className="mt-1 text-xs text-slate-400">{hint}</p> : null}
     </label>
   );
 }
 
-function SelectField({ label, hint, options, placeholder, ...props }) {
+function SelectField({ label, hint, options, placeholder, error, ...props }) {
   return (
     <label className="block text-sm text-slate-300">
       {label}
       <select
         {...props}
-        className="mt-1 w-full rounded-xl border border-white/10 bg-white/[0.07] px-3 py-2 text-sm text-slate-100 focus:border-sky-400/60 focus:outline-none focus:ring-2 focus:ring-sky-400/30"
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${props.id}-error` : undefined}
+        className={`mt-1 w-full rounded-xl border bg-white/[0.07] px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 ${error ? "border-rose-400/80 focus:border-rose-300 focus:ring-rose-400/30" : "border-white/10 focus:border-sky-400/60 focus:ring-sky-400/30"}`}
       >
         <option value="">{placeholder}</option>
         {options.map((option) => (
@@ -513,6 +539,7 @@ function SelectField({ label, hint, options, placeholder, ...props }) {
           </option>
         ))}
       </select>
+      {error ? <p id={`${props.id}-error`} className="mt-1 text-xs text-rose-200">{error}</p> : null}
       {hint ? <p className="mt-1 text-xs text-slate-400">{hint}</p> : null}
     </label>
   );

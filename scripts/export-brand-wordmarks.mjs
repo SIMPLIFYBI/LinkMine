@@ -4,6 +4,7 @@ import sharp from "sharp";
 const projectRoot = process.cwd();
 const brandRoot = path.join(projectRoot, "public", "brand");
 const exportRoot = path.join(brandRoot, "exports");
+const CONTENT_RATIO = 0.9;
 
 const assets = [
   {
@@ -63,9 +64,61 @@ const assets = [
   },
 ];
 
+async function findVisibleBounds(imageBuffer) {
+  const { data, info } = await sharp(imageBuffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  let left = info.width;
+  let top = info.height;
+  let right = -1;
+  let bottom = -1;
+
+  for (let y = 0; y < info.height; y += 1) {
+    for (let x = 0; x < info.width; x += 1) {
+      const alpha = data[(y * info.width + x) * info.channels + 3];
+      if (alpha <= 8) continue;
+      left = Math.min(left, x);
+      top = Math.min(top, y);
+      right = Math.max(right, x);
+      bottom = Math.max(bottom, y);
+    }
+  }
+
+  if (right < left || bottom < top) {
+    throw new Error("Brand asset does not contain any visible pixels.");
+  }
+
+  return { left, top, width: right - left + 1, height: bottom - top + 1 };
+}
+
 for (const asset of assets) {
-  await sharp(asset.input)
+  const rendered = await sharp(asset.input)
     .resize({ width: asset.width })
+    .png()
+    .toBuffer();
+  const bounds = await findVisibleBounds(rendered);
+  const contentWidth = Math.round(asset.width * CONTENT_RATIO);
+  const content = await sharp(rendered)
+    .extract(bounds)
+    .resize({ width: contentWidth })
+    .png()
+    .toBuffer();
+  const { height: contentHeight } = await sharp(content).metadata();
+  const canvasHeight = Math.ceil(contentHeight / CONTENT_RATIO);
+
+  await sharp({
+    create: {
+      width: asset.width,
+      height: canvasHeight,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  })
+    .composite([
+      {
+        input: content,
+        left: Math.round((asset.width - contentWidth) / 2),
+        top: Math.round((canvasHeight - contentHeight) / 2),
+      },
+    ])
     .png()
     .toFile(asset.output);
 }

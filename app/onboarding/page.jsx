@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, Compass, LibraryBig, MessageCircle, Sparkles } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
+import { claimAndTrackSignup, getSignupMethod } from "@/lib/ga4Client";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState("details");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
+  const signupTracked = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -30,6 +32,11 @@ export default function OnboardingPage() {
       if (!currentSession?.user?.id) {
         router.replace("/signup");
         return;
+      }
+
+      if (!signupTracked.current) {
+        signupTracked.current = true;
+        claimAndTrackSignup(currentSession, getSignupMethod(currentSession.user)).catch(() => {});
       }
 
       const { data: profile, error } = await sb

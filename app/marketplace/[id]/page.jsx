@@ -172,7 +172,7 @@ export default async function MarketplaceResourcePage({ params }) {
   let claimTarget = null;
 
   if (selectedConsultantId) {
-    const { data: consultantRow } = await publicSb
+    const { data: consultantRow } = await sb
       .from("consultants")
       .select("id, display_name, metadata, contact_email, claimed_by")
       .eq("id", selectedConsultantId)
