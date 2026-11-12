@@ -90,6 +90,7 @@ export async function POST(req, ctx) {
   await postmarkClient().sendEmail({
     From: process.env.EMAIL_FROM,
     To: consultant.contact_email,
+    Bcc: "info@youmine.com.au",
     Subject: `Confirm ownership of ${consultant.display_name}`,
     HtmlBody,
     TextBody,

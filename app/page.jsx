@@ -519,6 +519,20 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <section className="mx-auto w-full max-w-6xl px-2 md:px-4 fade-in-up">
+        <Link href="/about#watch-youmine" className="group flex flex-col gap-4 rounded-2xl border border-sky-300/20 bg-sky-500/[0.07] p-5 transition hover:border-sky-200/40 hover:bg-sky-500/[0.11] sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-200">New to YouMine?</p>
+            <h2 className="mt-2 text-xl font-semibold text-white">Watch the quick platform overview</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-300">See how YouMine connects industry expertise, opportunities, learning, and practical digital tools.</p>
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-sky-100 transition group-hover:text-white">
+            Watch video
+            <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
+          </span>
+        </Link>
+      </section>
+
       {/* Service finder (flush to previous separator line) */}
       <section
         id="search"

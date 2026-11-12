@@ -212,7 +212,7 @@ export async function PATCH(req) {
   let inviteSent = false;
   let inviteError = null;
   try {
-    const result = await sendEmail({ to: creator.contact_email, subject: email.subject, html: email.html, text: email.text });
+    const result = await sendEmail({ to: creator.contact_email, bcc: "info@youmine.com.au", subject: email.subject, html: email.html, text: email.text });
     if (!result?.ok) throw new Error(result?.error || "Email delivery failed.");
     inviteSent = true;
   } catch (error) {

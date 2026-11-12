@@ -68,7 +68,7 @@ export async function POST(req) {
       const email = buildVaultCreatorClaimEmail({ creator, profileUrl: `${base}/consultants/${creator.id}`, signupUrl: `${base}/signup`, loginUrl: `${base}/login` });
       let sendError;
       try {
-        const result = await sendEmail({ to: recipient, subject: email.subject, html: email.html, text: email.text });
+        const result = await sendEmail({ to: recipient, bcc: "info@youmine.com.au", subject: email.subject, html: email.html, text: email.text });
         if (!result?.ok) sendError = new Error(result?.error || "Email delivery failed.");
       } catch (error) {
         sendError = error;
