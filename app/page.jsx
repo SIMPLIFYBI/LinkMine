@@ -1036,7 +1036,7 @@ export default async function HomePage() {
           <ServiceFinder className="w-full" initialCategories={searchCategories} />
         </section>
 
-        <section aria-labelledby="featured-experts-title" className="border-t border-white/10 pt-8">
+        <section aria-labelledby="featured-experts-title" className="pt-8">
           <div>
             <p className="section-label">People to know</p>
             <h2 id="featured-experts-title" className="mt-2 text-2xl font-semibold text-white">Featured {copy.industryLabel} consultants</h2>
