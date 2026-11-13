@@ -10,6 +10,7 @@ import { resolveResourceConsultantIcons } from "@/lib/resourceHubServer";
 import AddProfileSmartCTA from "@/app/components/consultants/AddProfileSmartCTA.client.jsx";
 import WelcomeAccountModal from "@/app/components/WelcomeAccountModal.client.jsx";
 import DidYouKnowSection from "./components/stats/DidYouKnowSection.jsx";
+import { supabaseAdminClient } from "@/lib/supabaseAdminClient";
 import {
   siteMarketLabel,
 } from "@/lib/siteMarket";
@@ -20,13 +21,13 @@ const heroImage = "/Pictures/pexels-urtimud-89-76108288-14263363.jpg";
 function getHomeCopy(market) {
   if (market === "oil_gas") {
     return {
-      title: "YouMine — The Resources Industry. Connected.",
+      title: "Oil & Gas Consultants, Jobs and Resources | YouMine",
       description:
-        "YouMine is the central digital platform for the resources industry, connecting oil & gas talent, jobs, training, events, and practical digital resources.",
+        "Find oil and gas consultants, contract opportunities, industry training, events and practical digital resources on YouMine.",
       heroAlt: "YouMine — consultants and contractors in oil and gas",
       heroTitle: "The resources industry, connected.",
       heroDescription:
-        "Discover experts, opportunities, events and digital tools across mining and oil & gas.",
+        "Discover oil & gas consultants, contract opportunities, industry events and practical digital tools.",
       overviewTitle: "Connect oil & gas teams with trusted contractors & consultants",
       overviewDescription:
         "YouMine helps operators, asset teams, and project leads find qualified oil & gas contractors and consultants fast — with portfolios, verified business details, service categories, and Google-linked profiles.",
@@ -37,13 +38,13 @@ function getHomeCopy(market) {
 
   if (market === "both") {
     return {
-      title: "YouMine — The Resources Industry. Connected.",
+      title: "Mining & Oil and Gas Consultants, Jobs and Resources | YouMine",
       description:
-        "YouMine is the central digital platform for the resources industry, connecting specialist talent, jobs, training, events, and practical digital resources across mining and oil & gas.",
+        "Find mining and oil and gas consultants, contract opportunities, industry training, events and practical digital resources on YouMine.",
       heroAlt: "YouMine — consultants and contractors across mining and oil and gas",
       heroTitle: "The resources industry, connected.",
       heroDescription:
-        "Discover experts, opportunities, events and digital tools across mining and oil & gas.",
+        "Discover mining and oil & gas consultants, contract opportunities, industry events and practical digital tools.",
       overviewTitle: "Connect industry teams with trusted contractors & consultants",
       overviewDescription:
         "YouMine helps mining and oil & gas teams find qualified contractors and consultants fast — with portfolios, verified business details, service categories, and Google-linked profiles.",
@@ -53,13 +54,13 @@ function getHomeCopy(market) {
   }
 
   return {
-    title: "YouMine — The Resources Industry. Connected.",
+    title: "Mining Consultants, Jobs and Resources | YouMine",
     description:
-      "YouMine is the central digital platform for the resources industry, connecting mining talent, jobs, training, events, and practical digital resources.",
+      "Find mining consultants, contract opportunities, industry training, events and practical digital resources on YouMine.",
     heroAlt: "YouMine — consultants and contractors in mining",
     heroTitle: "The resources industry, connected.",
     heroDescription:
-      "Discover experts, opportunities, events and digital tools across mining and oil & gas.",
+      "Discover mining consultants, contract opportunities, industry events and practical digital tools.",
     overviewTitle: "Connect mining clients with trusted contractors & consultants",
     overviewDescription:
       "YouMine helps mining companies find qualified contractors and consultants fast — with portfolios, verified business details, service categories, and Google-linked profiles. For consultants, it’s the easiest way to showcase your work, build credibility, and track profile metrics.",
@@ -230,17 +231,94 @@ async function getFeaturedResources() {
       .eq("status", "approved")
       .order("is_featured", { ascending: false })
       .order("updated_at", { ascending: false })
-      .limit(3);
+      .limit(24);
 
     if (error) throw error;
     const resources = data || [];
-    const iconByResourceId = await resolveResourceConsultantIcons(sb, resources);
+    const [iconByResourceId, { data: imageRows = [] }] = await Promise.all([
+      resolveResourceConsultantIcons(sb, resources),
+      resources.length
+        ? sb
+            .from("resource_images")
+            .select("id, resource_id, bucket_name, object_path, original_filename, sort_order")
+            .in("resource_id", resources.map((resource) => resource.id))
+            .order("sort_order", { ascending: true })
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    let signingClient = sb;
+    try {
+      signingClient = supabaseAdminClient();
+    } catch {
+      // Fall back to the public server client when admin storage access is unavailable.
+    }
+
+    const firstImageByResourceId = new Map();
+    for (const image of imageRows) {
+      if (!firstImageByResourceId.has(image.resource_id)) {
+        firstImageByResourceId.set(image.resource_id, image);
+      }
+    }
+
+    const imageByResourceId = new Map();
+    await Promise.all([...firstImageByResourceId.values()].map(async (image) => {
+      const { data: signedData, error: signedError } = await signingClient.storage
+        .from(image.bucket_name)
+        .createSignedUrl(image.object_path, 60 * 60 * 24 * 7);
+
+      if (!signedError && signedData?.signedUrl) {
+        imageByResourceId.set(image.resource_id, {
+          url: signedData.signedUrl,
+          alt: image.original_filename || "Resource preview",
+        });
+      }
+    }));
+
     return resources.map((resource) => ({
       ...resource,
       consultantIconUrl: iconByResourceId.get(resource.id) || null,
-    }));
+      previewImage: imageByResourceId.get(resource.id) || null,
+    })).sort((a, b) => Number(Boolean(b.previewImage)) - Number(Boolean(a.previewImage))).slice(0, 3);
   } catch {
     return [];
+  }
+}
+
+async function getUpcomingEvents() {
+  try {
+    const sb = supabasePublicServer();
+    const { data, error } = await sb
+      .from("events")
+      .select("id, title, summary, starts_at, ends_at, timezone, delivery_method, location_name, suburb, state")
+      .eq("status", "published")
+      .gte("starts_at", new Date().toISOString())
+      .order("starts_at", { ascending: true })
+      .limit(3);
+
+    if (error) throw error;
+    return data || [];
+  } catch {
+    return [];
+  }
+}
+
+function formatEventDate(value, timezone) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return { month: "", day: "", detail: "" };
+
+  const options = { timeZone: timezone || "UTC" };
+  try {
+    return {
+      month: new Intl.DateTimeFormat("en-AU", { ...options, month: "short" }).format(date),
+      day: new Intl.DateTimeFormat("en-AU", { ...options, day: "2-digit" }).format(date),
+      detail: new Intl.DateTimeFormat("en-AU", { ...options, weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(date),
+    };
+  } catch {
+    return {
+      month: new Intl.DateTimeFormat("en-AU", { month: "short", timeZone: "UTC" }).format(date),
+      day: new Intl.DateTimeFormat("en-AU", { day: "2-digit", timeZone: "UTC" }).format(date),
+      detail: new Intl.DateTimeFormat("en-AU", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "UTC" }).format(date),
+    };
   }
 }
 
@@ -263,7 +341,7 @@ function getResourceArtwork(resource, format) {
   return `radial-gradient(circle at 20% 16%, hsla(${(glow + drift + 360) % 360},90%,72%,0.28), transparent 28%), linear-gradient(145deg, hsla(${(base + drift + 360) % 360},58%,44%,0.94), hsla(${(accent + drift + 360) % 360},64%,26%,0.84))`;
 }
 
-export default async function HomePage() {
+async function LegacyHomePage() {
   const showPreview = true;
   const { market } = await getResolvedSiteMarket();
   const marketName = siteMarketLabel(market);
@@ -878,6 +956,218 @@ export default async function HomePage() {
       {/* JSON-LD */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     </main>
+  );
+}
+
+const USE_REDESIGNED_HOME = true;
+
+export default async function HomePage() {
+  if (!USE_REDESIGNED_HOME) return <LegacyHomePage />;
+
+  const { market } = await getResolvedSiteMarket();
+  const marketName = siteMarketLabel(market);
+  const copy = getHomeCopy(market);
+  const [{ featured, searchCategories }, featuredResources, upcomingEvents] = await Promise.all([
+    getStatsAndFeatured(market),
+    getFeaturedResources(),
+    getUpcomingEvents(),
+  ]);
+
+  const featuredConsultants = featured.slice(0, 3);
+  const pathways = [
+    { title: "Find expertise", description: "Specialist consultants and providers", href: "/consultants", Icon: UsersRound, color: "text-sky-300" },
+    { title: "Find work", description: "Contract and freelance opportunities", href: "/jobs", Icon: BriefcaseBusiness, color: "text-amber-300" },
+    { title: "Learn and connect", description: "Industry events and training", href: "/whats-on", Icon: CalendarDays, color: "text-emerald-300" },
+    { title: "Explore digital tools", description: "Practical resources in the Vault", href: "/vault", Icon: FolderOpen, color: "text-rose-300" },
+  ];
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "YouMine",
+    url: "https://youmine.io",
+    logo: "https://youmine.io/og-image.png",
+    contactPoint: [{ "@type": "ContactPoint", email: "info@youmine.com.au", contactType: "customer support" }],
+  };
+
+  return (
+    <div className="site-market-shell" data-market={market}>
+      <WelcomeAccountModal />
+
+      <section className="relative isolate flex min-h-[430px] items-center overflow-hidden sm:min-h-[520px]">
+        <Image src={heroImage} alt={copy.heroAlt} fill priority sizes="100vw" className="-z-20 object-cover" />
+        <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(2,6,23,0.94)_0%,rgba(2,6,23,0.78)_48%,rgba(2,6,23,0.3)_100%)]" />
+        <div className="mx-auto w-full max-w-6xl px-5 py-12 sm:px-8 sm:py-20">
+          <div className="max-w-3xl">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">YouMine · {marketName}</p>
+            <h1 className="mt-5 max-w-2xl text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">The resources industry, connected.</h1>
+            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-100 sm:text-lg sm:leading-8">{copy.heroDescription}</p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link href="#find-expertise" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-cyan-300 px-5 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">
+                Find a consultant <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+              <Link href="/vault" className="inline-flex min-h-12 items-center justify-center rounded-lg border border-white/45 bg-slate-950/25 px-5 text-sm font-semibold text-white transition hover:bg-white/10">Explore digital tools</Link>
+            </div>
+          </div>
+        </div>
+        <div aria-hidden="true" className="absolute bottom-0 left-0 h-px w-full bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent" />
+      </section>
+
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-14 px-4 py-10 sm:gap-16 sm:px-6 sm:py-14 lg:px-8">
+        <nav aria-label="Explore YouMine" className="grid divide-y divide-white/10 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
+          {pathways.map(({ title, description, href, Icon, color }) => (
+            <Link key={title} href={href} className="home-pathway-link group flex min-h-28 items-center gap-4 rounded-lg px-3 py-5 sm:px-5 lg:min-h-36 lg:flex-col lg:items-start lg:justify-between lg:py-3 lg:pr-5">
+              <Icon className={`h-6 w-6 shrink-0 ${color}`} strokeWidth={1.8} aria-hidden="true" />
+              <span className="min-w-0 flex-1">
+                <span className="home-pathway-title block font-semibold text-white">{title}</span>
+                <span className="home-pathway-description mt-1 block text-sm leading-5 text-slate-400">{description}</span>
+              </span>
+              <ArrowUpRight className="home-pathway-arrow h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+            </Link>
+          ))}
+        </nav>
+
+        <section id="find-expertise" className="scroll-mt-24 grid gap-6 border-y border-white/10 py-8 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:items-center md:gap-10 md:py-10">
+          <div>
+            <p className="section-label">Looking for specialist support?</p>
+            <h2 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">Find the right expertise</h2>
+            <p className="mt-3 max-w-lg text-sm leading-6 text-slate-300">Search specialist services and go straight to consultants with relevant industry experience.</p>
+          </div>
+          <ServiceFinder className="w-full" initialCategories={searchCategories} />
+        </section>
+
+        <section aria-labelledby="featured-experts-title" className="border-t border-white/10 pt-8">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="section-label">People to know</p>
+              <h2 id="featured-experts-title" className="mt-2 text-2xl font-semibold text-white">Featured {copy.industryLabel} consultants</h2>
+            </div>
+            <Link href="/consultants" className="inline-flex items-center gap-1 text-sm font-semibold text-cyan-200 hover:text-white">View all <ArrowUpRight className="h-4 w-4" aria-hidden="true" /></Link>
+          </div>
+          {featuredConsultants.length === 0 ? (
+            <p className="mt-5 text-sm text-slate-300">New profiles are being approved. Browse the directory to explore current listings.</p>
+          ) : (
+            <div className="mt-6 grid gap-3 md:grid-cols-3">
+              {featuredConsultants.map((consultant) => {
+                const logo = consultant?.metadata?.logo?.url || "";
+                return (
+                  <Link key={consultant.id} href={`/consultants/${consultant.id}`} className="group flex min-w-0 items-center gap-4 border-t border-white/10 py-4 transition hover:border-cyan-300/50">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/10 text-sm font-semibold text-white">
+                      {logo ? <img src={logo} alt={`${consultant.display_name} logo`} width="48" height="48" loading="lazy" className="h-full w-full object-contain" /> : consultant.display_name?.slice(0, 1) || "Y"}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold text-white">{consultant.display_name}</span>
+                      <span className="mt-1 block line-clamp-2 text-sm text-slate-400">{consultant.headline || consultant.location || "View consultant profile"}</span>
+                    </span>
+                    <ArrowUpRight className="h-4 w-4 shrink-0 text-slate-500 group-hover:text-cyan-200" aria-hidden="true" />
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        <section aria-labelledby="vault-resources-title" className="grid min-w-0 gap-6 border-t border-white/10 pt-8 lg:grid-cols-[0.7fr_1.3fr] lg:gap-10">
+          <div>
+            <p className="section-label">From the Vault</p>
+            <h2 id="vault-resources-title" className="mt-2 text-2xl font-semibold text-white">Useful tools for real work</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">Browse practical digital tools and resources made for the resources industry.</p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link href="/vault" className="text-sm font-semibold text-cyan-200 hover:text-white">Explore the Vault <ArrowUpRight className="ml-1 inline h-4 w-4" aria-hidden="true" /></Link>
+            </div>
+          </div>
+          {featuredResources.length > 0 ? (
+            <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {featuredResources.slice(0, 3).map((resource) => {
+                const format = RESOURCE_FORMAT_META[resource.resource_format] || RESOURCE_FORMAT_META.generic;
+                const FormatIcon = format.Icon;
+
+                return (
+                  <Link key={resource.id} href={`/vault/${resource.id}`} className="group min-w-0 overflow-hidden rounded-xl border border-white/10 bg-white/[0.035] transition hover:-translate-y-1 hover:border-cyan-200/35 hover:bg-white/[0.06]">
+                    <div className="relative aspect-[16/9] overflow-hidden" style={{ backgroundImage: getResourceArtwork(resource, format) }}>
+                      {resource.previewImage?.url ? (
+                        <img src={resource.previewImage.url} alt={resource.previewImage.alt} loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.035]" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+                          <span aria-hidden="true" className="absolute -right-7 -top-10 h-40 w-40 rounded-full border border-white/20 bg-white/10" />
+                          <span aria-hidden="true" className="absolute -bottom-14 -left-8 h-36 w-36 rotate-12 rounded-[2rem] border border-white/15 bg-slate-950/10" />
+                          <FormatIcon className="relative h-12 w-12 text-white/85 drop-shadow-md" strokeWidth={1.35} aria-hidden="true" />
+                        </div>
+                      )}
+                      <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-slate-950/10" />
+                      <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-md border border-white/25 bg-slate-950/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
+                        <FormatIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                        {format.label}
+                      </span>
+                      <ArrowUpRight className="absolute right-3 top-3 h-5 w-5 text-white opacity-0 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100" aria-hidden="true" />
+                    </div>
+                    <div className="p-4">
+                      {resource.resource_categories?.name ? <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-200/80">{resource.resource_categories.name}</p> : null}
+                      <h3 className="mt-1 line-clamp-2 font-semibold leading-5 text-white group-hover:text-cyan-100">{resource.title}</h3>
+                      <p className="mt-2 line-clamp-2 text-sm leading-5 text-slate-400">{resource.summary || "Open the resource to review the details."}</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : <div className="border-y border-white/10 py-4 text-sm text-slate-400">New resources are being curated. Explore the Vault to see the latest.</div>}
+        </section>
+
+        <section aria-labelledby="upcoming-events-title" className="border-t border-white/10 pt-8">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="section-label">Mark your calendar</p>
+              <h2 id="upcoming-events-title" className="mt-2 text-2xl font-semibold text-white">Upcoming events</h2>
+            </div>
+            <Link href="/whats-on" className="inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-cyan-200 transition hover:text-white">
+              See all events and training <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
+          {upcomingEvents.length ? (
+            <div className="mt-5 grid gap-3 md:grid-cols-3">
+              {upcomingEvents.map((event) => {
+                const date = formatEventDate(event.starts_at, event.timezone);
+                const location = [event.location_name, event.suburb, event.state].filter(Boolean).join(", ");
+                return (
+                  <Link key={event.id} href="/whats-on" className="group flex min-w-0 items-start gap-4 rounded-xl border border-white/10 bg-white/[0.035] p-4 transition hover:-translate-y-0.5 hover:border-cyan-200/30 hover:bg-white/[0.06]">
+                    <span className="flex h-16 w-14 shrink-0 flex-col items-center justify-center rounded-lg border border-cyan-200/20 bg-cyan-300/[0.08] text-cyan-100">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.12em]">{date.month}</span>
+                      <span className="mt-0.5 text-2xl font-semibold leading-none">{date.day}</span>
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block line-clamp-2 font-semibold leading-5 text-white group-hover:text-cyan-100">{event.title}</span>
+                      <span className="mt-2 block text-xs font-medium text-cyan-200/85">{date.detail}</span>
+                      {location ? <span className="mt-1 block truncate text-xs text-slate-400">{location}</span> : null}
+                      {event.summary ? <span className="mt-2 block line-clamp-2 text-sm leading-5 text-slate-400">{event.summary}</span> : null}
+                    </span>
+                    <ArrowUpRight className="mt-1 h-4 w-4 shrink-0 text-slate-500 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-cyan-200" aria-hidden="true" />
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="mt-5 rounded-xl border border-white/10 bg-white/[0.025] px-4 py-5 text-sm text-slate-400">No upcoming events are listed right now. Visit the calendar to see available training and check back for new events.</p>
+          )}
+        </section>
+
+        <section className="flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="section-label">New to YouMine?</p>
+            <h2 className="mt-2 text-xl font-semibold text-white">See how the platform connects the industry.</h2>
+          </div>
+          <Link href="/about#watch-youmine" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-white/20 px-4 text-sm font-semibold text-white transition hover:border-cyan-200/50 hover:bg-white/5 sm:self-auto">Watch the overview <ArrowUpRight className="h-4 w-4" aria-hidden="true" /></Link>
+        </section>
+
+        <section className="flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="section-label">For consultants and providers</p>
+            <h2 className="mt-2 text-xl font-semibold text-white">Make your expertise easier to find.</h2>
+          </div>
+          <AddProfileSmartCTA />
+        </section>
+      </div>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+    </div>
   );
 }
 
