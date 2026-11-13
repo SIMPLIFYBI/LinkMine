@@ -75,16 +75,6 @@ function TradingViewTicker() {
         className="tradingview-widget-container w-full px-4"
       >
         <div ref={widgetRef} className="tradingview-widget-container__widget" />
-        <div className="tradingview-widget-copyright mt-1 px-1 text-[10px] leading-none opacity-60 transition-opacity hover:opacity-90">
-          <a
-            href="https://www.tradingview.com/markets/"
-            rel="noopener nofollow"
-            target="_blank"
-          >
-            Ticker tape
-          </a>{" "}
-          by TradingView
-        </div>
       </div>
     </div>
   );

@@ -991,7 +991,7 @@ export default async function HomePage() {
   };
 
   return (
-    <div className="site-market-shell" data-market={market}>
+    <div className="site-market-shell home-redesigned-background" data-market={market}>
       <WelcomeAccountModal />
 
       <section className="relative isolate flex min-h-[430px] items-center overflow-hidden sm:min-h-[520px]">
@@ -1037,12 +1037,9 @@ export default async function HomePage() {
         </section>
 
         <section aria-labelledby="featured-experts-title" className="border-t border-white/10 pt-8">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="section-label">People to know</p>
-              <h2 id="featured-experts-title" className="mt-2 text-2xl font-semibold text-white">Featured {copy.industryLabel} consultants</h2>
-            </div>
-            <Link href="/consultants" className="inline-flex items-center gap-1 text-sm font-semibold text-cyan-200 hover:text-white">View all <ArrowUpRight className="h-4 w-4" aria-hidden="true" /></Link>
+          <div>
+            <p className="section-label">People to know</p>
+            <h2 id="featured-experts-title" className="mt-2 text-2xl font-semibold text-white">Featured {copy.industryLabel} consultants</h2>
           </div>
           {featuredConsultants.length === 0 ? (
             <p className="mt-5 text-sm text-slate-300">New profiles are being approved. Browse the directory to explore current listings.</p>
@@ -1065,6 +1062,11 @@ export default async function HomePage() {
               })}
             </div>
           )}
+          <div className="mt-5 flex justify-end border-t border-white/10 pt-4">
+            <Link href="/consultants" className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-cyan-200 transition hover:text-white">
+              View more consultants <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
         </section>
 
         <section aria-labelledby="vault-resources-title" className="grid min-w-0 gap-6 border-t border-white/10 pt-8 lg:grid-cols-[0.7fr_1.3fr] lg:gap-10">
@@ -1072,9 +1074,6 @@ export default async function HomePage() {
             <p className="section-label">From the Vault</p>
             <h2 id="vault-resources-title" className="mt-2 text-2xl font-semibold text-white">Useful tools for real work</h2>
             <p className="mt-3 text-sm leading-6 text-slate-300">Browse practical digital tools and resources made for the resources industry.</p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link href="/vault" className="text-sm font-semibold text-cyan-200 hover:text-white">Explore the Vault <ArrowUpRight className="ml-1 inline h-4 w-4" aria-hidden="true" /></Link>
-            </div>
           </div>
           {featuredResources.length > 0 ? (
             <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -1111,17 +1110,17 @@ export default async function HomePage() {
               })}
             </div>
           ) : <div className="border-y border-white/10 py-4 text-sm text-slate-400">New resources are being curated. Explore the Vault to see the latest.</div>}
+          <div className="flex justify-end border-t border-white/10 pt-4 lg:col-start-2">
+            <Link href="/vault" className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-cyan-200 transition hover:text-white">
+              View more digital tools <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
         </section>
 
         <section aria-labelledby="upcoming-events-title" className="border-t border-white/10 pt-8">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="section-label">Mark your calendar</p>
-              <h2 id="upcoming-events-title" className="mt-2 text-2xl font-semibold text-white">Upcoming events</h2>
-            </div>
-            <Link href="/whats-on" className="inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-cyan-200 transition hover:text-white">
-              See all events and training <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
+          <div>
+            <p className="section-label">Mark your calendar</p>
+            <h2 id="upcoming-events-title" className="mt-2 text-2xl font-semibold text-white">Upcoming events</h2>
           </div>
           {upcomingEvents.length ? (
             <div className="mt-5 grid gap-3 md:grid-cols-3">
@@ -1148,6 +1147,11 @@ export default async function HomePage() {
           ) : (
             <p className="mt-5 rounded-xl border border-white/10 bg-white/[0.025] px-4 py-5 text-sm text-slate-400">No upcoming events are listed right now. Visit the calendar to see available training and check back for new events.</p>
           )}
+          <div className="mt-5 flex justify-end border-t border-white/10 pt-4">
+            <Link href="/whats-on" className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-cyan-200 transition hover:text-white">
+              View all events and training <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
         </section>
 
         <section className="flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between">
@@ -1158,12 +1162,16 @@ export default async function HomePage() {
           <Link href="/about#watch-youmine" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-white/20 px-4 text-sm font-semibold text-white transition hover:border-cyan-200/50 hover:bg-white/5 sm:self-auto">Watch the overview <ArrowUpRight className="h-4 w-4" aria-hidden="true" /></Link>
         </section>
 
-        <section className="flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between">
+        <section className="relative isolate flex flex-col gap-5 overflow-hidden rounded-2xl border border-cyan-200/20 bg-[linear-gradient(125deg,rgba(8,47,73,0.72),rgba(15,23,42,0.94)_55%,rgba(6,78,59,0.42))] p-5 shadow-[0_24px_70px_-44px_rgba(34,211,238,0.55)] sm:flex-row sm:items-center sm:justify-between sm:p-7">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 -z-10 w-1/3 bg-[radial-gradient(ellipse_at_right,rgba(34,211,238,0.15),transparent_72%)]" />
           <div>
-            <p className="section-label">For consultants and providers</p>
-            <h2 className="mt-2 text-xl font-semibold text-white">Make your expertise easier to find.</h2>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">For consultants and providers</p>
+            <h2 className="mt-2 text-xl font-semibold text-white sm:text-2xl">Make your expertise easier to find.</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Create a profile to showcase your services, experience and work to people across the resources industry.</p>
           </div>
-          <AddProfileSmartCTA />
+          <div className="shrink-0 [&_a]:!min-h-11 [&_button]:!min-h-11">
+            <AddProfileSmartCTA />
+          </div>
         </section>
       </div>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
