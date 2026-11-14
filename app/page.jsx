@@ -10,6 +10,7 @@ import { resolveResourceConsultantIcons } from "@/lib/resourceHubServer";
 import AddProfileSmartCTA from "@/app/components/consultants/AddProfileSmartCTA.client.jsx";
 import WelcomeAccountModal from "@/app/components/WelcomeAccountModal.client.jsx";
 import DidYouKnowSection from "./components/stats/DidYouKnowSection.jsx";
+import HomeMotion from "./components/home/HomeMotion.client.jsx";
 import { supabaseAdminClient } from "@/lib/supabaseAdminClient";
 import {
   siteMarketLabel,
@@ -993,16 +994,17 @@ export default async function HomePage() {
   return (
     <div className="site-market-shell home-redesigned-background" data-market={market}>
       <WelcomeAccountModal />
+      <HomeMotion />
 
       <section className="relative isolate flex min-h-[430px] items-center overflow-hidden sm:min-h-[520px]">
         <Image src={heroImage} alt={copy.heroAlt} fill priority sizes="100vw" className="-z-20 object-cover" />
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(2,6,23,0.94)_0%,rgba(2,6,23,0.78)_48%,rgba(2,6,23,0.3)_100%)]" />
-        <div className="mx-auto w-full max-w-6xl px-5 py-12 sm:px-8 sm:py-20">
+        <div className="home-hero-copy mx-auto w-full max-w-6xl px-5 py-12 sm:px-8 sm:py-20">
           <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">YouMine · {marketName}</p>
-            <h1 className="mt-5 max-w-2xl text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">The resources industry, connected.</h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-100 sm:text-lg sm:leading-8">{copy.heroDescription}</p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <p data-home-hero-step="1" className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">YouMine · {marketName}</p>
+            <h1 data-home-hero-step="2" className="mt-5 max-w-2xl text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">The resources industry, connected.</h1>
+            <p data-home-hero-step="3" className="mt-5 max-w-2xl text-base leading-7 text-slate-100 sm:text-lg sm:leading-8">{copy.heroDescription}</p>
+            <div data-home-hero-step="4" className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="#find-expertise" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-cyan-300 px-5 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">
                 Find a consultant <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
               </Link>
@@ -1014,7 +1016,7 @@ export default async function HomePage() {
       </section>
 
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-14 px-4 py-10 sm:gap-16 sm:px-6 sm:py-14 lg:px-8">
-        <nav aria-label="Explore YouMine" className="grid divide-y divide-white/10 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
+        <nav data-home-reveal aria-label="Explore YouMine" className="grid divide-y divide-white/10 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
           {pathways.map(({ title, description, href, Icon, color }) => (
             <Link key={title} href={href} className="home-pathway-link group flex min-h-28 items-center gap-4 rounded-lg px-3 py-5 sm:px-5 lg:min-h-36 lg:flex-col lg:items-start lg:justify-between lg:py-3 lg:pr-5">
               <Icon className={`h-6 w-6 shrink-0 ${color}`} strokeWidth={1.8} aria-hidden="true" />
@@ -1027,7 +1029,7 @@ export default async function HomePage() {
           ))}
         </nav>
 
-        <section id="find-expertise" className="scroll-mt-24 grid gap-6 border-y border-white/10 py-8 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:items-center md:gap-10 md:py-10">
+        <section data-home-reveal id="find-expertise" className="scroll-mt-24 grid gap-6 border-y border-white/10 py-8 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:items-center md:gap-10 md:py-10">
           <div>
             <p className="section-label">Looking for specialist support?</p>
             <h2 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">Find the right expertise</h2>
@@ -1036,7 +1038,7 @@ export default async function HomePage() {
           <ServiceFinder className="w-full" initialCategories={searchCategories} />
         </section>
 
-        <section aria-labelledby="featured-experts-title" className="pt-8">
+        <section data-home-reveal aria-labelledby="featured-experts-title" className="pt-8">
           <div>
             <p className="section-label">People to know</p>
             <h2 id="featured-experts-title" className="mt-2 text-2xl font-semibold text-white">Featured {copy.industryLabel} consultants</h2>
@@ -1069,7 +1071,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section aria-labelledby="vault-resources-title" className="grid min-w-0 gap-6 border-t border-white/10 pt-8 lg:grid-cols-[0.7fr_1.3fr] lg:gap-10">
+        <section data-home-reveal aria-labelledby="vault-resources-title" className="grid min-w-0 gap-6 border-t border-white/10 pt-8 lg:grid-cols-[0.7fr_1.3fr] lg:gap-10">
           <div>
             <p className="section-label">From the Vault</p>
             <h2 id="vault-resources-title" className="mt-2 text-2xl font-semibold text-white">Useful tools for real work</h2>
@@ -1117,7 +1119,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section aria-labelledby="upcoming-events-title" className="border-t border-white/10 pt-8">
+        <section data-home-reveal aria-labelledby="upcoming-events-title" className="border-t border-white/10 pt-8">
           <div>
             <p className="section-label">Mark your calendar</p>
             <h2 id="upcoming-events-title" className="mt-2 text-2xl font-semibold text-white">Upcoming events</h2>
@@ -1154,7 +1156,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between">
+        <section data-home-reveal className="flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="section-label">New to YouMine?</p>
             <h2 className="mt-2 text-xl font-semibold text-white">See how the platform connects the industry.</h2>
@@ -1162,7 +1164,7 @@ export default async function HomePage() {
           <Link href="/about#watch-youmine" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 self-start rounded-lg border border-white/20 px-4 text-sm font-semibold text-white transition hover:border-cyan-200/50 hover:bg-white/5 sm:self-auto">Watch the overview <ArrowUpRight className="h-4 w-4" aria-hidden="true" /></Link>
         </section>
 
-        <section className="relative isolate flex flex-col gap-5 overflow-hidden rounded-2xl border border-cyan-200/20 bg-[linear-gradient(125deg,rgba(8,47,73,0.72),rgba(15,23,42,0.94)_55%,rgba(6,78,59,0.42))] p-5 shadow-[0_24px_70px_-44px_rgba(34,211,238,0.55)] sm:flex-row sm:items-center sm:justify-between sm:p-7">
+        <section data-home-reveal className="relative isolate flex flex-col gap-5 overflow-hidden rounded-2xl border border-cyan-200/20 bg-[linear-gradient(125deg,rgba(8,47,73,0.72),rgba(15,23,42,0.94)_55%,rgba(6,78,59,0.42))] p-5 shadow-[0_24px_70px_-44px_rgba(34,211,238,0.55)] sm:flex-row sm:items-center sm:justify-between sm:p-7">
           <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 -z-10 w-1/3 bg-[radial-gradient(ellipse_at_right,rgba(34,211,238,0.15),transparent_72%)]" />
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">For consultants and providers</p>
