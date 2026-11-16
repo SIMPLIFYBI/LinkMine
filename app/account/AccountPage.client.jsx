@@ -220,6 +220,12 @@ export default function AccountPageClient({ initialTab = "account" }) {
             >
               Social Studio
             </Link>
+            <Link
+              href="/admin/analytics"
+              className="rounded-full border border-emerald-400/35 bg-emerald-500/15 px-5 py-2 text-sm font-semibold text-emerald-100 shadow-sm hover:bg-emerald-500/25"
+            >
+              Analytics
+            </Link>
           </>
         )}
         <div className="ml-auto">
