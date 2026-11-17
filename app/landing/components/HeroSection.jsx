@@ -1,4 +1,4 @@
-export function HeroSection({ hero, browseHref, allHref = "/consultants" }) {
+export function HeroSection({ hero, browseHref, allHref = "/consultants", browseLabel = "Browse consultants" }) {
   return (
     <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-8 ring-1 ring-white/10">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-sky-500 via-cyan-400 to-sky-500" />
@@ -7,7 +7,7 @@ export function HeroSection({ hero, browseHref, allHref = "/consultants" }) {
       <div className="mt-5 flex flex-wrap gap-3">
         <a href={browseHref}>
           <button className="rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow hover:opacity-95">
-            Browse consultants
+            {browseLabel}
           </button>
         </a>
         <a href={allHref}>

@@ -105,12 +105,15 @@ async function fetchShowcase(entry) {
     .eq("status", "approved");
   if (consErr || !consultants?.length) return [];
 
+  const eligibleConsultants = entry.showcase.locationPattern
+    ? consultants.filter((consultant) => entry.showcase.locationPattern.test(consultant.location || ""))
+    : consultants;
   const limit = entry.showcase.limit ?? 6;
   if (entry.showcase.dailyRotate) {
     const dayKey = new Date().toISOString().slice(0, 10);
-    return seededShuffle(consultants, dayKey).slice(0, limit);
+    return seededShuffle(eligibleConsultants, dayKey).slice(0, limit);
   }
-  return consultants
+  return eligibleConsultants
     .slice()
     .sort((a, b) => String(a.display_name || "").localeCompare(String(b.display_name || "")))
     .slice(0, limit);
@@ -127,7 +130,7 @@ async function ConsultantShowcase({ entry, browseHref }) {
           href={browseHref}
           className="text-xs font-semibold text-sky-300 underline-offset-2 hover:underline"
         >
-          See more
+          {entry.showcase.browseLabel || "See more"}
         </Link>
       </div>
       {showcaseConsultants.length === 0 ? (
@@ -225,26 +228,23 @@ export default async function LandingPage({ params }) {
   const browseHref = consultantsParams.toString() ? `/consultants?${consultantsParams.toString()}` : "/consultants";
   const allHref = marketValue !== "mining" ? `/consultants?market=${encodeURIComponent(marketValue)}` : "/consultants";
 
-  const faqLd = entry.faqs?.length
-    ? {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        mainEntity: entry.faqs.map(f => ({
-          "@type": "Question",
-          name: f.q,
-          acceptedAnswer: { "@type": "Answer", text: f.a }
-        }))
-      }
-    : null;
-
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pb-16">
-      <HeroSection hero={entry.hero} browseHref={browseHref} allHref={allHref} />
+      <HeroSection hero={entry.hero} browseHref={browseHref} allHref={allHref} browseLabel={entry.browseLabel} />
 
       {entry.showcase && (
         <Suspense fallback={null}>
           <ConsultantShowcase entry={entry} browseHref={browseHref} />
         </Suspense>
+      )}
+
+      {entry.selectionGuidance?.length > 0 && (
+        <section className="border-t border-white/10 pt-6">
+          <h2 className="text-xl font-semibold text-white">Choosing a consultant</h2>
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-200">
+            {entry.selectionGuidance.map((guidance) => <li key={guidance}>{guidance}</li>)}
+          </ul>
+        </section>
       )}
 
       {entry.problem?.length > 0 && (
@@ -280,7 +280,7 @@ export default async function LandingPage({ params }) {
           </div>
           <div className="mt-5">
             <Link href={browseHref} className="text-sky-300 underline-offset-2 hover:underline">
-              Browse consultants offering these services →
+              {entry.browseLabel || "Browse consultants offering these services"} →
             </Link>
           </div>
         </section>
@@ -350,9 +350,20 @@ export default async function LandingPage({ params }) {
           </ol>
           <div className="mt-5">
             <Link href={browseHref} className="text-sky-300 underline-offset-2 hover:underline">
-              Connect with consultants →
+              {entry.browseLabel || "Connect with consultants"} →
             </Link>
           </div>
+        </section>
+      )}
+
+      {entry.relatedPages?.length > 0 && (
+        <section className="border-t border-white/10 pt-6">
+          <h2 className="text-xl font-semibold text-white">Explore related expertise</h2>
+          <ul className="mt-3 space-y-2">
+            {entry.relatedPages.map((related) => (
+              <li key={related.href}><Link href={related.href} className="text-sm text-sky-300 underline-offset-2 hover:underline">{related.label}</Link></li>
+            ))}
+          </ul>
         </section>
       )}
 
@@ -360,18 +371,12 @@ export default async function LandingPage({ params }) {
         <div className="rounded-2xl border border-sky-400/30 bg-sky-500/10 p-3 text-center shadow ring-1 ring-sky-400/20 backdrop-blur">
           <Link href={browseHref} className="inline-flex">
             <button className="rounded-lg bg-gradient-to-r from-sky-600 to-indigo-600 px-5 py-2 text-sm font-semibold text-white">
-              Browse consultants now
+              {entry.browseLabel || "Browse consultants now"}
             </button>
           </Link>
         </div>
       </div>
 
-      {faqLd && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
-        />
-      )}
     </main>
   );
 }

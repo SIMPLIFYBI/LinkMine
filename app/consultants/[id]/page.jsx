@@ -17,7 +17,9 @@ function truncateText(value, maxLength = 160) {
   const normalized = String(value || "").replace(/\s+/g, " ").trim();
   if (!normalized) return "";
   if (normalized.length <= maxLength) return normalized;
-  return `${normalized.slice(0, Math.max(0, maxLength - 1)).trimEnd()}...`;
+  const truncated = normalized.slice(0, Math.max(0, maxLength - 3));
+  const lastSpace = truncated.lastIndexOf(" ");
+  return `${(lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated).trimEnd()}...`;
 }
 
 function getBackHref(value) {
@@ -33,18 +35,12 @@ function buildConsultantDescription(consultant, services) {
   const serviceNames = Array.isArray(services)
     ? services.map((service) => service?.name).filter(Boolean)
     : [];
-  const parts = [];
-
-  if (consultant?.headline) parts.push(consultant.headline);
-  if (consultant?.location) parts.push(`Based in ${consultant.location}.`);
-  if (serviceNames.length) {
-    parts.push(`Services include ${serviceNames.slice(0, 3).join(", ")}.`);
-  } else if (consultant?.bio) {
-    parts.push(consultant.bio);
-  }
+  const parts = [consultant?.bio || consultant?.headline];
+  if (!consultant?.bio && consultant?.location) parts.push(`Based in ${consultant.location}.`);
+  if (!consultant?.bio && serviceNames.length) parts.push(`Services include ${serviceNames.slice(0, 3).join(", ")}.`);
 
   return truncateText(
-    parts.join(" ") || `View ${consultant?.display_name || "this consultant"} on YouMine.`,
+    parts.filter(Boolean).join(" ") || `View ${consultant?.display_name || "this provider"} on YouMine.`,
     160
   );
 }
@@ -168,10 +164,11 @@ export async function generateMetadata(props) {
   const { consultant, services } = data;
   const titleParts = [consultant.display_name];
 
-  if (consultant.location) {
-    titleParts.push(`Mining consultant in ${consultant.location}`);
-  } else if (consultant.headline) {
-    titleParts.push(consultant.headline);
+  const headline = String(consultant.headline || "").replace(/\s+/g, " ").trim();
+  if (headline && headline.length <= 60 && !headline.toLowerCase().includes(String(consultant.display_name || "").toLowerCase())) {
+    titleParts.push(headline);
+  } else if (consultant.location) {
+    titleParts.push(consultant.location);
   }
 
   const description = buildConsultantDescription(consultant, services);

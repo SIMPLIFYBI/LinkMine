@@ -4,6 +4,16 @@ const entry = {
   description:
     "Find Perth and wider Western Australia mining consultants for studies, planning, geotechnical, drill & blast, productivity improvement, closure and technical services support.",
   categorySlug: "mining-engineering-planning", // use same filter as mine-engineering-planning
+  browseLabel: "Browse planning consultants in all locations",
+  selectionGuidance: [
+    "Check the consultant's location and whether they can work at your project site or remotely.",
+    "Compare relevant mine type, commodity and project-stage experience with your requirements.",
+    "Discuss scope, deliverables, availability and site access directly before engaging a provider.",
+  ],
+  relatedPages: [
+    { href: "/landing/mine-engineering-planning-consultants-australia", label: "Mine planning and engineering consultants in Australia" },
+    { href: "/landing/geotechnical-consultants-wa", label: "Mining geotechnical consultants in Western Australia" },
+  ],
   hero: {
     heading: "Mining Consultants — Perth & Western Australia",
     subheading:
@@ -95,23 +105,6 @@ const entry = {
     delivery: ["Perth office with site campaigns", "FIFO", "DIDO", "Remote data collaboration"],
     lifecycle: ["Concept", "Scoping", "PFS", "DFS", "Execution", "Operations", "Expansion", "Closure"]
   },
-  proof: [
-    {
-      heading: "Haulage bottleneck uplift",
-      body:
-        "Cycle segmentation and revised road maintenance cadence reduced truck delays and lifted effective hours without new fleet."
-    },
-    {
-      heading: "Study criteria alignment",
-      body:
-        "Early cross‑discipline review tightened design criteria and avoided late geotechnical and scheduling rework pre‑PFS gate."
-    },
-    {
-      heading: "Drill & blast cost reduction",
-      body:
-        "Pattern adjustments maintained fragmentation while trimming explosive consumption and reducing oversize at the crusher."
-    }
-  ],
   who: [
     "Technical Services Managers needing integrated planning inputs",
     "Study Managers seeking defendable criteria and gate deliverables",
@@ -149,7 +142,9 @@ const entry = {
     }
   ],
   showcase: {
-    heading: "Consultant showcase",
+    heading: "Planning consultants based in Perth and WA",
+    browseLabel: "See planning consultants in all locations",
+    locationPattern: /\b(perth|western australia|wa)\b/i,
     limit: 6,
     dailyRotate: true
   }

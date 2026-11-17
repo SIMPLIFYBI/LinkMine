@@ -1,11 +1,20 @@
 const entry = {
   slug: "mine-engineering-planning-consultants-australia",
-  title: "Mine Engineering & Planning Consultants – Australia",
+  title: "Mine Planning & Engineering Consultants in Australia",
   description:
-    "Independent Australian mine engineering and planning consultants for studies, scheduling, fleet optimisation, cost control and execution readiness.",
+    "Find mine planning and engineering consultants for mine design, production scheduling, studies and operational planning across Australia.",
   categorySlug: "mining-engineering-planning",
+  selectionGuidance: [
+    "Identify whether you need strategic mine design, life-of-mine planning, production scheduling or an independent study review.",
+    "Compare experience with your mining method, commodity, project stage and planning software.",
+    "Agree on required inputs, schedule, deliverables and on-site or remote support directly with the consultant.",
+  ],
+  relatedPages: [
+    { href: "/landing/mining-consultants-perth-western-australia", label: "Mining consultants in Perth and Western Australia" },
+    { href: "/landing/open-pit-engineering-consultants-australia", label: "Open-pit engineering consultants in Australia" },
+  ],
   hero: {
-    heading: "Mine Engineering & Planning Consultants — Australia",
+    heading: "Mine Planning & Engineering Consultants — Australia",
     subheading:
       "Locate independent mine engineering and planning consultants for studies, schedules, haulage optimisation and execution support. YouMine lists specialists; the consultants deliver the work."
   },
@@ -73,20 +82,6 @@ const entry = {
     delivery: ["FIFO", "DIDO", "Capital city office with site visits", "Remote collaboration with site data feeds"],
     lifecycle: ["Concept", "Scoping", "PFS", "DFS", "Execution", "Operations", "Expansion", "Closure planning"]
   },
-  proof: [
-    {
-      heading: "Iron ore phase redesign",
-      body: "Re-sequenced waste stripping and ore release lifted NPV by aligning manning, drill and haulage profiles to plant capacity."
-    },
-    {
-      heading: "Underground ramp-up recovery",
-      body: "Bottleneck analysis and revised production roster lifted stoping compliance from 62% to 88% within three months."
-    },
-    {
-      heading: "Study readiness uplift",
-      body: "Independent PFS review identified schedule and cost gaps, enabling a clear mitigation plan before board submission."
-    }
-  ],
   who: [
     "Technical services managers needing aligned production and development plans",
     "Planning superintendents looking to stabilise short-term schedules and compliance",
