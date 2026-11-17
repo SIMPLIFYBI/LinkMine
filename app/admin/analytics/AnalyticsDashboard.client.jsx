@@ -2,6 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { Activity, Clock3, Eye, RefreshCw, UserPlus, Users } from "lucide-react";
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 const DATE_RANGES = [7, 30, 90];
 
@@ -31,6 +41,85 @@ function formatTimestamp(value) {
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function formatCompactNumber(value) {
+  return new Intl.NumberFormat(undefined, {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(Number(value || 0));
+}
+
+function formatChartDate(value) {
+  if (!value) return "";
+  return new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" }).format(new Date(`${value}T00:00:00`));
+}
+
+function ChartTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+
+  return (
+    <div className="min-w-36 rounded-md border border-white/10 bg-slate-950/95 px-3 py-2 shadow-xl">
+      <p className="mb-1.5 text-xs text-slate-400">{formatChartDate(label)}</p>
+      {payload.map((item) => (
+        <div key={item.dataKey} className="flex items-center justify-between gap-5 py-0.5 text-xs">
+          <span style={{ color: item.color }}>{item.name}</span>
+          <span className="font-medium text-white">{formatNumber(item.value)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TrendChart({ title, data, lines, loading, days }) {
+  return (
+    <Panel title={title}>
+      {loading ? (
+        <div className="flex h-[288px] items-center justify-center text-sm text-slate-400">Loading trend...</div>
+      ) : data?.length ? (
+        <div className="h-[288px] w-full px-2 py-4 sm:px-4" role="img" aria-label={`${title} over the last ${days} days`}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
+              <CartesianGrid stroke="rgba(148,163,184,0.12)" vertical={false} />
+              <XAxis
+                dataKey="date"
+                tickFormatter={formatChartDate}
+                tick={{ fill: "#94a3b8", fontSize: 11 }}
+                axisLine={{ stroke: "rgba(148,163,184,0.2)" }}
+                tickLine={false}
+                minTickGap={28}
+              />
+              <YAxis
+                tickFormatter={formatCompactNumber}
+                tick={{ fill: "#94a3b8", fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+                width={42}
+              />
+              <Tooltip content={<ChartTooltip />} cursor={{ stroke: "rgba(148,163,184,0.28)" }} />
+              <Legend verticalAlign="top" align="right" height={28} iconType="circle" iconSize={7} wrapperStyle={{ color: "#cbd5e1", fontSize: 11 }} />
+              {lines.map((line) => (
+                <Line
+                  key={line.key}
+                  type="monotone"
+                  dataKey={line.key}
+                  name={line.label}
+                  stroke={line.color}
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4, strokeWidth: 0 }}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
+        <div className="flex h-[288px] items-center justify-center px-4 text-center text-sm text-slate-400">
+          No trend data is available for this period.
+        </div>
+      )}
+    </Panel>
+  );
 }
 
 function MetricCard({ icon: Icon, label, value, detail }) {
@@ -154,6 +243,29 @@ export default function AnalyticsDashboard() {
       </section>
 
       <section className="mt-6 grid gap-5 lg:grid-cols-2">
+        <TrendChart
+          title="Traffic over time"
+          data={report?.trend}
+          days={days}
+          loading={loading}
+          lines={[
+            { key: "sessions", label: "Sessions", color: "#38bdf8" },
+            { key: "pageViews", label: "Page views", color: "#fbbf24" },
+          ]}
+        />
+        <TrendChart
+          title="User growth"
+          data={report?.trend}
+          days={days}
+          loading={loading}
+          lines={[
+            { key: "activeUsers", label: "Active users", color: "#34d399" },
+            { key: "newUsers", label: "New users", color: "#fb7185" },
+          ]}
+        />
+      </section>
+
+      <section className="mt-6 grid gap-5 lg:grid-cols-2">
         <Panel title="Top visitor locations">
           {report?.countries?.length ? (
             <div className="overflow-x-auto">
@@ -185,7 +297,7 @@ export default function AnalyticsDashboard() {
         </Panel>
       </section>
 
-      <section className="mt-5 grid gap-5 lg:grid-cols-2">
+      <section className="mt-5">
         <Panel title="Traffic sources and campaigns">
           {report?.acquisition?.length ? (
             <div className="overflow-x-auto">
@@ -199,21 +311,6 @@ export default function AnalyticsDashboard() {
               </table>
             </div>
           ) : <EmptyTable>{loading ? "Loading traffic sources..." : "No campaign data is available for this period."}</EmptyTable>}
-        </Panel>
-
-        <Panel title="Daily activity">
-          {report?.trend?.length ? (
-            <div className="max-h-[390px] overflow-y-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="sticky top-0 bg-slate-950 text-xs uppercase tracking-[0.1em] text-slate-500">
-                  <tr><th className="px-4 py-3 font-medium">Date</th><th className="px-4 py-3 text-right font-medium">Users</th><th className="px-4 py-3 text-right font-medium">Sessions</th><th className="px-4 py-3 text-right font-medium">Views</th></tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {report.trend.map((row) => <tr key={row.date}><td className="px-4 py-3 text-slate-200">{row.date}</td><td className="px-4 py-3 text-right text-slate-300">{formatNumber(row.activeUsers)}</td><td className="px-4 py-3 text-right text-slate-300">{formatNumber(row.sessions)}</td><td className="px-4 py-3 text-right text-slate-300">{formatNumber(row.pageViews)}</td></tr>)}
-                </tbody>
-              </table>
-            </div>
-          ) : <EmptyTable>{loading ? "Loading daily activity..." : "No activity data is available for this period."}</EmptyTable>}
         </Panel>
       </section>
     </main>
