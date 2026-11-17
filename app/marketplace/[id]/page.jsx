@@ -21,6 +21,7 @@ import {
 import { supabaseAdminClient } from "@/lib/supabaseAdminClient";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
+import { siteUrl } from "@/lib/siteUrl";
 import MarketplaceRouteShell from "@/app/marketplace/MarketplaceRouteShell.client.jsx";
 import ConsultantClaimButton from "@/app/components/ConsultantClaimButton";
 import ResourceDetailActions from "./ResourceDetailActions.client.jsx";
@@ -143,8 +144,50 @@ function CreatorPanel({ consultant, fallbackName = "", fallbackIconUrl = "" }) {
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
+  const { data: resource } = await supabasePublicServer()
+    .from("resources")
+    .select("id, title, summary, description, source_name")
+    .eq("id", id)
+    .eq("status", "approved")
+    .maybeSingle();
+
+  if (!resource) {
+    return {
+      title: "Vault resource",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const title = resource.source_name && !resource.title.toLowerCase().includes(resource.source_name.toLowerCase())
+    ? `${resource.title} | ${resource.source_name}`
+    : resource.title;
+  const descriptionText = String(resource.summary || resource.description || `Explore ${resource.title} in the YouMine Vault.`)
+    .replace(/\s+/g, " ")
+    .trim();
+  const description = descriptionText.length > 160
+    ? `${descriptionText.slice(0, 157).trimEnd()}...`
+    : descriptionText;
+  const canonical = siteUrl(`/vault/${resource.id}`);
+  const image = siteUrl("/og-image.png");
+
   return {
-    title: `Resource ${id}`,
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      siteName: "YouMine",
+      type: "website",
+      images: [{ url: image, alt: `${resource.title} on YouMine` }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [image],
+    },
   };
 }
 

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import ResourcesTablePageClient from "./ResourcesTablePage.client.jsx";
+import { siteUrl } from "@/lib/siteUrl";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -7,6 +8,7 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "All Vault Resources",
   description: "View vault resources in a sortable, filterable table with fast pagination.",
+  alternates: { canonical: siteUrl("/vault/resources") },
 };
 
 export default function MarketplaceResourcesPage() {

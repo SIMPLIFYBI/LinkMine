@@ -14,6 +14,9 @@ export default async function sitemap() {
     "/terms",
     "/privacy",
     "/landing",
+    "/vault",
+    "/vault/resources",
+    "/vault/resources/directory",
   ].map((p) => ({
     url: siteUrl(p),
     changefreq: "weekly",
@@ -34,6 +37,7 @@ export default async function sitemap() {
 
   let consultants = [];
   let jobs = [];
+  let resources = [];
 
   try {
     const [consultantsResult, jobsResult] = await Promise.all([
@@ -55,6 +59,28 @@ export default async function sitemap() {
     return [...core, ...landingEntries];
   }
 
+  try {
+    const pageSize = 1000;
+    let lastId = null;
+    for (;;) {
+      let query = sb
+        .from("resources")
+        .select("id")
+        .eq("status", "approved")
+        .order("id", { ascending: true })
+        .limit(pageSize);
+      if (lastId) query = query.gt("id", lastId);
+      const { data, error } = await query;
+      if (error) throw error;
+      if (!data?.length) break;
+      resources.push(...data);
+      lastId = data[data.length - 1].id;
+    }
+  } catch (error) {
+    console.error("Unable to load Vault resources for sitemap", error);
+    resources = [];
+  }
+
   const consultantEntries = consultants.map((consultant) => ({
     url: siteUrl(`/consultants/${consultant.id}`),
     changefreq: "weekly",
@@ -68,5 +94,11 @@ export default async function sitemap() {
     priority: 0.6,
   }));
 
-  return [...core, ...landingEntries, ...consultantEntries, ...jobEntries];
+  const resourceEntries = resources.map((resource) => ({
+    url: siteUrl(`/vault/${resource.id}`),
+    changefreq: "weekly",
+    priority: 0.6,
+  }));
+
+  return [...core, ...landingEntries, ...consultantEntries, ...jobEntries, ...resourceEntries];
 }

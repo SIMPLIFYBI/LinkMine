@@ -1041,6 +1041,9 @@ export default function ResourcesTablePageClient() {
             </div>
           </div>
         </section>
+        <div className="pb-2 text-right">
+          <Link href="/vault/resources/directory" className="text-xs text-slate-400 underline underline-offset-4 hover:text-slate-200">Resource directory</Link>
+        </div>
       </div>
       </div>
       </div>
