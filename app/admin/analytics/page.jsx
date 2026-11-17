@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Analytics · YouMine",
-  description: "GA4 website performance reporting for YouMine administrators.",
+  description: "Website and search performance reporting for YouMine administrators.",
 };
 
 export default async function AnalyticsPage() {

@@ -1,39 +1,11 @@
 import { NextResponse } from "next/server";
 import { getGa4Report } from "@/lib/ga4Reporting";
-import { supabaseServerClient } from "@/lib/supabaseServerClient";
+import { getAnalyticsAdminContext } from "@/lib/adminAnalyticsAuth";
 
 export const runtime = "nodejs";
 
-async function getAdminContext() {
-  const sb = await supabaseServerClient();
-  const { data: auth } = await sb.auth.getUser();
-  const user = auth?.user || null;
-
-  if (!user) {
-    return { ok: false, status: 401, error: "Not authenticated." };
-  }
-
-  const { data: adminRow } = await sb
-    .from("app_admins")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "")
-    .split(",")
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
-  const isAdmin = Boolean(adminRow) || adminEmails.includes(String(user.email || "").toLowerCase());
-
-  if (!isAdmin) {
-    return { ok: false, status: 403, error: "Forbidden." };
-  }
-
-  return { ok: true };
-}
-
 export async function GET(request) {
-  const admin = await getAdminContext();
+  const admin = await getAnalyticsAdminContext();
   if (!admin.ok) {
     return NextResponse.json({ ok: false, error: admin.error }, { status: admin.status });
   }

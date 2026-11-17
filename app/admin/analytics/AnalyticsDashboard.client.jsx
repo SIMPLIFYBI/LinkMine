@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Activity, Clock3, Eye, RefreshCw, UserPlus, Users } from "lucide-react";
+import SearchConsoleDashboard from "./SearchConsoleDashboard.client";
 import {
   CartesianGrid,
   Legend,
@@ -155,6 +156,20 @@ function Panel({ title, children }) {
 }
 
 export default function AnalyticsDashboard() {
+  const [tab, setTab] = useState("analytics");
+  return (
+    <>
+      <nav aria-label="Analytics reports" className="mx-auto flex w-full max-w-7xl gap-5 border-b border-white/10 px-4 pt-5 sm:px-6">
+        {[{ id: "analytics", label: "Google Analytics" }, { id: "search", label: "Search Console" }].map((item) => (
+          <button key={item.id} type="button" onClick={() => setTab(item.id)} aria-current={tab === item.id ? "page" : undefined} className={`border-b-2 px-1 pb-3 text-sm font-semibold ${tab === item.id ? "border-cyan-400 text-white" : "border-transparent text-slate-400 hover:text-white"}`}>{item.label}</button>
+        ))}
+      </nav>
+      {tab === "analytics" ? <Ga4Dashboard /> : <SearchConsoleDashboard />}
+    </>
+  );
+}
+
+function Ga4Dashboard() {
   const [days, setDays] = useState(30);
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);

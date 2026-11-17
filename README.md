@@ -65,6 +65,14 @@ npm run cap:doctor
 npm run cap:sync
 ```
 
+## Admin Search Console
+
+The Search Console tab in `/admin/analytics` uses the existing server-side `GOOGLE_CLIENT_EMAIL`, `GOOGLE_PROJECT_ID`, and `GOOGLE_PRIVATE_KEY` service-account credentials. Enable the Search Console API and grant the service account access to the Search Console property. `GOOGLE_SEARCH_CONSOLE_SITE_URL` is optional and defaults to `sc-domain:youmine.io`; set it to the exact property identifier when using another property. Do not expose credentials through `NEXT_PUBLIC_` variables.
+
+The dashboard requests finalized web-search data in Pacific Time. Reports can be delayed, Google may omit queries or return only top rows, and page-level totals may differ from property-level totals. Results are cached in server memory for 15 minutes; cache entries are local to each server instance.
+
+Run the focused checks with `node --test tests/searchConsoleParams.test.mjs tests/searchConsoleReporting.test.cjs tests/adminAnalyticsAuth.test.cjs`.
+
 ## Contributing
 Contributions are welcome! Please open an issue or submit a pull request for enhancements or bug fixes.
 
