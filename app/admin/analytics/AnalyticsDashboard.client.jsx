@@ -159,13 +159,121 @@ export default function AnalyticsDashboard() {
   const [tab, setTab] = useState("analytics");
   return (
     <>
-      <nav aria-label="Analytics reports" className="mx-auto flex w-full max-w-7xl gap-5 border-b border-white/10 px-4 pt-5 sm:px-6">
-        {[{ id: "analytics", label: "Google Analytics" }, { id: "search", label: "Search Console" }].map((item) => (
-          <button key={item.id} type="button" onClick={() => setTab(item.id)} aria-current={tab === item.id ? "page" : undefined} className={`border-b-2 px-1 pb-3 text-sm font-semibold ${tab === item.id ? "border-cyan-400 text-white" : "border-transparent text-slate-400 hover:text-white"}`}>{item.label}</button>
+      <nav aria-label="Analytics reports" className="mx-auto flex w-full max-w-7xl gap-5 overflow-x-auto border-b border-white/10 px-4 pt-5 sm:px-6">
+        {[{ id: "analytics", label: "Google Analytics" }, { id: "search", label: "Search Console" }, { id: "in-app", label: "In-app metrics" }].map((item) => (
+          <button key={item.id} type="button" onClick={() => setTab(item.id)} aria-current={tab === item.id ? "page" : undefined} className={`shrink-0 border-b-2 px-1 pb-3 text-sm font-semibold ${tab === item.id ? "border-cyan-400 text-white" : "border-transparent text-slate-400 hover:text-white"}`}>{item.label}</button>
         ))}
       </nav>
-      {tab === "analytics" ? <Ga4Dashboard /> : <SearchConsoleDashboard />}
+      {tab === "analytics" ? <Ga4Dashboard /> : tab === "search" ? <SearchConsoleDashboard /> : <InAppDashboard />}
     </>
+  );
+}
+
+function InAppDashboard() {
+  const [days, setDays] = useState(30);
+  const [refresh, setRefresh] = useState(0);
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    async function loadReport() {
+      setLoading(true);
+      setError("");
+      setReport(null);
+      try {
+        const response = await fetch(`/api/admin/analytics/in-app?days=${days}`, { cache: "no-store", signal: controller.signal });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload?.ok) throw new Error(payload?.error || "Unable to load in-app reporting.");
+        if (!controller.signal.aborted) setReport(payload.report);
+      } catch (nextError) {
+        if (!controller.signal.aborted) setError(nextError.message || "Unable to load in-app reporting.");
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }
+    loadReport();
+    return () => controller.abort();
+  }, [days, refresh]);
+
+  const overview = report?.overview;
+  const metric = (value) => loading ? "-" : formatNumber(value);
+
+  return (
+    <main className="mx-auto w-full max-w-7xl px-4 py-8 text-slate-100 sm:px-6">
+      <div className="border-b border-white/10 pb-6">
+        <div className="flex flex-wrap items-end justify-between gap-5">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-300">Admin analytics</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">In-app metrics</h1>
+            <p className="mt-2 text-sm text-slate-400">Activity by UTC date, including today. Consultant listings include imported and unclaimed profiles.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="inline-flex rounded-lg border border-white/10 bg-slate-950/50 p-1" aria-label="Reporting period">
+              {DATE_RANGES.map((range) => (
+                <button key={range} type="button" onClick={() => setDays(range)} aria-pressed={days === range} className={`min-w-12 rounded-md px-3 py-1.5 text-xs font-medium transition ${days === range ? "bg-cyan-400 text-slate-950" : "text-slate-300 hover:bg-white/10 hover:text-white"}`}>
+                  {range}d
+                </button>
+              ))}
+            </div>
+            <button type="button" onClick={() => setRefresh((value) => value + 1)} disabled={loading} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60" aria-label="Refresh in-app metrics" title="Refresh in-app metrics">
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+        {report?.generatedAt ? <p className="mt-3 text-xs text-slate-500">Updated {formatTimestamp(report.generatedAt)}</p> : null}
+      </div>
+
+      {error ? <section role="alert" className="mt-6 rounded-lg border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</section> : null}
+
+      {!error ? <>
+        <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <MetricCard icon={UserPlus} label="Account signups" value={metric(overview?.signups)} detail={`${days}-day period`} />
+          <MetricCard icon={Users} label="New listings" value={metric(overview?.consultants)} detail="Consultant profiles created" />
+          <MetricCard icon={Activity} label="New resources" value={metric(overview?.resources)} detail="All statuses" />
+          <MetricCard icon={Eye} label="Resource opens" value={metric(overview?.resourceOpens)} detail={loading ? "" : `${formatNumber(overview?.uniqueResourceOpeners)} unique openers`} />
+          <MetricCard icon={Eye} label="Listing views" value={metric(overview?.consultantViews)} detail="Tracked profile views" />
+          <MetricCard icon={Activity} label="Enquiries" value={metric(overview?.enquiries)} detail="Consultant contact requests" />
+        </section>
+
+        <section className="mt-6 grid gap-5 lg:grid-cols-2">
+          <TrendChart title="Growth by date" data={report?.trend} days={days} loading={loading} lines={[
+            { key: "signups", label: "Account signups", color: "#38bdf8" },
+            { key: "consultants", label: "New listings", color: "#34d399" },
+            { key: "resources", label: "New resources", color: "#fbbf24" },
+          ]} />
+          <TrendChart title="Engagement by date" data={report?.trend} days={days} loading={loading} lines={[
+            { key: "resourceOpens", label: "Resource opens", color: "#38bdf8" },
+            { key: "consultantViews", label: "Listing views", color: "#fb7185" },
+            { key: "enquiries", label: "Enquiries", color: "#fbbf24" },
+          ]} />
+        </section>
+
+        <section className="mt-6 grid gap-5 lg:grid-cols-2">
+          <Panel title="Moderation snapshot">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-white/[0.03] text-xs uppercase tracking-[0.1em] text-slate-500"><tr><th className="px-4 py-3 font-medium">Content</th><th className="px-4 py-3 text-right font-medium">Pending</th><th className="px-4 py-3 text-right font-medium">Approved</th></tr></thead>
+                <tbody className="divide-y divide-white/5">
+                  <tr><td className="px-4 py-3 text-slate-200">Consultant listings</td><td className="px-4 py-3 text-right text-slate-300">{metric(overview?.pendingConsultants)}</td><td className="px-4 py-3 text-right text-slate-300">{metric(overview?.approvedConsultants)}</td></tr>
+                  <tr><td className="px-4 py-3 text-slate-200">Resources</td><td className="px-4 py-3 text-right text-slate-300">{metric(overview?.pendingResources)}</td><td className="px-4 py-3 text-right text-slate-300">{metric(overview?.approvedResources)}</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="px-4 pb-4 text-xs text-slate-500">Current status, regardless of creation date.</p>
+          </Panel>
+          <Panel title="Most opened resources">
+            {report?.topResources?.length ? <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-white/[0.03] text-xs uppercase tracking-[0.1em] text-slate-500"><tr><th className="px-4 py-3 font-medium">Resource</th><th className="px-4 py-3 text-right font-medium">Opens</th><th className="px-4 py-3 text-right font-medium">People</th></tr></thead>
+                <tbody className="divide-y divide-white/5">{report.topResources.map((row) => <tr key={row.id}><td className="px-4 py-3 text-slate-200"><a href={`/vault/${encodeURIComponent(row.id)}`} className="hover:text-cyan-200 hover:underline">{row.title}</a></td><td className="px-4 py-3 text-right text-slate-300">{formatNumber(row.opens)}</td><td className="px-4 py-3 text-right text-slate-300">{formatNumber(row.uniqueOpeners)}</td></tr>)}</tbody>
+              </table>
+            </div> : <EmptyTable>{loading ? "Loading resources..." : "No resource opens in this period."}</EmptyTable>}
+          </Panel>
+        </section>
+      </> : null}
+    </main>
   );
 }
 
