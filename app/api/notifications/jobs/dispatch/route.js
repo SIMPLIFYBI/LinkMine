@@ -9,9 +9,10 @@ import { buildEmailLayout, emailButton, emailDetails, emailPanel, escapeHtml } f
 function checkSecret(req) {
   const secret = process.env.CRON_SECRET || process.env.NOTIFY_CRON_SECRET;
   if (!secret) return { ok: false, error: "CRON_SECRET not set" };
+  if (secret.length < 24) return { ok: false, error: "CRON_SECRET must be at least 24 characters" };
   const bearer = (req.headers.get("authorization") || "").match(/^Bearer\s+(.+)$/i)?.[1];
   const header = req.headers.get("x-cron-secret") || "";
-  return bearer === secret || header === secret ? { ok: true } : { ok: false, error: "Unauthorized" };
+  return bearer === secret || header === secret ? { ok: true, secret } : { ok: false, error: "Unauthorized" };
 }
 
 function renderEmail(row) {
@@ -57,7 +58,9 @@ async function checkAdmin(req) {
     .filter(Boolean);
 
   const isAdmin = Boolean(adminRow) || (email && adminEmails.includes(email));
-  return isAdmin ? { ok: true, sb, user } : { ok: false, status: 403, error: "Forbidden" };
+  return isAdmin
+    ? { ok: true, sb, isDatabaseAdmin: Boolean(adminRow) }
+    : { ok: false, status: 403, error: "Forbidden" };
 }
 
 export async function POST(req) {
@@ -71,12 +74,28 @@ export async function POST(req) {
       return NextResponse.json({ ok: false, error: adminCheck.error }, { status: adminCheck.status });
     }
     sb = adminCheck.sb;
+
+    const configuredSecret = process.env.CRON_SECRET || process.env.NOTIFY_CRON_SECRET;
+    if (adminCheck.isDatabaseAdmin && configuredSecret) {
+      const { error: configureError } = await sb.rpc("configure_job_notification_dispatch_secret", {
+        p_secret: configuredSecret,
+      });
+      if (configureError) {
+        console.error("Unable to configure job notification dispatch secret:", configureError.message);
+      }
+    }
+    if (!adminCheck.isDatabaseAdmin && configuredSecret) {
+      sb = await supabaseServerClient({
+        headers: Object.fromEntries(req.headers),
+        global: { headers: { "x-job-notification-secret": configuredSecret } },
+      });
+    }
   } else {
-    // Secret path: still run with a request-scoped client (no service role)
-    sb = await supabaseServerClient({ headers: Object.fromEntries(req.headers) });
+    sb = await supabaseServerClient({
+      global: { headers: { "x-job-notification-secret": secret.secret } },
+    });
   }
 
-  // Get a small batch from the SECURITY DEFINER RPC
   const { data: queue, error: qErr } = await sb.rpc("get_job_notifications_queue", { p_limit: 50 });
   if (qErr) return NextResponse.json({ ok: false, error: qErr.message }, { status: 500 });
   if (!queue || queue.length === 0) return NextResponse.json({ ok: true, sent: 0, total: 0 });

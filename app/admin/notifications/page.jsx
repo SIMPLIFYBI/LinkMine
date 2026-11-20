@@ -31,7 +31,23 @@ export default async function AdminNotificationsPage() {
     return <div className="p-6 text-red-300">You don’t have access to this page.</div>;
   }
 
-  const { data: queue, error } = await sb.rpc("get_job_notifications_queue", { p_limit: 50 });
+  const dispatchSecret = process.env.CRON_SECRET || process.env.NOTIFY_CRON_SECRET;
+  let queueClient = sb;
+  if (dispatchSecret) {
+    let canUseDispatchSecret = !adminRow;
+    if (adminRow) {
+      const { error: configureError } = await sb.rpc("configure_job_notification_dispatch_secret", {
+        p_secret: dispatchSecret,
+      });
+      canUseDispatchSecret = !configureError;
+    }
+    if (canUseDispatchSecret) {
+      queueClient = await supabaseServerClient({
+        global: { headers: { "x-job-notification-secret": dispatchSecret } },
+      });
+    }
+  }
+  const { data: queue, error: queueError } = await queueClient.rpc("get_job_notifications_queue", { p_limit: 50 });
   const queueLength = queue?.length || 0;
   const { data: consultantRows, error: consultantError } = await sb
     .from("consultants")
@@ -63,8 +79,8 @@ export default async function AdminNotificationsPage() {
 
       <div className="mb-4 rounded-xl border border-white/10 bg-white/5 p-4">
         <div className="text-sm">Queued items (up to 50):</div>
-        {error ? (
-          <div className="text-red-400">{error.message}</div>
+        {queueError ? (
+          <div className="text-red-400">{queueError.message}</div>
         ) : (
           <div className="mt-1 text-lg font-semibold">{queueLength}</div>
         )}

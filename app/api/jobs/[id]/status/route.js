@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
-import { supabaseAdminClient } from "@/lib/supabaseAdminClient";
 import { postmarkClient, jobEmailPayload } from "@/lib/postmark";
 
 async function getAdminClient(req) {
@@ -35,14 +34,7 @@ async function getAdminClient(req) {
     return { ok: false, status: 403, error: "Forbidden" };
   }
 
-  let writeClient = authClient;
-  try {
-    writeClient = supabaseAdminClient();
-  } catch {
-    writeClient = authClient;
-  }
-
-  return { ok: true, sb: writeClient, user };
+  return { ok: true, sb: authClient, user };
 }
 
 async function notifyApprovedJob(sb, job) {
