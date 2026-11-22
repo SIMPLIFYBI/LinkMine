@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import LineChart from "@/app/intelligence/LineChart.client";
+import ChartFrame, { DownloadPanel, SharePanel, SourcesPanel } from "@/app/intelligence/ChartFrame.client";
+import CountryRail from "@/app/intelligence/CountryRail.client";
 import WorldMap from "@/app/intelligence/maps/WorldMap";
 import { sequentialColor, sequentialGradient } from "@/lib/intelligence/frames";
 import {
@@ -56,7 +58,6 @@ export default function DataExplorer({ facet, population, sources, builtAt, init
   const [highlight, setHighlight] = useState(initial.h || null);
   const [mapYear, setMapYear] = useState(initial.y ? Number(initial.y) : null);
   const [playing, setPlaying] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [state, setState] = useState({ status: "loading", years: [], rows: [] });
   const cache = useRef(new Map());
 
@@ -202,11 +203,15 @@ export default function DataExplorer({ facet, population, sources, builtAt, init
     URL.revokeObjectURL(url);
   }
 
-  async function copyLink() {
-    try { await navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { window.prompt("Copy this link", window.location.href); }
+  // Ticking a country in the rail always switches to a hand-picked list, starting from whatever is shown now.
+  const chosenIsos = chosen.map((r) => r.iso);
+  function toggleCountry(iso) {
+    const base = custom ? picked : chosenIsos;
+    setPicked(base.includes(iso) ? base.filter((p) => p !== iso) : [...base, iso]);
+    setCustom(true);
   }
-
-  const addable = data.filter((r) => !picked.includes(r.iso)).sort((a, b) => a.name.localeCompare(b.name));
+  function clearCountries() { setPicked([]); setCustom(true); }
+  const railRows = data.map((r) => ({ iso: r.iso, name: r.name, v: r.values[toIdx] }));
   const yearOptions = years.filter((y) => y >= (minYear ?? 0) && y <= (maxYear ?? 0));
   const ranked = useMemo(() => {
     if (!data.length) return [];
@@ -214,6 +219,37 @@ export default function DataExplorer({ facet, population, sources, builtAt, init
   }, [data, toIdx]);
   const mapValues = useMemo(() => Object.fromEntries(data.map((r) => [r.iso, r.values[mapIdx]])), [data, mapIdx]);
   const [hover, setHover] = useState(null);
+
+  const window_ = years.length ? `${years[fromIdx]} to ${years[toIdx]}` : "";
+  const panels = {
+    sources: {
+      label: "Sources",
+      content: (
+        <SourcesPanel
+          items={[
+            { label: "Series", text: `${basisLabel(series.basis)}, ${unitBase}. ${series.countries} countries, ${series.year_from} to ${series.year_to}.` },
+            { label: "Publisher", text: src?.name },
+            { label: "Licence", text: src?.licence_name },
+            { label: "Attribution", text: src?.attribution_text },
+            { label: "About this series", text: series.caveat },
+            { label: "Method", text: "Series with different bases or sources are kept separate and never added together. Measures reported by only one or two countries are not offered here. A gap means no reading, never zero." },
+            { label: "Source data refreshed", text: stamp(builtAt) },
+          ]}
+        />
+      ),
+    },
+    download: {
+      label: "Download",
+      content: (
+        <DownloadPanel
+          onCsv={download}
+          disabled={!chosen.length}
+          includes={`${chosen.length} chosen countries, ${window_}, as shown. The file starts with the source attribution and the view settings.`}
+        />
+      ),
+    },
+    share: { label: "Share", content: <SharePanel /> },
+  };
 
   return (
     <>
@@ -225,6 +261,18 @@ export default function DataExplorer({ facet, population, sources, builtAt, init
         ))}
       </div>
 
+      <div className="yi-explorer">
+      <CountryRail
+        rows={railRows}
+        chosen={chosenIsos}
+        onToggle={toggleCountry}
+        onClear={view === "map" ? () => setHighlight(null) : clearCountries}
+        mode={view === "map" ? "highlight" : "select"}
+        highlight={highlight}
+        onHighlight={setHighlight}
+        valueLabel={years.length ? `Value in ${years[toIdx]}` : "Latest value"}
+      />
+      <div className="yi-explorer__main">
       <div className="yi-controls">
         <div className="yi-ctrl">
           <label htmlFor="d-measure">Measure</label>
@@ -253,18 +301,9 @@ export default function DataExplorer({ facet, population, sources, builtAt, init
           <label htmlFor="d-countries">Countries</label>
           <select id="d-countries" className="yi-select" value={custom ? "custom" : String(topN)} onChange={(e) => { if (e.target.value === "custom") { setCustom(true); if (!picked.length) setPicked(pickTop(data, 5, toIdx)); } else { setCustom(false); setTopN(Number(e.target.value)); } }}>
             {TOP_CHOICES.map((n) => <option key={n} value={n}>Top {n} by latest value</option>)}
-            <option value="custom">Choose countries</option>
+            <option value="custom">My selection ({picked.length})</option>
           </select>
         </div>
-        {custom ? (
-          <div className="yi-ctrl">
-            <label htmlFor="d-add">Add a country</label>
-            <select id="d-add" className="yi-select" value="" onChange={(e) => e.target.value && setPicked([...picked, e.target.value])}>
-              <option value="">Select…</option>
-              {addable.map((r) => <option key={r.iso} value={r.iso}>{r.name}</option>)}
-            </select>
-          </div>
-        ) : null}
         <div className="yi-ctrl">
           <label htmlFor="d-from">From</label>
           <select id="d-from" className="yi-select" value={years[fromIdx]} onChange={(e) => { setFromYear(Number(e.target.value)); if (Number(e.target.value) > years[toIdx]) setToYear(Number(e.target.value)); }}>
@@ -292,33 +331,15 @@ export default function DataExplorer({ facet, population, sources, builtAt, init
         </label>
       </div>
 
-      {custom && picked.length ? (
-        <ul className="yi-chipset" aria-label="Chosen countries">
-          {picked.map((iso) => (
-            <li key={iso}>
-              {data.find((r) => r.iso === iso)?.name || iso}
-              <button type="button" aria-label={`Remove ${iso}`} onClick={() => setPicked(picked.filter((p) => p !== iso))}>×</button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
-      <div className="yi-toolbar">
-        <div className="yi-seg" role="group" aria-label="View">
-          {VIEWS.map(([v, label]) => (
-            <button key={v} type="button" aria-pressed={view === v} className="yi-btn" onClick={() => { setView(v); setPlaying(false); }}>{label}</button>
-          ))}
-        </div>
-        <div className="yi-actions">
-          <button type="button" className="yi-btn" onClick={copyLink}>{copied ? "Link copied" : "Copy link"}</button>
-          <button type="button" className="yi-btn" onClick={download} disabled={!chosen.length}>Download CSV</button>
-        </div>
-      </div>
-
-      <section className="yi-card" aria-busy={state.status === "loading"}>
-        <h2 className="yi-card-title">{title}</h2>
-        <p className="yi-card-sub">{unitLabel}{smooth ? ", centred 3-year average" : ""}</p>
-
+      <ChartFrame
+        title={title}
+        subtitle={`${unitLabel}${smooth ? ", centred 3-year average" : ""}`}
+        views={VIEWS}
+        view={view}
+        onView={(v) => { setView(v); setPlaying(false); }}
+        panels={panels}
+        source={`Source: ${src?.name || series.source_code}, refreshed ${stamp(builtAt)}.`}
+      >
         {state.status === "error" ? <p className="yi-flag" role="alert">This series could not be loaded. Try another selection.</p> : null}
         {state.status === "loading" && !years.length ? <p className="yi-pick">Loading…</p> : null}
 
@@ -326,7 +347,7 @@ export default function DataExplorer({ facet, population, sources, builtAt, init
           chosen.length ? (
             <LineChart rows={chosen} years={years} from={fromIdx} to={toIdx} highlight={highlight} onHighlight={setHighlight} unitLabel={unitLabel} title={`${title}, ${years[fromIdx]} to ${years[toIdx]}`} zeroBased={normal !== "first" && normal !== "peak"} />
           ) : (
-            <p className="yi-pick">No countries have a value in this period. Widen the years or choose other countries.</p>
+            <p className="yi-pick">No countries are chosen, or none has a value in this period. Choose countries from the list, or widen the years.</p>
           )
         ) : null}
 
@@ -394,18 +415,15 @@ export default function DataExplorer({ facet, population, sources, builtAt, init
             <span className="yi-num">{years[view === "map" ? mapIdx : toIdx]}</span>. A gap means no reading, never zero.
           </p>
         ) : null}
-      </section>
+      </ChartFrame>
 
       {series.caveat ? <p className="yi-flag"><strong>About this series.</strong> {series.caveat}</p> : null}
       {normal === "share" ? <p className="yi-flag"><strong>Share of reporting total.</strong> No world total is published. Each share is of the countries that report in that year, so it can move when coverage changes.</p> : null}
       {normal === "pop" ? <p className="yi-flag"><strong>Per person.</strong> Population (World Bank) exists for {popRange?.[0]} to {popRange?.[1]} only, so the period is limited to those years.</p> : null}
       {smooth ? <p className="yi-coverage">Smoothing shows a centred 3-year average and leaves out years without both neighbours, so each line is two years shorter.</p> : null}
-
-      <footer className="yi-sourcebar">
-        <p><strong>Series:</strong> {basisLabel(series.basis)}, {unitBase}. {series.countries} countries, {series.year_from} to {series.year_to}. Series with different bases or sources are kept separate and never added together. Measures reported by only one or two countries are not offered here.</p>
-        {src?.attribution_text ? <p>{src.attribution_text}</p> : null}
-        <p>Source data refreshed <span className="yi-num">{stamp(builtAt)}</span>.</p>
-      </footer>
+      {src?.attribution_text ? <p className="yi-fresh" style={{ marginTop: "0.8rem" }}>{src.attribution_text}</p> : null}
+      </div>
+      </div>
     </>
   );
 }

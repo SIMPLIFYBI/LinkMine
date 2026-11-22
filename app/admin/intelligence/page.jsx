@@ -5,7 +5,8 @@ import { sustainedCrossing } from "@/lib/intelligence/frames";
 import { fmt, sparkPath, stamp, tonnes } from "@/lib/intelligence/format";
 import { REPORTS } from "@/lib/intelligence/reports";
 import { getResolvedSiteMarket } from "@/lib/siteMarketServer";
-import HeroMapPlayer from "@/app/intelligence/maps/HeroMapPlayer.client";
+import { MAP_REPORTS } from "@/lib/intelligence/mapReports";
+import MapReports from "@/app/intelligence/maps/MapReports.client";
 import YourCountryTile from "@/app/intelligence/YourCountryTile.client";
 
 export const dynamic = "force-dynamic";
@@ -15,27 +16,7 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-// Each caption is a checked reading from the published data, shown when the map reaches its year.
-const CAPTIONS = [
-  { year: 1992, text: "Each country shaded by how much of its own oil and liquid fuel demand it produces. Blue: more than it burns. Orange: less." },
-  { year: 1993, text: "China, an oil exporter, falls below its own demand: it produces 97% of what it burns." },
-  { year: 2003, text: "Indonesia, an OPEC member, becomes a net importer: about 96% of its demand." },
-  { year: 2006, text: "The North Sea decline takes the UK below its own demand for good: about 96%." },
-  { year: 2015, text: "Brazil's pre-salt fields lift it above its own demand for good: 101%." },
-  { year: 2022, text: "The United States crosses back above 100% for good, on shale oil: 102%." },
-  { year: 2025, text: "Guyana produces about 38 times its own demand. 2025 is a publisher estimate." },
-];
-
 const FLIPPERS = ["CHN", "GBR", "BRA", "USA"];
-
-// EIA leaves non-producing countries blank in these years but records zero in the others.
-const RANGE_NOTES = [
-  {
-    from: 1993,
-    to: 2003,
-    text: "In 1993 to 2003 the source leaves countries that produce nothing blank instead of recording zero, so about 90 countries show as hatched here. They are not unknown; in other years they appear as deep orange. Producers are unaffected.",
-  },
-];
 const FEATURED = "CU";
 
 const PROBLEM = {
@@ -59,8 +40,9 @@ function Bars({ items, max, unit }) {
   );
 }
 
-export default async function IntelligenceHome() {
+export default async function IntelligenceHome({ searchParams }) {
   await requireIntelligenceAdmin("/admin/intelligence");
+  const { map: requestedMap } = await searchParams;
   const { market } = await getResolvedSiteMarket();
 
   let data = null;
@@ -84,7 +66,11 @@ export default async function IntelligenceHome() {
     );
   }
 
-  const { reserves, hero } = data;
+  const { reserves, hero, maps, charts } = data;
+  const mapReports = MAP_REPORTS.map((config) => {
+    const { firstYear, lastYear, series, names, sourceName, attribution, builtAt, undrawn, table } = maps[config.id];
+    return { ...config, firstYear, lastYear, series, names, sourceName, attribution, builtAt, undrawn, table };
+  });
 
   const ranks = reserves.rows.map((r) => ({
     code: r.commodity_code,
@@ -170,36 +156,12 @@ export default async function IntelligenceHome() {
   return (
     <main className="yi-wrap yi-wrap--wide">
       <p className="yi-kicker">Discover · Admin only</p>
-      <h1 className="yi-title">What the public data says</h1>
+      <h1 className="yi-title">The numbers that move mining and energy</h1>
       <p className="yi-lede">
         Live maps and rankings built from open data. Open anything to explore it, embed it or build on it.
       </p>
 
-      <h2 className="yi-section">Who covers their own oil demand?</h2>
-      <HeroMapPlayer hero={hero} captions={CAPTIONS} rangeNotes={RANGE_NOTES} title="Oil and liquid fuel self-sufficiency" />
-      <details className="yi-embedbox">
-        <summary>Read the same map as a table</summary>
-        <div className="yi-scroll">
-          <table className="yi-table">
-            <thead>
-              <tr>
-                <th>Country</th>
-                <th>Production, {hero.lastYear}</th>
-                <th>Share of own demand</th>
-              </tr>
-            </thead>
-            <tbody>
-              {hero.latest.slice(0, 20).map((r) => (
-                <tr key={r.iso}>
-                  <td>{r.name}</td>
-                  <td className="yi-num">{fmt(r.production)} kb/d</td>
-                  <td className="yi-num">{fmt(r.pct)}%</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </details>
+      <MapReports reports={mapReports} charts={charts} initialId={requestedMap} />
 
       <h2 className="yi-section">Start with a question</h2>
       <div className="yi-chips">
@@ -236,9 +198,9 @@ export default async function IntelligenceHome() {
 
       <footer className="yi-sourcebar">
         <p>
-          <strong>Energy:</strong> {hero.sourceName}, through {hero.lastYear} (the latest year is a publisher estimate), refreshed{" "}
-          <span className="yi-num">{stamp(hero.builtAt)}</span>. Where a publisher reported no trade, the country is hatched on the
-          map, not shown as zero. Former states such as the Soviet Union are not drawn, so the map starts in {hero.firstYear}.
+          <strong>Maps:</strong> each map names its source under the map. Where a publisher reported no trade or no reading, the
+          country is hatched, not shown as zero. Former states such as the Soviet Union are not drawn, so the oil, gas and copper
+          maps start in {hero.firstYear}. The latest energy year is a publisher estimate.
         </p>
         {hero.attribution ? <p>{hero.attribution}</p> : null}
         <p>

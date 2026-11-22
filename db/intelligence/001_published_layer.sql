@@ -1,3 +1,6 @@
+-- SUPERSEDED. The authoritative, as-applied SQL for every published-layer change is in db/intelligence/migrations/,
+-- exported from the database's own migration history. This file is kept only as the original reviewed draft.
+--
 -- APPLIED 2026-11-22 as migration `published_layer_v1` (the catalog view was dropped before applying; see below).
 -- Target: Supabase project wfelikvlymtvkmljkvri (YouMine Intelligence data).
 -- Do NOT run this against the LinkMine app project; LinkMine's own migrations live in db/migrations.
