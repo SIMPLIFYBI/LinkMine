@@ -670,6 +670,130 @@
   color: var(--yi-ink-3);
 }
 
+/* ---------- data builder ---------- */
+.yi-seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1.5rem;
+}
+
+.yi-seg .yi-btn[aria-pressed="true"] {
+  background: var(--yi-ink);
+  border-color: var(--yi-ink);
+  color: var(--yi-surface);
+}
+
+.yi-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+  margin: 0.4rem 0 1rem;
+}
+
+.yi-toolbar .yi-seg {
+  margin-top: 0;
+}
+
+.yi-btn[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.yi-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  color: var(--yi-ink-2);
+  padding-bottom: 0.55rem;
+}
+
+.yi-chipset {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.yi-chipset li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  padding: 0.15rem 0.3rem 0.15rem 0.7rem;
+  background: var(--yi-sunken);
+  border: 1px solid var(--yi-rule-2);
+  border-radius: 999px;
+}
+
+.yi-chipset button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--yi-ink-2);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 0.3rem;
+}
+
+.yi-card-title {
+  font-family: var(--yi-serif);
+  font-weight: 600;
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.yi-card-sub {
+  margin: 0.15rem 0 0.8rem;
+  font-size: 0.82rem;
+  color: var(--yi-ink-3);
+}
+
+.yi-lc {
+  position: relative;
+  width: 100%;
+}
+
+.yi-lc svg {
+  display: block;
+  max-width: 100%;
+}
+
+.yi-lc-ax {
+  font-family: var(--yi-mono);
+  font-size: 10.5px;
+  fill: var(--yi-ink-3);
+}
+
+.yi-lc-lab {
+  font-family: var(--yi-sans);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.yi-lc-tip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  align-items: center;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--yi-ink-2);
+}
+
+.yi-lc-tip i {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
 /* ---------- map stage ---------- */
 .yi-stage {
   background: var(--yi-raised);
