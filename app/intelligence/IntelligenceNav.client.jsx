@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 const ITEMS = [
   { href: "/admin/intelligence", label: "Discover", match: (p) => p === "/admin/intelligence" },
-  { href: "/admin/intelligence/reports", label: "Reports", match: (p) => p.startsWith("/admin/intelligence/reports") || /\/admin\/intelligence\/(energy-flip|peak-was-yesterday|reserve-report)/.test(p) },
+  { href: "/admin/intelligence/reports", label: "Reports", match: (p) => p.startsWith("/admin/intelligence/reports") || /\/admin\/intelligence\/(energy-flip|peak-was-yesterday|reserve-report|the-handover)/.test(p) },
   { href: "/admin/intelligence/data", label: "Data", match: (p) => p.startsWith("/admin/intelligence/data") || p.startsWith("/admin/intelligence/reserves") },
   { label: "Atlas", soon: true },
   { label: "My work", soon: true },
