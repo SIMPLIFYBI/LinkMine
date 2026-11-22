@@ -1,0 +1,504 @@
+<title>The Mine-Dependent Six</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+/* Layout: lede, one figure with two measures side by side for each country,
+   then every country that came close, trade-only cases, and the method. */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --surface-2:#eef1f4;
+  --ink:#14181d; --ink-2:#48515b; --ink-3:#7b858f;
+  --rule:#dde2e7; --rule-2:#c9d1d8;
+  --rent:#2a78d6; --trade:#eb6834;
+  --rent-fill:rgba(42,120,214,.16); --trade-fill:rgba(235,104,52,.16);
+  --font-display:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --font-body:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+  --font-data:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1116; --surface:#161a20; --surface-2:#1d232a;
+    --ink:#e9ecef; --ink-2:#a6aeb7; --ink-3:#737c86;
+    --rule:#262d35; --rule-2:#333c45;
+    --rent:#3987e5; --trade:#d95926;
+    --rent-fill:rgba(57,135,229,.2); --trade-fill:rgba(217,89,38,.22);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1116; --surface:#161a20; --surface-2:#1d232a;
+  --ink:#e9ecef; --ink-2:#a6aeb7; --ink-3:#737c86;
+  --rule:#262d35; --rule-2:#333c45;
+  --rent:#3987e5; --trade:#d95926;
+  --rent-fill:rgba(57,135,229,.2); --trade-fill:rgba(217,89,38,.22);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:var(--font-body); font-size:1.0625rem; line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:60rem; margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 4rem;
+}
+.col{max-width:36rem}
+
+/* ---- masthead ---- */
+.mast{
+  display:flex; flex-wrap:wrap; gap:.75rem 1.25rem; align-items:baseline;
+  border-bottom:1px solid var(--rule); padding-block:1.5rem .875rem; margin-bottom:2.75rem;
+}
+.mast .brand{
+  font-family:var(--font-display); font-weight:700; font-size:.8125rem;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink);
+}
+.mast .kicker{
+  font-family:var(--font-display); font-size:.75rem; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink-3); margin-left:auto;
+}
+
+h1{
+  font-family:var(--font-display); font-weight:700;
+  font-size:clamp(2.25rem,7vw,3.75rem); line-height:1.02;
+  letter-spacing:-.025em; margin:0 0 1.25rem; text-wrap:balance;
+}
+.standfirst{
+  font-size:clamp(1.125rem,2.6vw,1.375rem); line-height:1.5; color:var(--ink-2);
+  margin:0 0 2rem; max-width:34rem;
+}
+.standfirst b{color:var(--ink); font-weight:600}
+
+h2{
+  font-family:var(--font-display); font-weight:600;
+  font-size:clamp(1.25rem,3vw,1.625rem); letter-spacing:-.015em;
+  margin:3.5rem 0 .75rem; text-wrap:balance;
+}
+h3{
+  font-family:var(--font-display); font-weight:600; font-size:1rem;
+  margin:2rem 0 .5rem;
+}
+p{margin:0 0 1.125rem}
+a{color:var(--rent)}
+
+.lead-rule{height:3px; background:var(--ink); width:3.5rem; margin-bottom:1.75rem}
+
+/* ---- stat strip ---- */
+.stats{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));
+  gap:1px; background:var(--rule); border:1px solid var(--rule);
+  margin:2.5rem 0 3rem;
+}
+.stat{background:var(--surface); padding:1.125rem 1.25rem; min-width:0}
+.stat .n{
+  font-family:var(--font-data); font-weight:600;
+  font-size:clamp(1.25rem,3.6vw,1.625rem); line-height:1.1;
+  letter-spacing:-.02em; font-variant-numeric:tabular-nums; display:block;
+}
+.stat .l{
+  font-family:var(--font-display); font-size:.75rem; line-height:1.35;
+  color:var(--ink-2); margin-top:.5rem; display:block;
+}
+
+/* ---- the figure: one row per country, two measures side by side ---- */
+.fig{background:var(--surface); border:1px solid var(--rule); margin:1.5rem 0; padding:.5rem 1rem 1rem}
+.fig h3.tier{margin:1.5rem 0 .25rem; font-size:.8125rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-2)}
+.fig .head,.fig .rowg{
+  display:grid; grid-template-columns:8.5rem minmax(0,1fr) minmax(0,1fr); gap:.5rem 1.25rem; align-items:center;
+}
+.fig .head{
+  font-family:var(--font-display); font-size:.6875rem; font-weight:600; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--ink-2); border-bottom:1px solid var(--rule-2); padding-block:.625rem .5rem;
+}
+.fig .head span small{display:block; font-weight:400; letter-spacing:0; text-transform:none; color:var(--ink-3); font-size:.6875rem}
+.rowg{padding-block:.625rem; border-bottom:1px solid var(--rule)}
+.rowg:last-child{border-bottom:none}
+.rowg .nm{font-family:var(--font-display); font-weight:600; font-size:.9375rem; min-width:0}
+.rowg .cell{min-width:0}
+.rowg svg{display:block; width:100%; height:auto}
+.rowg .cap{font-family:var(--font-data); font-size:.6875rem; color:var(--ink-2); margin-top:.125rem; display:block}
+.legend-note{
+  font-family:var(--font-display); font-size:.8125rem; color:var(--ink-2);
+  display:flex; flex-wrap:wrap; gap:.375rem 1.25rem; margin:0 0 1rem;
+}
+.legend-note span{display:inline-flex; align-items:center; gap:.4375rem}
+.k-bar{width:1.25rem; height:.5rem; flex:none}
+.k-bar.rent{background:var(--rent-fill); border:1px solid var(--rent)}
+.k-dot{width:.5625rem; height:.5625rem; border-radius:50%; flex:none}
+.k-dot.rent{background:var(--rent)}
+.k-dot.trade{background:var(--trade)}
+.k-dot.hollow{background:transparent; border:2px solid var(--trade)}
+.k-line{width:1.25rem; height:0; border-top:2px dashed var(--ink-3); flex:none}
+@media (max-width:560px){
+  .fig .head,.fig .rowg{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .fig .head span:first-child{display:none}
+  .rowg .nm{grid-column:1 / -1}
+}
+
+/* ---- tables ---- */
+.tablewrap{overflow-x:auto; border:1px solid var(--rule); margin:1.5rem 0}
+table{border-collapse:collapse; width:100%; min-width:52rem; background:var(--surface)}
+table.sm{min-width:30rem}
+caption{
+  text-align:left; font-family:var(--font-display); font-size:.8125rem;
+  color:var(--ink-2); padding:.75rem .875rem; background:var(--surface-2);
+  border-bottom:1px solid var(--rule);
+}
+th,td{
+  padding:.625rem .875rem; text-align:right; border-bottom:1px solid var(--rule);
+  font-family:var(--font-data); font-size:.8125rem;
+  font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+th{
+  font-family:var(--font-display); font-weight:600; font-size:.6875rem;
+  letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2);
+  border-bottom:1px solid var(--rule-2); vertical-align:bottom;
+}
+th:first-child,td:first-child,th.l,td.l{text-align:left}
+td:first-child{font-family:var(--font-display); font-weight:600; font-size:.875rem; white-space:normal}
+td.l{font-family:var(--font-display); font-size:.8125rem; white-space:normal}
+td.why{font-family:var(--font-body); font-size:.8125rem; white-space:normal; min-width:15rem; color:var(--ink-2)}
+tbody tr:last-child td{border-bottom:none}
+tr.tier1 td:first-child{border-left:3px solid var(--rent)}
+tr.tier2 td:first-child{border-left:3px solid var(--trade)}
+tr.out td{color:var(--ink-3)}
+tr.out td:first-child{color:var(--ink-2)}
+td.miss{color:var(--ink-3)}
+
+/* ---- aside / method ---- */
+.aside{
+  border-left:3px solid var(--ink-2); background:var(--surface);
+  padding:1.125rem 1.25rem; margin:2.25rem 0; max-width:42rem;
+}
+.aside .h{
+  font-family:var(--font-display); font-weight:600; font-size:.6875rem;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--ink-2);
+  margin-bottom:.5rem;
+}
+.aside p:last-child{margin-bottom:0}
+.n{font-family:var(--font-data); font-variant-numeric:tabular-nums; font-size:.92em}
+
+.method{border-top:1px solid var(--rule); margin-top:4rem; padding-top:2rem}
+.method h2{margin-top:0}
+.method p,.method li,.method h3{max-width:40rem}
+.method p,.method li{font-size:.9375rem; color:var(--ink-2)}
+.method ul{margin:0 0 1.125rem; padding-left:1.25rem}
+.method li{margin-bottom:.5rem}
+.method b{color:var(--ink); font-weight:600}
+.credit{
+  font-family:var(--font-display); font-size:.8125rem; color:var(--ink-3);
+  border-top:1px solid var(--rule); margin-top:2rem; padding-top:1.25rem;
+}
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <span class="brand">YouMine Intelligence</span>
+    <span class="kicker">Mining dependence · 2015 to 2023</span>
+  </header>
+
+  <div class="lead-rule"></div>
+
+  <h1>The Mine-Dependent Six</h1>
+
+  <p class="standfirst">Ask which countries depend on mining and you get a long list.
+  Ask two World Bank measures to agree, in every period we tested, and the list
+  is <b>six</b>: Mongolia, DR Congo, Zambia, Papua New Guinea, Chile and Peru. Two
+  more, Mali and Burkina Faso, earn mineral rents on a par with the six, but only
+  one measure can see it.</p>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="col">
+    <p>Both measures are blunt. One is trade: ores and metals as a share of what
+    a country sells abroad. The other is mineral rents, which is what mining earns
+    after costs, as a share of the whole economy. A country can look dependent on
+    one and not the other, and the tables below show many that do. The six here clear both bars in every period
+    tested: ores and metals at least a quarter of goods exports, and mineral rents
+    at least 3% of GDP.</p>
+
+    <p>The two gold economies are the other half of the story. The World Bank's
+    trade measure leaves gold out, so Mali and Burkina Faso, which earn 6.8% and
+    5.3% of GDP in mineral rents on average, show ores and metals at under 2% of
+    their exports. In our BGS data Mali mined 73 tonnes of gold in 2023 and Burkina
+    Faso 57.</p>
+  </div>
+
+  <h2>Eight economies, two measures</h2>
+  <p class="col" style="color:var(--ink-2)">One row per country. Left: mineral rents
+  as a share of GDP over 2015&#8211;21, with the average and the range of years.
+  Right: ores and metals as a share of goods exports, then and now.</p>
+
+  <div class="legend-note">
+    <span><i class="k-bar rent"></i> Range of years, 2015&#8211;21</span>
+    <span><i class="k-dot rent"></i> Average</span>
+    <span><i class="k-dot hollow"></i> Exports 2015&#8211;19</span>
+    <span><i class="k-dot trade"></i> Exports 2021&#8211;23</span>
+    <span><i class="k-line"></i> The 3% and 25% lines</span>
+  </div>
+
+  <div class="fig" id="fig"></div>
+
+  <div class="aside">
+    <div class="h">Why the rents are shown as a range</div>
+    <p>Mineral rents move with commodity prices, and 2021 was a peak. DR Congo's
+    rents were <span class="n" id="a-drc-lo"></span> of GDP in its lowest year of
+    2015&#8211;21 and <span class="n" id="a-drc-hi"></span> in its highest.
+    Zambia's went from <span class="n" id="a-zmb-lo"></span> to
+    <span class="n" id="a-zmb-hi"></span>. A ranking on a single year would mostly
+    measure the price. The data ends in 2021, so these figures are a 2015&#8211;21
+    average, not a current reading.</p>
+  </div>
+
+  <h2>Everyone who came close</h2>
+
+  <div class="tablewrap">
+    <table>
+      <caption>Every country with average mineral rents of 3% of GDP or more in 2015&#8211;21,
+      and the test each one met or missed. Rents in percent of GDP, exports in percent of goods exports.</caption>
+      <thead>
+        <tr>
+          <th class="l">Country</th>
+          <th>Rents<br>2015&#8211;21</th><th>Low &#8211; high<br>year</th>
+          <th>Rents<br>2015&#8211;19</th><th>Rents<br>2017&#8211;21</th>
+          <th>Exports<br>2021&#8211;23</th><th>Exports<br>2015&#8211;19</th>
+          <th class="l">Result</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <h2>Dependent on trade, not on rents</h2>
+  <p class="col" style="color:var(--ink-2)">Sixteen more countries have ores and metals
+  at 25% or more of exports in 2021&#8211;23 but average mineral rents under 3% of GDP. They
+  are not claims of mining dependence.</p>
+
+  <div class="tablewrap">
+    <table class="sm">
+      <caption>Ores and metals exports of 25% or more, mineral rents under 3% of GDP.</caption>
+      <thead>
+        <tr><th class="l">Country</th><th>Exports<br>2021&#8211;23</th><th>Exports<br>2015&#8211;19</th><th>Rents<br>2015&#8211;21</th></tr>
+      </thead>
+      <tbody id="tbody2"></tbody>
+    </table>
+  </div>
+
+  <div class="method">
+    <h2>How this was built, and what it can't tell you</h2>
+
+    <p><b>The sources.</b> Two World Bank World Development Indicators:
+    <i>Mineral rents (% of GDP)</i> and <i>Ores and metals exports (% of merchandise
+    exports)</i>, for countries only (World Bank aggregates are excluded). Rents
+    cover 2015&#8211;21 for 197 countries; exports run to 2023 for 163. Gold figures are
+    from BGS World Mineral Statistics.</p>
+
+    <h3>The rule</h3>
+    <ul>
+      <li><b>The six:</b> mineral rents of at least 3% of GDP in each of three
+      windows (2015&#8211;21, 2015&#8211;19, 2017&#8211;21) and ores and metals of at
+      least 25% of goods exports in both 2021&#8211;23 and 2015&#8211;19.</li>
+      <li><b>The two gold economies:</b> the same rents test, and ores and metals
+      under 5% of exports in both periods.</li>
+      <li>No composite score. The two measures are never added or averaged, because
+      they measure different things.</li>
+    </ul>
+    <p>The thresholds are judgments, and they are stated so a reader can move them.
+    Three windows are used for rents because the 2021 boom would otherwise decide
+    the answer. Raise the rents line to 4% and Chile (3.4% in 2015&#8211;19) and Peru
+    (3.9%) fall below it in the earlier window, though both stay far above the line on
+    exports. Australia, Tajikistan and Mauritania miss the 3% line in 2015&#8211;19 (2.8%,
+    2.9% and 2.5%), so they are not in the six. The table shows every miss.</p>
+
+    <h3>What the trade measure counts</h3>
+    <p>By the World Bank's definition the category covers ores, concentrates and
+    non-ferrous metals. It
+    includes refined metal, so economies built on smelting appear alongside miners,
+    and it excludes gold. Several countries in the trade-only table are known for
+    aluminium smelting or processing, such as Iceland, Bahrain and Montenegro. That is
+    background knowledge from outside this data, not something the figures show.
+    The measure is also volatile: Panama went from 10.6% in 2015&#8211;19 to 78.5% in
+    2021&#8211;23.</p>
+
+    <h3>What rents count</h3>
+    <p>Mineral rents are the value of mineral production at world prices less the cost
+    of producing it, as a share of GDP, for the World Bank's list of ten minerals: tin, gold,
+    lead, zinc, iron ore, copper, nickel, silver, bauxite and phosphate. Diamonds, cobalt,
+    uranium and lithium are not on the list, and coal, oil and gas are reported separately,
+    so economies that depend on those are undercounted here. Rents say nothing about who
+    owns the mines, or how much of the income stays in the country.</p>
+
+    <h3>Still not claimed</h3>
+    <p>This is dependence on mining as a whole, not on one commodity, and it is
+    not a measure of how much a country benefits. The data is two to four years old.</p>
+
+    <p class="credit">Source: World Bank Open Data (CC BY 4.0). Indicators NY.GDP.MINR.RT.ZS
+    and TX.VAL.MMTL.ZS.UN. Gold production: World Mineral Statistics contributed by
+    permission of the British Geological Survey. Analysis by YouMine Intelligence,
+    November 2026.</p>
+  </div>
+</div>
+
+<script id="data" type="application/json">
+{
+"near":[
+{"n":"Mongolia","r1":9.7,"r2":6.6,"r3":11.7,"lo":4.0,"hi":26.6,"e1":35.5,"e2":45.3},
+{"n":"DR Congo","r1":8.4,"r2":4.9,"r3":10.6,"lo":2.5,"hi":28.8,"e1":76.8,"e2":61.8},
+{"n":"Zambia","r1":8.1,"r2":4.0,"r3":10.1,"lo":2.2,"hi":28.2,"e1":75.4,"e2":75.9},
+{"n":"Mali","r1":6.8,"r2":4.9,"r3":7.8,"lo":3.7,"hi":16.2,"e1":0.6,"e2":0.2},
+{"n":"Kyrgyz Republic","r1":6.7,"r2":5.9,"r3":7.4,"lo":4.1,"hi":11.2,"e1":11.4,"e2":10.3},
+{"n":"Uzbekistan","r1":6.2,"r2":5.7,"r3":7.3,"lo":3.1,"hi":9.0,"e1":11.2,"e2":8.1},
+{"n":"Papua New Guinea","r1":5.6,"r2":4.3,"r3":6.5,"lo":1.8,"hi":14.4,"e1":29.4,"e2":41.5},
+{"n":"Guyana","r1":5.5,"r2":5.3,"r3":5.0,"lo":2.3,"hi":10.6,"e1":1.4,"e2":9.3},
+{"n":"Chile","r1":5.4,"r2":3.4,"r3":6.4,"lo":1.8,"hi":16.2,"e1":54.7,"e2":52.1},
+{"n":"Burkina Faso","r1":5.3,"r2":3.5,"r3":6.2,"lo":2.4,"hi":15.5,"e1":1.7,"e2":4.6},
+{"n":"Peru","r1":5.0,"r2":3.9,"r3":5.6,"lo":1.8,"hi":12.1,"e1":47.4,"e2":43.4},
+{"n":"Australia","r1":4.1,"r2":2.8,"r3":4.8,"lo":1.9,"hi":10.5,"e1":36.1,"e2":31.9},
+{"n":"Guinea","r1":4.1,"r2":5.7,"r3":3.6,"lo":0.0,"hi":9.8,"e1":null,"e2":31.3},
+{"n":"Kazakhstan","r1":4.0,"r2":2.8,"r3":4.7,"lo":1.3,"hi":9.1,"e1":12.1,"e2":14.3},
+{"n":"Suriname","r1":3.7,"r2":5.2,"r3":2.7,"lo":0.0,"hi":13.6,"e1":0.8,"e2":0.3},
+{"n":"Tajikistan","r1":3.6,"r2":2.9,"r3":4.3,"lo":1.3,"hi":7.1,"e1":51.9,"e2":54.4},
+{"n":"Mauritania","r1":3.3,"r2":2.5,"r3":3.3,"lo":0.4,"hi":9.6,"e1":46.8,"e2":41.8}
+],
+"trade":[
+{"n":"Panama","r1":0.6,"e1":78.5,"e2":10.6},
+{"n":"Cuba","r1":0.2,"e1":51.2,"e2":17.7},
+{"n":"Bahrain","r1":0.0,"e1":49.3,"e2":24.5},
+{"n":"Zimbabwe","r1":2.0,"e1":43.1,"e2":31.7},
+{"n":"Iceland","r1":0.0,"e1":39.4,"e2":38.8},
+{"n":"Madagascar","r1":0.0,"e1":36.5,"e2":26.9},
+{"n":"Niger","r1":0.3,"e1":34.0,"e2":37.0},
+{"n":"South Africa","r1":1.3,"e1":32.8,"e2":24.7},
+{"n":"Jamaica","r1":0.6,"e1":32.7,"e2":55.2},
+{"n":"Mozambique","r1":0.1,"e1":29.5,"e2":31.8},
+{"n":"Bolivia","r1":1.6,"e1":29.0,"e2":30.4},
+{"n":"Georgia","r1":0.6,"e1":28.7,"e2":24.2},
+{"n":"Montenegro","r1":0.2,"e1":26.6,"e2":32.0},
+{"n":"Namibia","r1":1.6,"e1":26.3,"e2":25.5},
+{"n":"Armenia","r1":1.7,"e1":25.4,"e2":37.0},
+{"n":"Bhutan","r1":0.1,"e1":25.1,"e2":21.8}
+]
+}
+</script>
+
+<script>
+(function(){
+  var D = JSON.parse(document.getElementById('data').textContent);
+  var f1 = function(v){ return v == null ? '\u2014' : v.toFixed(1); };
+  var pc = function(v){ return v == null ? '\u2014' : v.toFixed(1) + '%'; };
+  var by = function(n){ return D.near.filter(function(r){ return r.n === n; })[0]; };
+
+  /* ---- the rule, applied to the data so the page cannot disagree with itself ---- */
+  function verdict(r){
+    var rentsOk = r.r1 >= 3 && r.r2 >= 3 && r.r3 >= 3;
+    var miss = [];
+    if (r.r1 < 3) miss.push('2015\u201321');
+    if (r.r2 < 3) miss.push('2015\u201319');
+    if (r.r3 < 3) miss.push('2017\u201321');
+    if (!rentsOk) return { tier: 0, why: 'Rents below 3% in ' + miss.join(' and ') + ' (' +
+      f1(Math.min(r.r1, r.r2, r.r3)) + '% at the lowest).' };
+    if (r.e1 == null) return { tier: 0, why: 'No exports figure for 2021\u201323, so the trade test cannot be applied.' };
+    if (r.e1 >= 25 && r.e2 >= 25) return { tier: 1, why: 'Passes both tests in every period.' };
+    if (r.e1 < 5 && r.e2 < 5) return { tier: 2, why: 'Rents pass; ores and metals under 5% of exports (gold is not counted).' };
+    return { tier: 0, why: 'Rents pass; exports are ' + f1(r.e1) + '% (2021\u201323) and ' + f1(r.e2) +
+      '% (2015\u201319), which meets neither the 25% line nor the 5% line in both.' };
+  }
+  D.near.forEach(function(r){ var v = verdict(r); r.tier = v.tier; r.why = v.why; });
+  var six = D.near.filter(function(r){ return r.tier === 1; });
+  var gold = D.near.filter(function(r){ return r.tier === 2; });
+
+  /* ---- stat strip ---- */
+  var e1s = six.map(function(r){ return r.e1; });
+  var drc = by('DR Congo'), mali = by('Mali');
+  var stats = [
+    [String(six.length), 'countries pass both tests in every period tested'],
+    [Math.round(Math.min.apply(null, e1s)) + '\u2013' + Math.round(Math.max.apply(null, e1s)) + '%', 'of goods exports are ores and metals across those six (2021\u201323)'],
+    [pc(drc.lo) + ' \u2192 ' + pc(drc.hi), 'DR Congo\u2019s mineral rents as a share of GDP, lowest to highest year of 2015\u201321'],
+    [pc(mali.e1), 'ores and metals in Mali\u2019s exports, against mineral rents of ' + pc(mali.r1) + ' of GDP']
+  ];
+  var sEl = document.getElementById('stats');
+  stats.forEach(function(s){
+    var el = document.createElement('div'); el.className = 'stat';
+    el.innerHTML = '<span class="n">' + s[0] + '</span><span class="l">' + s[1] + '</span>';
+    sEl.appendChild(el);
+  });
+  var zmb = by('Zambia');
+  document.getElementById('a-drc-lo').textContent = pc(drc.lo);
+  document.getElementById('a-drc-hi').textContent = pc(drc.hi);
+  document.getElementById('a-zmb-lo').textContent = pc(zmb.lo);
+  document.getElementById('a-zmb-hi').textContent = pc(zmb.hi);
+
+  /* ---- figure ---- */
+  var W = 200, H = 22, PAD = 4;
+  var mono = 'font-family="IBM Plex Mono, monospace"';
+  function track(max, thr, marks){
+    var sx = function(v){ return PAD + v / max * (W - 2 * PAD); };
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + marks.label + '">' +
+      '<line x1="' + PAD + '" y1="' + (H/2) + '" x2="' + (W - PAD) + '" y2="' + (H/2) + '" stroke="var(--rule-2)" stroke-width="1"/>' +
+      '<line x1="' + sx(thr).toFixed(1) + '" y1="2" x2="' + sx(thr).toFixed(1) + '" y2="' + (H - 2) +
+        '" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="2 2"/>';
+    s += marks.body(sx);
+    return s + '</svg>';
+  }
+  function row(r){
+    var rent = track(30, 3, {
+      label: r.n + ': mineral rents averaged ' + f1(r.r1) + ' percent of GDP over 2015 to 2021, range ' + f1(r.lo) + ' to ' + f1(r.hi) + '.',
+      body: function(sx){
+        return '<rect x="' + sx(r.lo).toFixed(1) + '" y="' + (H/2 - 4) + '" width="' + Math.max(1, sx(r.hi) - sx(r.lo)).toFixed(1) +
+          '" height="8" fill="var(--rent-fill)" stroke="var(--rent)" stroke-width="1"/>' +
+          '<circle cx="' + sx(r.r1).toFixed(1) + '" cy="' + (H/2) + '" r="3.6" fill="var(--rent)" stroke="var(--surface)" stroke-width="1.4"/>';
+      }
+    });
+    var trade = track(100, 25, {
+      label: r.n + ': ores and metals were ' + f1(r.e2) + ' percent of goods exports in 2015 to 2019 and ' + (r.e1 == null ? 'not reported' : f1(r.e1) + ' percent') + ' in 2021 to 2023.',
+      body: function(sx){
+        var s = '';
+        if (r.e1 != null) s += '<line x1="' + sx(r.e2).toFixed(1) + '" y1="' + (H/2) + '" x2="' + sx(r.e1).toFixed(1) + '" y2="' + (H/2) + '" stroke="var(--trade)" stroke-width="1.4"/>';
+        s += '<circle cx="' + sx(r.e2).toFixed(1) + '" cy="' + (H/2) + '" r="3.4" fill="var(--surface)" stroke="var(--trade)" stroke-width="2"/>';
+        if (r.e1 != null) s += '<circle cx="' + sx(r.e1).toFixed(1) + '" cy="' + (H/2) + '" r="3.6" fill="var(--trade)" stroke="var(--surface)" stroke-width="1.4"/>';
+        return s;
+      }
+    });
+    var d = document.createElement('div');
+    d.className = 'rowg';
+    d.innerHTML = '<div class="nm">' + r.n + '</div>' +
+      '<div class="cell">' + rent + '<span class="cap">avg ' + pc(r.r1) + ' \u00b7 ' + f1(r.lo) + '\u2013' + f1(r.hi) + '%</span></div>' +
+      '<div class="cell">' + trade + '<span class="cap">' + pc(r.e2) + ' \u2192 ' + pc(r.e1) + '</span></div>';
+    return d;
+  }
+  var fig = document.getElementById('fig');
+  var head = document.createElement('div');
+  head.className = 'head';
+  head.innerHTML = '<span></span><span>Mineral rents, % of GDP<small>scale 0 to 30%</small></span>' +
+    '<span>Ores and metals, % of goods exports<small>scale 0 to 100%</small></span>';
+  fig.appendChild(head);
+  function tierHead(t){ var h = document.createElement('h3'); h.className = 'tier'; h.textContent = t; fig.appendChild(h); }
+  tierHead('Both measures agree');
+  six.sort(function(a, b){ return b.r1 - a.r1; }).forEach(function(r){ fig.appendChild(row(r)); });
+  tierHead('Mineral rents only: the trade measure cannot see gold');
+  gold.sort(function(a, b){ return b.r1 - a.r1; }).forEach(function(r){ fig.appendChild(row(r)); });
+
+  /* ---- tables ---- */
+  var tb = document.getElementById('tbody');
+  D.near.forEach(function(r){
+    var tr = document.createElement('tr');
+    tr.className = r.tier === 1 ? 'tier1' : r.tier === 2 ? 'tier2' : 'out';
+    tr.innerHTML = '<td>' + r.n + '</td><td>' + f1(r.r1) + '</td><td>' + f1(r.lo) + ' \u2013 ' + f1(r.hi) + '</td>' +
+      '<td>' + f1(r.r2) + '</td><td>' + f1(r.r3) + '</td>' +
+      '<td' + (r.e1 == null ? ' class="miss"' : '') + '>' + f1(r.e1) + '</td><td>' + f1(r.e2) + '</td>' +
+      '<td class="why">' + r.why + '</td>';
+    tb.appendChild(tr);
+  });
+  var tb2 = document.getElementById('tbody2');
+  D.trade.forEach(function(r){
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + r.n + '</td><td>' + f1(r.e1) + '</td><td>' + f1(r.e2) + '</td><td>' + f1(r.r1) + '</td>';
+    tb2.appendChild(tr);
+  });
+})();
+</script>
