@@ -1,0 +1,434 @@
+<title>Peak Was Yesterday</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+/* Layout: a statistical-yearbook column — lede, a 9-panel grid of indexed
+   production curves with each peak marked, then the figures as a precise table. */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --surface-2:#eef1f4;
+  --ink:#14181d; --ink-2:#48515b; --ink-3:#7b858f;
+  --rule:#dde2e7; --rule-2:#c9d1d8;
+  --line:#1259a6; --peak:#b07314; --fill:rgba(18,89,166,.10);
+  --font-display:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --font-body:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+  --font-data:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1116; --surface:#161a20; --surface-2:#1d232a;
+    --ink:#e9ecef; --ink-2:#a6aeb7; --ink-3:#737c86;
+    --rule:#262d35; --rule-2:#333c45;
+    --line:#4a8fd0; --peak:#ad7c1a; --fill:rgba(74,143,208,.14);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1116; --surface:#161a20; --surface-2:#1d232a;
+  --ink:#e9ecef; --ink-2:#a6aeb7; --ink-3:#737c86;
+  --rule:#262d35; --rule-2:#333c45;
+  --line:#4a8fd0; --peak:#ad7c1a; --fill:rgba(74,143,208,.14);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:var(--font-body); font-size:1.0625rem; line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:60rem; margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 4rem;
+}
+.col{max-width:36rem}
+
+/* ---- masthead ---- */
+.mast{
+  display:flex; flex-wrap:wrap; gap:.75rem 1.25rem; align-items:baseline;
+  border-bottom:1px solid var(--rule); padding-block:1.5rem .875rem; margin-bottom:2.75rem;
+}
+.mast .brand{
+  font-family:var(--font-display); font-weight:700; font-size:.8125rem;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink);
+}
+.mast .kicker{
+  font-family:var(--font-display); font-size:.75rem; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink-3); margin-left:auto;
+}
+
+h1{
+  font-family:var(--font-display); font-weight:700;
+  font-size:clamp(2.25rem,7vw,3.75rem); line-height:1.02;
+  letter-spacing:-.025em; margin:0 0 1.25rem; text-wrap:balance;
+}
+.standfirst{
+  font-size:clamp(1.125rem,2.6vw,1.375rem); line-height:1.5; color:var(--ink-2);
+  margin:0 0 2rem; max-width:34rem;
+}
+.standfirst b{color:var(--ink); font-weight:600}
+
+h2{
+  font-family:var(--font-display); font-weight:600;
+  font-size:clamp(1.25rem,3vw,1.625rem); letter-spacing:-.015em;
+  margin:3.5rem 0 .75rem; text-wrap:balance;
+}
+h3{
+  font-family:var(--font-display); font-weight:600; font-size:1rem;
+  margin:2rem 0 .5rem;
+}
+p{margin:0 0 1.125rem}
+a{color:var(--line)}
+
+.lead-rule{height:3px; background:var(--ink); width:3.5rem; margin-bottom:1.75rem}
+
+/* ---- stat strip ---- */
+.stats{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(8.5rem,1fr));
+  gap:1px; background:var(--rule); border:1px solid var(--rule);
+  margin:2.5rem 0 3rem;
+}
+.stat{background:var(--surface); padding:1.125rem 1.25rem}
+.stat .n{
+  font-family:var(--font-display); font-weight:700;
+  font-size:clamp(1.625rem,4.5vw,2.125rem); line-height:1;
+  letter-spacing:-.02em; font-variant-numeric:tabular-nums; display:block;
+}
+.stat .n.amber{color:var(--peak)}
+.stat .l{
+  font-family:var(--font-display); font-size:.75rem; line-height:1.35;
+  color:var(--ink-2); margin-top:.5rem; display:block;
+}
+
+/* ---- small multiples ---- */
+.grid{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));
+  gap:1px; background:var(--rule); border:1px solid var(--rule); margin:1.5rem 0;
+}
+.panel{background:var(--surface); padding:.875rem .9375rem 1rem; min-width:0}
+.panel .name{
+  font-family:var(--font-display); font-weight:600; font-size:.9375rem;
+  letter-spacing:-.005em; display:block;
+}
+.panel .sub{
+  font-family:var(--font-data); font-size:.6875rem; color:var(--ink-3);
+  margin-top:.1875rem; display:block;
+}
+.panel svg{display:block; width:100%; height:auto; margin-top:.625rem}
+.panel .crit{
+  display:inline-block; font-family:var(--font-display); font-size:.625rem;
+  font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--peak); border:1px solid currentColor; border-radius:2px;
+  padding:.0625rem .3125rem; margin-left:.375rem; vertical-align:.1em;
+}
+.legend-note{
+  font-family:var(--font-display); font-size:.8125rem; color:var(--ink-2);
+  display:flex; flex-wrap:wrap; gap:.375rem 1.25rem; margin:0 0 1.5rem;
+}
+.legend-note span{display:inline-flex; align-items:center; gap:.4375rem}
+.swatch{width:1.125rem; height:3px; background:var(--line); flex:none}
+.dot{width:.5rem; height:.5rem; border-radius:50%; background:var(--peak); flex:none}
+
+/* ---- table ---- */
+.tablewrap{overflow-x:auto; border:1px solid var(--rule); margin:1.5rem 0}
+table{border-collapse:collapse; width:100%; min-width:46rem; background:var(--surface)}
+caption{
+  text-align:left; font-family:var(--font-display); font-size:.8125rem;
+  color:var(--ink-2); padding:.75rem .875rem; background:var(--surface-2);
+  border-bottom:1px solid var(--rule);
+}
+th,td{
+  padding:.625rem .875rem; text-align:right; border-bottom:1px solid var(--rule);
+  font-family:var(--font-data); font-size:.8125rem;
+  font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+th{
+  font-family:var(--font-display); font-weight:600; font-size:.6875rem;
+  letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2);
+  border-bottom:1px solid var(--rule-2); vertical-align:bottom;
+}
+th:first-child,td:first-child{text-align:left; white-space:normal}
+td:first-child{font-family:var(--font-display); font-weight:600; font-size:.875rem}
+td.note{
+  font-family:var(--font-body); font-size:.8125rem; white-space:normal;
+  color:var(--ink-2); text-align:left; min-width:13rem;
+}
+tbody tr:last-child td{border-bottom:none}
+.pct{font-weight:600}
+.pct.low{color:var(--peak)}
+
+/* ---- aside / method ---- */
+.aside{
+  border-left:3px solid var(--peak); background:var(--surface);
+  padding:1.125rem 1.25rem; margin:2.25rem 0; max-width:42rem;
+}
+.aside .h{
+  font-family:var(--font-display); font-weight:600; font-size:.6875rem;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--peak);
+  margin-bottom:.5rem;
+}
+.aside p:last-child{margin-bottom:0}
+
+.method{border-top:1px solid var(--rule); margin-top:4rem; padding-top:2rem}
+.method h2{margin-top:0}
+.method p,.method li,.method h3{max-width:40rem}
+.method p,.method li{font-size:.9375rem; color:var(--ink-2)}
+.method ul{margin:0 0 1.125rem; padding-left:1.25rem}
+.method li{margin-bottom:.5rem}
+.method b{color:var(--ink); font-weight:600}
+code{
+  font-family:var(--font-data); font-size:.875em;
+  background:var(--surface-2); padding:.0625rem .25rem; border-radius:2px;
+}
+.credit{
+  font-family:var(--font-display); font-size:.8125rem; color:var(--ink-3);
+  border-top:1px solid var(--rule); margin-top:2rem; padding-top:1.25rem;
+}
+@media (prefers-reduced-motion:no-preference){
+  .panel svg path.ln{stroke-dasharray:1200; stroke-dashoffset:0}
+}
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <span class="brand">YouMine Intelligence</span>
+    <span class="kicker">Global production · 1970–2024</span>
+  </header>
+
+  <div class="lead-rule"></div>
+
+  <h1>Peak Was Yesterday</h1>
+
+  <p class="standfirst">The world mined more mercury in 1971 than in any year since.
+  More asbestos in 1978. More diamonds in 2006. Mining is the industry of
+  <i>more</i> — but in the longest production record anyone keeps,
+  <b>nine minerals have already turned over</b>, and one of them is a metal both
+  Washington and Brussels classify as critical.</p>
+
+  <div class="stats">
+    <div class="stat"><span class="n amber">1971</span><span class="l">Mercury's peak year. Output has never returned.</span></div>
+    <div class="stat"><span class="n">15%</span><span class="l">Of peak mercury still mined today</span></div>
+    <div class="stat"><span class="n">9</span><span class="l">Minerals past peak on a stable reporting base</span></div>
+    <div class="stat"><span class="n">410,021</span><span class="l">Country-year records behind this, from 1970</span></div>
+  </div>
+
+  <div class="col">
+    <p>Every critical-minerals strategy published in the last five years rests on
+    the same premise: demand climbs, so supply must climb with it. For most of
+    what gets dug up that premise holds. Copper, iron ore, gold, bauxite and
+    lithium are all at or near record output.</p>
+
+    <p>But the British Geological Survey has been compiling world mineral
+    statistics since 1913, and its machine-readable record runs from 1970 to
+    2024 across 190 countries. Run the whole series and a different group
+    appears: minerals whose global peak is not a forecast but a date in the
+    past. Some were legislated out of existence. One is being strangled by the
+    very scarcity that makes it strategic.</p>
+  </div>
+
+  <h2>Nine curves that already turned</h2>
+  <p class="col" style="color:var(--ink-2)">Each panel shows world production
+  against that mineral's own peak, set to 100. Three-year averages, because a
+  single big year is usually a reporting artefact rather than a peak.</p>
+
+  <div class="legend-note">
+    <span><i class="swatch"></i> World production, indexed to peak = 100</span>
+    <span><i class="dot"></i> Peak year</span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="aside">
+    <div class="h">The one that should worry people</div>
+    <p><b>Antimony</b> is on the United States critical minerals list and the
+    European Union's critical raw materials list. It hardens lead, retards flame
+    and sits in every lead-acid battery. World mine production peaked in
+    <b>2013</b> and is now at <b>60%</b> of that level — a 40% fall over a decade
+    in which demand did not fall at all. This is not a ban and not substitution.
+    It is depletion meeting export control, and unlike mercury or asbestos,
+    nobody chose it.</p>
+  </div>
+
+  <h2>The figures</h2>
+
+  <div class="tablewrap">
+    <table>
+      <caption>World production at peak and now. Three-year centred averages;
+      "now" is the 2022–24 average. Source: BGS World Mineral Statistics.</caption>
+      <thead>
+        <tr>
+          <th>Mineral</th><th>Unit</th><th>Peak</th><th>At peak</th>
+          <th>2022–24</th><th>% of peak</th><th>Producers<br>then → now</th>
+          <th>What happened</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="method">
+    <h2>How this was built, and what it can't tell you</h2>
+
+    <p><b>The source.</b> BGS World Mineral Statistics: 410,021 country-year
+    records of production, imports and exports, 1970 to 2024, 190 countries, 521
+    commodity codes. BGS has compiled these figures since 1913; everything before
+    1970 exists only on paper. Used here with the permission of the British
+    Geological Survey, whose published terms otherwise limit reuse to
+    non-commercial research.</p>
+
+    <h3>World totals are summed, not published</h3>
+    <p>BGS publishes no world row, so each total here is the sum of the countries
+    reporting that mineral that year. That makes coverage the main risk, and it
+    is the reason four candidate minerals were thrown out rather than published:</p>
+    <ul>
+      <li><b>Cement</b> — BGS's reporters account for about <b>7%</b> of real
+      world output. The apparent trend is a coverage artefact.</li>
+      <li><b>Rare earth minerals</b> — fall to 0.2% of peak with a single
+      reporter left. That is a reclassification, not a collapse; rare earth
+      output has grown enormously.</li>
+      <li><b>Mica</b> — jumps from 59 to 100 and back to 66 across 2012–16. A
+      reporting discontinuity, not a peak.</li>
+      <li><b>Primary aggregates</b> — BGS reports them as one term spanning
+      crushed stone and sand and gravel, so no single commodity figure is valid.</li>
+    </ul>
+
+    <h3>Cross-checked against a second publisher</h3>
+    <p>For 2024, BGS country sums were compared against the USGS published world
+    totals. Where both cover the same material on the same basis they agree
+    closely — gold <b>101.6%</b>, crude steel <b>99.6%</b>, mine lead
+    <b>100.3%</b>, primary aluminium <b>100.8%</b>, alumina <b>100.9%</b>,
+    bauxite <b>96%</b>. That agreement is what licenses the earlier years, where
+    no second source exists.</p>
+
+    <h3>Why three-year averages</h3>
+    <p>Single-year peaks are usually artefacts. Talc appeared to peak in 1997 at
+    a level 29% above the year before and 40% above the year after; smoothed, its
+    real plateau is 1990. Graphite appeared to peak in 1995 on a one-year
+    doubling in a single country's reported figure; smoothed, its peak is 2008.
+    Every figure here is a three-year centred average.</p>
+
+    <h3>One reading to resist</h3>
+    <p>A falling producer count is not proof of a falling world total — it can
+    equally mean the data got thinner. So the direction of coverage is published
+    in the table beside every figure. For diamond and platinum-group metals,
+    <i>more</i> countries report now than at peak, which makes those declines
+    hard to explain away. For asbestos the producer count collapsed from 23 to 4,
+    and there the shrinking list <i>is</i> the finding: countries stopped
+    producing because they banned the material.</p>
+
+    <h3>What a zero means</h3>
+    <p>BGS states the precision of every figure, which most publishers leave you
+    to infer. Of 410,021 records, 6,229 say <code>-----</code>, meaning nothing
+    was produced; 3,327 say <code>...</code>, meaning the figure is unknown and
+    stored as null rather than zero; and 624 carry a printed <b>0</b> that BGS
+    explicitly states is real output between 0 and 0.5 units. Those 624 are not
+    zero production, and treating them as such would be the easiest mistake in
+    this dataset. None of them are counted as zero here.</p>
+
+    <h3>Still true, and not claimed</h3>
+    <p>Past peak is not the same as running out, and it is not a reserve
+    statement. Mercury and asbestos fell because the world decided it wanted
+    less of them — that is policy succeeding, not scarcity. Diamond's fall owes
+    much to one mine closing, Argyle in Western Australia, plus laboratory
+    stones taking share. And a mineral can turn over again: antimony's own 2013
+    peak came after an earlier high in 2006.</p>
+
+    <p class="credit">World Mineral Statistics contributed by permission of the
+    British Geological Survey. Comparison figures: United States Geological
+    Survey, Mineral Commodity Summaries 2025 (public domain). Analysis by
+    YouMine Intelligence, November 2026.</p>
+  </div>
+</div>
+
+<script id="data" type="application/json">
+{
+"mercury":{"label":"Mercury","unit":"kg","peak":1971,"peakv":"9,756,859","now":"1,472,207","pct":15.1,"r0":20,"r1":7,"why":"Banned in products, then in mining itself; the Minamata Convention finished the job.","crit":null,
+"s":[[1971,100],[1972,95.9],[1973,91.7],[1974,89],[1975,88],[1976,80.4],[1977,72],[1978,63.9],[1979,64.2],[1980,66.1],[1981,67.4],[1982,64],[1983,61.5],[1984,61.5],[1985,62.1],[1986,61.7],[1987,58],[1988,55.8],[1989,51.7],[1990,43],[1991,32.2],[1992,24.3],[1993,21.9],[1994,25.8],[1995,26.4],[1996,28.1],[1997,23.7],[1998,20.6],[1999,17.1],[2000,16.9],[2001,19],[2002,21.3],[2003,21.4],[2004,19.1],[2005,15.7],[2006,13.9],[2007,14.8],[2008,17],[2009,19.5],[2010,20.2],[2011,20.7],[2012,21.7],[2013,24.4],[2014,29.2],[2015,34.8],[2016,38.8],[2017,36.7],[2018,31.2],[2019,25.5],[2020,21.9],[2021,18.2],[2022,15.5],[2023,15.1]]},
+"asbestos":{"label":"Asbestos","unit":"t","peak":1978,"peakv":"4,761,232","now":"1,239,835","pct":26.0,"r0":23,"r1":4,"why":"Prohibited in more than 60 countries. The producer list shrank because producing became illegal.","crit":null,
+"s":[[1971,76],[1972,80.9],[1973,84.9],[1974,87.9],[1975,91.9],[1976,96.4],[1977,99.7],[1978,100],[1979,99.3],[1980,96.9],[1981,94.7],[1982,93.2],[1983,93.9],[1984,92.8],[1985,91.2],[1986,90.6],[1987,91.2],[1988,92.8],[1989,91.4],[1990,85.9],[1991,77.6],[1992,67.1],[1993,58.3],[1994,53.2],[1995,51.6],[1996,52.5],[1997,48.3],[1998,44.6],[1999,41.5],[2000,41.6],[2001,44],[2002,45.9],[2003,48.7],[2004,48.2],[2005,46.8],[2006,45.9],[2007,45.3],[2008,45.2],[2009,43.7],[2010,42.7],[2011,41],[2012,38.9],[2013,36.3],[2014,32.3],[2015,28.7],[2016,25.7],[2017,24.9],[2018,24.6],[2019,24.4],[2020,25.4],[2021,26.1],[2022,26.9],[2023,26]]},
+"sillimanite":{"label":"Sillimanite minerals","unit":"t","peak":1989,"peakv":"735,417","now":"390,551","pct":53.1,"r0":13,"r1":5,"why":"Refractory demand moved to other materials; South Africa alone accounts for a third of the fall.","crit":null,
+"s":[[1971,40.3],[1972,42.1],[1973,43.8],[1974,44.3],[1975,43],[1976,46.1],[1977,48.2],[1978,51.1],[1979,57.5],[1980,63.1],[1981,65.2],[1982,61],[1983,59.9],[1984,69.7],[1985,79.3],[1986,88.9],[1987,91.3],[1988,96.7],[1989,100],[1990,97.1],[1991,84.9],[1992,67.1],[1993,54.9],[1994,50.8],[1995,54],[1996,55.6],[1997,62.3],[1998,57.2],[1999,59],[2000,61.1],[2001,62.4],[2002,57.8],[2003,50.9],[2004,55.8],[2005,59.4],[2006,62.2],[2007,60.9],[2008,60.3],[2009,58.7],[2010,63.4],[2011,66.2],[2012,64.9],[2013,59.6],[2014,57.8],[2015,56.1],[2016,58.3],[2017,57.7],[2018,56.5],[2019,50.9],[2020,50.8],[2021,53.4],[2022,55.6],[2023,53.1]]},
+"antimony":{"label":"Antimony","unit":"t metal","peak":2013,"peakv":"182,881","now":"109,535","pct":59.9,"r0":20,"r1":17,"why":"Depletion of Chinese reserves plus export restriction. Demand never fell.","crit":"US + EU critical",
+"s":[[1971,37.7],[1972,37.8],[1973,38.5],[1974,38.9],[1975,38.3],[1976,37.8],[1977,35.9],[1978,35],[1979,34.4],[1980,33.7],[1981,32.1],[1982,29.1],[1983,29.3],[1984,30.9],[1985,33.9],[1986,42.9],[1987,52.7],[1988,60.5],[1989,58.2],[1990,54.1],[1991,52.8],[1992,52.5],[1993,58.5],[1994,68.4],[1995,80.5],[1996,86.1],[1997,79.6],[1998,70.3],[1999,63.1],[2000,63.7],[2001,69.8],[2002,70],[2003,74.1],[2004,79.8],[2005,90.4],[2006,97],[2007,86.9],[2008,78.2],[2009,74.8],[2010,82.2],[2011,90.7],[2012,96.2],[2013,100],[2014,97.4],[2015,92.8],[2016,89.7],[2017,91.9],[2018,84.8],[2019,77.8],[2020,64.4],[2021,60.2],[2022,59],[2023,59.9]]},
+"diamond":{"label":"Diamond","unit":"carats","peak":2006,"peakv":"173,950,194","now":"113,939,140","pct":65.5,"r0":25,"r1":27,"why":"Argyle closed in 2020 and laboratory stones took share — while more countries report, not fewer.","crit":null,
+"s":[[1971,23.8],[1972,23.9],[1973,24.6],[1974,24.2],[1975,23.7],[1976,22.8],[1977,22.5],[1978,22.6],[1979,23.3],[1980,23.3],[1981,23.5],[1982,25.9],[1983,30.5],[1984,35.4],[1985,43.1],[1986,48.7],[1987,54.7],[1988,55],[1989,58.5],[1990,60.2],[1991,61.6],[1992,60.1],[1993,60.5],[1994,61.9],[1995,64.8],[1996,66.6],[1997,68.1],[1998,66.7],[1999,65.7],[2000,65.3],[2001,69.4],[2002,78.2],[2003,86.4],[2004,94.7],[2005,98.3],[2006,100],[2007,97.7],[2008,86.9],[2009,78.3],[2010,70.4],[2011,71.4],[2012,72.4],[2013,72.7],[2014,73.1],[2015,72.1],[2016,77.1],[2017,81.4],[2018,84.7],[2019,77],[2020,70.8],[2021,67.1],[2022,67.2],[2023,65.5]]},
+"graphite":{"label":"Graphite, natural","unit":"t","peak":2008,"peakv":"2,383,670","now":"1,755,977","pct":73.7,"r0":20,"r1":20,"why":"Natural flake lost ground to synthetic graphite, then began recovering on battery demand.","crit":"US + EU critical",
+"s":[[1971,16.4],[1972,16.8],[1973,18.1],[1974,19],[1975,18.9],[1976,18.3],[1977,19.2],[1978,23.1],[1979,24.7],[1980,25.7],[1981,23.7],[1982,23.9],[1983,24.2],[1984,24.7],[1985,25.4],[1986,25.8],[1987,27.1],[1988,31.6],[1989,38.8],[1990,43.9],[1991,44.5],[1992,42.4],[1993,46],[1994,68.6],[1995,87.7],[1996,98.6],[1997,90.5],[1998,83.2],[1999,82.7],[2000,82.5],[2001,79.3],[2002,74],[2003,70.3],[2004,75.2],[2005,81.2],[2006,92.2],[2007,98],[2008,100],[2009,94.1],[2010,82.8],[2011,68.1],[2012,55.5],[2013,51.5],[2014,50.8],[2015,47.2],[2016,43.4],[2017,43.4],[2018,52.2],[2019,57.6],[2020,64.8],[2021,67.7],[2022,72.5],[2023,73.7]]},
+"vermiculite":{"label":"Vermiculite","unit":"t","peak":1988,"peakv":"642,635","now":"481,455","pct":74.9,"r0":12,"r1":13,"why":"The Libby mine in Montana closed in 1990 after asbestos contamination; US output never recovered.","crit":null,
+"s":[[1971,65.3],[1972,70.9],[1973,75.5],[1974,78.6],[1975,79.5],[1976,79.8],[1977,80.2],[1978,81.7],[1979,83.3],[1980,83],[1981,81.4],[1982,76.5],[1983,75.1],[1984,74.8],[1985,79],[1986,87.6],[1987,95.3],[1988,100],[1989,95.8],[1990,89.2],[1991,80.9],[1992,76.5],[1993,74.4],[1994,75.8],[1995,73.7],[1996,64],[1997,55.6],[1998,60.2],[1999,71.6],[2000,77.1],[2001,74],[2002,72.6],[2003,76.6],[2004,78.5],[2005,79.6],[2006,79.9],[2007,80.7],[2008,76.6],[2009,72.8],[2010,67.2],[2011,64.8],[2012,61.8],[2013,59.9],[2014,61.1],[2015,62.2],[2016,62.2],[2017,63.3],[2018,64.3],[2019,65.6],[2020,70.5],[2021,74.5],[2022,76.9],[2023,74.9]]},
+"talc":{"label":"Talc","unit":"t","peak":1990,"peakv":"8,832,563","now":"7,289,588","pct":82.5,"r0":41,"r1":39,"why":"A slow drift down on a wide, stable reporting base of about 40 countries.","crit":null,
+"s":[[1971,53.4],[1972,55.8],[1973,60.2],[1974,60],[1975,59.1],[1976,58.4],[1977,62.8],[1978,66.7],[1979,72.1],[1980,75.9],[1981,77.8],[1982,76.7],[1983,78.2],[1984,80.8],[1985,83.2],[1986,84.1],[1987,85.1],[1988,90.8],[1989,95.9],[1990,100],[1991,98.1],[1992,95.8],[1993,93],[1994,92.6],[1995,91.5],[1996,100],[1997,96.3],[1998,90.9],[1999,81.2],[2000,84.8],[2001,90.5],[2002,93.1],[2003,94.5],[2004,96.5],[2005,95.7],[2006,94.3],[2007,92.6],[2008,90.1],[2009,87.1],[2010,84.5],[2011,85.2],[2012,87.1],[2013,87.8],[2014,86.2],[2015,83.6],[2016,83.5],[2017,83.7],[2018,82.2],[2019,78.5],[2020,78],[2021,78.3],[2022,80.8],[2023,82.5]]},
+"pgm":{"label":"Platinum-group metals","unit":"kg metal","peak":2006,"peakv":"534,470","now":"445,810","pct":83.4,"r0":12,"r1":13,"why":"South African deep-shaft output has not regained its 2006 level, despite more reporting countries.","crit":"EU critical",
+"s":[[1971,24.3],[1972,26.3],[1973,29.6],[1974,32.5],[1975,33.9],[1976,35],[1977,36.1],[1978,37.1],[1979,38.2],[1980,39.3],[1981,39.9],[1982,38.9],[1983,39.5],[1984,41.4],[1985,45.5],[1986,48.5],[1987,51],[1988,52.2],[1989,53.3],[1990,53.8],[1991,52.7],[1992,53.1],[1993,56.7],[1994,63.9],[1995,72],[1996,75.8],[1997,80.7],[1998,81],[1999,83.3],[2000,82.8],[2001,79.9],[2002,79.8],[2003,83.8],[2004,93.5],[2005,98.3],[2006,100],[2007,95.9],[2008,92.2],[2009,88.5],[2010,89.6],[2011,88.4],[2012,86.8],[2013,79.7],[2014,80.5],[2015,80.3],[2016,85],[2017,85.8],[2018,86.8],[2019,84.3],[2020,84.4],[2021,82.6],[2022,84.6],[2023,83.4]]}
+}
+</script>
+
+<script>
+(function(){
+  var D = JSON.parse(document.getElementById('data').textContent);
+  var order = ['mercury','asbestos','sillimanite','antimony','diamond','graphite','vermiculite','talc','pgm'];
+
+  var W = 260, H = 96, PT = 10, PB = 18, PL = 7, PR = 34;
+  var Y0 = 1971, Y1 = 2023;
+  var sx = function(y){ return PL + (y - Y0) / (Y1 - Y0) * (W - PL - PR); };
+  var sy = function(v){ return PT + (100 - v) / 100 * (H - PT - PB); };
+
+  var grid = document.getElementById('grid');
+  var tbody = document.getElementById('tbody');
+
+  order.forEach(function(k){
+    var d = D[k];
+    var pts = d.s.map(function(p){ return [sx(p[0]), sy(p[1])]; });
+    var line = pts.map(function(p,i){ return (i?'L':'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ');
+    var area = line + ' L' + pts[pts.length-1][0].toFixed(1) + ' ' + sy(0).toFixed(1) +
+               ' L' + pts[0][0].toFixed(1) + ' ' + sy(0).toFixed(1) + ' Z';
+    var pk = d.s.find(function(p){ return p[0] === d.peak; }) || d.s[0];
+    var last = d.s[d.s.length-1];
+
+    var panel = document.createElement('div');
+    panel.className = 'panel';
+    panel.innerHTML =
+      '<span class="name">' + d.label +
+        (d.crit ? '<span class="crit">' + d.crit + '</span>' : '') + '</span>' +
+      '<span class="sub">peak ' + d.peak + ' · now ' + d.pct.toFixed(1) + '% of it</span>' +
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + d.label +
+        ' world production peaked in ' + d.peak + ' and is now at ' + d.pct.toFixed(1) +
+        ' percent of that level.">' +
+        '<line x1="' + PL + '" y1="' + sy(0).toFixed(1) + '" x2="' + (W-PR) +
+          '" y2="' + sy(0).toFixed(1) + '" stroke="var(--rule-2)" stroke-width="1"/>' +
+        '<line x1="' + PL + '" y1="' + sy(100).toFixed(1) + '" x2="' + (W-PR) +
+          '" y2="' + sy(100).toFixed(1) + '" stroke="var(--rule)" stroke-width="1" stroke-dasharray="2 3"/>' +
+        '<path d="' + area + '" fill="var(--fill)" stroke="none"/>' +
+        '<path class="ln" d="' + line + '" fill="none" stroke="var(--line)" stroke-width="2" ' +
+          'stroke-linejoin="round" stroke-linecap="round"/>' +
+        '<circle cx="' + sx(pk[0]).toFixed(1) + '" cy="' + sy(pk[1]).toFixed(1) +
+          '" r="3.2" fill="var(--peak)" stroke="var(--surface)" stroke-width="1.4"/>' +
+        '<circle cx="' + sx(last[0]).toFixed(1) + '" cy="' + sy(last[1]).toFixed(1) +
+          '" r="2.6" fill="var(--line)" stroke="var(--surface)" stroke-width="1.4"/>' +
+        '<text x="' + (sx(last[0]) + 6).toFixed(1) + '" y="' + (sy(last[1]) + 3.6).toFixed(1) +
+          '" font-family="IBM Plex Mono, monospace" font-size="10" font-weight="500" ' +
+          'fill="var(--ink-2)">' + Math.round(d.pct) + '%</text>' +
+        '<text x="' + PL + '" y="' + (H - 5) + '" font-family="IBM Plex Mono, monospace" ' +
+          'font-size="9" fill="var(--ink-3)">1971</text>' +
+        '<text x="' + (W - PR) + '" y="' + (H - 5) + '" text-anchor="end" ' +
+          'font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--ink-3)">2023</text>' +
+      '</svg>';
+    grid.appendChild(panel);
+
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + d.label + '</td>' +
+      '<td>' + d.unit + '</td>' +
+      '<td>' + d.peak + '</td>' +
+      '<td>' + d.peakv + '</td>' +
+      '<td>' + d.now + '</td>' +
+      '<td class="pct' + (d.pct < 50 ? ' low' : '') + '">' + d.pct.toFixed(1) + '%</td>' +
+      '<td>' + d.r0 + ' → ' + d.r1 + '</td>' +
+      '<td class="note">' + d.why + '</td>';
+    tbody.appendChild(tr);
+  });
+})();
+</script>

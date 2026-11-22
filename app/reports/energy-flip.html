@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Energy Flip</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --surface:#fcfcfb; --raised:#ffffff; --sunken:#f4f3f0;
+  --ink:#16160f; --ink-2:#4a4a42; --ink-3:#77776c;
+  --rule:#e2e1dc; --rule-2:#cfcec8;
+  --lost:#eb6834; --gain:#2a78d6;
+  --lost-soft:rgba(235,104,52,.13); --gain-soft:rgba(42,120,214,.13);
+  --serif:"IBM Plex Serif",Georgia,serif;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --surface:#1a1a19; --raised:#222221; --sunken:#141413;
+    --ink:#f2f1ec; --ink-2:#b4b3ab; --ink-3:#86857d;
+    --rule:#33332f; --rule-2:#44443f;
+    --lost:#d95926; --gain:#3987e5;
+    --lost-soft:rgba(217,89,38,.18); --gain-soft:rgba(57,135,229,.18);
+  }
+}
+:root[data-theme="dark"]{
+  --surface:#1a1a19; --raised:#222221; --sunken:#141413;
+  --ink:#f2f1ec; --ink-2:#b4b3ab; --ink-3:#86857d;
+  --rule:#33332f; --rule-2:#44443f;
+  --lost:#d95926; --gain:#3987e5;
+  --lost-soft:rgba(217,89,38,.18); --gain-soft:rgba(57,135,229,.18);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--surface); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px; margin:0 auto; padding:0 16px}
+a{color:var(--gain)}
+
+/* ---------- masthead ---------- */
+.masthead{border-bottom:1px solid var(--rule); padding:14px 0; margin-bottom:40px}
+.masthead .wrap{display:flex; align-items:center; justify-content:space-between; gap:12px}
+.brand{font-family:var(--serif); font-weight:600; font-size:15px; letter-spacing:.01em}
+.brand span{color:var(--ink-3); font-weight:400}
+.tbtn{
+  font-family:var(--sans); font-size:12px; color:var(--ink-2);
+  background:transparent; border:1px solid var(--rule-2); border-radius:999px;
+  padding:5px 12px; cursor:pointer; line-height:1;
+}
+.tbtn:hover{border-color:var(--ink-3); color:var(--ink)}
+
+/* ---------- hero ---------- */
+.kicker{
+  font-family:var(--mono); font-size:11.5px; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--ink-3); margin:0 0 18px;
+}
+h1{
+  font-family:var(--serif); font-weight:600; letter-spacing:-.021em;
+  font-size:clamp(2.05rem,5.6vw,3.6rem); line-height:1.07; margin:0 0 22px;
+  max-width:21ch;
+}
+h1 em{font-style:italic; font-weight:400}
+.standfirst{
+  font-family:var(--serif); font-size:clamp(1.07rem,2.3vw,1.3rem);
+  line-height:1.56; color:var(--ink-2); max-width:62ch; margin:0 0 34px;
+}
+.standfirst strong{color:var(--ink); font-weight:600}
+
+/* ---------- stat row ---------- */
+.stats{
+  display:grid; gap:1px; background:var(--rule);
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  border:1px solid var(--rule); border-radius:10px; overflow:hidden; margin:0 0 56px;
+}
+.stat{background:var(--raised); padding:20px 18px}
+.stat .n{
+  font-family:var(--serif); font-weight:600; font-size:clamp(2rem,4.6vw,2.7rem);
+  line-height:1; letter-spacing:-.02em; display:block; margin-bottom:7px;
+}
+.stat.lost .n{color:var(--lost)} .stat.gain .n{color:var(--gain)}
+.stat .l{font-size:13px; color:var(--ink-2); line-height:1.4; display:block}
+
+/* ---------- sections ---------- */
+section{margin:0 0 60px}
+h2{
+  font-family:var(--serif); font-weight:600; font-size:clamp(1.4rem,3vw,1.85rem);
+  letter-spacing:-.014em; line-height:1.2; margin:0 0 10px;
+}
+.sub{font-size:14.5px; color:var(--ink-2); max-width:68ch; margin:0 0 26px}
+p{max-width:66ch}
+.note{font-size:13px; color:var(--ink-3); max-width:70ch; margin:14px 0 0}
+
+/* ---------- legend ---------- */
+.legend{display:flex; flex-wrap:wrap; gap:18px; margin:0 0 20px; align-items:center}
+.lg{display:flex; align-items:center; gap:7px; font-size:13px; color:var(--ink-2)}
+.sw{width:11px; height:11px; border-radius:3px; flex:none}
+.sw.l{background:var(--lost)} .sw.g{background:var(--gain)}
+
+/* ---------- charts ---------- */
+.chartcard{
+  background:var(--raised); border:1px solid var(--rule);
+  border-radius:12px; padding:20px 18px 14px;
+}
+svg{display:block; width:100%; height:auto; overflow:visible}
+.ax{font-family:var(--mono); font-size:10.5px; fill:var(--ink-3)}
+.axl{font-family:var(--sans); font-size:11px; fill:var(--ink-3)}
+.grid{stroke:var(--rule); stroke-width:1}
+.base{stroke:var(--rule-2); stroke-width:1.5; stroke-dasharray:3 3}
+.dot{cursor:pointer}
+.dot:hover{stroke:var(--surface); stroke-width:2}
+.dlab{font-family:var(--sans); font-size:10.5px; font-weight:500; fill:var(--ink-2)}
+
+/* ---------- small multiples ---------- */
+.grid-sm{
+  display:grid; gap:1px; background:var(--rule);
+  grid-template-columns:repeat(auto-fill,minmax(168px,1fr));
+  border:1px solid var(--rule); border-radius:12px; overflow:hidden;
+}
+.cell{background:var(--raised); padding:13px 13px 9px}
+.cell h3{
+  font-family:var(--sans); font-size:12.5px; font-weight:600; margin:0 0 1px;
+  letter-spacing:-.005em; line-height:1.3;
+}
+.cell .meta{
+  font-family:var(--mono); font-size:10px; color:var(--ink-3);
+  margin:0 0 8px; letter-spacing:.02em;
+}
+.fuel{
+  font-family:var(--mono); font-size:9px; text-transform:uppercase;
+  letter-spacing:.08em; padding:1px 5px; border-radius:3px; margin-left:5px;
+  vertical-align:1px;
+}
+.fuel.oil{background:var(--sunken); color:var(--ink-2); border:1px solid var(--rule-2)}
+.fuel.gas{background:var(--sunken); color:var(--ink-2); border:1px solid var(--rule-2)}
+.cell .ba{font-family:var(--mono); font-size:10.5px; color:var(--ink-2); margin:7px 0 0}
+.cell .ba b{font-weight:500; color:var(--ink)}
+
+/* featured bigger panels */
+.grid-feat{
+  display:grid; gap:1px; background:var(--rule);
+  grid-template-columns:repeat(auto-fill,minmax(248px,1fr));
+  border:1px solid var(--rule); border-radius:12px; overflow:hidden;
+}
+.fcell{background:var(--raised); padding:16px 16px 11px}
+.fcell h3{font-family:var(--serif); font-size:15.5px; font-weight:600; margin:0 0 2px}
+.fcell .story{font-size:12.5px; color:var(--ink-2); line-height:1.45; margin:9px 0 0}
+
+/* ---------- table ---------- */
+.tablewrap{overflow-x:auto; border:1px solid var(--rule); border-radius:12px; background:var(--raised)}
+table{border-collapse:collapse; width:100%; min-width:620px; font-size:13.5px}
+th,td{padding:9px 13px; text-align:left; border-bottom:1px solid var(--rule); white-space:nowrap}
+th{
+  font-family:var(--sans); font-size:11px; font-weight:600; text-transform:uppercase;
+  letter-spacing:.06em; color:var(--ink-3); cursor:pointer; user-select:none;
+  position:sticky; top:0; background:var(--raised); z-index:1;
+}
+th:hover{color:var(--ink)}
+th.num,td.num{text-align:right; font-family:var(--mono); font-size:12.5px}
+tbody tr:hover{background:var(--sunken)}
+tbody tr:last-child td{border-bottom:none}
+.tag{
+  font-family:var(--mono); font-size:9.5px; text-transform:uppercase; letter-spacing:.07em;
+  padding:2px 7px; border-radius:999px; font-weight:500;
+}
+.tag.l{background:var(--lost-soft); color:var(--lost)}
+.tag.g{background:var(--gain-soft); color:var(--gain)}
+
+/* ---------- method ---------- */
+.method{background:var(--sunken); border:1px solid var(--rule); border-radius:12px; padding:24px 22px}
+.method h2{font-size:1.25rem; margin-bottom:14px}
+.method h3{
+  font-family:var(--sans); font-size:13px; font-weight:600; margin:20px 0 5px;
+  letter-spacing:.01em;
+}
+.method p,.method li{font-size:13.5px; color:var(--ink-2); line-height:1.62; max-width:72ch}
+.method code{
+  font-family:var(--mono); font-size:12px; background:var(--raised);
+  padding:1px 5px; border-radius:4px; border:1px solid var(--rule);
+}
+.method ul{padding-left:20px; margin:6px 0}
+.flag{
+  border-left:3px solid var(--lost); background:var(--lost-soft);
+  padding:13px 15px; border-radius:0 8px 8px 0; margin:16px 0;
+}
+.flag p{color:var(--ink); font-size:13.5px; margin:0}
+.flag strong{font-weight:600}
+
+/* ---------- tooltip ---------- */
+#tip{
+  position:fixed; pointer-events:none; opacity:0; transition:opacity .1s;
+  background:var(--ink); color:var(--surface); font-family:var(--sans); font-size:12px;
+  padding:8px 11px; border-radius:7px; z-index:50; line-height:1.45; max-width:230px;
+  box-shadow:0 4px 16px rgba(0,0,0,.2);
+}
+#tip b{font-weight:600}
+#tip .m{font-family:var(--mono); font-size:11px; opacity:.85}
+
+footer{border-top:1px solid var(--rule); padding:26px 0 56px; margin-top:16px}
+footer p{font-size:12.5px; color:var(--ink-3); max-width:74ch; margin:0 0 7px}
+footer a{color:var(--ink-2)}
+.sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+
+<div class="masthead"><div class="wrap">
+  <div class="brand">YouMine <span>Intelligence</span></div>
+  <button class="tbtn" id="theme">Dark</button>
+</div></div>
+
+<div class="wrap">
+
+  <p class="kicker">Energy · 178 countries · 1990–2025</p>
+  <h1>China was an oil exporter until 1993</h1>
+  <p class="standfirst">
+    Britain's North Sea peaked in 1999; it has imported oil since 2006 and gas since 2004.
+    Indonesia was an OPEC member that quietly became a net oil importer in 2003. The
+    Netherlands, the country that gave Europe its gas market, now produces under a third of
+    what it burns. We tracked production against consumption for every country and both
+    fuels over 36 years and dated every crossing of the self-sufficiency line.
+    <strong>Twenty-six crossings went down. Twelve went up.</strong>
+  </p>
+
+  <div class="stats">
+    <div class="stat lost"><span class="n">26</span><span class="l">country–fuel pairs that stopped covering their own demand, for good</span></div>
+    <div class="stat gain"><span class="n">12</span><span class="l">that crossed the other way and stayed there</span></div>
+    <div class="stat"><span class="n">178</span><span class="l">countries measured, 6,933 observations, oil and gas</span></div>
+    <div class="stat"><span class="n">2.2<span style="font-size:.55em">×</span></span><span class="l">more countries lost self-sufficiency than gained it</span></div>
+  </div>
+
+  <section>
+    <h2>Every crossing, by the year it happened</h2>
+    <p class="sub">
+      Each dot is one country and one fuel, placed at the year it crossed 100% of its own
+      demand and never crossed back. Above the line, countries that lost self-sufficiency;
+      below it, countries that gained it. Hover any dot for the detail.
+    </p>
+    <div class="legend">
+      <span class="lg"><span class="sw l"></span>Lost self-sufficiency</span>
+      <span class="lg"><span class="sw g"></span>Gained self-sufficiency</span>
+    </div>
+    <div class="chartcard"><svg id="timeline" role="img" aria-label="Timeline of self-sufficiency crossings by year, 1990 to 2025"></svg></div>
+    <p class="note">
+      The two dots on the far left are Albania in 1992, as its command economy came apart,
+      and China in 1993. The tall orange columns at 2008
+      and 2015 are mature basins and wars arriving together — Tunisia, the UAE and
+      Mauritania in one, Bolivia, Sudan and Yemen in the other. The blue run at the right is the American
+      reversal, gas in 2017 and oil in 2022, with Argentina the same year. Nothing in the
+      last decade suggests the balance of direction has changed.
+    </p>
+  </section>
+
+  <section>
+    <h2>Eight that mattered</h2>
+    <p class="sub">
+      Self-sufficiency over time, on a logarithmic scale so that twice the demand and half
+      the demand sit the same distance from the centre line. The dashed line is 100% — the
+      point where a country produces exactly what it consumes.
+    </p>
+    <div class="legend">
+      <span class="lg"><span class="sw l"></span>Lost</span>
+      <span class="lg"><span class="sw g"></span>Gained</span>
+      <span class="lg" style="color:var(--ink-3)">Dashed line = 100% of own demand</span>
+    </div>
+    <div class="grid-feat" id="featured"></div>
+  </section>
+
+  <section>
+    <h2>All 38 crossings</h2>
+    <p class="sub">
+      The same measure for every country–fuel pair that crossed and stayed crossed, ordered
+      by how much of that fuel the country now burns. Scale is shared: the centre of each
+      panel is 100%, the top is ten times demand, the bottom is a tenth of it.
+    </p>
+    <div class="grid-sm" id="smallmult"></div>
+    <p class="note">
+      Values beyond ten times demand or a tenth of it are drawn at the edge of the scale
+      and marked with a caret: Chad, Timor-Leste and Guyana run off the top at their peaks,
+      producing enormous multiples of their own very small domestic demand, while the years
+      before a discovery or after a field shuts in sit on the floor at zero.
+    </p>
+  </section>
+
+  <section>
+    <h2>The full table</h2>
+    <p class="sub">Click any column heading to sort.</p>
+    <div class="tablewrap">
+      <table id="tbl">
+        <thead><tr>
+          <th data-k="c">Country</th>
+          <th data-k="f">Fuel</th>
+          <th data-k="d">Direction</th>
+          <th data-k="x" class="num">Crossed</th>
+          <th data-k="pkp" class="num">Peak</th>
+          <th data-k="now" class="num">Latest</th>
+          <th data-k="cons" class="num">Consumption</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="note">
+      Consumption is thousand barrels per day for oil and billion cubic metres per year for
+      gas. The two are different measures of flow and must not be added together or compared
+      with each other.
+    </p>
+  </section>
+
+  <section class="method">
+    <h2>How this was measured</h2>
+
+    <p>
+      <strong>The measure.</strong> Self-sufficiency is production divided by consumption,
+      as a percentage, for one country, one fuel and one year. Above 100% a country produces
+      more of that fuel than it burns. It is not a measure of energy security or of trade
+      balance: a country can produce more than it consumes and still import, and this says
+      nothing about electricity, coal, nuclear or renewables.
+    </p>
+
+    <h3>What counts as a flip</h3>
+    <p>
+      A country–fuel pair qualifies only if it sustained a three-year average above 110% at
+      some point and its latest three years average below 90% — or the reverse. Requiring a
+      gap on both sides of the line keeps out series that merely hover at it. The crossing
+      year is the first year after which the series never returns to the old side, so a
+      one-year dip does not count as a flip. One pair, Papua New Guinea's oil, met the
+      magnitude test but has no permanent crossing: it is still oscillating, and it is
+      excluded from the counts.
+    </p>
+    <p>
+      "Peak" is the highest three-year average anywhere in the series, not the first
+      observation. That distinction matters: Britain's oil self-sufficiency in 1990 was only
+      102%, and its real peak of 158% came in 1999. Measuring from the start of the record
+      would have missed the textbook case entirely.
+    </p>
+
+    <h3>A publisher convention that had to be removed first</h3>
+    <div class="flag">
+      <p>
+        <strong>Where no trade is reported, the source sets consumption equal to
+        production</strong> — to full floating-point precision. Those rows compute to
+        exactly 100%, which reads as "perfectly balanced" but actually means "no trade
+        data". Egypt's gas in 2000 is recorded as 18.3001727095257 produced and
+        18.3001727095257 consumed. Iraq's gas is identical in every year from 1995 to 2015.
+      </p>
+    </div>
+    <p>
+      This affects 431 of 2,513 gas rows, 17.2%, across 34 countries, and no oil rows at
+      all — oil trade is always reported. Not one row in the data sits at exactly 100%
+      without being identical, so every such reading is a placeholder rather than a genuine
+      balance. Those rows are excluded here. Treating them as observations invents history:
+      smoothing across the edge of Iraq's twenty-year placeholder run produces a 151% gas
+      "export peak" that never happened, and on the uncorrected data Iraq appears in this
+      report. It should not, and does not.
+    </p>
+
+    <h3>What the numbers do not control for</h3>
+    <ul>
+      <li>Petroleum production here is total supply of all liquids, including crude,
+        condensate, natural gas liquids and refinery gain, while consumption is of refined
+        products. A country can look self-sufficient in liquids overall and still import the
+        specific fuels its vehicles burn.</li>
+      <li>Gas is an annual total in billion cubic metres; oil is a daily rate in thousand
+        barrels per day. Percentages are comparable between the fuels; quantities are not.</li>
+      <li>The most recent year is a publisher estimate for an incomplete year and will move
+        in later releases. Crossings dated 2024 and 2025 are the least settled.</li>
+      <li>A flip can be caused by production falling or by demand rising, and the two have
+        very different meanings. China's oil crossing in 1993 was demand; Britain's in 2006
+        was depletion; Syria's and Yemen's were war; Sudan's was the secession of South
+        Sudan in 2011, which took the oilfields and left the pipeline.</li>
+    </ul>
+  </section>
+
+</div>
+
+<footer><div class="wrap">
+  <p><strong>Source:</strong> U.S. Energy Information Administration, international energy
+     statistics (petroleum and other liquids; dry natural gas), production and consumption
+     by country, 1990–2025. U.S. Government work, public domain.</p>
+  <p>Analysis and methodology by YouMine Intelligence. Figures are the publisher's own;
+     the crossing dates, peak detection and the exclusion of unreported-trade rows are ours
+     and are described above in full.</p>
+</div></footer>
+
+<div id="tip" role="status" aria-live="polite"></div>
+
+<script id="flips" type="application/json">
+[{"c":"United States","d":"gained","f":"oil","k":"rev","v":[43,44,42,56,53,53,52,51,49,46,46,46,46,44,42,40,40,41,44,49,51,54,60,65,74,78,75,79,87,95,102,96,102,109,112,114],"x":2022,"pk":null,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":112,"pkp":113,"cons":20736},
+{"c":"Brazil","d":"gained","f":"oil","k":"rev","v":[49,56,54,42,41,39,42,42,47,52,58,61,69,73,73,78,82,78,94,98,100,96,91,89,94,101,108,111,115,122,134,124,126,136,131,144],"x":2015,"pk":null,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":137,"pkp":137,"cons":3241},
+{"c":"United States","d":"gained","f":"gas","k":"rev","v":[93,90,88,87,89,84,83,83,86,84,82,88,82,86,83,82,85,83,87,90,88,94,94,93,97,99,97,101,102,109,110,113,112,116,114,117],"x":2017,"pk":null,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":116,"pkp":116,"cons":949},
+{"c":"Argentina","d":"gained","f":"oil","k":"rev","v":[128,128,138,129,162,177,177,184,171,184,157,176,191,177,159,147,139,127,117,119,103,97,91,86,89,86,87,87,90,95,107,96,102,104,116,133],"x":2022,"pk":null,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":118,"pkp":182,"cons":737},
+{"c":"Ghana","d":"gained","f":"oil","k":"rev","v":[5,23,23,25,27,26,23,19,19,18,18,20,17,17,16,15,12,12,110,89,104,120,115,107,178,197,213,211,170,176,158,159,158],"x":2013,"pk":null,"y0":1992,"yr":[1992,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":158,"pkp":207,"cons":118},
+{"c":"Kazakhstan","d":"gained","f":"gas","k":"rev","v":[40,45,30,44,29,44,41,34,64,70,88,79,66,109,128,81,83,133,151,147,157,145,153,156,147,146,153,160,134,145,129,129,117,107],"x":2009,"pk":null,"y0":1992,"yr":[1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":118,"pkp":153,"cons":26},
+{"c":"Guyana","d":"gained","f":"oil","k":"new","v":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,424,622,1079,1523,2103,3770],"x":2020,"pk":null,"y0":1990,"yr":[1990,1991,1992,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":2465,"pkp":2937,"cons":20},
+{"c":"Niger","d":"gained","f":"oil","k":"new","v":[0,0,0,0,0,0,0,0,0,0,84,174,183,167,107,107,131,129,106,100,92,66,64,170,604],"x":2024,"pk":null,"y0":1990,"yr":[1990,1991,1992,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":279,"pkp":387,"cons":17},
+{"c":"Chad","d":"gained","f":"oil","k":"new","v":[0,0,0,2060,10369,9435,8546,7088,5966,5124,3311,3017,1556,1430,1660,1673,1577,1184,1010,958,872,679,702,859,909,781],"x":2003,"pk":null,"y0":1990,"yr":[1990,1991,1992,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":850,"pkp":9450,"cons":16},
+{"c":"Israel","d":"gained","f":"gas","k":"rev","v":[41,42,78,93,89,99,98,95,93,95,92,131,158,176,196,198,189],"x":2020,"pk":null,"y0":2009,"yr":[2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":194,"pkp":194,"cons":14},
+{"c":"Azerbaijan","d":"gained","f":"gas","k":"rev","v":[53,62,68,73,72,65,85,57,56,50,56,60,114,154,157,150,165,153,176,174,165,164,164,170,201,211,241,247,252,288,324],"x":2007,"pk":null,"y0":1992,"yr":[1992,1993,1994,1995,1996,1997,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":288,"pkp":306,"cons":12},
+{"c":"Denmark","d":"gained","f":"gas","k":"rev","v":[152,170,168,163,160,147,153,162,155,154,159,164,164,154,182,209,204,202,219,191,165,157,147,130,146,144,139,155,135,110,65,64,86,90,98,158],"x":2025,"pk":null,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":115,"pkp":209,"cons":2},
+{"c":"China","d":"lost","f":"oil","k":"rev","v":[119,117,106,97,92,88,83,88,78,73,70,68,64,58,55,55,52,51,52,49,50,49,48,47,46,44,40,37,35,34,34,33,33,32,31,32],"x":1993,"pk":1990,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":32,"pkp":118,"cons":17163},
+{"c":"Indonesia","d":"lost","f":"oil","k":"rev","v":[236,239,223,208,215,212,193,173,177,160,122,116,106,95,83,80,80,73,73,70,71,60,54,54,51,51,61,54,50,53,58,55,50,52,50,48],"x":2003,"pk":1990,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":50,"pkp":238,"cons":1779},
+{"c":"United Kingdom","d":"lost","f":"oil","k":"rev","v":[102,100,101,117,148,154,150,152,158,162,153,143,143,130,118,105,96,98,92,91,86,73,65,61,60,65,67,65,72,75,90,74,64,58,52,54],"x":2006,"pk":1999,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":55,"pkp":158,"cons":1413},
+{"c":"Egypt","d":"lost","f":"oil","k":"rev","v":[188,192,198,213,196,191,171,157,146,144,127,126,124,124,104,99,97,93,92,88,89,91,87,88,83,84,82,92,102,110,101,83,79,73,70,73],"x":2021,"pk":1993,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":72,"pkp":202,"cons":829},
+{"c":"Malaysia","d":"lost","f":"oil","k":"rev","v":[238,232,221,188,184,193,174,162,170,162,152,153,161,157,152,152,143,124,131,115,123,105,109,89,91,102,105,106,104,95,107,110,91,81,74,85],"x":2022,"pk":1990,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":80,"pkp":235,"cons":712},
+{"c":"Vietnam","d":"lost","f":"oil","k":"rev","v":[94,143,173,164,167,161,151,158,184,196,202,190,167,162,148,140,141,113,105,107,88,86,96,93,85,90,75,62,53,46,44,43,36,34,31,30],"x":2010,"pk":2000,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":32,"pkp":196,"cons":654},
+{"c":"China","d":"lost","f":"gas","k":"rev","v":[103,103,103,103,103,103,110,115,113,114,107,110,109,106,107,107,104,98,99,95,88,79,76,73,70,70,69,65,60,60,60,57,61,61,61,64],"x":2007,"pk":1998,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":62,"pkp":114,"cons":432},
+{"c":"Denmark","d":"lost","f":"oil","k":"rev","v":[63,74,85,84,87,84,88,102,107,136,173,163,188,199,226,213,185,168,159,159,147,135,130,115,108,102,90,91,76,68,58,51,49,46,45,56],"x":2016,"pk":2004,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":49,"pkp":212,"cons":140},
+{"c":"Uzbekistan","d":"lost","f":"oil","k":"rev","v":[35,44,81,90,117,124,124,133,124,121,121,108,165,157,152,156,160,128,81,80,77,82,83,80,71,53,47,42,38,36,44,37,35,45],"x":2010,"pk":2005,"y0":1992,"yr":[1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":39,"pkp":158,"cons":111},
+{"c":"Tunisia","d":"lost","f":"oil","k":"rev","v":[157,160,158,138,126,130,123,104,105,106,91,83,87,78,79,78,76,104,93,92,90,83,77,73,56,39,43,41,39,37,37,41,36,35,30,26],"x":2008,"pk":1990,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":30,"pkp":159,"cons":107},
+{"c":"Bolivia","d":"lost","f":"oil","k":"rev","v":[104,102,106,95,109,115,121,111,115,91,92,113,111,96,103,108,126,116,124,111,113,96,115,118,125,99,96,88,63,56,63,69,61,55,52,51],"x":2015,"pk":2007,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":53,"pkp":122,"cons":102},
+{"c":"Sudan","d":"lost","f":"oil","k":"rev","v":[9,20,37,238,390,431,411,430,442,384,362,469,431,430,425,421,89,136,112,90,78,73,53,53,52,49,45,72,61,32],"x":2015,"pk":2008,"y0":1996,"yr":[1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":55,"pkp":443,"cons":101},
+{"c":"Cote d'Ivoire","d":"lost","f":"oil","k":"rev","v":[6,7,5,21,24,24,53,50,37,33,24,21,54,91,95,115,241,198,209,228,167,180,121,102,91,71,82,79,73,72,68,43,37,34,40,61],"x":2014,"pk":2007,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":45,"pkp":216,"cons":92},
+{"c":"Syria","d":"lost","f":"oil","k":"rev","v":[188,277,261,277,265,276,261,246,240,234,241,254,275,279,183,133,119,108,106,120,124,106,66,37,21,18,19,19,18,24,35,67,78,57,62,98],"x":2012,"pk":1994,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":72,"pkp":273,"cons":83},
+{"c":"United Arab Emirates","d":"lost","f":"gas","k":"rev","v":[118,116,113,117,119,126,124,125,122,123,122,121,119,118,115,114,113,102,85,83,85,77,83,82,82,83,82,80,81,83,81,82,82,82,83,82],"x":2008,"pk":1996,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":83,"pkp":125,"cons":75},
+{"c":"Yemen","d":"lost","f":"oil","k":"rev","v":[250,246,215,319,528,483,485,479,449,661,444,414,411,355,334,315,298,246,216,196,222,183,166,131,102,49,30,38,43,54,57,54,42,12,13,22],"x":2015,"pk":1998,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":16,"pkp":530,"cons":68},
+{"c":"United Kingdom","d":"lost","f":"gas","k":"rev","v":[85,90,91,96,97,99,100,101,102,107,113,111,108,108,97,92,88,79,74,67,60,58,53,50,53,56,52,53,51,51,53,43,52,53,49,48],"x":2004,"pk":2001,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":50,"pkp":111,"cons":62},
+{"c":"Egypt","d":"lost","f":"gas","k":"rev","v":[100,101,103,124,145,140,140,141,133,121,114,110,101,92,84,88,99,110,100,101,108,96,80,67],"x":2023,"pk":2007,"y0":1992,"yr":[1992,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":81,"pkp":142,"cons":60},
+{"c":"Uzbekistan","d":"lost","f":"gas","k":"rev","v":[138,103,136,126,118,119,137,138,132,140,124,122,119,124,125,129,129,133,132,123,120,128,116,116,124,121,129,131,110,109,101,91,81,78],"x":2023,"pk":2000,"y0":1992,"yr":[1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":83,"pkp":136,"cons":56},
+{"c":"Mauritania","d":"lost","f":"oil","k":"rev","v":[0,0,308,139,91,81,61,52,40,46,34,30,27,0,0,0,0,0,0,0,0,0],"x":2008,"pk":2007,"y0":2004,"yr":[2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":0,"pkp":179,"cons":39},
+{"c":"Congo-Kinshasa","d":"lost","f":"oil","k":"rev","v":[141,130,107,91,124,137,136,133,131,127,289,354,288,267,262,195,166,164,161,206,137,108,109,75,55,95,120,107,108,95,90,87,62,77,65,42],"x":2019,"pk":2001,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":61,"pkp":310,"cons":38},
+{"c":"Netherlands","d":"lost","f":"gas","k":"rev","v":[175,174,183,178,175,173,177,167,162,154,148,156,152,146,168,158,162,163,172,161,161,168,176,187,174,135,125,104,91,75,55,52,55,38,32,30],"x":2018,"pk":2013,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":33,"pkp":179,"cons":31},
+{"c":"Albania","d":"lost","f":"oil","k":"rev","v":[150,106,49,66,76,61,78,58,50,70,26,24,26,22,23,23,32,36,37,38,53,65,83,88,94,93,73,64,67,72,85,67,60,58,61,51],"x":1992,"pk":1990,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":57,"pkp":128,"cons":24},
+{"c":"Suriname","d":"lost","f":"oil","k":"rev","v":[37,36,55,52,59,72,95,81,96,101,100,103,90,114,93,101,100,117,109,107,93,117,99,100,97,106,114,104,104,85,86,77,70,76,67,54],"x":2019,"pk":2008,"y0":1990,"yr":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":66,"pkp":111,"cons":21},
+{"c":"Colombia","d":"lost","f":"gas","k":"rev","v":[101,120,121,124,124,118,120,108,103,99,100,97,98,97,99,99,92,81,79],"x":2016,"pk":2010,"y0":2007,"yr":[2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":84,"pkp":123,"cons":12},
+{"c":"Timor-Leste","d":"lost","f":"oil","k":"rev","v":[3863,7132,8407,7052,7060,6052,5069,5549,5111,2221,1249,1273,872,593,410,521,330,288,229,116,37,35],"x":2024,"pk":2006,"y0":2004,"yr":[2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025],"now":63,"pkp":7530,"cons":6}]
+</script>
+
+<script>
+(function(){
+"use strict";
+var DATA = JSON.parse(document.getElementById('flips').textContent);
+var SVGNS = 'http://www.w3.org/2000/svg';
+var tip = document.getElementById('tip');
+
+/* ---------- theme ---------- */
+var btn = document.getElementById('theme');
+function sysDark(){ return window.matchMedia('(prefers-color-scheme: dark)').matches; }
+var forced = null;
+try { forced = localStorage.getItem('ef-theme'); } catch(e){}
+if (forced) document.documentElement.setAttribute('data-theme', forced);
+function syncBtn(){
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+             (!document.documentElement.hasAttribute('data-theme') && sysDark());
+  btn.textContent = dark ? 'Light' : 'Dark';
+}
+syncBtn();
+btn.addEventListener('click', function(){
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+             (!document.documentElement.hasAttribute('data-theme') && sysDark());
+  var next = dark ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem('ef-theme', next); } catch(e){}
+  syncBtn(); drawAll();
+});
+
+/* ---------- helpers ---------- */
+function el(n, a){ var e = document.createElementNS(SVGNS, n); for (var k in a) e.setAttribute(k, a[k]); return e; }
+function fuelUnit(f){ return f === 'oil' ? 'kb/d' : 'bcm/yr'; }
+/* Short forms for the compact grid only; the table keeps the publisher's name. */
+var SHORT = {'United Arab Emirates':'UAE','Congo-Kinshasa':'DR Congo'};
+function shortName(c){ return SHORT[c] || c; }
+function col(d){ return d === 'lost' ? 'var(--lost)' : 'var(--gain)'; }
+function fmt(n){ return n.toLocaleString('en-US'); }
+
+/* one decade either side of 100% -> 0..1, 0.5 is 100% */
+var DEC = 1;
+function pos(p){
+  if (p <= 0) return {t:0, off:true};
+  var d = Math.log10(p/100);
+  var c = Math.max(-DEC, Math.min(DEC, d));
+  return {t: 0.5 + c/(2*DEC), off: Math.abs(d) > DEC};
+}
+
+function showTip(e, html){
+  tip.innerHTML = html; tip.style.opacity = 1;
+  var r = tip.getBoundingClientRect();
+  var x = e.clientX + 14, y = e.clientY - r.height - 10;
+  if (x + r.width > window.innerWidth - 8) x = e.clientX - r.width - 14;
+  if (y < 8) y = e.clientY + 18;
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+function hideTip(){ tip.style.opacity = 0; }
+
+function bindTip(node, html){
+  node.addEventListener('mouseenter', function(e){ showTip(e, html); });
+  node.addEventListener('mousemove', function(e){ showTip(e, html); });
+  node.addEventListener('click', function(e){ e.stopPropagation(); showTip(e, html); });
+  node.addEventListener('mouseleave', hideTip);
+}
+
+function rowTip(d){
+  return '<b>' + d.c + '</b> · ' + d.f +
+    '<br><span class="m">' + (d.d === 'lost' ? 'lost' : 'gained') +
+    ' self-sufficiency in ' + d.x + '</span>' +
+    '<br><span class="m">peak ' + d.pkp + '%' + (d.pk ? ' in ' + d.pk : '') +
+    ' → now ' + d.now + '%</span>' +
+    '<br><span class="m">burns ' + fmt(d.cons) + ' ' + fuelUnit(d.f) + '</span>';
+}
+
+/* ---------- 1. timeline ---------- */
+function drawTimeline(){
+  var svg = document.getElementById('timeline');
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+  var W = svg.clientWidth || 900;
+  var mL = 8, mR = 8, mT = 30;
+  var R = W < 520 ? 5.5 : 7.5;
+  var gap = W < 520 ? 2.5 : 4;
+  var step = 2*R + gap;
+
+  var byYear = {};
+  DATA.forEach(function(d){
+    if (!byYear[d.x]) byYear[d.x] = {lost:[], gained:[]};
+    byYear[d.x][d.d].push(d);
+  });
+  var years = Object.keys(byYear).map(Number);
+  var y0 = 1990, y1 = 2025;
+  var maxUp = 0, maxDn = 0;
+  years.forEach(function(y){
+    maxUp = Math.max(maxUp, byYear[y].lost.length);
+    maxDn = Math.max(maxDn, byYear[y].gained.length);
+  });
+
+  var innerW = W - mL - mR;
+  var midY    = mT + maxUp*step + 10;
+  var dotsBot = midY + 12 + maxDn*step;
+  var capY    = dotsBot + 20;          /* "gained" caption row */
+  var axisY   = capY + 20;             /* year labels, clear of every dot  */
+  var H = axisY + 8;
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svg.setAttribute('height', H);
+
+  function xOf(y){ return mL + ((y - y0 + 0.5) / (y1 - y0 + 1)) * innerW; }
+
+  /* five-year gridlines, behind everything */
+  for (var y = 1990; y <= 2025; y++){
+    if (y % 5 !== 0) continue;
+    var tx = xOf(y);
+    svg.appendChild(el('line', {x1:tx, x2:tx, y1:mT-14, y2:dotsBot+6, 'class':'grid'}));
+    var tl = el('text', {x:tx, y:axisY, 'text-anchor':'middle', 'class':'ax'});
+    tl.textContent = y; svg.appendChild(tl);
+  }
+
+  /* centre line = the self-sufficiency threshold */
+  svg.appendChild(el('line', {x1:mL, x2:W-mR, y1:midY, y2:midY,
+    stroke:'var(--rule-2)', 'stroke-width':1.5}));
+
+  /* side captions, on their own rows so nothing can collide */
+  var up = el('text', {x:mL, y:mT-20, 'class':'axl'});
+  up.textContent = '↑ lost self-sufficiency'; svg.appendChild(up);
+  var dn = el('text', {x:mL, y:capY, 'class':'axl'});
+  dn.textContent = '↓ gained self-sufficiency'; svg.appendChild(dn);
+
+  /* dots — identity comes from the legend and from hover, never from
+     crowded inline labels, which collided at every width tested */
+  years.forEach(function(yr){
+    ['lost','gained'].forEach(function(dir){
+      byYear[yr][dir].forEach(function(d, i){
+        var cx = xOf(yr);
+        var cy = dir === 'lost' ? midY - 12 - i*step - R : midY + 12 + i*step + R;
+        var c = el('circle', {cx:cx, cy:cy, r:R, fill:col(dir), 'class':'dot'});
+        bindTip(c, rowTip(d));
+        svg.appendChild(c);
+      });
+    });
+  });
+}
+
+/* ---------- 2. panel line drawing ---------- */
+function drawPanel(svg, d, opts){
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  var W = svg.clientWidth || 200;
+  var H = opts.h;
+  var mL = opts.axis ? 30 : 2, mR = 6, mT = 7, mB = opts.axis ? 17 : 11;
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svg.setAttribute('height', H);
+
+  var iw = W - mL - mR, ih = H - mT - mB;
+  var yrs = d.yr, vals = d.v;
+  var ya = yrs[0], yb = yrs[yrs.length-1];
+  function X(y){ return mL + ((y - ya) / Math.max(1, yb - ya)) * iw; }
+  function Y(t){ return mT + (1 - t) * ih; }
+
+  /* reference lines */
+  [[10,'0.1×'],[100,'100%'],[1000,'10×']].forEach(function(r){
+    var t = pos(r[0]).t;
+    var isBase = r[0] === 100;
+    svg.appendChild(el('line', {
+      x1:mL, x2:W-mR, y1:Y(t), y2:Y(t),
+      'class': isBase ? 'base' : 'grid'
+    }));
+    if (opts.axis){
+      var tl = el('text', {x:mL-6, y:Y(t)+3.5, 'text-anchor':'end', 'class':'ax'});
+      tl.textContent = r[1]; svg.appendChild(tl);
+    }
+  });
+
+  /* path */
+  var dstr = '', offs = [];
+  for (var i = 0; i < vals.length; i++){
+    var p = pos(vals[i]);
+    var px = X(yrs[i]), py = Y(p.t);
+    dstr += (i ? 'L' : 'M') + px.toFixed(1) + ' ' + py.toFixed(1);
+    if (p.off) offs.push([px, py]);
+  }
+  svg.appendChild(el('path', {d:dstr, fill:'none', stroke:col(d.d),
+    'stroke-width':2, 'stroke-linejoin':'round', 'stroke-linecap':'round'}));
+
+  /* Off-scale carets, ONE per contiguous run. Marking every clamped point
+     drew a zigzag scribble along the edge wherever a series sat at zero for
+     years (Guyana and Niger before discovery, Mauritania after shut-in). */
+  var runs = [], cur = null;
+  for (var q = 0; q < vals.length; q++){
+    if (pos(vals[q]).off){ if (!cur) cur = []; cur.push(q); }
+    else if (cur){ runs.push(cur); cur = null; }
+  }
+  if (cur) runs.push(cur);
+  offs = runs.map(function(r){
+    var mid = r[Math.floor(r.length/2)];
+    return [X(yrs[mid]), Y(pos(vals[mid]).t)];
+  });
+
+  offs.forEach(function(o){
+    var up = o[1] < Y(0.5);
+    var k = el('path', {
+      d: up ? 'M' + (o[0]-3) + ' ' + (o[1]+3) + 'L' + o[0] + ' ' + (o[1]-1) + 'L' + (o[0]+3) + ' ' + (o[1]+3)
+            : 'M' + (o[0]-3) + ' ' + (o[1]-3) + 'L' + o[0] + ' ' + (o[1]+1) + 'L' + (o[0]+3) + ' ' + (o[1]-3),
+      fill:'none', stroke:col(d.d), 'stroke-width':1.5, 'stroke-linecap':'round'
+    });
+    svg.appendChild(k);
+  });
+
+  /* crossing marker */
+  var xi = yrs.indexOf(d.x);
+  if (xi === -1){ for (var j=0;j<yrs.length;j++){ if (yrs[j] >= d.x){ xi = j; break; } } }
+  if (xi > -1){
+    var cx = X(yrs[xi]), cy = Y(pos(vals[xi]).t);
+    svg.appendChild(el('circle', {cx:cx, cy:cy, r:4.5, fill:'var(--surface)',
+      stroke:col(d.d), 'stroke-width':2}));
+  }
+
+  /* axis years */
+  if (opts.axis){
+    [ya, yb].forEach(function(y, i){
+      var t = el('text', {x:X(y), y:H-4, 'text-anchor': i ? 'end':'start', 'class':'ax'});
+      t.textContent = y; svg.appendChild(t);
+    });
+  }
+
+  /* hover band: nearest year */
+  var hit = el('rect', {x:mL, y:mT, width:iw, height:ih, fill:'transparent'});
+  hit.style.cursor = 'crosshair';
+  var onHover = function(e){
+    var r = svg.getBoundingClientRect();
+    var rel = (e.clientX - r.left) * (W / r.width);
+    var frac = (rel - mL) / iw;
+    var yy = ya + frac * (yb - ya);
+    var best = 0, bd = 1e9;
+    for (var i=0;i<yrs.length;i++){ var dd = Math.abs(yrs[i]-yy); if (dd<bd){bd=dd;best=i;} }
+    showTip(e, '<b>' + d.c + '</b> · ' + d.f + '<br><span class="m">' + yrs[best] +
+      ': ' + vals[best] + '% of own demand</span>');
+  };
+  hit.addEventListener('mousemove', onHover);
+  hit.addEventListener('click', function(e){ e.stopPropagation(); onHover(e); });
+  hit.addEventListener('mouseleave', hideTip);
+  svg.appendChild(hit);
+}
+
+/* ---------- 3. featured ---------- */
+var FEAT = [
+  ['China','oil','Demand, not depletion. Chinese production kept rising; consumption rose far faster. It now burns 17.2 million barrels a day and produces under a third of them.'],
+  ['United States','oil','The shale reversal. From 40% in 2005 to a durable crossing in 2022 — the largest swing in the dataset, on the largest demand in the world.'],
+  ['United Kingdom','oil','The North Sea peaked in 1999 at 158%, not in 1990. Britain has imported oil since 2006 and gas since 2004.'],
+  ['Indonesia','oil','An OPEC member that became a net importer in 2003, announced its exit from the organisation in 2008 and suspended its membership from 2009. It now produces half what it burns.'],
+  ['Netherlands','gas','Groningen. Production peaked in 2013, earthquakes forced the wind-down, and the country that built Europe’s gas market now makes under a third of its own.'],
+  ['Brazil','oil','Pre-salt. A steady two-decade climb from 39% to 144%, crossing for good in 2015.'],
+  ['Egypt','oil','A slow slide from 202% in 1993, crossing in 2021 — and its gas followed in 2023.'],
+  ['Guyana','oil','From no oil at all to 24 times its own demand in six years. The sharpest arrival in the record.']
+];
+function buildFeatured(){
+  var host = document.getElementById('featured');
+  host.innerHTML = '';
+  FEAT.forEach(function(f){
+    var d = DATA.filter(function(r){ return r.c === f[0] && r.f === f[1]; })[0];
+    if (!d) return;
+    var cell = document.createElement('div');
+    cell.className = 'fcell';
+    cell.innerHTML =
+      '<h3>' + d.c + '<span class="fuel ' + d.f + '">' + d.f + '</span></h3>' +
+      '<p class="meta" style="font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin:0 0 9px">' +
+        (d.d === 'lost' ? 'crossed down ' : 'crossed up ') + d.x +
+        ' · ' + d.pkp + '% → ' + d.now + '%</p>' +
+      '<svg role="img" aria-label="' + d.c + ' ' + d.f + ' self-sufficiency, ' +
+        d.yr[0] + ' to ' + d.yr[d.yr.length-1] + '"></svg>' +
+      '<p class="story">' + f[2] + '</p>';
+    host.appendChild(cell);
+    drawPanel(cell.querySelector('svg'), d, {h:124, axis:true});
+  });
+}
+
+/* ---------- 4. small multiples ---------- */
+function buildSmall(){
+  var host = document.getElementById('smallmult');
+  host.innerHTML = '';
+  DATA.forEach(function(d){
+    var cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.innerHTML =
+      '<h3>' + shortName(d.c) + '<span class="fuel ' + d.f + '">' + d.f + '</span></h3>' +
+      '<p class="meta">' + (d.d === 'lost' ? '↓' : '↑') + ' ' + d.x + '</p>' +
+      '<svg role="img" aria-label="' + d.c + ' ' + d.f + ', ' + d.pkp + '% to ' + d.now + '%"></svg>' +
+      '<p class="ba"><b>' + d.pkp + '%</b> → <b>' + d.now + '%</b></p>';
+    host.appendChild(cell);
+    drawPanel(cell.querySelector('svg'), d, {h:64, axis:false});
+  });
+  /* fill the last row so the grid does not end in a bare slab of gutter */
+  var probe = host.firstChild;
+  if (probe){
+    var perRow = Math.max(1, Math.round(host.clientWidth / probe.getBoundingClientRect().width));
+    var short = (perRow - (DATA.length % perRow)) % perRow;
+    for (var i = 0; i < short; i++){
+      var f = document.createElement('div');
+      f.className = 'cell'; f.setAttribute('aria-hidden','true');
+      host.appendChild(f);
+    }
+  }
+}
+
+/* ---------- 5. table ---------- */
+var sortK = 'cons', sortAsc = false;
+function buildTable(){
+  var tb = document.querySelector('#tbl tbody');
+  var rows = DATA.slice().sort(function(a,b){
+    var x = a[sortK], y = b[sortK];
+    if (typeof x === 'string') return sortAsc ? x.localeCompare(y) : y.localeCompare(x);
+    return sortAsc ? x - y : y - x;
+  });
+  tb.innerHTML = '';
+  rows.forEach(function(d){
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + d.c + '</td>' +
+      '<td>' + d.f + '</td>' +
+      '<td><span class="tag ' + (d.d === 'lost' ? 'l' : 'g') + '">' + d.d + '</span></td>' +
+      '<td class="num">' + d.x + '</td>' +
+      '<td class="num">' + d.pkp + '%' + (d.pk ? ' <span style="color:var(--ink-3)"> ' + d.pk + '</span>' : '') + '</td>' +
+      '<td class="num">' + d.now + '%</td>' +
+      '<td class="num">' + fmt(d.cons) + ' <span style="color:var(--ink-3)">' + fuelUnit(d.f) + '</span></td>';
+    tb.appendChild(tr);
+  });
+}
+Array.prototype.forEach.call(document.querySelectorAll('#tbl th'), function(th){
+  th.addEventListener('click', function(){
+    var k = th.getAttribute('data-k');
+    if (k === sortK) sortAsc = !sortAsc; else { sortK = k; sortAsc = (k === 'c' || k === 'f' || k === 'd'); }
+    buildTable();
+  });
+});
+
+/* ---------- boot ---------- */
+function drawAll(){ drawTimeline(); buildFeatured(); buildSmall(); }
+drawAll();
+buildTable();
+document.addEventListener('click', hideTip);
+
+var rt;
+window.addEventListener('resize', function(){
+  clearTimeout(rt); rt = setTimeout(drawAll, 140);
+});
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ syncBtn(); drawAll(); });
+})();
+</script>
+</body>
+</html>

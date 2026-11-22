@@ -4,6 +4,11 @@ dotenv.config(); // Explicitly load .env files from project root
 
 const nextConfig = {
   reactStrictMode: true,
+  // The intelligence report HTML is read from disk at request time, so it must be traced into the build.
+  outputFileTracingIncludes: {
+    "/admin/intelligence/raw/[slug]": ["./app/reports/*.html"],
+    "/embed/reserves": ["./app/intelligence/tokens.css"],
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },
