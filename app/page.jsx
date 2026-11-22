@@ -1001,10 +1001,9 @@ export default async function HomePage() {
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(2,6,23,0.94)_0%,rgba(2,6,23,0.78)_48%,rgba(2,6,23,0.3)_100%)]" />
         <div className="home-hero-copy mx-auto w-full max-w-6xl px-5 py-12 sm:px-8 sm:py-20">
           <div className="max-w-3xl">
-            <p data-home-hero-step="1" className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">YouMine · {marketName}</p>
-            <h1 data-home-hero-step="2" className="mt-5 max-w-2xl text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">The resources industry, connected.</h1>
-            <p data-home-hero-step="3" className="mt-5 max-w-2xl text-base leading-7 text-slate-100 sm:text-lg sm:leading-8">{copy.heroDescription}</p>
-            <div data-home-hero-step="4" className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <h1 data-home-hero-step="1" className="max-w-2xl text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">The resources industry, connected.</h1>
+            <p data-home-hero-step="2" className="mt-5 max-w-2xl text-base leading-7 text-slate-100 sm:text-lg sm:leading-8">{copy.heroDescription}</p>
+            <div data-home-hero-step="3" className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="#find-expertise" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-cyan-300 px-5 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">
                 Find a consultant <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
               </Link>
