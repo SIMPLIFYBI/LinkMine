@@ -310,7 +310,7 @@ export default function MapReports({ reports, charts = [], initialId }) {
                 </li>
               ))}
               <li>
-                <Link href="/admin/intelligence/reserves?c=CU">
+                <Link href="/intelligence/reserves?c=CU">
                   <span>Years of reserves left</span>
                   <small>Every country, any commodity</small>
                 </Link>
@@ -320,7 +320,7 @@ export default function MapReports({ reports, charts = [], initialId }) {
         ) : null}
 
         <p className="yi-lib__more">
-          <Link href="/admin/intelligence/data">Build your own view</Link>
+          <Link href="/intelligence/data">Build your own view</Link>
         </p>
       </nav>
 

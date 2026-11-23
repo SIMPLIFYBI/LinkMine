@@ -9,7 +9,8 @@ export default function ConditionalTicker() {
   if (
     pathname?.startsWith("/vault") ||
     pathname?.startsWith("/talenthub") ||
-    pathname?.startsWith("/admin/intelligence")
+    pathname?.startsWith("/admin/intelligence") ||
+    pathname?.startsWith("/intelligence")
   ) {
     return null;
   }

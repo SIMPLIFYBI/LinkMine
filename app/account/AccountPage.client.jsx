@@ -227,7 +227,7 @@ export default function AccountPageClient({ initialTab = "account" }) {
               Analytics
             </Link>
             <Link
-              href="/admin/intelligence"
+              href="/intelligence"
               className="rounded-full border border-violet-400/35 bg-violet-500/15 px-5 py-2 text-sm font-semibold text-violet-100 shadow-sm hover:bg-violet-500/25"
             >
               Intelligence

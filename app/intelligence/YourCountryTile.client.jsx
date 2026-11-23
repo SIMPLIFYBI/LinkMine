@@ -53,7 +53,7 @@ export default function YourCountryTile({ ranks, countries }) {
       )}
       <p className="yi-tile__foot">
         Best reserve ranks among the {ranks.filter((r) => r.iso === iso).length} commodities where {name} has both figures.{" "}
-        <a href={`/admin/intelligence/reserves?c=${(top[0] || ranks[0])?.code}&h=${iso}`}>Open in Data</a>
+        <a href={`/intelligence/reserves?c=${(top[0] || ranks[0])?.code}&h=${iso}`}>Open in Data</a>
       </p>
     </article>
   );

@@ -138,14 +138,14 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--gain); outline
 .chart{background:var(--surface); border:1px solid var(--rule); padding:1rem}
 .axis{display:flex; margin:0 0 .35rem; font-family:var(--font-data); font-size:.6875rem;
   color:var(--ink-3); font-variant-numeric:tabular-nums}
-.axis .pad{flex:0 0 var(--lab,14rem); min-width:0; text-align:right;
+.axis .pad{flex:0 0 var(--lab,16rem); min-width:0; text-align:right;
   padding-right:.5rem; letter-spacing:.07em; text-transform:uppercase}
 .axis .ticks{position:relative; flex:1 1 auto; height:1.1rem; min-width:0}
 .axis .ticks span{position:absolute; transform:translateX(-50%); white-space:nowrap}
 .rows{display:flex; flex-direction:column; gap:.1rem}
 .row{display:flex; align-items:center; gap:.5rem; padding:.2rem 0; min-width:0}
 .row:hover{background:var(--surface-2)}
-.row .lab{flex:0 0 var(--lab,14rem); min-width:0; font-family:var(--font-display); font-size:.84rem;
+.row .lab{flex:0 0 var(--lab,16rem); min-width:0; font-family:var(--font-display); font-size:.84rem;
   display:flex; justify-content:space-between; gap:.5rem; align-items:baseline}
 .row .lab .c{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .row .lab .rk{font-family:var(--font-data); font-size:.66rem; color:var(--ink-3);
@@ -261,8 +261,9 @@ tbody tr:last-child td{border-bottom:none}
   <h2>How many years of reserves are left</h2>
   <p class="col sub">Known reserves divided by one year of mining. Pick a mineral,
   then highlight a country to find it. The scale is stretched because the range
-  runs from a couple of years to thousands. &ldquo;Res 2 &middot; mine 8&rdquo;
-  means 2nd for reserves, 8th for mining.</p>
+  runs from a couple of years to thousands. Beside each country is its rank:
+  &ldquo;#2 reserves &middot; #8 mining&rdquo; means 2nd in the world for reserves,
+  8th for mining.</p>
   <div class="controls">
     <div class="ctrl"><label for="com">Mineral</label>
       <select id="com"></select></div>
@@ -448,7 +449,7 @@ tbody tr:last-child td{border-bottom:none}
       var right = p > 72;
       return '<div class="row' + (d.k === hl.value ? ' sel' : '') + '" data-i="' + i + '">'
         + '<div class="lab"><span class="c">' + d.k + '</span>'
-        + '<span class="rk">res ' + d.rr + ' &middot; mine ' + d.pr + '</span></div>'
+        + '<span class="rk">#' + d.rr + ' reserves &middot; #' + d.pr + ' mining</span></div>'
         + '<div class="track">' + gridHtml
         + '<div class="stem" style="left:0;width:' + p.toFixed(2) + '%"></div>'
         + '<div class="dot" style="left:' + p.toFixed(2) + '%"></div>'

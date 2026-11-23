@@ -237,7 +237,7 @@ stop looking like the product.
 - [ ] No commercial price series republished
       (`core.price_series.provider_is_commercial`)
 - [ ] First person ("I") for judgement, no "we"/"our"; one `<h1>` only
-- [ ] Byline and author box render (preview it via the admin raw route)
+- [ ] Byline and author box render (preview it at `/intelligence/raw/<slug>`)
 - [ ] Every open issue in `db/intelligence/ISSUES_LOG.md` that touches this
       report's data is fixed or stated on the page
 - [ ] Licence for every source is confirmed in writing (BGS: see issue 8)

@@ -41,8 +41,8 @@ export default async function IntelligenceSocialPage({ searchParams }) {
       </p>
 
       <p className="yi-flag" role="note">
-        Public report pages do not exist yet, so the links below ({PUBLIC_BASE}/&hellip;) will not resolve until the reports are published.
-        Do not post until they do.
+        The links below ({PUBLIC_BASE}/&hellip;) open the public report pages once this is deployed. The reports are still drafts and
+        kept out of search: do not post until each one is cleared for publication.
       </p>
 
       <div className="yi-chips yis-pick" role="group" aria-label="Choose a report">

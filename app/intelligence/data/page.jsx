@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { requireIntelligenceAdmin } from "@/lib/intelligence/adminPage";
 import { getDataCatalog, PublishedDataError } from "@/lib/intelligence/published";
 import DataExplorer from "@/app/intelligence/DataExplorer.client";
 
@@ -21,8 +20,6 @@ const KEYS = ["k", "t", "p", "n", "sm", "v", "f", "to", "h", "y"];
 export default async function DataPage({ searchParams }) {
   const params = await searchParams;
   const initial = Object.fromEntries(KEYS.map((key) => [key, one(params?.[key])]));
-  const query = new URLSearchParams(Object.entries(initial).filter(([, value]) => value)).toString();
-  await requireIntelligenceAdmin(`/admin/intelligence/data${query ? `?${query}` : ""}`);
 
   let catalog = null;
   let problem = null;
@@ -35,14 +32,14 @@ export default async function DataPage({ searchParams }) {
 
   return (
     <main className="yi-wrap yi-wrap--wide">
-      <p className="yi-kicker">Data · Admin only</p>
+      <p className="yi-kicker">Data</p>
       <h1 className="yi-title yi-title--sm">Build a view</h1>
       <p className="yi-lede">
         Choose a measure and a commodity, compare countries over time, and switch between chart, ranking, map and table. Only
         combinations that have data are offered.
       </p>
       <p className="yi-fresh">
-        Looking for one ready-made answer? <Link href="/admin/intelligence/reserves">Years of reserves remaining</Link> ranks every country for a commodity.
+        Looking for one ready-made answer? <Link href="/intelligence/reserves">Years of reserves remaining</Link> ranks every country for a commodity.
       </p>
 
       {problem ? (

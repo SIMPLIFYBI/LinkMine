@@ -1,7 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
-import { getAnalyticsAdminContext } from "@/lib/adminAnalyticsAuth";
 import { getReport } from "@/lib/intelligence/reports";
 import { injectAuthor } from "@/lib/intelligence/byline";
 
@@ -24,10 +23,8 @@ const CSP = [
   "frame-ancestors 'self'",
 ].join("; ");
 
+// Public: anyone with the URL can read a report. noindex keeps drafts out of search until publication.
 export async function GET(_request, { params }) {
-  const gate = await getAnalyticsAdminContext();
-  if (!gate.ok) return new NextResponse(gate.error, { status: gate.status });
-
   const { slug } = await params;
   const report = getReport(slug);
   if (!report) return new NextResponse("Not found", { status: 404 });
@@ -39,7 +36,7 @@ export async function GET(_request, { params }) {
   return new NextResponse(html, {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "private, no-store",
+      "Cache-Control": "no-store",
       "Content-Security-Policy": CSP,
       "X-Content-Type-Options": "nosniff",
       "X-Robots-Tag": "noindex, nofollow",

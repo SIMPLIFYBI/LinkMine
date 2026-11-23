@@ -1,4 +1,3 @@
-import { requireIntelligenceAdmin } from "@/lib/intelligence/adminPage";
 import { getReservesToProduction, PublishedDataError } from "@/lib/intelligence/published";
 import ReservesExplorer from "./ReservesExplorer.client";
 
@@ -22,10 +21,6 @@ export default async function ReservesPage({ searchParams }) {
   const state = { c: one(params?.c), h: one(params?.h), v: one(params?.v) };
   const initial = { code: state.c, highlight: state.h, view: state.v };
 
-  // Keep the chart state through the sign-in redirect so a shared link still lands on the same view.
-  const query = new URLSearchParams(Object.entries(state).filter(([, value]) => value)).toString();
-  await requireIntelligenceAdmin(`/admin/intelligence/reserves${query ? `?${query}` : ""}`);
-
   let data = null;
   let problem = null;
   try {
@@ -37,7 +32,7 @@ export default async function ReservesPage({ searchParams }) {
 
   return (
     <main className="yi-wrap">
-      <p className="yi-kicker">YouMine Intelligence · Admin only · Native chart</p>
+      <p className="yi-kicker">YouMine Intelligence · Data</p>
       <h1 className="yi-title">Years of reserves remaining</h1>
       <p className="yi-lede">
         Reported reserves divided by one year of mine production, for every country that publishes both. A log scale,

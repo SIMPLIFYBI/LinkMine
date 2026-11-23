@@ -6,7 +6,7 @@ const nextConfig = {
   reactStrictMode: true,
   // The intelligence report HTML is read from disk at request time, so it must be traced into the build.
   outputFileTracingIncludes: {
-    "/admin/intelligence/raw/[slug]": ["./app/reports/*.html"],
+    "/intelligence/raw/[slug]": ["./app/reports/*.html"],
     "/embed/reserves": ["./app/intelligence/tokens.css"],
     "/admin/intelligence/social/image/[slug]/[n]": ["./app/intelligence/social/fonts/*.ttf", "./public/intelligence/james-blue-192.jpg"],
   },
@@ -15,6 +15,17 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // YouMine Intelligence moved out of /admin; the social post kits stay there as editorial tooling.
+      {
+        source: "/admin/intelligence",
+        destination: "/intelligence",
+        permanent: false,
+      },
+      {
+        source: "/admin/intelligence/:path((?!social).*)",
+        destination: "/intelligence/:path",
+        permanent: false,
+      },
       {
         source: "/marketplace",
         destination: "/vault",

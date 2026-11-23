@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { requireIntelligenceAdmin } from "@/lib/intelligence/adminPage";
 import { getHomeData, PublishedDataError } from "@/lib/intelligence/published";
 import { sustainedCrossing } from "@/lib/intelligence/frames";
 import { fmt, sparkPath, stamp, tonnes } from "@/lib/intelligence/format";
@@ -41,7 +40,6 @@ function Bars({ items, max, unit }) {
 }
 
 export default async function IntelligenceHome({ searchParams }) {
-  await requireIntelligenceAdmin("/admin/intelligence");
   const { map: requestedMap } = await searchParams;
   const { market } = await getResolvedSiteMarket();
 
@@ -106,7 +104,7 @@ export default async function IntelligenceHome({ searchParams }) {
         unit={(item) => `${tonnes(item.value)} · ${item.years >= 100 ? fmt(item.years) : item.years.toFixed(0)} yrs`}
       />
       <p className="yi-tile__foot">
-        Reserves, with years left at current output. <Link href={`/admin/intelligence/reserves?c=${FEATURED}`}>Open in Data</Link>
+        Reserves, with years left at current output. <Link href={`/intelligence/reserves?c=${FEATURED}`}>Open in Data</Link>
       </p>
     </article>,
     <YourCountryTile key="country" ranks={ranks} countries={countries} />,
@@ -122,7 +120,7 @@ export default async function IntelligenceHome({ searchParams }) {
         unit={(item) => `${(item.value / 1000).toFixed(1)} Mb/d · ${fmt(item.pct)}%`}
       />
       <p className="yi-tile__foot">
-        {hero.lastYear} (estimate), million barrels a day against own demand. <Link href="/admin/intelligence/energy-flip">Read the report</Link>
+        {hero.lastYear} (estimate), million barrels a day against own demand. <Link href="/intelligence/energy-flip">Read the report</Link>
       </p>
     </article>,
     <article key="crossings" className="yi-tile">
@@ -155,7 +153,7 @@ export default async function IntelligenceHome({ searchParams }) {
 
   return (
     <main className="yi-wrap yi-wrap--wide">
-      <p className="yi-kicker">Discover · Admin only</p>
+      <p className="yi-kicker">Discover</p>
       <h1 className="yi-title">The numbers that move mining and energy</h1>
       <p className="yi-lede">
         Live maps and rankings built from open data. Open anything to explore it, embed it or build on it.
@@ -165,16 +163,16 @@ export default async function IntelligenceHome({ searchParams }) {
 
       <h2 className="yi-section">Start with a question</h2>
       <div className="yi-chips">
-        <Link className="yi-btn" href="/admin/intelligence/reserves?c=CU">
+        <Link className="yi-btn" href="/intelligence/reserves?c=CU">
           How many years of copper are left?
         </Link>
-        <Link className="yi-btn" href="/admin/intelligence/reserves?c=NI&h=AUS">
+        <Link className="yi-btn" href="/intelligence/reserves?c=NI&h=AUS">
           Who holds the most nickel?
         </Link>
-        <Link className="yi-btn" href="/admin/intelligence/energy-flip">
+        <Link className="yi-btn" href="/intelligence/energy-flip">
           Who flipped from exporter to importer?
         </Link>
-        <Link className="yi-btn yi-btn--primary" href={`/admin/intelligence/reserves?c=${surprise}`}>
+        <Link className="yi-btn yi-btn--primary" href={`/intelligence/reserves?c=${surprise}`}>
           Surprise me
         </Link>
       </div>
@@ -190,7 +188,7 @@ export default async function IntelligenceHome({ searchParams }) {
             <h3>{report.title}</h3>
             <p className="yi-fresh">{report.summary}</p>
             <p className="yi-tile__foot">
-              <Link href={`/admin/intelligence/${report.slug}`}>Preview the report</Link>
+              <Link href={`/intelligence/${report.slug}`}>Read the report</Link>
             </p>
           </article>
         ))}

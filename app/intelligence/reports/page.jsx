@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { requireIntelligenceAdmin } from "@/lib/intelligence/adminPage";
 import { CHARTS, REPORTS, REPORT_SOURCES } from "@/lib/intelligence/reports";
 import { AUTHOR } from "@/lib/intelligence/author";
 
@@ -13,14 +12,12 @@ export const metadata = {
 const SECTOR_LABEL = { mining: "Mining", "oil-gas": "Oil & gas" };
 
 export default async function IntelligenceReportsPage() {
-  await requireIntelligenceAdmin("/admin/intelligence/reports");
-
   return (
     <main className="yi-wrap">
-      <p className="yi-kicker">YouMine Intelligence · Admin only</p>
+      <p className="yi-kicker">YouMine Intelligence</p>
       <h1 className="yi-title">Reports</h1>
       <p className="yi-lede">
-        Draft reports in the house style. Nothing here is public yet; each preview is served only to signed-in admins.
+        Data-led reports on mining and energy, with the method, sources and caveats on every page.
       </p>
 
       <ul className="yi-list">
@@ -40,11 +37,11 @@ export default async function IntelligenceReportsPage() {
             </div>
 
             <div className="yi-actions">
-              <Link href={`/admin/intelligence/${report.slug}`} className="yi-btn yi-btn--primary">
-                Preview
+              <Link href={`/intelligence/${report.slug}`} className="yi-btn yi-btn--primary">
+                Read
               </Link>
               <a
-                href={`/admin/intelligence/raw/${report.slug}`}
+                href={`/intelligence/raw/${report.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="yi-btn"
