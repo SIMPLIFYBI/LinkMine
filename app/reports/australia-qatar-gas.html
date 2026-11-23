@@ -44,12 +44,25 @@ body {
 }
 .col { max-width: 36rem; }
 .mast {
-  display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem 1rem;
-  align-items: baseline; padding-block: 1.5rem .875rem;
-  border-bottom: 1px solid var(--rule); margin-bottom: 2.5rem;
-  font: 600 .75rem var(--font-display); text-transform: uppercase; letter-spacing: .11em;
+  display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; align-items: baseline;
+  border-bottom: 1px solid var(--rule); padding-block: 1.5rem .875rem; margin-bottom: 2.75rem;
 }
-.kicker { color: var(--ink-3); }
+.mast .brand {
+  font: 700 .8125rem var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: var(--ink);
+}
+.mast .kicker {
+  font: .75rem var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin-left: auto;
+}
+.aside {
+  border-left: 3px solid var(--ink-2); background: var(--surface);
+  padding: 1.125rem 1.25rem; margin: 2.25rem 0; max-width: 42rem;
+}
+.aside .h {
+  font: 600 .6875rem var(--font-display); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-2); margin-bottom: .5rem;
+}
+.aside p:last-child { margin-bottom: 0; }
+.stat-note { font: .75rem var(--font-display); color: var(--ink-3); margin: -1.25rem 0 2rem; }
 .lead-rule { width: 3.5rem; height: 3px; background: var(--ink); margin-bottom: 1.75rem; }
 h1, h2, h3 { font-family: var(--font-display); letter-spacing: -.02em; }
 h1 { max-width: 48rem; font-size: clamp(2.1rem, 7vw, 3.75rem); line-height: 1.05; margin: 0; text-wrap: balance; }
@@ -76,6 +89,7 @@ svg .tick { font-weight: 400; fill: var(--ink-3); }
 .gridline { stroke: var(--rule-2); stroke-width: 1; }
 .table-scroll { overflow-x: auto; }
 .wide-chart { max-width: 50rem; margin: auto; }
+.bar-chart { max-width: 34rem; margin-left: 0; }
 @media (max-width: 600px) {
   .wide-chart text { font-size: 18px; }
 }
@@ -102,22 +116,24 @@ a { color: inherit; text-underline-offset: .15em; }
 <body>
 <main class="wrap">
   <header class="mast">
-    <span>YouMine Intelligence</span>
-    <span class="kicker">Dry natural gas · 2000–24</span>
+    <span class="brand">YouMine Intelligence</span>
+    <span class="kicker">Natural gas · 2000–24</span>
   </header>
   <div class="lead-rule"></div>
   <h1>Australia Nearly Caught Qatar on Gas</h1>
   <p class="standfirst col">In <span class="num">2013–15</span>, Australia was producing about <strong class="num">40%</strong> as much natural gas as Qatar. By <span class="num">2022–24</span>, it was at <strong class="num">90%</strong>. Almost all of that catch-up happened in just a few years.</p>
 
   <div class="stats">
-    <div class="stat"><span class="num">65 → 152</span><span class="stat-label">Australia’s average annual output</span></div>
-    <div class="stat"><span class="num">163 → 170</span><span class="stat-label">Qatar’s average annual output</span></div>
-    <div class="stat"><span class="num">97 → 17</span><span class="stat-label">The gap, in billion cubic metres a year</span></div>
+    <div class="stat"><span class="num">65 → 152</span><span class="stat-label">Australia’s output, billion cubic metres a year</span></div>
+    <div class="stat"><span class="num">163 → 170</span><span class="stat-label">Qatar’s output, billion cubic metres a year</span></div>
+    <div class="stat"><span class="num">97 → 17</span><span class="stat-label">The gap between them, billion cubic metres a year</span></div>
   </div>
+  <p class="stat-note">Annual averages, <span class="num">2013–15</span> then <span class="num">2022–24</span>. Source: U.S. Energy Information Administration.</p>
 
   <div class="col">
-    <p>The two countries started remarkably close. In <span class="num">2000</span>, Australia produced about <span class="num">33</span> billion cubic metres of dry gas, just ahead of Qatar’s <span class="num">29</span>. Qatar then pulled away. By <span class="num">2013–15</span>, it was producing roughly two and a half times as much gas as Australia.</p>
-    <p>Then came Australia’s turn. Queensland began exporting liquefied natural gas, or LNG, in <span class="num">2015</span> after developing gas from coal seams. New export facilities opened during the decade. In four years, Australian dry gas output went from <span class="num">72</span> billion cubic metres to <span class="num">145</span>. Qatar’s output stayed near the level it had already reached.</p>
+    <p>The two countries started remarkably close. In <span class="num">2000</span>, Australia produced about <span class="num">33</span> billion cubic metres of gas, just ahead of Qatar’s <span class="num">29</span>. Qatar then pulled away. By <span class="num">2013–15</span>, it was producing roughly two and a half times as much gas as Australia.</p>
+    <p>Then came Australia’s turn. Queensland began exporting liquefied natural gas, or LNG, in <span class="num">2015</span>, using gas from coal seams. More large LNG plants came online in the years that followed. In four years, Australia’s output doubled, from <span class="num">72</span> billion cubic metres to <span class="num">145</span>. Qatar’s stayed close to where it already was.</p>
+    <p>All the figures here are for dry natural gas: the gas left once heavier liquids are stripped out, which is what gets piped, burned or chilled into LNG.</p>
   </div>
 
   <h2>First Qatar pulled away. Then Australia closed most of the gap.</h2>
@@ -158,11 +174,11 @@ a { color: inherit; text-underline-offset: .15em; }
   <div class="col">
     <p>Australia added nearly <span class="num">87</span> billion cubic metres a year between the two comparison periods. Qatar added about <span class="num">7</span>. Subtract one from the other and the gap narrowed by about <span class="num">80</span> billion cubic metres a year. Qatar was still producing more at the end. Australia had grown much faster.</p>
     <p>The annual figures show how compressed that change was. The gap fell from about <span class="num">92</span> billion cubic metres in <span class="num">2015</span> to <span class="num">22</span> in <span class="num">2019</span> and <span class="num">16</span> in <span class="num">2024</span>. About nine tenths of the narrowing between <span class="num">2015</span> and <span class="num">2024</span> had already happened by <span class="num">2019</span>.</p>
-    <p>Only the United States, China and Iran added more annual output than Australia among the <span class="num">162</span> countries with EIA figures for all six years. Qatar makes a useful benchmark for the catch-up, while the broader ranking shows how unusual Australia’s growth was.</p>
+    <p>Australia’s growth was unusual by any measure, not just against Qatar. Only three countries added more gas a year over the same period: the United States, China and Iran.</p>
   </div>
   <figure>
     <div class="panel">
-      <svg class="wide-chart" viewBox="0 0 510 194" role="img" aria-labelledby="gas-growth-title">
+      <svg class="wide-chart bar-chart" viewBox="0 0 510 194" role="img" aria-labelledby="gas-growth-title">
         <title id="gas-growth-title">The four largest increases in average annual dry gas output, plus Qatar. United States 325, China 115, Iran 97, Australia 87 and Qatar 7 billion cubic metres.</title>
         <text x="8" y="30">United States</text>
         <line class="gridline" x1="130" x2="454" y1="26" y2="26"/>
@@ -189,6 +205,12 @@ a { color: inherit; text-underline-offset: .15em; }
     <figcaption>Change in average annual dry gas output, <span class="num">2013–15</span> to <span class="num">2022–24</span>, in billion cubic metres. The four biggest increases are shown with Qatar for comparison. Source: EIA.</figcaption>
   </figure>
 
+  <div class="aside">
+    <div class="h">Read this before you quote a number</div>
+    <p>The gap may be opening again. The EIA’s early estimate for <span class="num">2025</span>, a year not yet complete in its data, has Australia at <span class="num">147</span> billion cubic metres and Qatar at <span class="num">174</span>: a gap of <span class="num">26</span>, up from <span class="num">16</span> in <span class="num">2024</span>. That is why this report stops at <span class="num">2024</span>, the latest full year, and why the headline says nearly.</p>
+    <p>Every figure comes from one publisher, so the comparison is like for like. National statistics agencies and other publishers measure gas in different ways and report somewhat different totals.</p>
+  </div>
+
   <h2>The ten biggest gas producers</h2>
   <p class="col">Australia moved into the same league as Qatar, but the next rung was still some distance away. Canada, in fifth place, produced about <span class="num">47</span> billion cubic metres more than Australia in <span class="num">2024</span>, nearly three times the gap between Australia and Qatar.</p>
   <div class="table-scroll" role="region" tabindex="0" aria-label="Top ten dry natural gas producers">
@@ -197,23 +219,23 @@ a { color: inherit; text-underline-offset: .15em; }
       <thead><tr><th scope="col">Country</th><th scope="col">2024 rank</th><th scope="col">2024 output</th><th scope="col">2013–15 average</th><th scope="col">2022–24 average</th><th scope="col">Change in average</th></tr></thead>
       <tbody>
         <tr><th scope="row">United States</th><td>1</td><td>1,068.3</td><td>728.3</td><td>1,053.7</td><td>+325.4</td></tr>
-        <tr><th scope="row">Russia</th><td>2</td><td>642</td><td>614.8</td><td>629.5</td><td>+14.7</td></tr>
+        <tr><th scope="row">Russia</th><td>2</td><td>642.0</td><td>614.8</td><td>629.5</td><td>+14.7</td></tr>
         <tr><th scope="row">Iran</th><td>3</td><td>276.7</td><td>173.5</td><td>270.6</td><td>+97.1</td></tr>
         <tr><th scope="row">China</th><td>4</td><td>258.4</td><td>126.3</td><td>241.4</td><td>+115.1</td></tr>
-        <tr><th scope="row">Canada</th><td>5</td><td>199</td><td>169.5</td><td>193.6</td><td>+24.1</td></tr>
-        <tr><th scope="row">Qatar</th><td>6</td><td>168.3</td><td>162.8</td><td>169.8</td><td>+7</td></tr>
+        <tr><th scope="row">Canada</th><td>5</td><td>199.0</td><td>169.5</td><td>193.6</td><td>+24.1</td></tr>
+        <tr><th scope="row">Qatar</th><td>6</td><td>168.3</td><td>162.8</td><td>169.8</td><td>+7.0</td></tr>
         <tr><th scope="row">Australia</th><td>7</td><td>152.2</td><td>65.5</td><td>152.4</td><td>+86.9</td></tr>
         <tr><th scope="row">Norway</th><td>8</td><td>130.7</td><td>115.1</td><td>127.7</td><td>+12.5</td></tr>
-        <tr><th scope="row">Saudi Arabia</th><td>9</td><td>122.9</td><td>100.3</td><td>122</td><td>+21.7</td></tr>
-        <tr><th scope="row">Algeria</th><td>10</td><td>103.7</td><td>82</td><td>103.4</td><td>+21.4</td></tr>
+        <tr><th scope="row">Saudi Arabia</th><td>9</td><td>122.9</td><td>100.3</td><td>122.0</td><td>+21.7</td></tr>
+        <tr><th scope="row">Algeria</th><td>10</td><td>103.7</td><td>82.0</td><td>103.4</td><td>+21.4</td></tr>
       </tbody>
     </table>
   </div>
 
   <h2>Why all that gas doesn’t settle the local supply question</h2>
   <div class="col">
-    <p>Geoscience Australia estimates that about <span class="num">70%</span> of the country’s gas production was exported in <span class="num">2024</span>, chiefly as LNG. That is a separate measure from the dry gas comparison above. It helps explain why a country can be a big producer and still face a different supply picture in each region.</p>
-    <p>Western Australia has no gas pipeline to the east coast. On the east coast itself, declining Bass Strait output changes where southern buyers can source their gas. A national total can show the scale of production. To understand a local market, you also need to know where the gas is and how it can reach buyers. <a href="https://www.industry.gov.au/publications/future-gas-strategy/3-finding-new-sources-gas-meet-demand" target="_blank" rel="noopener">Australian Government Future Gas Strategy</a></p>
+    <p>Most of that gas leaves the country. Geoscience Australia estimates that Australia exported about <span class="num">70%</span> of the gas it produced in <span class="num">2024</span>, as LNG. That is a separate measure from the comparison above, but it explains why a country can be one of the world’s biggest producers and still worry about gas supply at home.</p>
+    <p>Where the gas is matters as much as how much there is. Western Australia has no gas pipeline to the east coast, and on the east coast, falling output from Bass Strait is changing where southern buyers can get their gas, as the <a href="https://www.industry.gov.au/publications/future-gas-strategy/3-finding-new-sources-gas-meet-demand" target="_blank" rel="noopener">Australian Government’s Future Gas Strategy</a> sets out. A national total shows the scale. A local market depends on where the gas is and how it reaches buyers.</p>
   </div>
 
   <details>
@@ -255,11 +277,11 @@ a { color: inherit; text-underline-offset: .15em; }
 
   <section class="method col">
     <h2>How I measured it</h2>
-    <p>I used the EIA’s annual dry natural gas production series as loaded in YouMine. The chart starts in <span class="num">2000</span> to show both countries before the gap opened up. The headline compares the average of <span class="num">2013–15</span>, before the steepest part of Australia’s climb, with <span class="num">2022–24</span>, after it had levelled off.</p>
-    <p>I divided Australia’s average output by Qatar’s for each period and rounded after calculation. The production ranks use the most recent year shown in the chart, <span class="num">2024</span>.</p>
-    <p>I ranked the growth figures using the difference between the two three-year averages. A country needed a recorded figure in all six years to be included in that comparison. The <span class="num">2024</span> production table ranks all countries with a figure in that year. The export share comes from Geoscience Australia’s national energy accounts.</p>
-    <p><a href="https://www.eia.gov/international/data/" target="_blank" rel="noopener">EIA International Energy Statistics, annual natural gas</a> · <a href="https://www.ga.gov.au/aecr2026/gas" target="_blank" rel="noopener">Geoscience Australia’s gas report</a> · <a href="https://www.industry.gov.au/sites/default/files/2022-08/review-of-the-australian-domestic-gas-security-mechanism-2019.pdf" target="_blank" rel="noopener">Australian Government review of Queensland’s LNG expansion</a></p>
-    <p class="credit">Analysis by James Blue for YouMine Intelligence.</p>
+    <p>I used the EIA’s annual dry natural gas production series as loaded in YouMine. The chart starts in <span class="num">2000</span> to show both countries before the gap opened up. The headline compares the average of <span class="num">2013–15</span>, before the steepest part of Australia’s climb, with <span class="num">2022–24</span>, after it had levelled off. Three-year averages smooth out a single unusual year.</p>
+    <p>I divided Australia’s average output by Qatar’s for each period and rounded after calculation. The data runs to <span class="num">2025</span>, but the EIA’s latest year is an estimate for an incomplete year, so the analysis stops at <span class="num">2024</span>; the <span class="num">2025</span> estimate is reported above.</p>
+    <p>I ranked the growth figures using the difference between the two three-year averages. A country needed a recorded figure in all six years to be included: <span class="num">162</span> countries, most of which produce little or no gas. The <span class="num">2024</span> production table ranks every country with a figure for that year. The export share comes from Geoscience Australia’s national gas report, which measures gas in energy terms (petajoules), not volume.</p>
+    <p><a href="https://www.eia.gov/international/data/" target="_blank" rel="noopener">EIA International Energy Statistics, annual natural gas</a> · <a href="https://www.ga.gov.au/aecr2026/gas" target="_blank" rel="noopener">Geoscience Australia, Australia’s Energy Commodity Resources 2026: Gas</a> · <a href="https://www.industry.gov.au/sites/default/files/2022-08/review-of-the-australian-domestic-gas-security-mechanism-2019.pdf" target="_blank" rel="noopener">Australian Government review of Queensland’s LNG expansion</a></p>
+    <p class="credit">Natural gas production: U.S. Energy Information Administration, International Energy Statistics (U.S. Government work, public domain). Export share: Geoscience Australia. Analysis by James Blue for YouMine Intelligence, November 2026.</p>
   </section>
 </main>
 </body>

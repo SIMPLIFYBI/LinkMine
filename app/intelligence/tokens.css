@@ -247,17 +247,6 @@
   padding: 0.7rem 1rem;
 }
 
-.yi-frame {
-  display: block;
-  width: 100%;
-  height: calc(100dvh - 12rem);
-  min-height: 560px;
-  margin-top: 1.25rem;
-  background: var(--yi-raised);
-  border: 1px solid var(--yi-rule);
-  border-radius: 12px;
-}
-
 /* ---------- controls ---------- */
 .yi-controls {
   display: flex;

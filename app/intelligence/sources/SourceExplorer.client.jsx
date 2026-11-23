@@ -133,7 +133,7 @@ export default function SourceExplorer({ reports, initialReport, sources, catalo
             <div className={styles.reportGraph}>
               <div className={styles.reportNode}>
                 <FileText size={18} aria-hidden="true" />
-                <Link href={`/intelligence/${report.slug}`}>{report.title}</Link>
+                <a href={`/intelligence/raw/${report.slug}`}>{report.title}</a>
               </div>
               {report.codes.length ? (
                 <ul>

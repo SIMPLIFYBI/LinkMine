@@ -37,16 +37,8 @@ export default async function IntelligenceReportsPage() {
             </div>
 
             <div className="yi-actions">
-              <Link href={`/intelligence/${report.slug}`} className="yi-btn yi-btn--primary">
+              <a href={`/intelligence/raw/${report.slug}`} className="yi-btn yi-btn--primary">
                 Read
-              </Link>
-              <a
-                href={`/intelligence/raw/${report.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="yi-btn"
-              >
-                Open standalone
               </a>
             </div>
 

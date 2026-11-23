@@ -188,7 +188,7 @@ export default async function IntelligenceHome({ searchParams }) {
             <h3>{report.title}</h3>
             <p className="yi-fresh">{report.summary}</p>
             <p className="yi-tile__foot">
-              <Link href={`/intelligence/${report.slug}`}>Read the report</Link>
+              <a href={`/intelligence/raw/${report.slug}`}>Read the report</a>
             </p>
           </article>
         ))}

@@ -50,12 +50,25 @@ body {
 }
 .col { max-width: 36rem; }
 .mast {
-  display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem 1rem;
-  align-items: baseline; padding-block: 1.5rem .875rem;
-  border-bottom: 1px solid var(--rule); margin-bottom: 2.5rem;
-  font: 600 .75rem var(--font-display); text-transform: uppercase; letter-spacing: .11em;
+  display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; align-items: baseline;
+  border-bottom: 1px solid var(--rule); padding-block: 1.5rem .875rem; margin-bottom: 2.75rem;
 }
-.kicker { color: var(--ink-3); }
+.mast .brand {
+  font: 700 .8125rem var(--font-display); letter-spacing: .14em; text-transform: uppercase; color: var(--ink);
+}
+.mast .kicker {
+  font: .75rem var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin-left: auto;
+}
+.aside {
+  border-left: 3px solid var(--ink-2); background: var(--surface);
+  padding: 1.125rem 1.25rem; margin: 2.25rem 0; max-width: 42rem;
+}
+.aside .h {
+  font: 600 .6875rem var(--font-display); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-2); margin-bottom: .5rem;
+}
+.aside p:last-child { margin-bottom: 0; }
+.stat-note { font: .75rem var(--font-display); color: var(--ink-3); margin: -1.25rem 0 2rem; }
 .lead-rule { width: 3.5rem; height: 3px; background: var(--ink); margin-bottom: 1.75rem; }
 h1, h2, h3 { font-family: var(--font-display); letter-spacing: -.02em; }
 h1 { max-width: 48rem; font-size: clamp(2.1rem, 7vw, 3.75rem); line-height: 1.05; margin: 0; text-wrap: balance; }
@@ -189,22 +202,23 @@ a { color: inherit; text-underline-offset: .15em; }
 <body>
 <main class="wrap">
   <header class="mast">
-    <span>YouMine Intelligence</span>
+    <span class="brand">YouMine Intelligence</span>
     <span class="kicker">Mining and processing · 2024</span>
   </header>
   <div class="lead-rule"></div>
   <h1>The World’s Biggest Bauxite Miner Barely Refines It</h1>
-  <p class="standfirst col">Guinea mined <strong class="num">a third</strong> of the world’s bauxite in <span class="num">2024</span>. It made just <strong class="num">0.25%</strong> of the world’s alumina, the next step on the way to aluminium. By the time you get to the metal, the country at the top of the list is China.</p>
+  <p class="standfirst col">Guinea mined <strong>a third</strong> of the world’s bauxite in <span class="num">2024</span>. It made just <strong class="num">0.25%</strong> of the world’s alumina, the next step on the way to aluminium. By the time you get to the metal, the country at the top of the list is China.</p>
 
   <div class="stats">
-    <div class="stat"><span class="num">33%</span><span class="stat-label">Guinea’s share of bauxite mining</span></div>
-    <div class="stat"><span class="num">0.25%</span><span class="stat-label">Guinea’s share of alumina refining</span></div>
-    <div class="stat"><span class="num">60%</span><span class="stat-label">China’s share of primary aluminium production</span></div>
+    <div class="stat"><span class="num">33%</span><span class="stat-label">Guinea’s share of world bauxite mining</span></div>
+    <div class="stat"><span class="num">0.25%</span><span class="stat-label">Guinea’s share of world alumina refining</span></div>
+    <div class="stat"><span class="num">60%</span><span class="stat-label">China’s share of world aluminium smelting</span></div>
   </div>
+  <p class="stat-note">Shares of world production in <span class="num">2024</span>. Source: U.S. Geological Survey.</p>
 
   <div class="col">
     <p>Think of an aluminium can. Before there was metal to roll into a sheet, there was a reddish rock called bauxite. A refinery turns the rock into alumina, a white powder. A smelter uses electricity to turn the powder into new metal. Each step can happen in a different country.</p>
-    <p>Guinea’s split was more than a curiosity in a table. In October <span class="num">2024</span>, its customs authorities halted bauxite exports from one operator’s mine near Boké. The USGS identifies a dispute over a promised local alumina refinery as a major reason. A country that already led the world in mining the rock wanted more of the processing to happen at home.</p>
+    <p>Guinea’s split is more than a curiosity in a table. In October <span class="num">2024</span>, Guinea’s customs authorities suspended bauxite exports from the Boké mine of Guinea Alumina Corporation, a subsidiary of Emirates Global Aluminium. According to the US Geological Survey, the main reason was the company’s unmet commitment to build an alumina refinery in Guinea. A country that already led the world in mining the rock wanted more of the processing done at home.</p>
   </div>
 
   <h2>Follow the rock to the metal</h2>
@@ -287,13 +301,7 @@ a { color: inherit; text-underline-offset: .15em; }
     <figcaption>Share of output reported to BGS from <span class="num">2000</span> to <span class="num">2024</span>. Grey means no figure is available for that country and year. The article’s <span class="num">2024</span> figures use USGS world totals.</figcaption>
   </figure>
 
-  <div class="col">
-    <p>Australia starts ahead of China at the mine and stays a major refiner. Its share drops to <span class="num">2%</span> at the smelter. China goes the other way, from <span class="num">19%</span> of the ore to around <span class="num">60%</span> of both the powder and the metal. If you stopped at the mine, you’d miss where the supply chain is most concentrated.</p>
-    <p>The map shows where production happened. Individual shipments, ownership and how much of the value stays in the country are separate questions. Recycled aluminium sits outside the primary-metal figures.</p>
-  </div>
-
-  <details>
-    <summary>Compare the production figures</summary>
+  <h2>Three steps, three different pictures</h2>
   <figure>
     <div class="panel-grid">
       <div class="panel">
@@ -350,9 +358,16 @@ a { color: inherit; text-underline-offset: .15em; }
         </svg>
       </div>
     </div>
-    <figcaption>Share of world output by stage, <span class="num">2024</span>. Every bar uses the same <span class="num">0–100%</span> scale. The USGS smelter table does not list Guinea separately.</figcaption>
+    <figcaption>Share of world output by stage, <span class="num">2024</span>. Every bar uses the same <span class="num">0–100%</span> scale. The USGS smelter table does not list Guinea separately. Source: U.S. Geological Survey.</figcaption>
   </figure>
 
+  <div class="col">
+    <p>Australia starts ahead of China at the mine and stays a major refiner, but its share drops to <span class="num">2%</span> at the smelter. China goes the other way, from <span class="num">19%</span> of the ore to around <span class="num">60%</span> of both the powder and the metal. If you stopped at the mine, you’d miss where the supply chain is most concentrated.</p>
+    <p>These figures show where production happened. Who owns the mines, where each shipment goes and how much of the value stays in the country are separate questions. Recycled aluminium sits outside the primary-metal figures.</p>
+  </div>
+
+  <details>
+    <summary>See the figures in tonnes</summary>
     <div class="table-scroll" role="region" tabindex="0" aria-label="Aluminium production by stage">
       <table>
         <caption>Million metric tonnes at each stage, <span class="num">2024</span></caption>
@@ -371,6 +386,7 @@ a { color: inherit; text-underline-offset: .15em; }
   <div class="col">
     <p>At the start of the century, the three biggest smelting countries made about <span class="num">40%</span> of the primary aluminium in the BGS figures. By <span class="num">2022–24</span>, the top three made <span class="num">71%</span>. Refining was even more concentrated, with almost four fifths of reported alumina output coming from just three countries.</p>
     <p>Mining concentrated too, but the biggest increases happened in different places. Guinea added about <span class="num">105</span> million tonnes a year of bauxite between the two periods. China added about <span class="num">78</span> million tonnes a year of alumina and <span class="num">38</span> million tonnes of primary aluminium. Each was the largest increase at its stage among countries with figures in all six years.</p>
+    <p>Guinea’s own refining went backwards. Its bauxite output grew about sevenfold, from <span class="num">17.6</span> million tonnes a year in <span class="num">2000–02</span> to <span class="num">122.9</span> million in <span class="num">2022–24</span>. Over the same years its alumina output halved, from <span class="num">0.63</span> million tonnes a year to <span class="num">0.32</span>.</p>
   </div>
   <figure>
     <div class="panel-grid">
@@ -424,15 +440,21 @@ a { color: inherit; text-underline-offset: .15em; }
       <caption>Change in annual output between <span class="num">2000–02</span> and <span class="num">2022–24</span>, million tonnes. Each stage measures a different material.</caption>
       <thead><tr><th scope="col">Stage</th><th scope="col">Change in total reported output</th><th scope="col">Country with the largest increase</th><th scope="col">Its earlier output</th><th scope="col">Its later output</th><th scope="col">Its share of the increase</th></tr></thead>
       <tbody>
-        <tr><th scope="row">Bauxite mined</th><td>+259.3</td><td>Guinea</td><td>17.6</td><td>122.9</td><td>41%</td></tr>
-        <tr><th scope="row">Alumina refined</th><td>+87.6</td><td>China</td><td>4.8</td><td>83.3</td><td>89%</td></tr>
-        <tr><th scope="row">Primary aluminium smelted</th><td>+45.9</td><td>China</td><td>3.6</td><td>41.9</td><td>83%</td></tr>
+        <tr><th scope="row">Bauxite mined</th><td>+259.3</td><td>Guinea</td><td>17.6</td><td>122.9</td><td>40.6%</td></tr>
+        <tr><th scope="row">Alumina refined</th><td>+87.6</td><td>China</td><td>4.8</td><td>83.3</td><td>89.5%</td></tr>
+        <tr><th scope="row">Primary aluminium smelted</th><td>+45.9</td><td>China</td><td>3.6</td><td>41.9</td><td>83.4%</td></tr>
       </tbody>
     </table>
   </div>
   <div class="col">
-    <p>Guinea accounted for about <span class="num">41%</span> of the increase in reported bauxite output. China accounted for about <span class="num">89%</span> of the increase in alumina output. That helps explain why looking at the mine gives such a different picture from looking at the refinery. Shares can move when countries appear or disappear from the figures. I repeated the comparison using just the countries with figures in all six years, and the top three gained share at every stage even there.</p>
-    <p>Trade links the two stories. China was the main destination for Guinea’s bauxite and alumina exports, according to the USGS. The production figures show where the ore and the processed products were made. They leave open how much of China’s own output came from Guinean ore. <a href="https://www.usgs.gov/centers/national-minerals-information-center/guinea" target="_blank" rel="noopener">USGS country profile for Guinea</a></p>
+    <p>Guinea accounted for about <span class="num">41%</span> of the increase in reported bauxite output. China accounted for almost <span class="num">90%</span> of the increase in alumina output. That is why looking at the mine gives such a different picture from looking at the refinery. Shares can move when countries appear in or drop out of the figures, so I repeated the comparison using only the countries with figures in all six years. The top three still gained share at every stage.</p>
+    <p>Trade links the two stories. About <span class="num">70%</span> of Guinea’s bauxite and alumina exports went to China, according to the <a href="https://www.usgs.gov/centers/national-minerals-information-center/guinea" target="_blank" rel="noopener">US Geological Survey’s country profile</a>. The production figures show where the ore and the processed products were made. They don’t show how much of China’s own output came from Guinean ore.</p>
+
+    <div class="aside">
+      <div class="h">Read this before you quote a number</div>
+      <p>This report uses two publishers. The <span class="num">2024</span> snapshot uses the USGS, which publishes a world total for each stage. The map and the two-decade comparison use the British Geological Survey, which publishes a longer history but no world total, so its shares are of the countries that report. That is why the map and the bars don’t match exactly. For <span class="num">2024</span> bauxite, the BGS gives Guinea <span class="num">34.6%</span> and China <span class="num">15.6%</span> (<span class="num">64</span> million tonnes), while the USGS gives Guinea <span class="num">33%</span> and China <span class="num">19%</span> (<span class="num">80.5</span> million tonnes). The two disagree most on China’s output, but on either source Guinea leads the mine and barely refines.</p>
+      <p>The pattern isn’t a one-year blip. The USGS’s early estimates for <span class="num">2025</span> point the same way: Guinea at <span class="num">34%</span> of world bauxite and <span class="num">0.24%</span> of alumina, and China at <span class="num">61%</span> of aluminium.</p>
+    </div>
   </div>
 
   <section class="method col">
@@ -441,9 +463,8 @@ a { color: inherit; text-underline-offset: .15em; }
     <p>The three stages have different products and denominators. A tonne of bauxite is a tonne of ore, while a tonne of aluminium is a tonne of metal. The shares compare the geography of production at each step.</p>
     <p>For the timeline, I used the British Geological Survey’s annual bauxite, alumina and primary aluminium series. Each share is relative to the total of the country figures available for that stage and year. Reporting coverage changes, and some estimates differ from the USGS snapshot. Figures for the former Serbia and Montenegro count toward the historical totals and can be viewed in the country selector.</p>
     <p>For the two-period comparison, I averaged the three annual BGS totals in each window. A country’s share is its average output divided by that period’s reported total. I ranked the countries by those averages and added the first three shares. The growth table names the largest increase among countries with all six annual figures and compares it with the change across everyone who reported. Unreported values stay blank in the map. They contribute no amount to the totals of reported output.</p>
-    <p><a href="https://pubs.usgs.gov/publication/mcs2026" target="_blank" rel="noopener">USGS production tables for bauxite, alumina and aluminium</a> · <a href="https://www.usgs.gov/centers/national-minerals-information-center/guinea" target="_blank" rel="noopener">USGS country profile for Guinea</a></p>
-    <p><a href="https://www.bgs.ac.uk/mineralsuk/statistics/world-mineral-statistics/" target="_blank" rel="noopener">World Mineral Statistics</a> contributed by permission of the British Geological Survey.</p>
-    <p class="credit">Analysis by James Blue for YouMine Intelligence.</p>
+    <p><a href="https://pubs.usgs.gov/publication/mcs2026" target="_blank" rel="noopener">USGS production tables for bauxite, alumina and aluminium</a> · <a href="https://www.usgs.gov/centers/national-minerals-information-center/guinea" target="_blank" rel="noopener">USGS country profile for Guinea</a> · <a href="https://www.bgs.ac.uk/mineralsuk/statistics/world-mineral-statistics/" target="_blank" rel="noopener">BGS World Mineral Statistics</a></p>
+    <p class="credit">2024 shares: U.S. Geological Survey, Mineral Commodity Summaries 2026 (public domain). Timeline and two-period comparison: World Mineral Statistics contributed by permission of the British Geological Survey. Analysis by James Blue for YouMine Intelligence, November 2026.</p>
   </section>
 </main>
 <script>
