@@ -24,7 +24,8 @@ Added 2026-11-22 while building the Discover home and the Data area. None of the
 ## Needs action (from the previous version)
 
 | # | Area | Finding | Evidence | Status |
-|---|---|---|---|---|| 1 | Reserve report, coal | Report ranks 70 countries for coal, the database supports 63. Seven (Egypt, France, Italy, Morocco, Slovakia, Spain, Taiwan) have 0 EIA `Coal Production` for 2025, yet the report shows non-zero production (e.g. Spain 2,400,997 t, Egypt 3,167 t). | `published.reserves_to_production` coal n=63; report JSON coal n=70 | open |
+|---|---|---|---|---|
+| 1 | Reserve report, coal | Report ranks 70 countries for coal, the database supports 63. Seven (Egypt, France, Italy, Morocco, Slovakia, Spain, Taiwan) have 0 EIA `Coal Production` for 2025, yet the report shows non-zero production (e.g. Spain 2,400,997 t, Egypt 3,167 t). | `published.reserves_to_production` coal n=63; report JSON coal n=70 | fixed 2026-11-23: the seven dropped and coal ranks taken from the published layer (63 countries). "South Korea", "North Korea" and "Turkiye" renamed to match the other minerals, which also removed duplicate entries from the country picker. |
 | 2 | Exposure | Schema `published` must be added to Settings > API > Exposed schemas before anon or the app can read it over REST. | Migration `published_layer_v1` applied 2026-11-22 | fixed 2026-11-22 (owner exposed it) |
 | 3 | `serving.mv_freshness` | Reports `last_refresh` from `last_analyze`, which is not the refresh time, so a displayed data age can be wrong. `published.build_info` records real refresh times. | View definition | open |
 | 4 | `serving.v_site_by_country_commodity` | Not `security_invoker` (the other serving views are). Global rollup takes about 1.27 s and filters are not pushed past the `COALESCE` group keys (AUS/gold still scans all 137,435 sites, 403 ms). | `EXPLAIN ANALYZE` | open |
@@ -32,7 +33,7 @@ Added 2026-11-22 while building the Discover home and the Data area. None of the
 | 6 | `serving.report_facet` | Built in a parallel session; overlaps the catalogue I had planned. It has no source or licence column and is `authenticated`-only, so it cannot be exposed publicly as is. | Table columns, grants | open |
 | 7 | Prices | 111 `core.price_series` have `provider_is_commercial` NULL (unclassified). The documented filter `= false` returns only 4 series. Commercial count is 58 of 176, not 59. | `core.price_series` | open |
 | 8 | BGS licence | Grant is verbal. Record a written confirmation covering redistribution (embeds, CSV) in `prov.source.licence_notes`. | Source `M3` notes | open |
-| 9 | Reserve report | `reserve-report.html` and the report style guide disagree with each other and with the other reports on tokens, headline font and number font; only Energy Flip has a theme toggle. | Files in `app/reports` | open |
+| 9 | Reserve report | `reserve-report.html` and the report style guide disagree with each other and with the other reports on tokens, headline font and number font; only Energy Flip has a theme toggle. | Files in `app/reports` | fixed 2026-11-23: the reserve report and Energy Flip were rebuilt on the house tokens, fonts and layout; Energy Flip's theme toggle was removed so all five reports follow the reader's system theme. |
 
 ## Fixed
 

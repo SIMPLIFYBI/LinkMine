@@ -1,0 +1,188 @@
+.yis-sec {
+  margin-top: 2.5rem;
+}
+
+.yis-sec__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1.5rem;
+}
+
+.yis-sec__head .yi-section {
+  margin: 0;
+}
+
+.yis-sec > .yi-section {
+  margin-top: 0;
+}
+
+.yis-hint {
+  font-size: 0.85rem;
+  color: var(--yi-ink-2);
+  max-width: 44rem;
+  margin: 0.6rem 0 0;
+}
+
+.yis-slides {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 1.25rem;
+}
+
+.yis-slide {
+  min-width: 0;
+}
+
+.yis-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--yi-sunken);
+  border: 1px solid var(--yi-rule-2);
+}
+
+.yis-img--square {
+  aspect-ratio: 1 / 1;
+}
+
+.yis-img--portrait {
+  aspect-ratio: 4 / 5;
+}
+
+.yis-slide__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.yis-alt {
+  margin-top: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.yis-alt summary {
+  cursor: pointer;
+  color: var(--yi-ink-2);
+}
+
+.yis-alt p {
+  color: var(--yi-ink-2);
+  margin: 0.5rem 0;
+}
+
+.yis-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+  margin-top: 0.9rem;
+}
+
+@media (min-width: 960px) {
+  .yis-cols {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+
+.yis-field {
+  min-width: 0;
+}
+
+.yis-field__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.35rem;
+}
+
+.yis-field__head label {
+  font-family: var(--yi-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--yi-ink-3);
+}
+
+.yis-count {
+  font-size: 0.75rem;
+  color: var(--yi-ink-3);
+}
+
+.yis-count.is-over {
+  color: var(--yi-lost);
+  font-weight: 600;
+}
+
+.yis-text {
+  display: block;
+  width: 100%;
+  font-family: var(--yi-sans);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--yi-ink);
+  background: var(--yi-raised);
+  border: 1px solid var(--yi-rule-2);
+  border-radius: 4px;
+  padding: 0.7rem 0.8rem;
+  resize: vertical;
+}
+
+.yis-text:focus-visible {
+  outline: 2px solid var(--yi-gain);
+  outline-offset: 1px;
+}
+
+.yis-field .yi-actions {
+  margin-top: 0.6rem;
+}
+
+.yis-links {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.yis-links li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.9rem;
+}
+
+.yis-links .yi-kicker {
+  width: 5.5rem;
+}
+
+.yis-links code {
+  flex: 1 1 18rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.78rem;
+  background: var(--yi-sunken);
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--yi-rule);
+}
+
+.yis-check {
+  margin: 0.8rem 0 0;
+  padding-left: 1.2rem;
+  max-width: 44rem;
+  color: var(--yi-ink-2);
+  font-size: 0.92rem;
+}
+
+.yis-check li {
+  margin-bottom: 0.4rem;
+}
+
+.yis-pick {
+  margin-top: 1.5rem;
+}

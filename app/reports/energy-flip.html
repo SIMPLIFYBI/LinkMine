@@ -8,105 +8,113 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
+/* House style shared with The Handover: the same tokens, type and layout. The legacy token names
+   (--surface page, --raised panels, --sunken wells, --serif/--sans/--mono) are kept so the chart code
+   below is unchanged, but they now carry the house values. */
 :root{
-  --surface:#fcfcfb; --raised:#ffffff; --sunken:#f4f3f0;
-  --ink:#16160f; --ink-2:#4a4a42; --ink-3:#77776c;
-  --rule:#e2e1dc; --rule-2:#cfcec8;
+  --surface:#f6f7f9; --raised:#ffffff; --sunken:#eef1f4;
+  --ink:#14181d; --ink-2:#48515b; --ink-3:#7b858f;
+  --rule:#dde2e7; --rule-2:#c9d1d8;
   --lost:#eb6834; --gain:#2a78d6;
-  --lost-soft:rgba(235,104,52,.13); --gain-soft:rgba(42,120,214,.13);
-  --serif:"IBM Plex Serif",Georgia,serif;
-  --sans:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
-  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --lost-soft:rgba(235,104,52,.12); --gain-soft:rgba(42,120,214,.10);
+  --serif:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+  --sans:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --surface:#1a1a19; --raised:#222221; --sunken:#141413;
-    --ink:#f2f1ec; --ink-2:#b4b3ab; --ink-3:#86857d;
-    --rule:#33332f; --rule-2:#44443f;
+    --surface:#0e1116; --raised:#161a20; --sunken:#1d232a;
+    --ink:#e9ecef; --ink-2:#a6aeb7; --ink-3:#737c86;
+    --rule:#262d35; --rule-2:#333c45;
     --lost:#d95926; --gain:#3987e5;
-    --lost-soft:rgba(217,89,38,.18); --gain-soft:rgba(57,135,229,.18);
+    --lost-soft:rgba(217,89,38,.16); --gain-soft:rgba(57,135,229,.14);
+    color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --surface:#1a1a19; --raised:#222221; --sunken:#141413;
-  --ink:#f2f1ec; --ink-2:#b4b3ab; --ink-3:#86857d;
-  --rule:#33332f; --rule-2:#44443f;
+  --surface:#0e1116; --raised:#161a20; --sunken:#1d232a;
+  --ink:#e9ecef; --ink-2:#a6aeb7; --ink-3:#737c86;
+  --rule:#262d35; --rule-2:#333c45;
   --lost:#d95926; --gain:#3987e5;
-  --lost-soft:rgba(217,89,38,.18); --gain-soft:rgba(57,135,229,.18);
+  --lost-soft:rgba(217,89,38,.16); --gain-soft:rgba(57,135,229,.14);
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{
   margin:0; background:var(--surface); color:var(--ink);
-  font-family:var(--sans); font-size:16px; line-height:1.6;
+  font-family:var(--serif); font-size:1.0625rem; line-height:1.65;
   -webkit-font-smoothing:antialiased;
 }
-.wrap{max-width:1080px; margin:0 auto; padding:0 16px}
+.wrap{
+  max-width:60rem; margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 4rem;
+}
 a{color:var(--gain)}
 
 /* ---------- masthead ---------- */
-.masthead{border-bottom:1px solid var(--rule); padding:14px 0; margin-bottom:40px}
-.masthead .wrap{display:flex; align-items:center; justify-content:space-between; gap:12px}
-.brand{font-family:var(--serif); font-weight:600; font-size:15px; letter-spacing:.01em}
-.brand span{color:var(--ink-3); font-weight:400}
-.tbtn{
-  font-family:var(--sans); font-size:12px; color:var(--ink-2);
-  background:transparent; border:1px solid var(--rule-2); border-radius:999px;
-  padding:5px 12px; cursor:pointer; line-height:1;
+.mast{
+  display:flex; flex-wrap:wrap; gap:.75rem 1.25rem; align-items:baseline;
+  border-bottom:1px solid var(--rule); padding-block:1.5rem .875rem; margin-bottom:2.75rem;
 }
-.tbtn:hover{border-color:var(--ink-3); color:var(--ink)}
+.mast .brand{
+  font-family:var(--sans); font-weight:700; font-size:.8125rem;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink);
+}
+.mast .kicker{
+  font-family:var(--sans); font-size:.75rem; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink-3); margin-left:auto;
+}
+.lead-rule{height:3px; background:var(--ink); width:3.5rem; margin-bottom:1.75rem}
 
 /* ---------- hero ---------- */
-.kicker{
-  font-family:var(--mono); font-size:11.5px; letter-spacing:.11em;
-  text-transform:uppercase; color:var(--ink-3); margin:0 0 18px;
-}
 h1{
-  font-family:var(--serif); font-weight:600; letter-spacing:-.021em;
-  font-size:clamp(2.05rem,5.6vw,3.6rem); line-height:1.07; margin:0 0 22px;
-  max-width:21ch;
+  font-family:var(--sans); font-weight:700;
+  font-size:clamp(2.25rem,7vw,3.75rem); line-height:1.02;
+  letter-spacing:-.025em; margin:0 0 1.25rem; text-wrap:balance;
 }
-h1 em{font-style:italic; font-weight:400}
 .standfirst{
-  font-family:var(--serif); font-size:clamp(1.07rem,2.3vw,1.3rem);
-  line-height:1.56; color:var(--ink-2); max-width:62ch; margin:0 0 34px;
+  font-family:var(--serif); font-size:clamp(1.125rem,2.6vw,1.375rem);
+  line-height:1.5; color:var(--ink-2); max-width:34rem; margin:0 0 2rem;
 }
 .standfirst strong{color:var(--ink); font-weight:600}
 
 /* ---------- stat row ---------- */
 .stats{
   display:grid; gap:1px; background:var(--rule);
-  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-  border:1px solid var(--rule); border-radius:10px; overflow:hidden; margin:0 0 56px;
+  grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));
+  border:1px solid var(--rule); margin:2.5rem 0 3rem;
 }
-.stat{background:var(--raised); padding:20px 18px}
+.stat{background:var(--raised); padding:1.125rem 1.25rem; min-width:0}
 .stat .n{
-  font-family:var(--serif); font-weight:600; font-size:clamp(2rem,4.6vw,2.7rem);
-  line-height:1; letter-spacing:-.02em; display:block; margin-bottom:7px;
+  font-family:var(--mono); font-weight:600; font-size:clamp(1.25rem,3.6vw,1.625rem);
+  line-height:1.1; letter-spacing:-.02em; font-variant-numeric:tabular-nums; display:block;
 }
 .stat.lost .n{color:var(--lost)} .stat.gain .n{color:var(--gain)}
-.stat .l{font-size:13px; color:var(--ink-2); line-height:1.4; display:block}
+.stat .l{font-family:var(--sans); font-size:.75rem; color:var(--ink-2); line-height:1.35; margin-top:.5rem; display:block}
 
 /* ---------- sections ---------- */
-section{margin:0 0 60px}
+section{margin:0}
 h2{
-  font-family:var(--serif); font-weight:600; font-size:clamp(1.4rem,3vw,1.85rem);
-  letter-spacing:-.014em; line-height:1.2; margin:0 0 10px;
+  font-family:var(--sans); font-weight:600; font-size:clamp(1.25rem,3vw,1.625rem);
+  letter-spacing:-.015em; line-height:1.2; margin:3.5rem 0 .75rem; text-wrap:balance;
 }
-.sub{font-size:14.5px; color:var(--ink-2); max-width:68ch; margin:0 0 26px}
-p{max-width:66ch}
-.note{font-size:13px; color:var(--ink-3); max-width:70ch; margin:14px 0 0}
+.sub{color:var(--ink-2); max-width:36rem; margin:0 0 1.5rem}
+p{max-width:36rem; margin:0 0 1.125rem}
+.note{font-family:var(--sans); font-size:.8125rem; color:var(--ink-2); max-width:42rem; margin:.9rem 0 0}
 
 /* ---------- legend ---------- */
-.legend{display:flex; flex-wrap:wrap; gap:18px; margin:0 0 20px; align-items:center}
-.lg{display:flex; align-items:center; gap:7px; font-size:13px; color:var(--ink-2)}
+.legend{display:flex; flex-wrap:wrap; gap:.375rem 1.25rem; margin:0 0 1.5rem; align-items:center}
+.lg{display:flex; align-items:center; gap:7px; font-family:var(--sans); font-size:.8125rem; color:var(--ink-2)}
 .sw{width:11px; height:11px; border-radius:3px; flex:none}
 .sw.l{background:var(--lost)} .sw.g{background:var(--gain)}
 
 /* ---------- charts ---------- */
 .chartcard{
   background:var(--raised); border:1px solid var(--rule);
-  border-radius:12px; padding:20px 18px 14px;
+  padding:20px 18px 14px;
 }
 svg{display:block; width:100%; height:auto; overflow:visible}
 .ax{font-family:var(--mono); font-size:10.5px; fill:var(--ink-3)}
@@ -121,7 +129,7 @@ svg{display:block; width:100%; height:auto; overflow:visible}
 .grid-sm{
   display:grid; gap:1px; background:var(--rule);
   grid-template-columns:repeat(auto-fill,minmax(168px,1fr));
-  border:1px solid var(--rule); border-radius:12px; overflow:hidden;
+  border:1px solid var(--rule);
 }
 .cell{background:var(--raised); padding:13px 13px 9px}
 .cell h3{
@@ -146,15 +154,15 @@ svg{display:block; width:100%; height:auto; overflow:visible}
 .grid-feat{
   display:grid; gap:1px; background:var(--rule);
   grid-template-columns:repeat(auto-fill,minmax(248px,1fr));
-  border:1px solid var(--rule); border-radius:12px; overflow:hidden;
+  border:1px solid var(--rule);
 }
 .fcell{background:var(--raised); padding:16px 16px 11px}
-.fcell h3{font-family:var(--serif); font-size:15.5px; font-weight:600; margin:0 0 2px}
+.fcell h3{font-family:var(--sans); font-size:15.5px; font-weight:600; margin:0 0 2px}
 .fcell .story{font-size:12.5px; color:var(--ink-2); line-height:1.45; margin:9px 0 0}
 
 /* ---------- table ---------- */
-.tablewrap{overflow-x:auto; border:1px solid var(--rule); border-radius:12px; background:var(--raised)}
-table{border-collapse:collapse; width:100%; min-width:620px; font-size:13.5px}
+.tablewrap{overflow-x:auto; border:1px solid var(--rule); background:var(--raised)}
+table{border-collapse:collapse; width:100%; min-width:620px; font-family:var(--sans); font-size:13.5px}
 th,td{padding:9px 13px; text-align:left; border-bottom:1px solid var(--rule); white-space:nowrap}
 th{
   font-family:var(--sans); font-size:11px; font-weight:600; text-transform:uppercase;
@@ -173,13 +181,12 @@ tbody tr:last-child td{border-bottom:none}
 .tag.g{background:var(--gain-soft); color:var(--gain)}
 
 /* ---------- method ---------- */
-.method{background:var(--sunken); border:1px solid var(--rule); border-radius:12px; padding:24px 22px}
-.method h2{font-size:1.25rem; margin-bottom:14px}
+.method{border-top:1px solid var(--rule); margin-top:4rem; padding-top:2rem}
+.method h2{margin-top:0}
 .method h3{
-  font-family:var(--sans); font-size:13px; font-weight:600; margin:20px 0 5px;
-  letter-spacing:.01em;
+  font-family:var(--sans); font-size:1rem; font-weight:600; margin:2rem 0 .5rem;
 }
-.method p,.method li{font-size:13.5px; color:var(--ink-2); line-height:1.62; max-width:72ch}
+.method p,.method li{font-size:.9375rem; color:var(--ink-2); max-width:40rem}
 .method code{
   font-family:var(--mono); font-size:12px; background:var(--raised);
   padding:1px 5px; border-radius:4px; border:1px solid var(--rule);
@@ -187,9 +194,9 @@ tbody tr:last-child td{border-bottom:none}
 .method ul{padding-left:20px; margin:6px 0}
 .flag{
   border-left:3px solid var(--lost); background:var(--lost-soft);
-  padding:13px 15px; border-radius:0 8px 8px 0; margin:16px 0;
+  padding:13px 15px; margin:16px 0; max-width:42rem;
 }
-.flag p{color:var(--ink); font-size:13.5px; margin:0}
+.flag p{color:var(--ink); font-size:.9375rem; margin:0}
 .flag strong{font-weight:600}
 
 /* ---------- tooltip ---------- */
@@ -202,56 +209,61 @@ tbody tr:last-child td{border-bottom:none}
 #tip b{font-weight:600}
 #tip .m{font-family:var(--mono); font-size:11px; opacity:.85}
 
-footer{border-top:1px solid var(--rule); padding:26px 0 56px; margin-top:16px}
-footer p{font-size:12.5px; color:var(--ink-3); max-width:74ch; margin:0 0 7px}
-footer a{color:var(--ink-2)}
+.credit{
+  font-family:var(--sans); font-size:.8125rem; color:var(--ink-3);
+  border-top:1px solid var(--rule); margin-top:2rem; padding-top:1.25rem; max-width:42rem;
+}
 .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
 </style>
 </head>
 <body>
 
-<div class="masthead"><div class="wrap">
-  <div class="brand">YouMine <span>Intelligence</span></div>
-  <button class="tbtn" id="theme">Dark</button>
-</div></div>
-
 <div class="wrap">
 
-  <p class="kicker">Energy · 178 countries · 1990–2025</p>
-  <h1>China was an oil exporter until 1993</h1>
+  <header class="mast">
+    <span class="brand">YouMine Intelligence</span>
+    <span class="kicker">Energy · 178 countries · 1990–2025</span>
+  </header>
+
+  <div class="lead-rule"></div>
+
+  <h1>The Energy Flip</h1>
+  <p class="standfirst" style="margin-bottom:14px">
+    <strong>China was an oil exporter until 1993.</strong> Britain's North Sea output peaked in 1999. Since 2004 it has used more gas than it
+    produces, and since 2006 more oil. Indonesia, an OPEC member, quietly became a net oil
+    importer in 2003. The Netherlands, long Europe's gas giant, now produces about a third
+    of the gas it uses.
+  </p>
   <p class="standfirst">
-    Britain's North Sea peaked in 1999; it has imported oil since 2006 and gas since 2004.
-    Indonesia was an OPEC member that quietly became a net oil importer in 2003. The
-    Netherlands, the country that gave Europe its gas market, now produces under a third of
-    what it burns. We tracked production against consumption for every country and both
-    fuels over 36 years and dated every crossing of the self-sufficiency line.
-    <strong>Twenty-six crossings went down. Twelve went up.</strong>
+    I checked every country, for oil and gas, from 1990 to 2025, and dated each time one
+    crossed the line between producing enough for itself and not, for good.
+    <strong>26 times a country slipped into relying on imports. 12 times one climbed out.</strong>
   </p>
 
   <div class="stats">
-    <div class="stat lost"><span class="n">26</span><span class="l">country–fuel pairs that stopped covering their own demand, for good</span></div>
-    <div class="stat gain"><span class="n">12</span><span class="l">that crossed the other way and stayed there</span></div>
-    <div class="stat"><span class="n">178</span><span class="l">countries measured, 6,933 observations, oil and gas</span></div>
-    <div class="stat"><span class="n">2.2<span style="font-size:.55em">×</span></span><span class="l">more countries lost self-sufficiency than gained it</span></div>
+    <div class="stat lost"><span class="n">26</span><span class="l">times a country stopped producing enough oil or gas for itself, for good</span></div>
+    <div class="stat gain"><span class="n">12</span><span class="l">times a country started producing enough, and stayed there</span></div>
+    <div class="stat"><span class="n">178</span><span class="l">countries measured, oil and gas, 6,933 data points</span></div>
+    <div class="stat"><span class="n">2.2<span style="font-size:.55em">×</span></span><span class="l">as many fell short as climbed out</span></div>
   </div>
 
   <section>
     <h2>Every crossing, by the year it happened</h2>
     <p class="sub">
-      Each dot is one country and one fuel, placed at the year it crossed 100% of its own
-      demand and never crossed back. Above the line, countries that lost self-sufficiency;
-      below it, countries that gained it. Hover any dot for the detail.
+      Each dot is one country and one fuel, placed at the year it crossed the line for good.
+      Above the line: countries that started relying on imports. Below: countries that
+      started producing enough for themselves. Hover or tap any dot for details.
     </p>
     <div class="legend">
-      <span class="lg"><span class="sw l"></span>Lost self-sufficiency</span>
-      <span class="lg"><span class="sw g"></span>Gained self-sufficiency</span>
+      <span class="lg"><span class="sw l"></span>Lost: now relies on imports</span>
+      <span class="lg"><span class="sw g"></span>Gained: now produces enough</span>
     </div>
     <div class="chartcard"><svg id="timeline" role="img" aria-label="Timeline of self-sufficiency crossings by year, 1990 to 2025"></svg></div>
     <p class="note">
-      The two dots on the far left are Albania in 1992, as its command economy came apart,
-      and China in 1993. The tall orange columns at 2008
-      and 2015 are mature basins and wars arriving together — Tunisia, the UAE and
-      Mauritania in one, Bolivia, Sudan and Yemen in the other. The blue run at the right is the American
+      The two dots on the far left are Albania in 1992, as its communist economy collapsed,
+      and China in 1993. The tall orange columns at 2008 and 2015 are ageing oil and gas
+      fields and wars hitting at the same time: Tunisia, the UAE and Mauritania in one,
+      Bolivia, Sudan and Yemen in the other. The blue run at the right is the American
       reversal, gas in 2017 and oil in 2022, with Argentina the same year. Nothing in the
       last decade suggests the balance of direction has changed.
     </p>
@@ -260,9 +272,9 @@ footer a{color:var(--ink-2)}
   <section>
     <h2>Eight that mattered</h2>
     <p class="sub">
-      Self-sufficiency over time, on a logarithmic scale so that twice the demand and half
-      the demand sit the same distance from the centre line. The dashed line is 100% — the
-      point where a country produces exactly what it consumes.
+      How much of its own demand each country produced, year by year. The dashed line is
+      100%: producing exactly what it uses. The scale is stretched so that producing double
+      and producing half sit the same distance from that line.
     </p>
     <div class="legend">
       <span class="lg"><span class="sw l"></span>Lost</span>
@@ -275,16 +287,15 @@ footer a{color:var(--ink-2)}
   <section>
     <h2>All 38 crossings</h2>
     <p class="sub">
-      The same measure for every country–fuel pair that crossed and stayed crossed, ordered
-      by how much of that fuel the country now burns. Scale is shared: the centre of each
-      panel is 100%, the top is ten times demand, the bottom is a tenth of it.
+      Every country and fuel that crossed and stayed crossed, biggest users first. All
+      panels share one scale: the middle is 100%, the top is ten times what the country
+      uses, the bottom is a tenth.
     </p>
     <div class="grid-sm" id="smallmult"></div>
     <p class="note">
-      Values beyond ten times demand or a tenth of it are drawn at the edge of the scale
-      and marked with a caret: Chad, Timor-Leste and Guyana run off the top at their peaks,
-      producing enormous multiples of their own very small domestic demand, while the years
-      before a discovery or after a field shuts in sit on the floor at zero.
+      Anything beyond that range is drawn at the edge and marked with a caret. Chad,
+      Timor-Leste and Guyana run off the top at their peaks because they use so little
+      themselves. Years before a discovery, or after a field closes, sit at the bottom.
     </p>
   </section>
 
@@ -340,11 +351,11 @@ footer a{color:var(--ink-2)}
       would have missed the textbook case entirely.
     </p>
 
-    <h3>A publisher convention that had to be removed first</h3>
+    <h3>A data quirk I had to remove first</h3>
     <div class="flag">
       <p>
         <strong>Where no trade is reported, the source sets consumption equal to
-        production</strong> — to full floating-point precision. Those rows compute to
+        production</strong>, to the last decimal place. Those rows compute to
         exactly 100%, which reads as "perfectly balanced" but actually means "no trade
         data". Egypt's gas in 2000 is recorded as 18.3001727095257 produced and
         18.3001727095257 consumed. Iraq's gas is identical in every year from 1995 to 2015.
@@ -375,18 +386,15 @@ footer a{color:var(--ink-2)}
         was depletion; Syria's and Yemen's were war; Sudan's was the secession of South
         Sudan in 2011, which took the oilfields and left the pipeline.</li>
     </ul>
+
+    <p class="credit">Source: U.S. Energy Information Administration, international energy
+     statistics (petroleum and other liquids; dry natural gas), production and consumption
+     by country, 1990–2025. U.S. Government work, public domain. Analysis and methodology by James Blue for YouMine Intelligence. Figures are the publisher's own;
+     the crossing dates, peak detection and the exclusion of unreported-trade rows are mine
+     and are described above in full.</p>
   </section>
 
 </div>
-
-<footer><div class="wrap">
-  <p><strong>Source:</strong> U.S. Energy Information Administration, international energy
-     statistics (petroleum and other liquids; dry natural gas), production and consumption
-     by country, 1990–2025. U.S. Government work, public domain.</p>
-  <p>Analysis and methodology by YouMine Intelligence. Figures are the publisher's own;
-     the crossing dates, peak detection and the exclusion of unreported-trade rows are ours
-     and are described above in full.</p>
-</div></footer>
 
 <div id="tip" role="status" aria-live="polite"></div>
 
@@ -437,27 +445,6 @@ footer a{color:var(--ink-2)}
 var DATA = JSON.parse(document.getElementById('flips').textContent);
 var SVGNS = 'http://www.w3.org/2000/svg';
 var tip = document.getElementById('tip');
-
-/* ---------- theme ---------- */
-var btn = document.getElementById('theme');
-function sysDark(){ return window.matchMedia('(prefers-color-scheme: dark)').matches; }
-var forced = null;
-try { forced = localStorage.getItem('ef-theme'); } catch(e){}
-if (forced) document.documentElement.setAttribute('data-theme', forced);
-function syncBtn(){
-  var dark = document.documentElement.getAttribute('data-theme') === 'dark' ||
-             (!document.documentElement.hasAttribute('data-theme') && sysDark());
-  btn.textContent = dark ? 'Light' : 'Dark';
-}
-syncBtn();
-btn.addEventListener('click', function(){
-  var dark = document.documentElement.getAttribute('data-theme') === 'dark' ||
-             (!document.documentElement.hasAttribute('data-theme') && sysDark());
-  var next = dark ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  try { localStorage.setItem('ef-theme', next); } catch(e){}
-  syncBtn(); drawAll();
-});
 
 /* ---------- helpers ---------- */
 function el(n, a){ var e = document.createElementNS(SVGNS, n); for (var k in a) e.setAttribute(k, a[k]); return e; }
@@ -553,9 +540,9 @@ function drawTimeline(){
 
   /* side captions, on their own rows so nothing can collide */
   var up = el('text', {x:mL, y:mT-20, 'class':'axl'});
-  up.textContent = '↑ lost self-sufficiency'; svg.appendChild(up);
+  up.textContent = '↑ lost: now relies on imports'; svg.appendChild(up);
   var dn = el('text', {x:mL, y:capY, 'class':'axl'});
-  dn.textContent = '↓ gained self-sufficiency'; svg.appendChild(dn);
+  dn.textContent = '↓ gained: now produces enough'; svg.appendChild(dn);
 
   /* dots — identity comes from the legend and from hover, never from
      crowded inline labels, which collided at every width tested */
@@ -678,7 +665,7 @@ var FEAT = [
   ['United States','oil','The shale reversal. From 40% in 2005 to a durable crossing in 2022 — the largest swing in the dataset, on the largest demand in the world.'],
   ['United Kingdom','oil','The North Sea peaked in 1999 at 158%, not in 1990. Britain has imported oil since 2006 and gas since 2004.'],
   ['Indonesia','oil','An OPEC member that became a net importer in 2003, announced its exit from the organisation in 2008 and suspended its membership from 2009. It now produces half what it burns.'],
-  ['Netherlands','gas','Groningen. Production peaked in 2013, earthquakes forced the wind-down, and the country that built Europe’s gas market now makes under a third of its own.'],
+  ['Netherlands','gas','Groningen. Production peaked in 2013, earthquakes forced the wind-down, and the country that built Europe’s gas market now makes about a third of its own.'],
   ['Brazil','oil','Pre-salt. A steady two-decade climb from 39% to 144%, crossing for good in 2015.'],
   ['Egypt','oil','A slow slide from 202% in 1993, crossing in 2021 — and its gas followed in 2023.'],
   ['Guyana','oil','From no oil at all to 24 times its own demand in six years. The sharpest arrival in the record.']
@@ -773,7 +760,7 @@ var rt;
 window.addEventListener('resize', function(){
   clearTimeout(rt); rt = setTimeout(drawAll, 140);
 });
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ syncBtn(); drawAll(); });
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawAll);
 })();
 </script>
 </body>

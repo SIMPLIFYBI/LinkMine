@@ -7,6 +7,7 @@ const ITEMS = [
   { href: "/admin/intelligence", label: "Discover", match: (p) => p === "/admin/intelligence" },
   { href: "/admin/intelligence/reports", label: "Reports", match: (p) => p.startsWith("/admin/intelligence/reports") || /\/admin\/intelligence\/(energy-flip|peak-was-yesterday|reserve-report|the-handover|mine-dependent-six)/.test(p) },
   { href: "/admin/intelligence/data", label: "Data", match: (p) => p.startsWith("/admin/intelligence/data") || p.startsWith("/admin/intelligence/reserves") },
+  { href: "/admin/intelligence/social", label: "Social", match: (p) => p.startsWith("/admin/intelligence/social") },
   { label: "Atlas", soon: true },
   { label: "My work", soon: true },
 ];

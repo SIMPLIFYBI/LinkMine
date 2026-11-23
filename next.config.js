@@ -8,6 +8,7 @@ const nextConfig = {
   outputFileTracingIncludes: {
     "/admin/intelligence/raw/[slug]": ["./app/reports/*.html"],
     "/embed/reserves": ["./app/intelligence/tokens.css"],
+    "/admin/intelligence/social/image/[slug]/[n]": ["./app/intelligence/social/fonts/*.ttf", "./public/intelligence/james-blue-192.jpg"],
   },
   eslint: {
     ignoreDuringBuilds: true,

@@ -1,248 +1,374 @@
 <title>Reserve Rich, Production Poor</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
 <style>
-/* Layout: editorial data report — stated finding, then a reader-driven ranking, then method */
+/* Layout: lede and stat strip, the biggest gaps, a reader-driven ranking of years of reserves,
+   one country across every mineral, then the method. House style shared with The Handover. */
 :root{
-  --ground:#f4f6f8; --surface:#ffffff; --ink:#10161c; --muted:#55646f;
-  --rule:#dce3e9; --mark:#2a78d6; --mark-hi:#eb6834; --stem:#c3cfd9;
-  --serif:"IBM Plex Serif",Georgia,"Times New Roman",serif;
-  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
-  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --bg:#f6f7f9; --surface:#ffffff; --surface-2:#eef1f4;
+  --ink:#14181d; --ink-2:#48515b; --ink-3:#7b858f;
+  --rule:#dde2e7; --rule-2:#c9d1d8;
+  --gain:#2a78d6; --lost:#eb6834;
+  --font-display:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --font-body:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+  --font-data:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --ground:#0f1317; --surface:#171c21; --ink:#e6edf3; --muted:#92a3b0;
-  --rule:#27313a; --mark:#3987e5; --mark-hi:#d95926; --stem:#2f3b45;
-  color-scheme:dark;
-}}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1116; --surface:#161a20; --surface-2:#1d232a;
+    --ink:#e9ecef; --ink-2:#a6aeb7; --ink-3:#737c86;
+    --rule:#262d35; --rule-2:#333c45;
+    --gain:#3987e5; --lost:#d95926;
+    color-scheme:dark;
+  }
+}
 :root[data-theme="dark"]{
-  --ground:#0f1317; --surface:#171c21; --ink:#e6edf3; --muted:#92a3b0;
-  --rule:#27313a; --mark:#3987e5; --mark-hi:#d95926; --stem:#2f3b45;
+  --bg:#0e1116; --surface:#161a20; --surface-2:#1d232a;
+  --ink:#e9ecef; --ink-2:#a6aeb7; --ink-3:#737c86;
+  --rule:#262d35; --rule-2:#333c45;
+  --gain:#3987e5; --lost:#d95926;
   color-scheme:dark;
 }
+
 *{box-sizing:border-box}
-body{background:var(--ground);color:var(--ink);font-family:var(--sans);
-  font-size:16px;line-height:1.55;margin:0}
-.wrap{max-width:60rem;margin:0 auto;
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--font-body); font-size:1.0625rem; line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:60rem; margin:0 auto;
   padding-left:max(16px,env(safe-area-inset-left,0px));
   padding-right:max(16px,env(safe-area-inset-right,0px));
-  padding-block:0 4rem}
-.eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--muted);margin:0}
-h1{font-family:var(--serif);font-weight:600;font-size:clamp(2.1rem,6vw,3.6rem);
-  line-height:1.05;letter-spacing:-.02em;text-wrap:balance;margin:.6rem 0 0}
-.stand{font-family:var(--serif);font-size:clamp(1.05rem,2.4vw,1.3rem);
-  line-height:1.5;color:var(--ink);max-width:36em;margin:1.1rem 0 0}
-header.hero{padding-block:2.6rem 0;border-bottom:1px solid var(--rule)}
-.hero-caveat{font-size:.95rem;line-height:1.55;color:var(--ink);max-width:40em;margin:0 0 2rem}
-.hero-caveat a{color:var(--mark)}
-.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));
-  gap:1.4rem;margin:2rem 0 2.2rem}
-.fig .n{font-family:var(--mono);font-size:clamp(1.9rem,5vw,2.6rem);
-  font-weight:500;line-height:1;font-variant-numeric:tabular-nums;color:var(--mark)}
-.fig .n.hi{color:var(--mark-hi)}
-.fig .l{font-size:.82rem;color:var(--muted);margin-top:.45rem;max-width:14em}
-section{padding-block:2.4rem;border-bottom:1px solid var(--rule)}
-h2{font-family:var(--serif);font-size:1.5rem;font-weight:600;margin:0 0 .3rem;
-  letter-spacing:-.01em;text-wrap:balance}
-.sub{color:var(--muted);font-size:.9rem;margin:0 0 1.4rem;max-width:44em}
-.card{background:var(--surface);border:1px solid var(--rule);border-radius:4px;
-  padding:1.2rem}
-.social{max-width:34rem}
-.social .tag{font-family:var(--mono);font-size:.65rem;letter-spacing:.12em;
-  text-transform:uppercase;color:var(--muted);display:block;margin-bottom:.9rem}
-.social ol{margin:0;padding-left:1.4rem}
-.social li{padding:.42rem 0;border-bottom:1px solid var(--rule)}
-.social li:last-child{border-bottom:0}
-.social .who{font-weight:600}
-.social .what{color:var(--muted);font-size:.85rem}
-.hook{margin:1rem 0 0;padding-top:.9rem;border-top:2px solid var(--mark);
-  font-size:.88rem;color:var(--muted)}
-.controls{display:flex;flex-wrap:wrap;gap:.8rem;align-items:flex-end;margin-bottom:1.5rem}
-.ctrl{display:flex;flex-direction:column;gap:.3rem;min-width:0}
-.ctrl label{font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--muted)}
-select,button{font-family:var(--sans);font-size:.92rem;color:var(--ink);
-  background:var(--surface);border:1px solid var(--rule);border-radius:3px;
-  padding:.46rem .6rem}
-button{cursor:pointer}
-button[aria-pressed="true"]{border-color:var(--mark);color:var(--mark)}
-select:focus-visible,button:focus-visible{outline:2px solid var(--mark);outline-offset:1px}
-.axis{display:flex;margin:0 0 .35rem;font-family:var(--mono);font-size:.66rem;
-  color:var(--muted);font-variant-numeric:tabular-nums}
-.axis .pad{flex:0 0 var(--lab,13rem);min-width:0;text-align:right;
-  padding-right:.5rem;letter-spacing:.08em;text-transform:uppercase}
-.axis .ticks{position:relative;flex:1 1 auto;height:1.1rem;min-width:0}
-.axis .ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
-.rows{display:flex;flex-direction:column;gap:.1rem}
-.row{display:flex;align-items:center;gap:.5rem;padding:.2rem 0;min-width:0}
-.row:hover{background:color-mix(in srgb,var(--mark) 7%,transparent)}
-.row .lab{flex:0 0 var(--lab,13rem);min-width:0;font-size:.84rem;
-  display:flex;justify-content:space-between;gap:.5rem;align-items:baseline}
-.row .lab .c{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.row .lab .rk{font-family:var(--mono);font-size:.66rem;color:var(--muted);
-  white-space:nowrap;font-variant-numeric:tabular-nums}
-.track{position:relative;flex:1 1 auto;height:1.5rem;min-width:0}
-.track .grid{position:absolute;inset:0;pointer-events:none}
-.track .grid i{position:absolute;top:0;bottom:0;width:1px;background:var(--rule)}
-.stem{position:absolute;top:50%;height:2px;background:var(--stem);transform:translateY(-50%)}
-.dot{position:absolute;top:50%;width:10px;height:10px;border-radius:50%;
-  background:var(--mark);transform:translate(-50%,-50%);
-  box-shadow:0 0 0 2px var(--surface)}
-.row.sel .dot{background:var(--mark-hi);width:12px;height:12px}
-.row.sel .lab{font-weight:600}
-.val{position:absolute;top:50%;transform:translateY(-50%);font-family:var(--mono);
-  font-size:.7rem;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
-table{width:100%;border-collapse:collapse;font-size:.86rem}
-th,td{text-align:left;padding:.42rem .5rem;border-bottom:1px solid var(--rule);
-  white-space:nowrap}
-th{font-family:var(--mono);font-size:.64rem;letter-spacing:.09em;
-  text-transform:uppercase;color:var(--muted);font-weight:500}
-td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
-.scroll{overflow-x:auto}
-.tip{position:fixed;z-index:20;pointer-events:none;background:var(--surface);
-  border:1px solid var(--rule);border-radius:3px;padding:.55rem .7rem;
-  font-size:.78rem;box-shadow:0 4px 14px rgb(0 0 0/.14);max-width:17rem}
-.tip b{display:block;margin-bottom:.25rem}
-.tip dl{display:grid;grid-template-columns:auto auto;gap:.1rem .7rem;margin:0}
-.tip dt{color:var(--muted)}
-.tip dd{margin:0;font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
-.note{font-size:.85rem;color:var(--muted);margin:.9rem 0 0}
-.method{columns:2;column-gap:2.2rem;font-size:.87rem;color:var(--muted)}
-.method h3{font-family:var(--sans);font-size:.78rem;letter-spacing:.08em;
-  text-transform:uppercase;color:var(--ink);margin:0 0 .3rem;break-after:avoid}
-.method p{margin:0 0 1rem;break-inside:avoid}
-.flag{border-left:2px solid var(--mark-hi);padding-left:.8rem}
-@media (max-width:620px){
-  .method{columns:1}
-  .row .lab,.axis .pad{--lab:7.5rem;flex-basis:7.5rem}
-  .row .lab .rk{display:none}
+  padding-block:0 4rem;
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.col{max-width:36rem}
+
+/* ---- masthead ---- */
+.mast{
+  display:flex; flex-wrap:wrap; gap:.75rem 1.25rem; align-items:baseline;
+  border-bottom:1px solid var(--rule); padding-block:1.5rem .875rem; margin-bottom:2.75rem;
+}
+.mast .brand{
+  font-family:var(--font-display); font-weight:700; font-size:.8125rem;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink);
+}
+.mast .kicker{
+  font-family:var(--font-display); font-size:.75rem; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink-3); margin-left:auto;
+}
+
+h1{
+  font-family:var(--font-display); font-weight:700;
+  font-size:clamp(2.25rem,7vw,3.75rem); line-height:1.02;
+  letter-spacing:-.025em; margin:0 0 1.25rem; text-wrap:balance;
+}
+.standfirst{
+  font-size:clamp(1.125rem,2.6vw,1.375rem); line-height:1.5; color:var(--ink-2);
+  margin:0 0 2rem; max-width:34rem;
+}
+.standfirst b{color:var(--ink); font-weight:600}
+
+h2{
+  font-family:var(--font-display); font-weight:600;
+  font-size:clamp(1.25rem,3vw,1.625rem); letter-spacing:-.015em;
+  margin:3.5rem 0 .75rem; text-wrap:balance;
+}
+h3{
+  font-family:var(--font-display); font-weight:600; font-size:1rem;
+  margin:2rem 0 .5rem;
+}
+p{margin:0 0 1.125rem}
+a{color:var(--gain)}
+
+.lead-rule{height:3px; background:var(--ink); width:3.5rem; margin-bottom:1.75rem}
+
+/* ---- stat strip ---- */
+.stats{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));
+  gap:1px; background:var(--rule); border:1px solid var(--rule);
+  margin:2.5rem 0 .75rem;
+}
+.stat{background:var(--surface); padding:1.125rem 1.25rem; min-width:0}
+.stat .n{
+  font-family:var(--font-data); font-weight:600;
+  font-size:clamp(1.25rem,3.6vw,1.625rem); line-height:1.1;
+  letter-spacing:-.02em; font-variant-numeric:tabular-nums; display:block;
+}
+.stat .n.hi{color:var(--lost)}
+.stat .l{
+  font-family:var(--font-display); font-size:.75rem; line-height:1.35;
+  color:var(--ink-2); margin-top:.5rem; display:block;
+}
+.stat-note{
+  font-family:var(--font-display); font-size:.75rem; color:var(--ink-3);
+  margin:0 0 3rem;
+}
+.sub{color:var(--ink-2)}
+
+/* ---- the biggest gaps ---- */
+.gaps{
+  list-style:none; margin:1.5rem 0; padding:0; max-width:42rem;
+  border:1px solid var(--rule); background:var(--surface);
+}
+.gaps li{
+  padding:.75rem 1rem; border-bottom:1px solid var(--rule);
+  display:flex; flex-wrap:wrap; gap:.25rem 1rem; align-items:baseline; min-width:0;
+}
+.gaps li:last-child{border-bottom:0}
+.gaps .who{font-family:var(--font-display); font-weight:600; font-size:.9375rem}
+.gaps .what{font-family:var(--font-data); font-size:.75rem; color:var(--ink-2); font-variant-numeric:tabular-nums}
+
+/* ---- interactive ranking ---- */
+.controls{display:flex; flex-wrap:wrap; gap:.8rem; align-items:flex-end; margin:1.5rem 0}
+.ctrl{display:flex; flex-direction:column; gap:.3rem; min-width:0}
+.ctrl label{
+  font-family:var(--font-display); font-weight:600; font-size:.6875rem;
+  letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2);
+}
+select,button{
+  font-family:var(--font-display); font-size:.9375rem; color:var(--ink);
+  background:var(--surface); border:1px solid var(--rule-2); border-radius:3px;
+  padding:.46rem .6rem; max-width:100%;
+}
+button{cursor:pointer}
+button[aria-pressed="true"]{border-color:var(--gain); color:var(--gain)}
+select:focus-visible,button:focus-visible{outline:2px solid var(--gain); outline-offset:1px}
+.chart{background:var(--surface); border:1px solid var(--rule); padding:1rem}
+.axis{display:flex; margin:0 0 .35rem; font-family:var(--font-data); font-size:.6875rem;
+  color:var(--ink-3); font-variant-numeric:tabular-nums}
+.axis .pad{flex:0 0 var(--lab,14rem); min-width:0; text-align:right;
+  padding-right:.5rem; letter-spacing:.07em; text-transform:uppercase}
+.axis .ticks{position:relative; flex:1 1 auto; height:1.1rem; min-width:0}
+.axis .ticks span{position:absolute; transform:translateX(-50%); white-space:nowrap}
+.rows{display:flex; flex-direction:column; gap:.1rem}
+.row{display:flex; align-items:center; gap:.5rem; padding:.2rem 0; min-width:0}
+.row:hover{background:var(--surface-2)}
+.row .lab{flex:0 0 var(--lab,14rem); min-width:0; font-family:var(--font-display); font-size:.84rem;
+  display:flex; justify-content:space-between; gap:.5rem; align-items:baseline}
+.row .lab .c{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.row .lab .rk{font-family:var(--font-data); font-size:.66rem; color:var(--ink-3);
+  white-space:nowrap; font-variant-numeric:tabular-nums}
+.track{position:relative; flex:1 1 auto; height:1.5rem; min-width:0}
+.track .grid{position:absolute; inset:0; pointer-events:none}
+.track .grid i{position:absolute; top:0; bottom:0; width:1px; background:var(--rule)}
+.stem{position:absolute; top:50%; height:2px; background:var(--rule-2); transform:translateY(-50%)}
+.dot{position:absolute; top:50%; width:10px; height:10px; border-radius:50%;
+  background:var(--gain); transform:translate(-50%,-50%); box-shadow:0 0 0 2px var(--surface)}
+.row.sel .dot{background:var(--lost); width:12px; height:12px}
+.row.sel .lab{font-weight:600}
+.val{position:absolute; top:50%; transform:translateY(-50%); font-family:var(--font-data);
+  font-size:.7rem; color:var(--ink-2); white-space:nowrap; font-variant-numeric:tabular-nums}
+.note{font-family:var(--font-display); font-size:.8125rem; color:var(--ink-2); margin:.9rem 0 0; max-width:42rem}
+.tip{position:fixed; z-index:20; pointer-events:none; background:var(--surface);
+  border:1px solid var(--rule-2); border-radius:3px; padding:.55rem .7rem;
+  font-family:var(--font-display); font-size:.78rem; box-shadow:0 4px 14px rgb(0 0 0/.14); max-width:17rem}
+.tip b{display:block; margin-bottom:.25rem}
+.tip dl{display:grid; grid-template-columns:auto auto; gap:.1rem .7rem; margin:0}
+.tip dt{color:var(--ink-2)}
+.tip dd{margin:0; font-family:var(--font-data); text-align:right; font-variant-numeric:tabular-nums}
+
+/* ---- table ---- */
+.tablewrap{overflow-x:auto; border:1px solid var(--rule); margin:1.5rem 0 0}
+table{border-collapse:collapse; width:100%; min-width:36rem; background:var(--surface)}
+th,td{
+  padding:.625rem .875rem; text-align:right; border-bottom:1px solid var(--rule);
+  font-family:var(--font-data); font-size:.8125rem;
+  font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+th{
+  font-family:var(--font-display); font-weight:600; font-size:.6875rem;
+  letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2);
+  border-bottom:1px solid var(--rule-2); vertical-align:bottom;
+}
+th:first-child,td:first-child{text-align:left}
+td:first-child{font-family:var(--font-display); font-weight:600; font-size:.875rem; white-space:normal}
+tbody tr:last-child td{border-bottom:none}
+
+/* ---- aside / method ---- */
+.aside{
+  border-left:3px solid var(--ink-2); background:var(--surface);
+  padding:1.125rem 1.25rem; margin:2.25rem 0; max-width:42rem;
+}
+.aside .h{
+  font-family:var(--font-display); font-weight:600; font-size:.6875rem;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--ink-2);
+  margin-bottom:.5rem;
+}
+.aside p:last-child{margin-bottom:0}
+.n{font-family:var(--font-data); font-variant-numeric:tabular-nums; font-size:.92em}
+
+.method{border-top:1px solid var(--rule); margin-top:4rem; padding-top:2rem}
+.method h2{margin-top:0}
+.method p,.method li,.method h3{max-width:40rem}
+.method p,.method li{font-size:.9375rem; color:var(--ink-2)}
+.method b{color:var(--ink); font-weight:600}
+.credit{
+  font-family:var(--font-display); font-size:.8125rem; color:var(--ink-3);
+  border-top:1px solid var(--rule); margin-top:2rem; padding-top:1.25rem;
+}
+
+@media (max-width:620px){
+  .row .lab,.axis .pad{--lab:7.5rem; flex-basis:7.5rem}
+  .row .lab .rk{display:none}
+  .chart{padding:.75rem .5rem}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
 </style>
 
 <div class="wrap">
-<header class="hero">
-  <p class="eyebrow">Reports by YouMine &middot; No. 01 &middot; Mineral endowment</p>
-  <h1>Reserve rich, production poor</h1>
-  <p class="stand">Of the 29 minerals ranked here, Australia holds the world&rsquo;s largest or second-largest reserves of
-  nine. In only one of them &mdash; lithium &mdash; does it also lead the world in
-  digging them up.</p>
-  <div class="figs">
-    <div class="fig"><div class="n">9</div>
-      <div class="l">minerals where Australia ranks 1st or 2nd for reserves</div></div>
-    <div class="fig"><div class="n hi">1</div>
-      <div class="l">of those where its production rank matches or beats it</div></div>
-    <div class="fig"><div class="n">556</div>
-      <div class="l">years of Australian nickel reserves at 2025&rsquo;s estimated output, under half 2024&rsquo;s. 244 years on JORC-compliant reserves</div></div>
-    <div class="fig"><div class="n">29</div>
-      <div class="l">commodities ranked, across 103 countries</div></div>
-  </div>
-<p class="hero-caveat"><strong>Not ranked in this edition:</strong> iron ore, bauxite, zirconium, titanium
-  minerals, tantalum and vanadium. Australia holds first or second place for reserves of all six and
-  leads 2025 mine production of iron ore and zirconium, so the claim above covers the 29 ranked
-  commodities only. <a href="#method">Why these were left out</a>.</p>
-</header>
 
-<section>
-  <h2>What goes out on LinkedIn</h2>
-  <p class="sub">The post carries the finding and the top five. The ranking itself,
-  all 29 commodities and every country, stays here.</p>
-  <div class="card social">
-    <span class="tag">Social card &mdash; top 5 of 29</span>
-    <ol id="social"></ol>
-    <p class="hook"><strong>Where does your country rank?</strong>
-    Full rankings for all 29 commodities, filterable by country, below.</p>
-  </div>
-</section>
+  <header class="mast">
+    <span class="brand">YouMine Intelligence</span>
+    <span class="kicker">Mineral reserves · 29 minerals · 98 countries</span>
+  </header>
 
-<section>
-  <h2>Years of reserves remaining</h2>
-  <p class="sub">Reported reserves divided by one year of mine production. A log scale,
-  because the range runs from a couple of years to tens of thousands. Pick a commodity,
-  then highlight a country to find it in the ranking.</p>
+  <div class="lead-rule"></div>
+
+  <h1>Reserve Rich, Production Poor</h1>
+
+  <p class="standfirst">Australia has the world&rsquo;s biggest or second-biggest
+  reserves of <b>nine</b> of the 29 minerals ranked here. It leads the world in
+  mining just <b>one</b> of them: lithium. For the other eight, it ranks lower for
+  what it mines than for what it holds in the ground.</p>
+
+  <div class="stats">
+    <div class="stat"><span class="n">9</span><span class="l">minerals where Australia has the 1st or 2nd biggest reserves</span></div>
+    <div class="stat"><span class="n hi">1</span><span class="l">of those where it also leads the world in mining: lithium</span></div>
+    <div class="stat"><span class="n">29</span><span class="l">minerals ranked, across 98 countries</span></div>
+  </div>
+  <p class="stat-note">Reserves and mine output as reported by the US Geological Survey; coal from the US Energy Information Administration.</p>
+
+  <div class="col">
+    <p>The measure here is simple: how many years a country&rsquo;s known reserves
+    would last if it kept mining at today&rsquo;s rate. A big number means a country
+    is sitting on far more than it digs up. It isn&rsquo;t a countdown to running
+    out. Reserves grow as exploration finds more, and mining rates change.</p>
+
+    <p>Six minerals aren&rsquo;t ranked, because their figures don&rsquo;t line up
+    (<a href="#method">see the method</a>): iron ore, bauxite, zirconium, titanium
+    minerals, tantalum and vanadium. Australia is first or second for reserves of
+    all six, and leads the world in mining iron ore and zirconium. So the headline
+    applies to the 29 ranked minerals only.</p>
+  </div>
+
+  <h2>The biggest gaps</h2>
+  <p class="col sub">Countries with a top-three share of a mineral&rsquo;s reserves
+  that rank far lower for mining it. Minerals with at least six countries ranked.</p>
+  <ol class="gaps" id="gaps"></ol>
+
+  <h2>How many years of reserves are left</h2>
+  <p class="col sub">Known reserves divided by one year of mining. Pick a mineral,
+  then highlight a country to find it. The scale is stretched because the range
+  runs from a couple of years to thousands. &ldquo;Res 2 &middot; mine 8&rdquo;
+  means 2nd for reserves, 8th for mining.</p>
   <div class="controls">
-    <div class="ctrl"><label for="com">Commodity</label>
+    <div class="ctrl"><label for="com">Mineral</label>
       <select id="com"></select></div>
     <div class="ctrl"><label for="hl">Highlight country</label>
       <select id="hl"></select></div>
     <div class="ctrl"><label for="view">View</label>
       <button id="view" aria-pressed="false">Show as table</button></div>
   </div>
-  <div id="chart">
+  <div class="chart" id="chart">
     <div class="axis"><div class="pad">years</div><div class="ticks" id="ticks"></div></div>
     <div class="rows" id="rows"></div>
   </div>
-  <div class="scroll" id="tableWrap" hidden>
+  <div class="tablewrap" id="tableWrap" hidden>
     <table id="table"></table>
   </div>
   <p class="note" id="chartNote"></p>
-</section>
 
-<section>
-  <h2>One country, every commodity</h2>
-  <p class="sub">Reserve rank against production rank. A country lower in production than
-  in reserves is sitting on more than it mines.</p>
+  <div class="aside">
+    <div class="h">Handle with care: Australian nickel</div>
+    <p>Australian nickel&rsquo;s <span class="n">556</span> years is the shakiest
+    figure here. It uses estimated 2025 output of <span class="n">45,000 t</span>,
+    less than half the <span class="n">98,000 t</span> mined in 2024. And only
+    <span class="n">11 Mt</span> of the <span class="n">25 Mt</span> reserve figure
+    meets Australia&rsquo;s JORC reporting standard (or an equivalent). On that
+    figure alone it is <span class="n">244</span> years.</p>
+  </div>
+
+  <h2>One country, every mineral</h2>
+  <p class="col sub">Reserve rank against mining rank. If a country ranks lower for
+  mining than for reserves, it is sitting on more than it mines. Biggest gaps first.</p>
   <div class="controls">
     <div class="ctrl"><label for="ctry">Country</label>
       <select id="ctry"></select></div>
   </div>
-  <div class="scroll"><table id="ctable"></table></div>
+  <div class="tablewrap"><table id="ctable"></table></div>
   <p class="note" id="ctryNote"></p>
-</section>
 
-<section>
-  <h2 id="method">Method, and what is left out</h2>
-  <div class="method">
-    <h3>What the ratio is</h3>
-    <p>Reserves divided by one year of mine production. It is a measure of endowment
-    against current extraction rate, not a forecast: reserves grow as exploration
-    converts resources, and production rates change.</p>
+  <div class="method" id="method">
+    <h2>How this was built, and what it can't tell you</h2>
+
+    <p><b>The measure.</b> Reserves divided by one year of mine production. It
+    compares what a country holds with how fast it is mining, and is not a
+    forecast: reserves grow as exploration turns resources into reserves, and
+    production rates change.</p>
+
     <h3>Mine production only</h3>
-    <p>Refinery, smelter, plant and secondary output are excluded. China refines roughly
-    14 million tonnes of copper a year but mines 1.8 million; comparing refinery output
-    to domestic reserves would have put China at 2.9 years instead of 22.8.</p>
-    <h3>Aggregates removed</h3>
-    <p>Publisher totals and residual buckets &mdash; &ldquo;World total&rdquo;,
-    &ldquo;Other countries&rdquo; &mdash; are excluded, along with composite rows naming
-    several countries at once.</p>
-    <h3 class="flag">Vanadium is excluded</h3>
-    <p class="flag">The source publishes world vanadium reserves of 21,000 tonnes against
-    110,000 tonnes of annual world production &mdash; less than one year. The reserve
-    figures appear to be in thousands while the unit column says tonnes. Until that is
-    resolved, no vanadium ratio is shown.</p>
+    <p>Refinery, smelter, plant and recycled output are excluded. China refines
+    roughly 14 million tonnes of copper a year but mines 1.8 million; comparing
+    refinery output with its own reserves would have put China at 2.9 years
+    instead of 22.8.</p>
+
+    <h3>Totals removed</h3>
+    <p>Publisher totals and catch-all rows (&ldquo;World total&rdquo;,
+    &ldquo;Other countries&rdquo;) are excluded, along with rows that combine
+    several countries.</p>
+
     <h3>The rankings have a floor</h3>
-    <p>The mineral tables list only countries above a reporting threshold and sweep the
-    rest into &ldquo;Other countries&rdquo;. A rank of 9th of 9 means ninth among
-    countries large enough to be listed separately.</p>
-    <h3>Current-year figures are estimates</h3>
-    <p>The most recent year in each series is the publisher&rsquo;s estimate for an
-    incomplete year, and coal reserves are carried forward unchanged between editions
-    rather than restated, so that series is a standing estimate.</p>
-    <h3 class="flag">Commodities not ranked</h3>
-    <p class="flag">The ranking covers 29 commodities. Six are left out, for different reasons.
-    Zirconium reserves are ZrO&#8322; content while production is gross weight, iron ore appears as
-    both crude ore and iron content, and titanium splits into ilmenite and rutile, so none has a single
-    like-for-like basis. Bauxite&rsquo;s reserve and production lines are labelled differently in the
-    source tables and have not yet been confirmed comparable. Tantalum is reported by only four countries
-    for reserves, too few to rank. Vanadium has the unit problem described above. On every basis USGS
-    publishes, Australia holds first or second place for reserves of all six, and first place for 2025
-    mine production of iron ore and zirconium. The headline claim applies to the 29 ranked commodities,
-    not to everything USGS covers.</p>
-    <h3 class="flag">Nickel is the outlier</h3>
-    <p class="flag">Australian nickel&rsquo;s 556 years is the least stable figure here. It divides
-    USGS&rsquo;s 25 million tonne reserve figure by 45,000 tonnes of estimated 2025 mine output, less
-    than half the 98,000 tonnes USGS gave for 2024. USGS also notes that only 11 million tonnes of
-    Australia&rsquo;s reserves are JORC-compliant or equivalent; on that figure the ratio is 244 years.</p>
-    <h3>Sources</h3>
-    <p>Mineral reserves and production: U.S. Geological Survey, Mineral Commodity
-    Summaries 2026 (public domain, CC0). Coal reserves and production: U.S. Energy
-    Information Administration, International Energy Data (public domain).</p>
+    <p>The USGS tables list only countries above a size threshold and put the
+    rest under &ldquo;Other countries&rdquo;. A rank of 9th of 9 means ninth among
+    countries big enough to be listed on their own.</p>
+
+    <h3>Coal: only countries that mine it</h3>
+    <p>Coal ranks 63 countries. Seven more hold coal reserves but recorded no coal
+    production in 2025 (Egypt, France, Italy, Morocco, Slovakia, Spain and
+    Taiwan), so they have no years-of-reserves figure and are left out rather
+    than shown with a production figure the data does not support.</p>
+
+    <h3>The latest year is an estimate</h3>
+    <p>The most recent year in each series is the publisher&rsquo;s estimate for
+    an incomplete year. Coal reserves are carried forward unchanged between
+    editions rather than restated, so that series is a standing estimate.</p>
+
+    <h3>Six minerals not ranked</h3>
+    <p>Each is left out for its own reason. Zirconium reserves are counted as
+    zirconium oxide while production is gross weight. Iron ore appears both as
+    crude ore and as iron content. Titanium splits into ilmenite and rutile. None
+    of these has a single like-for-like basis. Bauxite&rsquo;s reserve and
+    production lines are labelled differently in the source tables and are not
+    yet confirmed comparable. Tantalum has reserves for only four countries, too
+    few to rank. Vanadium has the unit problem below. On every basis USGS
+    publishes, Australia is first or second for reserves of all six, and first
+    for 2025 mine production of iron ore and zirconium.</p>
+
+    <h3>Why vanadium is excluded</h3>
+    <p>The source gives world vanadium reserves of 21,000 tonnes against 110,000
+    tonnes of annual production: less than one year. The reserve figures appear
+    to be in thousands of tonnes while the unit column says tonnes. Until that is
+    resolved, no vanadium figure is shown.</p>
+
+    <h3>Nickel</h3>
+    <p>Australia&rsquo;s 556 years divides USGS&rsquo;s 25 million tonne reserve
+    figure by 45,000 tonnes of estimated 2025 mine output, less than half the
+    98,000 tonnes USGS gave for 2024. USGS also notes that only 11 million tonnes
+    of Australia&rsquo;s reserves are JORC-compliant or equivalent; on that
+    figure the ratio is 244 years.</p>
+
+    <p class="credit">Mineral reserves and production: U.S. Geological Survey,
+    Mineral Commodity Summaries 2026 (public domain, CC0). Coal reserves and
+    production: U.S. Energy Information Administration, International Energy
+    Data (public domain). Analysis by James Blue for YouMine Intelligence,
+    November 2026.</p>
   </div>
-</section>
 </div>
 
-<script id="rp" type="application/json">[{"c":"Antimony","k":"China","r":830000,"p":40000,"y":20.8,"rr":1,"pr":1,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Russia","r":350000,"p":32000,"y":10.9,"rr":2,"pr":2,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Bolivia","r":310000,"p":5000,"y":62.0,"rr":3,"pr":4,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Kyrgyzstan","r":260000,"p":700,"y":371.4,"rr":4,"pr":8,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Burma","r":140000,"p":4500,"y":31.1,"rr":5,"pr":5,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Australia","r":110000,"p":1300,"y":84.6,"rr":6,"pr":7,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Turkey","r":99000,"p":3000,"y":33.0,"rr":7,"pr":6,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Tajikistan","r":60000,"p":22000,"y":2.7,"rr":8,"pr":3,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Vietnam","r":54000,"p":220,"y":245.5,"rr":9,"pr":11,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Pakistan","r":26000,"p":260,"y":100.0,"rr":10,"pr":10,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Mexico","r":18000,"p":600,"y":30.0,"rr":11,"pr":9,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Barite","k":"China","r":120000000,"p":2200000,"y":54.5,"rr":1,"pr":2,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Barite","k":"Iran","r":100000000,"p":300000,"y":333.3,"rr":2,"pr":4,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Barite","k":"Kazakhstan","r":85000000,"p":700000,"y":121.4,"rr":3,"pr":3,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Barite","k":"India","r":51000000,"p":3000000,"y":17.0,"rr":4,"pr":1,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Barite","k":"Turkey","r":34000000,"p":260000,"y":130.8,"rr":5,"pr":5,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Barite","k":"Russia","r":12000000,"p":230000,"y":52.2,"rr":6,"pr":6,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"United States","r":247882705205,"p":479416291,"y":517.1,"rr":1,"pr":4,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Russia","r":162165807144,"p":475975173,"y":340.7,"rr":2,"pr":5,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"China","r":157040813239,"p":4440217814,"y":35.4,"rr":3,"pr":1,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Australia","r":149471822240,"p":458080418,"y":326.3,"rr":4,"pr":6,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"India","r":127726848101,"p":1006462985,"y":126.9,"rr":5,"pr":2,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Germany","r":35399957901,"p":84402758,"y":419.4,"rr":6,"pr":10,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Indonesia","r":35054958311,"p":790386117,"y":44.4,"rr":7,"pr":3,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Ukraine","r":34374959120,"p":18591546,"y":1849.0,"rr":8,"pr":21,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Kyrgyzstan","r":28498966108,"p":4536965,"y":6281.5,"rr":9,"pr":34,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Poland","r":27757966989,"p":80793869,"y":343.6,"rr":10,"pr":11,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Kazakhstan","r":25604969549,"p":120138527,"y":213.1,"rr":11,"pr":8,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Turkiye","r":10974986948,"p":75931869,"y":144.5,"rr":12,"pr":12,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"North Korea","r":10599987394,"p":25157030,"y":421.4,"rr":13,"pr":17,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"South Africa","r":9892988235,"p":236501103,"y":41.8,"rr":14,"pr":7,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Serbia","r":7111991542,"p":33299697,"y":213.6,"rr":15,"pr":16,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"New Zealand","r":6749991973,"p":2575719,"y":2620.6,"rr":16,"pr":40,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Brazil","r":6595992156,"p":6905592,"y":955.2,"rr":17,"pr":30,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Canada","r":6581992172,"p":42629081,"y":154.4,"rr":18,"pr":15,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Eswatini","r":4643994477,"p":250458,"y":18542.0,"rr":19,"pr":57,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Colombia","r":4553994584,"p":50282234,"y":90.6,"rr":20,"pr":14,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Tajikistan","r":4074995154,"p":3114732,"y":1308.3,"rr":21,"pr":38,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Czechia","r":3594995725,"p":24510076,"y":146.7,"rr":22,"pr":18,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Bangladesh","r":3259996123,"p":1257131,"y":2593.2,"rr":23,"pr":48,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Vietnam","r":3115996294,"p":51942443,"y":60.0,"rr":24,"pr":13,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Greece","r":2875996580,"p":6290897,"y":457.2,"rr":25,"pr":31,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Pakistan","r":2856996602,"p":9386042,"y":304.4,"rr":26,"pr":27,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Hungary","r":2632996869,"p":2132000,"y":1235.0,"rr":27,"pr":43,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Mongolia","r":2519997003,"p":95539886,"y":26.4,"rr":28,"pr":9,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Bosnia and Herzegovina","r":2263997308,"p":12273342,"y":184.5,"rr":29,"pr":25,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Bulgaria","r":2173997415,"p":17200964,"y":126.4,"rr":30,"pr":22,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Nigeria","r":2143997450,"p":1305839,"y":1641.9,"rr":31,"pr":47,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Mozambique","r":1791997869,"p":13820232,"y":129.7,"rr":32,"pr":23,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Botswana","r":1659998026,"p":2928803,"y":566.8,"rr":33,"pr":39,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Peru","r":1566998136,"p":1894018,"y":827.3,"rr":34,"pr":45,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Kosovo","r":1563998140,"p":7052016,"y":221.8,"rr":35,"pr":29,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Tanzania","r":1409998323,"p":1001067,"y":1408.5,"rr":36,"pr":50,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Uzbekistan","r":1374998365,"p":8972225,"y":153.3,"rr":37,"pr":28,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Iran","r":1202998569,"p":1906545,"y":631.0,"rr":38,"pr":44,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Spain","r":1186998588,"p":2400997,"y":494.4,"rr":39,"pr":41,"n":70,"ry":2025,"py":2018,"amb":false},{"c":"Coal","k":"Chile","r":1180998595,"p":17486,"y":67539.7,"rr":40,"pr":67,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Mexico","r":1159998620,"p":5257005,"y":220.7,"rr":41,"pr":33,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Thailand","r":1062998736,"p":12460000,"y":85.3,"rr":42,"pr":24,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Zambia","r":944998876,"p":2395185,"y":394.5,"rr":43,"pr":42,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Georgia","r":900998928,"p":157960,"y":5704.0,"rr":44,"pr":60,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Malawi","r":801999046,"p":28848,"y":27800.5,"rr":45,"pr":66,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Argentina","r":799999049,"p":65000,"y":12307.7,"rr":46,"pr":65,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Venezuela","r":730999131,"p":341576,"y":2140.1,"rr":47,"pr":55,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Italy","r":609999275,"p":81000,"y":7530.9,"rr":48,"pr":64,"n":70,"ry":2025,"py":2015,"amb":false},{"c":"Coal","k":"Albania","r":521999379,"p":306871,"y":1701.0,"rr":49,"pr":56,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Zimbabwe","r":501999403,"p":5797530,"y":86.6,"rr":50,"pr":32,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Philippines","r":360999571,"p":19510009,"y":18.5,"rr":51,"pr":20,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Japan","r":349999584,"p":450243,"y":777.4,"rr":52,"pr":53,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Montenegro","r":336999599,"p":732900,"y":459.8,"rr":53,"pr":52,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"North Macedonia","r":331999605,"p":3439089,"y":96.5,"rr":54,"pr":36,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"South Korea","r":325999612,"p":420000,"y":776.2,"rr":55,"pr":54,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Romania","r":290999654,"p":12241000,"y":23.8,"rr":56,"pr":26,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Burma","r":251999700,"p":3507968,"y":71.8,"rr":57,"pr":35,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Malaysia","r":225999731,"p":3331192,"y":67.8,"rr":58,"pr":37,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Egypt","r":181999784,"p":3167,"y":57460.9,"rr":59,"pr":69,"n":70,"ry":2025,"py":2013,"amb":false},{"c":"Coal","k":"France","r":159999810,"p":160000,"y":1000.0,"rr":60,"pr":59,"n":70,"ry":2025,"py":2004,"amb":false},{"c":"Coal","k":"Morocco","r":95999886,"p":6833,"y":14048.8,"rr":61,"pr":68,"n":70,"ry":2025,"py":2006,"amb":false},{"c":"Coal","k":"Slovenia","r":94999887,"p":1757970,"y":54.0,"rr":62,"pr":46,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Niger","r":89999893,"p":219684,"y":409.7,"rr":63,"pr":58,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Afghanistan","r":65999922,"p":1210648,"y":54.5,"rr":64,"pr":49,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Laos","r":61999926,"p":20168913,"y":3.1,"rr":65,"pr":19,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"United Kingdom","r":25999969,"p":119570,"y":217.4,"rr":66,"pr":61,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Slovakia","r":18999977,"p":764999,"y":24.8,"rr":67,"pr":51,"n":70,"ry":2025,"py":2023,"amb":false},{"c":"Coal","k":"Nepal","r":7999990,"p":2975,"y":2689.1,"rr":68,"pr":70,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Norway","r":1999998,"p":92721,"y":21.6,"rr":69,"pr":62,"n":70,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Taiwan","r":999999,"p":83000,"y":12.0,"rr":70,"pr":63,"n":70,"ry":2025,"py":2000,"amb":false},{"c":"Cobalt","k":"Congo (Kinshasa)","r":6000000,"p":230000,"y":26.1,"rr":1,"pr":1,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"Australia","r":1700000,"p":3700,"y":459.5,"rr":2,"pr":5,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"Russia","r":800000,"p":7700,"y":103.9,"rr":3,"pr":3,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"Indonesia","r":760000,"p":44000,"y":17.3,"rr":4,"pr":2,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"Cuba","r":500000,"p":2000,"y":250.0,"rr":5,"pr":9,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"Philippines","r":260000,"p":3700,"y":70.3,"rr":6,"pr":5,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"Canada","r":220000,"p":3500,"y":62.9,"rr":7,"pr":7,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"China","r":160000,"p":2000,"y":80.0,"rr":8,"pr":9,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"Madagascar","r":100000,"p":3900,"y":25.6,"rr":9,"pr":4,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"Turkey","r":91000,"p":1900,"y":47.9,"rr":10,"pr":11,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"Papua New Guinea","r":84000,"p":2800,"y":30.0,"rr":11,"pr":8,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"United States","r":70000,"p":300,"y":233.3,"rr":12,"pr":12,"n":12,"ry":2025,"py":2025,"amb":true},{"c":"Copper","k":"Chile","r":180000000,"p":5300000,"y":34.0,"rr":1,"pr":1,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Australia","r":100000000,"p":730000,"y":137.0,"rr":2,"pr":8,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Peru","r":85000000,"p":2700000,"y":31.5,"rr":3,"pr":3,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Russia","r":80000000,"p":1300000,"y":61.5,"rr":4,"pr":5,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Congo (Kinshasa)","r":80000000,"p":3200000,"y":25.0,"rr":4,"pr":2,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Mexico","r":53000000,"p":690000,"y":76.8,"rr":6,"pr":11,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"United States","r":47000000,"p":1000000,"y":47.0,"rr":7,"pr":6,"n":14,"ry":2025,"py":2025,"amb":true},{"c":"Copper","k":"China","r":41000000,"p":1800000,"y":22.8,"rr":8,"pr":4,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Poland","r":33000000,"p":410000,"y":80.5,"rr":9,"pr":13,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Indonesia","r":21000000,"p":710000,"y":29.6,"rr":10,"pr":9,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Zambia","r":21000000,"p":940000,"y":22.3,"rr":10,"pr":7,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Kazakhstan","r":20000000,"p":710000,"y":28.2,"rr":12,"pr":9,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Canada","r":7000000,"p":500000,"y":14.0,"rr":13,"pr":12,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"India","r":2200000,"p":23000,"y":95.7,"rr":14,"pr":14,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Diamond (Industrial)","k":"Russia","r":150,"p":3,"y":46.9,"rr":1,"pr":1,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Diamond (Industrial)","k":"Botswana","r":50,"p":1,"y":50.0,"rr":2,"pr":3,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Diamond (Industrial)","k":"Congo (Kinshasa)","r":30,"p":1,"y":21.4,"rr":3,"pr":2,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Diamond (Industrial)","k":"Angola","r":30,"p":0,"y":150.0,"rr":3,"pr":6,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Diamond (Industrial)","k":"South Africa","r":17,"p":1,"y":29.0,"rr":5,"pr":5,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Diamond (Industrial)","k":"Zimbabwe","r":11,"p":1,"y":11.2,"rr":6,"pr":3,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Diatomite","k":"United States","r":250000000,"p":720000,"y":347.2,"rr":1,"pr":1,"n":5,"ry":2025,"py":2025,"amb":true},{"c":"Diatomite","k":"China","r":120000000,"p":140000,"y":857.1,"rr":2,"pr":3,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Diatomite","k":"Spain","r":57000000,"p":50000,"y":1140.0,"rr":3,"pr":5,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Diatomite","k":"Turkey","r":44000000,"p":150000,"y":293.3,"rr":4,"pr":2,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Diatomite","k":"Korea, Republic of","r":2200000,"p":120000,"y":18.3,"rr":5,"pr":4,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Feldspar And Nepheline Syenite","k":"China","r":730000000,"p":3700000,"y":197.3,"rr":1,"pr":4,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Feldspar And Nepheline Syenite","k":"Turkey","r":720000000,"p":5300000,"y":135.8,"rr":2,"pr":2,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Feldspar And Nepheline Syenite","k":"India","r":320000000,"p":6000000,"y":53.3,"rr":3,"pr":1,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Feldspar And Nepheline Syenite","k":"Korea, Republic of","r":200000000,"p":1000000,"y":200.0,"rr":4,"pr":6,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Feldspar And Nepheline Syenite","k":"Iran","r":130000000,"p":3900000,"y":33.3,"rr":5,"pr":3,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Feldspar And Nepheline Syenite","k":"Thailand","r":45000000,"p":1900000,"y":23.7,"rr":6,"pr":5,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Fluorspar","k":"China","r":110000000,"p":6000000,"y":18.3,"rr":1,"pr":1,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Fluorspar","k":"Mexico","r":68000000,"p":1500000,"y":45.3,"rr":2,"pr":2,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Fluorspar","k":"South Africa","r":41000000,"p":410000,"y":100.0,"rr":3,"pr":4,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Fluorspar","k":"Mongolia","r":34000000,"p":1500000,"y":22.7,"rr":4,"pr":2,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Fluorspar","k":"Vietnam","r":16000000,"p":160000,"y":100.0,"rr":5,"pr":5,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Fluorspar","k":"Spain","r":15000000,"p":140000,"y":107.1,"rr":6,"pr":6,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Fluorspar","k":"Iran","r":7600000,"p":70000,"y":108.6,"rr":7,"pr":8,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Fluorspar","k":"Thailand","r":3600000,"p":55000,"y":65.5,"rr":8,"pr":9,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Fluorspar","k":"Brazil","r":2500000,"p":100000,"y":25.0,"rr":9,"pr":7,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Gemstones","k":"Russia","r":150,"p":4,"y":35.7,"rr":1,"pr":1,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Gemstones","k":"Botswana","r":50,"p":3,"y":19.2,"rr":2,"pr":2,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Gemstones","k":"Congo (Kinshasa)","r":30,"p":0,"y":75.0,"rr":3,"pr":6,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Gemstones","k":"Angola","r":30,"p":3,"y":11.5,"rr":3,"pr":2,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Gemstones","k":"Canada","r":22,"p":3,"y":8.5,"rr":5,"pr":2,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Gemstones","k":"South Africa","r":17,"p":0,"y":41.4,"rr":6,"pr":5,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Gemstones","k":"Zimbabwe","r":11,"p":0,"y":105.7,"rr":7,"pr":7,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"Australia","r":13000,"p":280,"y":46.4,"rr":1,"pr":3,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"Russia","r":12000,"p":310,"y":38.7,"rr":2,"pr":2,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"South Africa","r":5000,"p":90,"y":55.6,"rr":3,"pr":11,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"Indonesia","r":3600,"p":90,"y":40.0,"rr":4,"pr":11,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"Canada","r":3200,"p":200,"y":16.0,"rr":5,"pr":4,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"China","r":3200,"p":380,"y":8.4,"rr":5,"pr":1,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"United States","r":3000,"p":160,"y":18.8,"rr":7,"pr":5,"n":13,"ry":2025,"py":2025,"amb":true},{"c":"Gold","k":"Brazil","r":2500,"p":80,"y":31.3,"rr":8,"pr":13,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"Kazakhstan","r":2300,"p":130,"y":17.7,"rr":9,"pr":8,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"Peru","r":2200,"p":110,"y":20.0,"rr":10,"pr":10,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"Uzbekistan","r":2200,"p":130,"y":16.9,"rr":10,"pr":8,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"Mexico","r":1400,"p":140,"y":10.0,"rr":12,"pr":7,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"Ghana","r":1000,"p":150,"y":6.7,"rr":13,"pr":6,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"China","r":100000000,"p":1400000,"y":71.4,"rr":1,"pr":1,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Brazil","r":74000000,"p":65000,"y":1138.5,"rr":2,"pr":4,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Madagascar","r":27000000,"p":80000,"y":337.5,"rr":3,"pr":2,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Mozambique","r":25000000,"p":60000,"y":416.7,"rr":4,"pr":5,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Tanzania","r":18000000,"p":75000,"y":240.0,"rr":5,"pr":3,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Russia","r":14000000,"p":25000,"y":560.0,"rr":6,"pr":6,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Vietnam","r":9700000,"p":500,"y":19400.0,"rr":7,"pr":14,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"India","r":8600000,"p":17000,"y":505.9,"rr":8,"pr":7,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Turkey","r":6900000,"p":2200,"y":3136.4,"rr":9,"pr":12,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Canada","r":5900000,"p":8000,"y":737.5,"rr":10,"pr":8,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Mexico","r":3100000,"p":740,"y":4189.2,"rr":11,"pr":13,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Korea, North","r":2000000,"p":8000,"y":250.0,"rr":12,"pr":8,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Korea, Republic of","r":1800000,"p":500,"y":3600.0,"rr":13,"pr":14,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Sri Lanka","r":1500000,"p":3200,"y":468.8,"rr":14,"pr":11,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Norway","r":600000,"p":6600,"y":90.9,"rr":15,"pr":10,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Gypsum","k":"China","r":1800000000,"p":12000000,"y":150.0,"rr":1,"pr":3,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Gypsum","k":"Thailand","r":910000000,"p":8700000,"y":104.6,"rr":2,"pr":5,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Gypsum","k":"Iran","r":750000000,"p":16000000,"y":46.9,"rr":3,"pr":2,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Gypsum","k":"United States","r":700000000,"p":20000000,"y":35.0,"rr":4,"pr":1,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Gypsum","k":"Brazil","r":450000000,"p":5800000,"y":77.6,"rr":5,"pr":6,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Gypsum","k":"Canada","r":450000000,"p":3600000,"y":125.0,"rr":5,"pr":8,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Gypsum","k":"France","r":300000000,"p":2400000,"y":125.0,"rr":7,"pr":9,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Gypsum","k":"Turkey","r":200000000,"p":10000000,"y":20.0,"rr":8,"pr":4,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Gypsum","k":"India","r":37000000,"p":4300000,"y":8.6,"rr":9,"pr":7,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Iodine","k":"Japan","r":4900000,"p":9000,"y":544.4,"rr":1,"pr":2,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Iodine","k":"Chile","r":750000,"p":23000,"y":32.6,"rr":2,"pr":1,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Iodine","k":"Azerbaijan","r":170000,"p":210,"y":809.5,"rr":3,"pr":5,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Iodine","k":"Russia","r":120000,"p":8,"y":15000.0,"rr":4,"pr":6,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Iodine","k":"Turkmenistan","r":70000,"p":800,"y":87.5,"rr":5,"pr":3,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Iodine","k":"Iran","r":40000,"p":700,"y":57.1,"rr":6,"pr":4,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"Australia","r":34000000,"p":480000,"y":70.8,"rr":1,"pr":2,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"China","r":22000000,"p":1900000,"y":11.6,"rr":2,"pr":1,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"Russia","r":8900000,"p":260000,"y":34.2,"rr":3,"pr":5,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"Mexico","r":5600000,"p":200000,"y":28.0,"rr":4,"pr":7,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"Peru","r":5000000,"p":290000,"y":17.2,"rr":5,"pr":3,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"United States","r":4600000,"p":280000,"y":16.4,"rr":6,"pr":4,"n":11,"ry":2025,"py":2025,"amb":true},{"c":"Lead","k":"Iran","r":2000000,"p":70000,"y":28.6,"rr":7,"pr":9,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"India","r":1900000,"p":220000,"y":8.6,"rr":8,"pr":6,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"Sweden","r":1700000,"p":70000,"y":24.3,"rr":9,"pr":9,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"Bolivia","r":1600000,"p":100000,"y":16.0,"rr":10,"pr":8,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"Turkey","r":1600000,"p":70000,"y":22.9,"rr":10,"pr":9,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lithium","k":"Chile","r":9200000,"p":56000,"y":164.3,"rr":1,"pr":3,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Lithium","k":"Australia","r":8400000,"p":92000,"y":91.3,"rr":2,"pr":1,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Lithium","k":"China","r":4600000,"p":62000,"y":74.2,"rr":3,"pr":2,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Lithium","k":"Argentina","r":4400000,"p":23000,"y":191.3,"rr":4,"pr":5,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Lithium","k":"Canada","r":1600000,"p":5600,"y":285.7,"rr":5,"pr":8,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Lithium","k":"Brazil","r":540000,"p":12000,"y":45.0,"rr":6,"pr":6,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Lithium","k":"Zimbabwe","r":500000,"p":28000,"y":17.9,"rr":7,"pr":4,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Lithium","k":"Mali","r":370000,"p":9400,"y":39.4,"rr":8,"pr":7,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Lithium","k":"Portugal","r":60000,"p":380,"y":157.9,"rr":9,"pr":9,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"Russia","r":2300000000,"p":1700000,"y":1352.9,"rr":1,"pr":3,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"Slovakia","r":1200000000,"p":330000,"y":3636.4,"rr":2,"pr":9,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"China","r":700000000,"p":12700000,"y":55.1,"rr":3,"pr":1,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"Greece","r":280000000,"p":130000,"y":2153.8,"rr":4,"pr":11,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"Australia","r":280000000,"p":400000,"y":700.0,"rr":4,"pr":7,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"Brazil","r":200000000,"p":1800000,"y":111.1,"rr":6,"pr":2,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"Turkey","r":110000000,"p":1600000,"y":68.8,"rr":7,"pr":4,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"India","r":66000000,"p":85000,"y":776.5,"rr":8,"pr":12,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"Austria","r":49000000,"p":650000,"y":75.4,"rr":9,"pr":5,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"Spain","r":35000000,"p":640000,"y":54.7,"rr":10,"pr":6,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"United States","r":35000000,"p":400000,"y":87.5,"rr":10,"pr":7,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"Iran","r":10000000,"p":200000,"y":50.0,"rr":12,"pr":10,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Manganese","k":"Australia","r":580000000,"p":1600000,"y":362.5,"rr":1,"pr":4,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Manganese","k":"South Africa","r":550000000,"p":7600000,"y":72.4,"rr":2,"pr":1,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Manganese","k":"Brazil","r":300000000,"p":800000,"y":375.0,"rr":3,"pr":5,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Manganese","k":"China","r":260000000,"p":700000,"y":371.4,"rr":4,"pr":7,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Manganese","k":"Gabon","r":61000000,"p":5000000,"y":12.2,"rr":5,"pr":2,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Manganese","k":"India","r":34000000,"p":790000,"y":43.0,"rr":6,"pr":6,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Manganese","k":"Ghana","r":13000000,"p":2000000,"y":6.5,"rr":7,"pr":3,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Nickel","k":"Indonesia","r":62000000,"p":2600000,"y":23.8,"rr":1,"pr":1,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Nickel","k":"Australia","r":25000000,"p":45000,"y":555.6,"rr":2,"pr":8,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Nickel","k":"Brazil","r":16000000,"p":70000,"y":228.6,"rr":3,"pr":7,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Nickel","k":"Russia","r":8300000,"p":200000,"y":41.5,"rr":4,"pr":3,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Nickel","k":"New Caledonia","r":7100000,"p":140000,"y":50.7,"rr":5,"pr":4,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Nickel","k":"Philippines","r":4800000,"p":270000,"y":17.8,"rr":6,"pr":2,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Nickel","k":"China","r":4400000,"p":120000,"y":36.7,"rr":7,"pr":6,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Nickel","k":"Canada","r":2200000,"p":140000,"y":15.7,"rr":8,"pr":4,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Nickel","k":"United States","r":340000,"p":10000,"y":34.0,"rr":9,"pr":9,"n":9,"ry":2025,"py":2025,"amb":true},{"c":"Peat","k":"Finland","r":6000000000,"p":2500000,"y":2400.0,"rr":1,"pr":1,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Peat","k":"Belarus","r":2600000000,"p":1800000,"y":1444.4,"rr":2,"pr":4,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Peat","k":"Russia","r":1000000000,"p":1800000,"y":555.6,"rr":3,"pr":4,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Peat","k":"Canada","r":720000000,"p":2000000,"y":360.0,"rr":4,"pr":2,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Peat","k":"Estonia","r":570000000,"p":1100000,"y":518.2,"rr":5,"pr":6,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Peat","k":"Lithuania","r":210000000,"p":540000,"y":388.9,"rr":6,"pr":7,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Peat","k":"United States","r":150000000,"p":330000,"y":454.5,"rr":7,"pr":8,"n":8,"ry":2025,"py":2025,"amb":true},{"c":"Peat","k":"Latvia","r":150000000,"p":2000000,"y":75.0,"rr":7,"pr":2,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Perlite","k":"Greece","r":180000000,"p":840000,"y":214.3,"rr":1,"pr":2,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Perlite","k":"United States","r":50000000,"p":730000,"y":68.5,"rr":2,"pr":3,"n":5,"ry":2025,"py":2025,"amb":true},{"c":"Perlite","k":"China","r":32000000,"p":1500000,"y":21.3,"rr":3,"pr":1,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Perlite","k":"Slovakia","r":30000000,"p":40000,"y":750.0,"rr":4,"pr":5,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Perlite","k":"Iran","r":15000000,"p":70000,"y":214.3,"rr":5,"pr":4,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Morocco","r":50000000000,"p":36000000,"y":1388.9,"rr":1,"pr":2,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"China","r":3400000000,"p":110000000,"y":30.9,"rr":2,"pr":1,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Egypt","r":2800000000,"p":5500000,"y":509.1,"rr":3,"pr":7,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Tunisia","r":2500000000,"p":3300000,"y":757.6,"rr":4,"pr":10,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Russia","r":2400000000,"p":14000000,"y":171.4,"rr":5,"pr":4,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Algeria","r":2200000000,"p":2000000,"y":1100.0,"rr":6,"pr":16,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Brazil","r":1600000000,"p":5000000,"y":320.0,"rr":7,"pr":8,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"South Africa","r":1500000000,"p":2200000,"y":681.8,"rr":8,"pr":15,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Saudi Arabia","r":1000000000,"p":10000000,"y":100.0,"rr":9,"pr":6,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"United States","r":1000000000,"p":20000000,"y":50.0,"rr":9,"pr":3,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Finland","r":1000000000,"p":980000,"y":1020.4,"rr":9,"pr":21,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Jordan","r":820000000,"p":12000000,"y":68.3,"rr":12,"pr":5,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Australia","r":800000000,"p":2500000,"y":320.0,"rr":13,"pr":13,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Kazakhstan","r":260000000,"p":1900000,"y":136.8,"rr":14,"pr":17,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Syria","r":250000000,"p":800000,"y":312.5,"rr":15,"pr":23,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Peru","r":210000000,"p":4800000,"y":43.8,"rr":16,"pr":9,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Uzbekistan","r":100000000,"p":950000,"y":105.3,"rr":17,"pr":22,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Turkey","r":71000000,"p":1200000,"y":59.2,"rr":18,"pr":20,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Israel","r":60000000,"p":2400000,"y":25.0,"rr":19,"pr":14,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Senegal","r":50000000,"p":2800000,"y":17.9,"rr":20,"pr":12,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"India","r":31000000,"p":1500000,"y":20.7,"rr":21,"pr":19,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Vietnam","r":30000000,"p":3000000,"y":10.0,"rr":22,"pr":11,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Togo","r":30000000,"p":1600000,"y":18.8,"rr":22,"pr":18,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Mexico","r":30000000,"p":450000,"y":66.7,"rr":22,"pr":24,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Rare Earths","k":"China","r":44000000,"p":270000,"y":163.0,"rr":1,"pr":1,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Rare Earths","k":"Brazil","r":21000000,"p":2000,"y":10500.0,"rr":2,"pr":5,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Rare Earths","k":"Australia","r":6300000,"p":29000,"y":217.2,"rr":3,"pr":3,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Rare Earths","k":"Russia","r":3800000,"p":2600,"y":1461.5,"rr":4,"pr":4,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Rare Earths","k":"Vietnam","r":3500000,"p":150,"y":23333.3,"rr":5,"pr":6,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Rare Earths","k":"United States","r":1900000,"p":51000,"y":37.3,"rr":6,"pr":2,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Rare Earths","k":"Malaysia","r":710000,"p":110,"y":6454.5,"rr":7,"pr":7,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Rhenium","k":"Chile","r":1300,"p":30,"y":43.3,"rr":1,"pr":1,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Rhenium","k":"United States","r":400,"p":10,"y":40.8,"rr":2,"pr":3,"n":5,"ry":2025,"py":2025,"amb":true},{"c":"Rhenium","k":"China","r":200,"p":20,"y":10.0,"rr":3,"pr":2,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Rhenium","k":"Kazakhstan","r":190,"p":1,"y":190.0,"rr":4,"pr":4,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Rhenium","k":"Armenia","r":95,"p":0,"y":475.0,"rr":5,"pr":5,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"Peru","r":110000,"p":3600,"y":30.6,"rr":1,"pr":2,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"Russia","r":92000,"p":1200,"y":76.7,"rr":2,"pr":7,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"Australia","r":91000,"p":1000,"y":91.0,"rr":3,"pr":9,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"China","r":67000,"p":3400,"y":19.7,"rr":4,"pr":3,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"Poland","r":59000,"p":1300,"y":45.4,"rr":5,"pr":6,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"Mexico","r":37000,"p":6300,"y":5.9,"rr":6,"pr":1,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"Chile","r":33000,"p":1400,"y":23.6,"rr":7,"pr":5,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"United States","r":23000,"p":1100,"y":20.9,"rr":8,"pr":8,"n":12,"ry":2025,"py":2025,"amb":true},{"c":"Silver","k":"Bolivia","r":22000,"p":1500,"y":14.7,"rr":9,"pr":4,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"India","r":8000,"p":800,"y":10.0,"rr":10,"pr":10,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"Argentina","r":6500,"p":800,"y":8.1,"rr":11,"pr":10,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"Canada","r":4900,"p":400,"y":12.3,"rr":12,"pr":12,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"Indonesia","r":1400000,"p":61000,"y":23.0,"rr":1,"pr":2,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"China","r":1200000,"p":71000,"y":16.9,"rr":2,"pr":1,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"Brazil","r":700000,"p":28000,"y":25.0,"rr":3,"pr":4,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"Burma","r":700000,"p":12000,"y":58.3,"rr":3,"pr":7,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"Australia","r":570000,"p":12000,"y":47.5,"rr":5,"pr":7,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"Russia","r":460000,"p":4500,"y":102.2,"rr":6,"pr":10,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"Bolivia","r":400000,"p":15000,"y":26.7,"rr":7,"pr":6,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"Peru","r":150000,"p":33000,"y":4.5,"rr":8,"pr":3,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"Congo (Kinshasa)","r":91000,"p":27000,"y":3.4,"rr":9,"pr":5,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"Vietnam","r":23000,"p":11000,"y":2.1,"rr":10,"pr":9,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tungsten","k":"China","r":2500000,"p":67000,"y":37.3,"rr":1,"pr":1,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Tungsten","k":"Australia","r":570000,"p":1000,"y":570.0,"rr":2,"pr":5,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Tungsten","k":"Russia","r":400000,"p":2000,"y":200.0,"rr":3,"pr":3,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Tungsten","k":"Vietnam","r":170000,"p":3000,"y":56.7,"rr":4,"pr":2,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Tungsten","k":"Spain","r":66000,"p":800,"y":82.5,"rr":5,"pr":7,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Tungsten","k":"Korea, North","r":29000,"p":2000,"y":14.5,"rr":6,"pr":3,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Tungsten","k":"Austria","r":10000,"p":840,"y":11.9,"rr":7,"pr":6,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Tungsten","k":"Portugal","r":3400,"p":700,"y":4.9,"rr":8,"pr":8,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Vermiculite","k":"United States","r":25000000,"p":100000,"y":250.0,"rr":1,"pr":2,"n":6,"ry":2025,"py":2025,"amb":true},{"c":"Vermiculite","k":"South Africa","r":14000000,"p":160000,"y":87.5,"rr":2,"pr":1,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Vermiculite","k":"Turkey","r":11000000,"p":10000,"y":1100.0,"rr":3,"pr":5,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Vermiculite","k":"Brazil","r":6600000,"p":50000,"y":132.0,"rr":4,"pr":3,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Vermiculite","k":"China","r":2900000,"p":40000,"y":72.5,"rr":5,"pr":4,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Vermiculite","k":"India","r":1600000,"p":2000,"y":800.0,"rr":6,"pr":6,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Zinc","k":"Australia","r":64000000,"p":1100000,"y":58.2,"rr":1,"pr":3,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Zinc","k":"China","r":60000000,"p":4100000,"y":14.6,"rr":2,"pr":1,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Zinc","k":"Russia","r":29000000,"p":430000,"y":67.4,"rr":3,"pr":7,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Zinc","k":"Peru","r":18000000,"p":1500000,"y":12.0,"rr":4,"pr":2,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Zinc","k":"Mexico","r":14000000,"p":780000,"y":17.9,"rr":5,"pr":5,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Zinc","k":"India","r":10000000,"p":870000,"y":11.5,"rr":6,"pr":4,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Zinc","k":"United States","r":9300000,"p":670000,"y":13.9,"rr":7,"pr":6,"n":9,"ry":2025,"py":2025,"amb":true},{"c":"Zinc","k":"Kazakhstan","r":7400000,"p":360000,"y":20.6,"rr":8,"pr":8,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Zinc","k":"Sweden","r":4100000,"p":230000,"y":17.8,"rr":9,"pr":9,"n":9,"ry":2025,"py":2025,"amb":false}]</script>
+<script id="rp" type="application/json">[{"c":"Antimony","k":"China","r":830000,"p":40000,"y":20.8,"rr":1,"pr":1,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Russia","r":350000,"p":32000,"y":10.9,"rr":2,"pr":2,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Bolivia","r":310000,"p":5000,"y":62,"rr":3,"pr":4,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Kyrgyzstan","r":260000,"p":700,"y":371.4,"rr":4,"pr":8,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Burma","r":140000,"p":4500,"y":31.1,"rr":5,"pr":5,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Australia","r":110000,"p":1300,"y":84.6,"rr":6,"pr":7,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Turkey","r":99000,"p":3000,"y":33,"rr":7,"pr":6,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Tajikistan","r":60000,"p":22000,"y":2.7,"rr":8,"pr":3,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Vietnam","r":54000,"p":220,"y":245.5,"rr":9,"pr":11,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Pakistan","r":26000,"p":260,"y":100,"rr":10,"pr":10,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Antimony","k":"Mexico","r":18000,"p":600,"y":30,"rr":11,"pr":9,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Barite","k":"China","r":120000000,"p":2200000,"y":54.5,"rr":1,"pr":2,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Barite","k":"Iran","r":100000000,"p":300000,"y":333.3,"rr":2,"pr":4,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Barite","k":"Kazakhstan","r":85000000,"p":700000,"y":121.4,"rr":3,"pr":3,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Barite","k":"India","r":51000000,"p":3000000,"y":17,"rr":4,"pr":1,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Barite","k":"Turkey","r":34000000,"p":260000,"y":130.8,"rr":5,"pr":5,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Barite","k":"Russia","r":12000000,"p":230000,"y":52.2,"rr":6,"pr":6,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"United States","r":247882705205,"p":479416291,"y":517.1,"rr":1,"pr":4,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Russia","r":162165807144,"p":475975173,"y":340.7,"rr":2,"pr":5,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"China","r":157040813239,"p":4440217814,"y":35.4,"rr":3,"pr":1,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Australia","r":149471822240,"p":458080418,"y":326.3,"rr":4,"pr":6,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"India","r":127726848101,"p":1006462985,"y":126.9,"rr":5,"pr":2,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Germany","r":35399957901,"p":84402758,"y":419.4,"rr":6,"pr":10,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Indonesia","r":35054958311,"p":790386117,"y":44.4,"rr":7,"pr":3,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Ukraine","r":34374959120,"p":18591546,"y":1849,"rr":8,"pr":21,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Kyrgyzstan","r":28498966108,"p":4536965,"y":6281.5,"rr":9,"pr":34,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Poland","r":27757966989,"p":80793869,"y":343.6,"rr":10,"pr":11,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Kazakhstan","r":25604969549,"p":120138527,"y":213.1,"rr":11,"pr":8,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Turkey","r":10974986948,"p":75931869,"y":144.5,"rr":12,"pr":12,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Korea, North","r":10599987394,"p":25157030,"y":421.4,"rr":13,"pr":17,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"South Africa","r":9892988235,"p":236501103,"y":41.8,"rr":14,"pr":7,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Serbia","r":7111991542,"p":33299697,"y":213.6,"rr":15,"pr":16,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"New Zealand","r":6749991973,"p":2575719,"y":2620.6,"rr":16,"pr":40,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Brazil","r":6595992156,"p":6905592,"y":955.2,"rr":17,"pr":30,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Canada","r":6581992172,"p":42629081,"y":154.4,"rr":18,"pr":15,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Eswatini","r":4643994477,"p":250458,"y":18542,"rr":19,"pr":55,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Colombia","r":4553994584,"p":50282234,"y":90.6,"rr":20,"pr":14,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Tajikistan","r":4074995154,"p":3114732,"y":1308.3,"rr":21,"pr":38,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Czechia","r":3594995725,"p":24510076,"y":146.7,"rr":22,"pr":18,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Bangladesh","r":3259996123,"p":1257131,"y":2593.2,"rr":23,"pr":47,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Vietnam","r":3115996294,"p":51942443,"y":60,"rr":24,"pr":13,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Greece","r":2875996580,"p":6290897,"y":457.2,"rr":25,"pr":31,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Pakistan","r":2856996602,"p":9386042,"y":304.4,"rr":26,"pr":27,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Hungary","r":2632996869,"p":2132000,"y":1235,"rr":27,"pr":42,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Mongolia","r":2519997003,"p":95539886,"y":26.4,"rr":28,"pr":9,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Bosnia and Herzegovina","r":2263997308,"p":12273342,"y":184.5,"rr":29,"pr":25,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Bulgaria","r":2173997415,"p":17200964,"y":126.4,"rr":30,"pr":22,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Nigeria","r":2143997450,"p":1305839,"y":1641.9,"rr":31,"pr":46,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Mozambique","r":1791997869,"p":13820232,"y":129.7,"rr":32,"pr":23,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Botswana","r":1659998026,"p":2928803,"y":566.8,"rr":33,"pr":39,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Peru","r":1566998136,"p":1894018,"y":827.3,"rr":34,"pr":44,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Kosovo","r":1563998140,"p":7052016,"y":221.8,"rr":35,"pr":29,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Tanzania","r":1409998323,"p":1001067,"y":1408.5,"rr":36,"pr":49,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Uzbekistan","r":1374998365,"p":8972225,"y":153.3,"rr":37,"pr":28,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Iran","r":1202998569,"p":1906545,"y":631,"rr":38,"pr":43,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Chile","r":1180998595,"p":17486,"y":67539.7,"rr":39,"pr":62,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Mexico","r":1159998620,"p":5257005,"y":220.7,"rr":40,"pr":33,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Thailand","r":1062998736,"p":12460000,"y":85.3,"rr":41,"pr":24,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Zambia","r":944998876,"p":2395185,"y":394.5,"rr":42,"pr":41,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Georgia","r":900998928,"p":157960,"y":5704,"rr":43,"pr":57,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Malawi","r":801999046,"p":28848,"y":27800.5,"rr":44,"pr":61,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Argentina","r":799999049,"p":65000,"y":12307.7,"rr":45,"pr":60,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Venezuela","r":730999131,"p":341576,"y":2140.1,"rr":46,"pr":53,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Albania","r":521999379,"p":306871,"y":1701,"rr":47,"pr":54,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Zimbabwe","r":501999403,"p":5797530,"y":86.6,"rr":48,"pr":32,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Philippines","r":360999571,"p":19510009,"y":18.5,"rr":49,"pr":20,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Japan","r":349999584,"p":450243,"y":777.4,"rr":50,"pr":51,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Montenegro","r":336999599,"p":732900,"y":459.8,"rr":51,"pr":50,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"North Macedonia","r":331999605,"p":3439089,"y":96.5,"rr":52,"pr":36,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Korea, Republic of","r":325999612,"p":420000,"y":776.2,"rr":53,"pr":52,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Romania","r":290999654,"p":12241000,"y":23.8,"rr":54,"pr":26,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Burma","r":251999700,"p":3507968,"y":71.8,"rr":55,"pr":35,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Malaysia","r":225999731,"p":3331192,"y":67.8,"rr":56,"pr":37,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Slovenia","r":94999887,"p":1757970,"y":54,"rr":57,"pr":45,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Niger","r":89999893,"p":219684,"y":409.7,"rr":58,"pr":56,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Afghanistan","r":65999922,"p":1210648,"y":54.5,"rr":59,"pr":48,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Laos","r":61999926,"p":20168913,"y":3.1,"rr":60,"pr":19,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"United Kingdom","r":25999969,"p":119570,"y":217.4,"rr":61,"pr":58,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Nepal","r":7999990,"p":2975,"y":2689.1,"rr":62,"pr":63,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Coal","k":"Norway","r":1999998,"p":92721,"y":21.6,"rr":63,"pr":59,"n":63,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"Congo (Kinshasa)","r":6000000,"p":230000,"y":26.1,"rr":1,"pr":1,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"Australia","r":1700000,"p":3700,"y":459.5,"rr":2,"pr":5,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"Russia","r":800000,"p":7700,"y":103.9,"rr":3,"pr":3,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"Indonesia","r":760000,"p":44000,"y":17.3,"rr":4,"pr":2,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"Cuba","r":500000,"p":2000,"y":250,"rr":5,"pr":9,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"Philippines","r":260000,"p":3700,"y":70.3,"rr":6,"pr":5,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"Canada","r":220000,"p":3500,"y":62.9,"rr":7,"pr":7,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"China","r":160000,"p":2000,"y":80,"rr":8,"pr":9,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"Madagascar","r":100000,"p":3900,"y":25.6,"rr":9,"pr":4,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"Turkey","r":91000,"p":1900,"y":47.9,"rr":10,"pr":11,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"Papua New Guinea","r":84000,"p":2800,"y":30,"rr":11,"pr":8,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Cobalt","k":"United States","r":70000,"p":300,"y":233.3,"rr":12,"pr":12,"n":12,"ry":2025,"py":2025,"amb":true},{"c":"Copper","k":"Chile","r":180000000,"p":5300000,"y":34,"rr":1,"pr":1,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Australia","r":100000000,"p":730000,"y":137,"rr":2,"pr":8,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Peru","r":85000000,"p":2700000,"y":31.5,"rr":3,"pr":3,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Russia","r":80000000,"p":1300000,"y":61.5,"rr":4,"pr":5,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Congo (Kinshasa)","r":80000000,"p":3200000,"y":25,"rr":4,"pr":2,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Mexico","r":53000000,"p":690000,"y":76.8,"rr":6,"pr":11,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"United States","r":47000000,"p":1000000,"y":47,"rr":7,"pr":6,"n":14,"ry":2025,"py":2025,"amb":true},{"c":"Copper","k":"China","r":41000000,"p":1800000,"y":22.8,"rr":8,"pr":4,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Poland","r":33000000,"p":410000,"y":80.5,"rr":9,"pr":13,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Indonesia","r":21000000,"p":710000,"y":29.6,"rr":10,"pr":9,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Zambia","r":21000000,"p":940000,"y":22.3,"rr":10,"pr":7,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Kazakhstan","r":20000000,"p":710000,"y":28.2,"rr":12,"pr":9,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"Canada","r":7000000,"p":500000,"y":14,"rr":13,"pr":12,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Copper","k":"India","r":2200000,"p":23000,"y":95.7,"rr":14,"pr":14,"n":14,"ry":2025,"py":2025,"amb":false},{"c":"Diamond (Industrial)","k":"Russia","r":150,"p":3,"y":46.9,"rr":1,"pr":1,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Diamond (Industrial)","k":"Botswana","r":50,"p":1,"y":50,"rr":2,"pr":3,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Diamond (Industrial)","k":"Congo (Kinshasa)","r":30,"p":1,"y":21.4,"rr":3,"pr":2,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Diamond (Industrial)","k":"Angola","r":30,"p":0,"y":150,"rr":3,"pr":6,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Diamond (Industrial)","k":"South Africa","r":17,"p":1,"y":29,"rr":5,"pr":5,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Diamond (Industrial)","k":"Zimbabwe","r":11,"p":1,"y":11.2,"rr":6,"pr":3,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Diatomite","k":"United States","r":250000000,"p":720000,"y":347.2,"rr":1,"pr":1,"n":5,"ry":2025,"py":2025,"amb":true},{"c":"Diatomite","k":"China","r":120000000,"p":140000,"y":857.1,"rr":2,"pr":3,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Diatomite","k":"Spain","r":57000000,"p":50000,"y":1140,"rr":3,"pr":5,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Diatomite","k":"Turkey","r":44000000,"p":150000,"y":293.3,"rr":4,"pr":2,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Diatomite","k":"Korea, Republic of","r":2200000,"p":120000,"y":18.3,"rr":5,"pr":4,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Feldspar And Nepheline Syenite","k":"China","r":730000000,"p":3700000,"y":197.3,"rr":1,"pr":4,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Feldspar And Nepheline Syenite","k":"Turkey","r":720000000,"p":5300000,"y":135.8,"rr":2,"pr":2,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Feldspar And Nepheline Syenite","k":"India","r":320000000,"p":6000000,"y":53.3,"rr":3,"pr":1,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Feldspar And Nepheline Syenite","k":"Korea, Republic of","r":200000000,"p":1000000,"y":200,"rr":4,"pr":6,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Feldspar And Nepheline Syenite","k":"Iran","r":130000000,"p":3900000,"y":33.3,"rr":5,"pr":3,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Feldspar And Nepheline Syenite","k":"Thailand","r":45000000,"p":1900000,"y":23.7,"rr":6,"pr":5,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Fluorspar","k":"China","r":110000000,"p":6000000,"y":18.3,"rr":1,"pr":1,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Fluorspar","k":"Mexico","r":68000000,"p":1500000,"y":45.3,"rr":2,"pr":2,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Fluorspar","k":"South Africa","r":41000000,"p":410000,"y":100,"rr":3,"pr":4,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Fluorspar","k":"Mongolia","r":34000000,"p":1500000,"y":22.7,"rr":4,"pr":2,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Fluorspar","k":"Vietnam","r":16000000,"p":160000,"y":100,"rr":5,"pr":5,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Fluorspar","k":"Spain","r":15000000,"p":140000,"y":107.1,"rr":6,"pr":6,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Fluorspar","k":"Iran","r":7600000,"p":70000,"y":108.6,"rr":7,"pr":8,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Fluorspar","k":"Thailand","r":3600000,"p":55000,"y":65.5,"rr":8,"pr":9,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Fluorspar","k":"Brazil","r":2500000,"p":100000,"y":25,"rr":9,"pr":7,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Gemstones","k":"Russia","r":150,"p":4,"y":35.7,"rr":1,"pr":1,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Gemstones","k":"Botswana","r":50,"p":3,"y":19.2,"rr":2,"pr":2,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Gemstones","k":"Congo (Kinshasa)","r":30,"p":0,"y":75,"rr":3,"pr":6,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Gemstones","k":"Angola","r":30,"p":3,"y":11.5,"rr":3,"pr":2,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Gemstones","k":"Canada","r":22,"p":3,"y":8.5,"rr":5,"pr":2,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Gemstones","k":"South Africa","r":17,"p":0,"y":41.4,"rr":6,"pr":5,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Gemstones","k":"Zimbabwe","r":11,"p":0,"y":105.7,"rr":7,"pr":7,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"Australia","r":13000,"p":280,"y":46.4,"rr":1,"pr":3,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"Russia","r":12000,"p":310,"y":38.7,"rr":2,"pr":2,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"South Africa","r":5000,"p":90,"y":55.6,"rr":3,"pr":11,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"Indonesia","r":3600,"p":90,"y":40,"rr":4,"pr":11,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"Canada","r":3200,"p":200,"y":16,"rr":5,"pr":4,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"China","r":3200,"p":380,"y":8.4,"rr":5,"pr":1,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"United States","r":3000,"p":160,"y":18.8,"rr":7,"pr":5,"n":13,"ry":2025,"py":2025,"amb":true},{"c":"Gold","k":"Brazil","r":2500,"p":80,"y":31.3,"rr":8,"pr":13,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"Kazakhstan","r":2300,"p":130,"y":17.7,"rr":9,"pr":8,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"Peru","r":2200,"p":110,"y":20,"rr":10,"pr":10,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"Uzbekistan","r":2200,"p":130,"y":16.9,"rr":10,"pr":8,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"Mexico","r":1400,"p":140,"y":10,"rr":12,"pr":7,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Gold","k":"Ghana","r":1000,"p":150,"y":6.7,"rr":13,"pr":6,"n":13,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"China","r":100000000,"p":1400000,"y":71.4,"rr":1,"pr":1,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Brazil","r":74000000,"p":65000,"y":1138.5,"rr":2,"pr":4,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Madagascar","r":27000000,"p":80000,"y":337.5,"rr":3,"pr":2,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Mozambique","r":25000000,"p":60000,"y":416.7,"rr":4,"pr":5,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Tanzania","r":18000000,"p":75000,"y":240,"rr":5,"pr":3,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Russia","r":14000000,"p":25000,"y":560,"rr":6,"pr":6,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Vietnam","r":9700000,"p":500,"y":19400,"rr":7,"pr":14,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"India","r":8600000,"p":17000,"y":505.9,"rr":8,"pr":7,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Turkey","r":6900000,"p":2200,"y":3136.4,"rr":9,"pr":12,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Canada","r":5900000,"p":8000,"y":737.5,"rr":10,"pr":8,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Mexico","r":3100000,"p":740,"y":4189.2,"rr":11,"pr":13,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Korea, North","r":2000000,"p":8000,"y":250,"rr":12,"pr":8,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Korea, Republic of","r":1800000,"p":500,"y":3600,"rr":13,"pr":14,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Sri Lanka","r":1500000,"p":3200,"y":468.8,"rr":14,"pr":11,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Graphite (Natural)","k":"Norway","r":600000,"p":6600,"y":90.9,"rr":15,"pr":10,"n":15,"ry":2025,"py":2025,"amb":false},{"c":"Gypsum","k":"China","r":1800000000,"p":12000000,"y":150,"rr":1,"pr":3,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Gypsum","k":"Thailand","r":910000000,"p":8700000,"y":104.6,"rr":2,"pr":5,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Gypsum","k":"Iran","r":750000000,"p":16000000,"y":46.9,"rr":3,"pr":2,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Gypsum","k":"United States","r":700000000,"p":20000000,"y":35,"rr":4,"pr":1,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Gypsum","k":"Brazil","r":450000000,"p":5800000,"y":77.6,"rr":5,"pr":6,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Gypsum","k":"Canada","r":450000000,"p":3600000,"y":125,"rr":5,"pr":8,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Gypsum","k":"France","r":300000000,"p":2400000,"y":125,"rr":7,"pr":9,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Gypsum","k":"Turkey","r":200000000,"p":10000000,"y":20,"rr":8,"pr":4,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Gypsum","k":"India","r":37000000,"p":4300000,"y":8.6,"rr":9,"pr":7,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Iodine","k":"Japan","r":4900000,"p":9000,"y":544.4,"rr":1,"pr":2,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Iodine","k":"Chile","r":750000,"p":23000,"y":32.6,"rr":2,"pr":1,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Iodine","k":"Azerbaijan","r":170000,"p":210,"y":809.5,"rr":3,"pr":5,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Iodine","k":"Russia","r":120000,"p":8,"y":15000,"rr":4,"pr":6,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Iodine","k":"Turkmenistan","r":70000,"p":800,"y":87.5,"rr":5,"pr":3,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Iodine","k":"Iran","r":40000,"p":700,"y":57.1,"rr":6,"pr":4,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"Australia","r":34000000,"p":480000,"y":70.8,"rr":1,"pr":2,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"China","r":22000000,"p":1900000,"y":11.6,"rr":2,"pr":1,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"Russia","r":8900000,"p":260000,"y":34.2,"rr":3,"pr":5,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"Mexico","r":5600000,"p":200000,"y":28,"rr":4,"pr":7,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"Peru","r":5000000,"p":290000,"y":17.2,"rr":5,"pr":3,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"United States","r":4600000,"p":280000,"y":16.4,"rr":6,"pr":4,"n":11,"ry":2025,"py":2025,"amb":true},{"c":"Lead","k":"Iran","r":2000000,"p":70000,"y":28.6,"rr":7,"pr":9,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"India","r":1900000,"p":220000,"y":8.6,"rr":8,"pr":6,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"Sweden","r":1700000,"p":70000,"y":24.3,"rr":9,"pr":9,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"Bolivia","r":1600000,"p":100000,"y":16,"rr":10,"pr":8,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lead","k":"Turkey","r":1600000,"p":70000,"y":22.9,"rr":10,"pr":9,"n":11,"ry":2025,"py":2025,"amb":false},{"c":"Lithium","k":"Chile","r":9200000,"p":56000,"y":164.3,"rr":1,"pr":3,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Lithium","k":"Australia","r":8400000,"p":92000,"y":91.3,"rr":2,"pr":1,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Lithium","k":"China","r":4600000,"p":62000,"y":74.2,"rr":3,"pr":2,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Lithium","k":"Argentina","r":4400000,"p":23000,"y":191.3,"rr":4,"pr":5,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Lithium","k":"Canada","r":1600000,"p":5600,"y":285.7,"rr":5,"pr":8,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Lithium","k":"Brazil","r":540000,"p":12000,"y":45,"rr":6,"pr":6,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Lithium","k":"Zimbabwe","r":500000,"p":28000,"y":17.9,"rr":7,"pr":4,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Lithium","k":"Mali","r":370000,"p":9400,"y":39.4,"rr":8,"pr":7,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Lithium","k":"Portugal","r":60000,"p":380,"y":157.9,"rr":9,"pr":9,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"Russia","r":2300000000,"p":1700000,"y":1352.9,"rr":1,"pr":3,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"Slovakia","r":1200000000,"p":330000,"y":3636.4,"rr":2,"pr":9,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"China","r":700000000,"p":12700000,"y":55.1,"rr":3,"pr":1,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"Greece","r":280000000,"p":130000,"y":2153.8,"rr":4,"pr":11,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"Australia","r":280000000,"p":400000,"y":700,"rr":4,"pr":7,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"Brazil","r":200000000,"p":1800000,"y":111.1,"rr":6,"pr":2,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"Turkey","r":110000000,"p":1600000,"y":68.8,"rr":7,"pr":4,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"India","r":66000000,"p":85000,"y":776.5,"rr":8,"pr":12,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"Austria","r":49000000,"p":650000,"y":75.4,"rr":9,"pr":5,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"Spain","r":35000000,"p":640000,"y":54.7,"rr":10,"pr":6,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"United States","r":35000000,"p":400000,"y":87.5,"rr":10,"pr":7,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Magnesium Compounds","k":"Iran","r":10000000,"p":200000,"y":50,"rr":12,"pr":10,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Manganese","k":"Australia","r":580000000,"p":1600000,"y":362.5,"rr":1,"pr":4,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Manganese","k":"South Africa","r":550000000,"p":7600000,"y":72.4,"rr":2,"pr":1,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Manganese","k":"Brazil","r":300000000,"p":800000,"y":375,"rr":3,"pr":5,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Manganese","k":"China","r":260000000,"p":700000,"y":371.4,"rr":4,"pr":7,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Manganese","k":"Gabon","r":61000000,"p":5000000,"y":12.2,"rr":5,"pr":2,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Manganese","k":"India","r":34000000,"p":790000,"y":43,"rr":6,"pr":6,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Manganese","k":"Ghana","r":13000000,"p":2000000,"y":6.5,"rr":7,"pr":3,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Nickel","k":"Indonesia","r":62000000,"p":2600000,"y":23.8,"rr":1,"pr":1,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Nickel","k":"Australia","r":25000000,"p":45000,"y":555.6,"rr":2,"pr":8,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Nickel","k":"Brazil","r":16000000,"p":70000,"y":228.6,"rr":3,"pr":7,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Nickel","k":"Russia","r":8300000,"p":200000,"y":41.5,"rr":4,"pr":3,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Nickel","k":"New Caledonia","r":7100000,"p":140000,"y":50.7,"rr":5,"pr":4,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Nickel","k":"Philippines","r":4800000,"p":270000,"y":17.8,"rr":6,"pr":2,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Nickel","k":"China","r":4400000,"p":120000,"y":36.7,"rr":7,"pr":6,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Nickel","k":"Canada","r":2200000,"p":140000,"y":15.7,"rr":8,"pr":4,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Nickel","k":"United States","r":340000,"p":10000,"y":34,"rr":9,"pr":9,"n":9,"ry":2025,"py":2025,"amb":true},{"c":"Peat","k":"Finland","r":6000000000,"p":2500000,"y":2400,"rr":1,"pr":1,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Peat","k":"Belarus","r":2600000000,"p":1800000,"y":1444.4,"rr":2,"pr":4,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Peat","k":"Russia","r":1000000000,"p":1800000,"y":555.6,"rr":3,"pr":4,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Peat","k":"Canada","r":720000000,"p":2000000,"y":360,"rr":4,"pr":2,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Peat","k":"Estonia","r":570000000,"p":1100000,"y":518.2,"rr":5,"pr":6,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Peat","k":"Lithuania","r":210000000,"p":540000,"y":388.9,"rr":6,"pr":7,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Peat","k":"United States","r":150000000,"p":330000,"y":454.5,"rr":7,"pr":8,"n":8,"ry":2025,"py":2025,"amb":true},{"c":"Peat","k":"Latvia","r":150000000,"p":2000000,"y":75,"rr":7,"pr":2,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Perlite","k":"Greece","r":180000000,"p":840000,"y":214.3,"rr":1,"pr":2,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Perlite","k":"United States","r":50000000,"p":730000,"y":68.5,"rr":2,"pr":3,"n":5,"ry":2025,"py":2025,"amb":true},{"c":"Perlite","k":"China","r":32000000,"p":1500000,"y":21.3,"rr":3,"pr":1,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Perlite","k":"Slovakia","r":30000000,"p":40000,"y":750,"rr":4,"pr":5,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Perlite","k":"Iran","r":15000000,"p":70000,"y":214.3,"rr":5,"pr":4,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Morocco","r":50000000000,"p":36000000,"y":1388.9,"rr":1,"pr":2,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"China","r":3400000000,"p":110000000,"y":30.9,"rr":2,"pr":1,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Egypt","r":2800000000,"p":5500000,"y":509.1,"rr":3,"pr":7,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Tunisia","r":2500000000,"p":3300000,"y":757.6,"rr":4,"pr":10,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Russia","r":2400000000,"p":14000000,"y":171.4,"rr":5,"pr":4,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Algeria","r":2200000000,"p":2000000,"y":1100,"rr":6,"pr":16,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Brazil","r":1600000000,"p":5000000,"y":320,"rr":7,"pr":8,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"South Africa","r":1500000000,"p":2200000,"y":681.8,"rr":8,"pr":15,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Saudi Arabia","r":1000000000,"p":10000000,"y":100,"rr":9,"pr":6,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"United States","r":1000000000,"p":20000000,"y":50,"rr":9,"pr":3,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Finland","r":1000000000,"p":980000,"y":1020.4,"rr":9,"pr":21,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Jordan","r":820000000,"p":12000000,"y":68.3,"rr":12,"pr":5,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Australia","r":800000000,"p":2500000,"y":320,"rr":13,"pr":13,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Kazakhstan","r":260000000,"p":1900000,"y":136.8,"rr":14,"pr":17,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Syria","r":250000000,"p":800000,"y":312.5,"rr":15,"pr":23,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Peru","r":210000000,"p":4800000,"y":43.8,"rr":16,"pr":9,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Uzbekistan","r":100000000,"p":950000,"y":105.3,"rr":17,"pr":22,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Turkey","r":71000000,"p":1200000,"y":59.2,"rr":18,"pr":20,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Israel","r":60000000,"p":2400000,"y":25,"rr":19,"pr":14,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Senegal","r":50000000,"p":2800000,"y":17.9,"rr":20,"pr":12,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"India","r":31000000,"p":1500000,"y":20.7,"rr":21,"pr":19,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Vietnam","r":30000000,"p":3000000,"y":10,"rr":22,"pr":11,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Togo","r":30000000,"p":1600000,"y":18.8,"rr":22,"pr":18,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Phosphate Rock","k":"Mexico","r":30000000,"p":450000,"y":66.7,"rr":22,"pr":24,"n":24,"ry":2025,"py":2025,"amb":false},{"c":"Rare Earths","k":"China","r":44000000,"p":270000,"y":163,"rr":1,"pr":1,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Rare Earths","k":"Brazil","r":21000000,"p":2000,"y":10500,"rr":2,"pr":5,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Rare Earths","k":"Australia","r":6300000,"p":29000,"y":217.2,"rr":3,"pr":3,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Rare Earths","k":"Russia","r":3800000,"p":2600,"y":1461.5,"rr":4,"pr":4,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Rare Earths","k":"Vietnam","r":3500000,"p":150,"y":23333.3,"rr":5,"pr":6,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Rare Earths","k":"United States","r":1900000,"p":51000,"y":37.3,"rr":6,"pr":2,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Rare Earths","k":"Malaysia","r":710000,"p":110,"y":6454.5,"rr":7,"pr":7,"n":7,"ry":2025,"py":2025,"amb":false},{"c":"Rhenium","k":"Chile","r":1300,"p":30,"y":43.3,"rr":1,"pr":1,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Rhenium","k":"United States","r":400,"p":10,"y":40.8,"rr":2,"pr":3,"n":5,"ry":2025,"py":2025,"amb":true},{"c":"Rhenium","k":"China","r":200,"p":20,"y":10,"rr":3,"pr":2,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Rhenium","k":"Kazakhstan","r":190,"p":1,"y":190,"rr":4,"pr":4,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Rhenium","k":"Armenia","r":95,"p":0,"y":475,"rr":5,"pr":5,"n":5,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"Peru","r":110000,"p":3600,"y":30.6,"rr":1,"pr":2,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"Russia","r":92000,"p":1200,"y":76.7,"rr":2,"pr":7,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"Australia","r":91000,"p":1000,"y":91,"rr":3,"pr":9,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"China","r":67000,"p":3400,"y":19.7,"rr":4,"pr":3,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"Poland","r":59000,"p":1300,"y":45.4,"rr":5,"pr":6,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"Mexico","r":37000,"p":6300,"y":5.9,"rr":6,"pr":1,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"Chile","r":33000,"p":1400,"y":23.6,"rr":7,"pr":5,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"United States","r":23000,"p":1100,"y":20.9,"rr":8,"pr":8,"n":12,"ry":2025,"py":2025,"amb":true},{"c":"Silver","k":"Bolivia","r":22000,"p":1500,"y":14.7,"rr":9,"pr":4,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"India","r":8000,"p":800,"y":10,"rr":10,"pr":10,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"Argentina","r":6500,"p":800,"y":8.1,"rr":11,"pr":10,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Silver","k":"Canada","r":4900,"p":400,"y":12.3,"rr":12,"pr":12,"n":12,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"Indonesia","r":1400000,"p":61000,"y":23,"rr":1,"pr":2,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"China","r":1200000,"p":71000,"y":16.9,"rr":2,"pr":1,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"Brazil","r":700000,"p":28000,"y":25,"rr":3,"pr":4,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"Burma","r":700000,"p":12000,"y":58.3,"rr":3,"pr":7,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"Australia","r":570000,"p":12000,"y":47.5,"rr":5,"pr":7,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"Russia","r":460000,"p":4500,"y":102.2,"rr":6,"pr":10,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"Bolivia","r":400000,"p":15000,"y":26.7,"rr":7,"pr":6,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"Peru","r":150000,"p":33000,"y":4.5,"rr":8,"pr":3,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"Congo (Kinshasa)","r":91000,"p":27000,"y":3.4,"rr":9,"pr":5,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tin","k":"Vietnam","r":23000,"p":11000,"y":2.1,"rr":10,"pr":9,"n":10,"ry":2025,"py":2025,"amb":false},{"c":"Tungsten","k":"China","r":2500000,"p":67000,"y":37.3,"rr":1,"pr":1,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Tungsten","k":"Australia","r":570000,"p":1000,"y":570,"rr":2,"pr":5,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Tungsten","k":"Russia","r":400000,"p":2000,"y":200,"rr":3,"pr":3,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Tungsten","k":"Vietnam","r":170000,"p":3000,"y":56.7,"rr":4,"pr":2,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Tungsten","k":"Spain","r":66000,"p":800,"y":82.5,"rr":5,"pr":7,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Tungsten","k":"Korea, North","r":29000,"p":2000,"y":14.5,"rr":6,"pr":3,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Tungsten","k":"Austria","r":10000,"p":840,"y":11.9,"rr":7,"pr":6,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Tungsten","k":"Portugal","r":3400,"p":700,"y":4.9,"rr":8,"pr":8,"n":8,"ry":2025,"py":2025,"amb":false},{"c":"Vermiculite","k":"United States","r":25000000,"p":100000,"y":250,"rr":1,"pr":2,"n":6,"ry":2025,"py":2025,"amb":true},{"c":"Vermiculite","k":"South Africa","r":14000000,"p":160000,"y":87.5,"rr":2,"pr":1,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Vermiculite","k":"Turkey","r":11000000,"p":10000,"y":1100,"rr":3,"pr":5,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Vermiculite","k":"Brazil","r":6600000,"p":50000,"y":132,"rr":4,"pr":3,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Vermiculite","k":"China","r":2900000,"p":40000,"y":72.5,"rr":5,"pr":4,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Vermiculite","k":"India","r":1600000,"p":2000,"y":800,"rr":6,"pr":6,"n":6,"ry":2025,"py":2025,"amb":false},{"c":"Zinc","k":"Australia","r":64000000,"p":1100000,"y":58.2,"rr":1,"pr":3,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Zinc","k":"China","r":60000000,"p":4100000,"y":14.6,"rr":2,"pr":1,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Zinc","k":"Russia","r":29000000,"p":430000,"y":67.4,"rr":3,"pr":7,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Zinc","k":"Peru","r":18000000,"p":1500000,"y":12,"rr":4,"pr":2,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Zinc","k":"Mexico","r":14000000,"p":780000,"y":17.9,"rr":5,"pr":5,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Zinc","k":"India","r":10000000,"p":870000,"y":11.5,"rr":6,"pr":4,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Zinc","k":"United States","r":9300000,"p":670000,"y":13.9,"rr":7,"pr":6,"n":9,"ry":2025,"py":2025,"amb":true},{"c":"Zinc","k":"Kazakhstan","r":7400000,"p":360000,"y":20.6,"rr":8,"pr":8,"n":9,"ry":2025,"py":2025,"amb":false},{"c":"Zinc","k":"Sweden","r":4100000,"p":230000,"y":17.8,"rr":9,"pr":9,"n":9,"ry":2025,"py":2025,"amb":false}]</script>
+
 <script>
 (function(){
   "use strict";
@@ -263,14 +389,14 @@ td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-num
     return fmt(Math.round(t)) + ' t';
   };
 
-  /* Social card: biggest gap between a top-3 reserve rank and its production rank. */
+  /* The biggest gaps: a top-3 reserve rank against a much lower mining rank. */
   var gaps = DATA.filter(function(d){ return d.n >= 6 && d.rr <= 3; })
     .sort(function(a,b){ return (b.pr-b.rr) - (a.pr-a.rr) || b.y - a.y; })
     .slice(0,5);
-  document.getElementById('social').innerHTML = gaps.map(function(d){
-    return '<li><span class="who">' + d.k + ' &middot; ' + d.c + '</span><br>'
-      + '<span class="what">' + ord(d.rr) + ' for reserves, ' + ord(d.pr)
-      + ' of ' + d.n + ' for production &mdash; ' + yrs(d.y) + ' years</span></li>';
+  document.getElementById('gaps').innerHTML = gaps.map(function(d){
+    return '<li><span class="who">' + d.k + ' &middot; ' + d.c + '</span>'
+      + '<span class="what">' + ord(d.rr) + ' for reserves &middot; ' + ord(d.pr)
+      + ' of ' + d.n + ' for mining &middot; ' + yrs(d.y) + ' years of reserves</span></li>';
   }).join('');
   function ord(n){
     var s = ['th','st','nd','rd'], v = n % 100;
@@ -291,8 +417,8 @@ td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-num
   }).join('');
 
   var CAVEATS = {
-    Nickel: ' Australia\u2019s 556 years divides a 25 Mt reserve figure by 45,000 t of estimated 2025 output, '
-      + 'under half the 98,000 t USGS gave for 2024. Only 11 Mt of those reserves are JORC-compliant, which gives 244 years.'
+    Nickel: ' Handle Australia’s 556 years with care: it uses estimated 2025 output, under half of 2024’s. '
+      + 'On JORC-compliant reserves only, it is 244 years (see the box below).'
   };
   var TICKS = [1,10,100,1000,10000,100000];
   function pos(y, lo, hi){
@@ -322,7 +448,7 @@ td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-num
       var right = p > 72;
       return '<div class="row' + (d.k === hl.value ? ' sel' : '') + '" data-i="' + i + '">'
         + '<div class="lab"><span class="c">' + d.k + '</span>'
-        + '<span class="rk">R' + d.rr + ' / P' + d.pr + '</span></div>'
+        + '<span class="rk">res ' + d.rr + ' &middot; mine ' + d.pr + '</span></div>'
         + '<div class="track">' + gridHtml
         + '<div class="stem" style="left:0;width:' + p.toFixed(2) + '%"></div>'
         + '<div class="dot" style="left:' + p.toFixed(2) + '%"></div>'
@@ -334,8 +460,8 @@ td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-num
     }).join('');
 
     var t = document.getElementById('table');
-    t.innerHTML = '<thead><tr><th>Country</th><th>Reserves</th><th>Mine production</th>'
-      + '<th>Years</th><th>Res. rank</th><th>Prod. rank</th></tr></thead><tbody>'
+    t.innerHTML = '<thead><tr><th>Country</th><th>Reserves</th><th>Mined per year</th>'
+      + '<th>Years of reserves</th><th>Reserves rank</th><th>Mining rank</th></tr></thead><tbody>'
       + list.map(function(d){
           return '<tr><td>' + d.k + '</td><td class="num">' + tonnes(d.r)
             + '</td><td class="num">' + tonnes(d.p) + '</td><td class="num">'
@@ -347,9 +473,9 @@ td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-num
     var ry = list[0].ry, py = list[0].py;
     document.getElementById('chartNote').textContent =
       list.length + ' countries. Reserves as reported for ' + ry
-      + ', production for ' + py + '.'
-      + (amb ? ' ' + amb + ' countr' + (amb>1?'ies':'y') + ' publish more than one '
-        + 'production line for this commodity; the first is used.' : '');
+      + ', mining for ' + py + '.'
+      + (amb ? ' ' + amb + ' countr' + (amb>1?'ies report':'y reports') + ' more than one '
+        + 'mining figure for this mineral; the first is used.' : '');
     if (CAVEATS[sel.value]) document.getElementById('chartNote').textContent += CAVEATS[sel.value];
     rowsEl.__list = list;
   }
@@ -364,10 +490,10 @@ td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-num
     if (!tip){ tip = document.createElement('div'); tip.className = 'tip'; document.body.appendChild(tip); }
     tip.innerHTML = '<b>' + d.k + ' &middot; ' + d.c + '</b><dl>'
       + '<dt>Reserves</dt><dd>' + tonnes(d.r) + '</dd>'
-      + '<dt>Mine production</dt><dd>' + tonnes(d.p) + '</dd>'
-      + '<dt>Years remaining</dt><dd>' + yrs(d.y) + '</dd>'
+      + '<dt>Mined per year</dt><dd>' + tonnes(d.p) + '</dd>'
+      + '<dt>Years of reserves</dt><dd>' + yrs(d.y) + '</dd>'
       + '<dt>Reserve rank</dt><dd>' + d.rr + ' of ' + d.n + '</dd>'
-      + '<dt>Production rank</dt><dd>' + d.pr + ' of ' + d.n + '</dd></dl>';
+      + '<dt>Mining rank</dt><dd>' + d.pr + ' of ' + d.n + '</dd></dl>';
     var x = Math.min(e.clientX + 14, window.innerWidth - 290);
     var y = Math.min(e.clientY + 14, window.innerHeight - 150);
     tip.style.left = Math.max(8, x) + 'px';
@@ -382,8 +508,8 @@ td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-num
       return (b.pr-b.rr) - (a.pr-a.rr) || a.rr - b.rr;
     });
     document.getElementById('ctable').innerHTML =
-      '<thead><tr><th>Commodity</th><th>Reserves</th><th>Mine production</th>'
-      + '<th>Years</th><th>Res. rank</th><th>Prod. rank</th></tr></thead><tbody>'
+      '<thead><tr><th>Mineral</th><th>Reserves</th><th>Mined per year</th>'
+      + '<th>Years of reserves</th><th>Reserves rank</th><th>Mining rank</th></tr></thead><tbody>'
       + list.map(function(d){
           return '<tr><td>' + d.c + '</td><td class="num">' + tonnes(d.r)
             + '</td><td class="num">' + tonnes(d.p) + '</td><td class="num">' + yrs(d.y)
@@ -392,7 +518,7 @@ td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-num
         }).join('') + '</tbody>';
     var top = list.filter(function(d){ return d.rr <= 2; }).length;
     document.getElementById('ctryNote').textContent = ctry.value + ' appears in '
-      + list.length + ' of the 29 commodities ranked here'
+      + list.length + ' of the 29 minerals ranked here'
       + (top ? ', with first or second place for reserves in ' + top + '.' : '.');
   }
 

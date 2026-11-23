@@ -12,7 +12,8 @@ implementation, and this document is the reasoning behind it.
 ## 1. What these are for
 
 The brief: a library of **provocative, surprising, highly shareable** reports —
-data-driven clickbait backed by credible data and transparent methodology.
+a provocative headline on a defensible page, backed by credible data and
+transparent methodology.
 
 > The LinkedIn post should generate curiosity, but the YouMine website should
 > provide the full answer.
@@ -44,6 +45,29 @@ A worked example of (4): *Peak Was Yesterday* uses **3-year centred moving
 averages** because single-year peaks turned out to be reporting artefacts — talc
 jumped 77.8 → 100 → 71.4 across 1996–98 on one country's revision. The report
 says so. The first draft didn't, and its rankings were wrong.
+
+### Author and voice
+
+Reports are written by a named analyst and published by YouMine:
+**"By James Blue, for YouMine Intelligence."** The author posts them from their
+own LinkedIn and X accounts; the YouMine company page reshares. A named person
+standing behind each claim is the main trust signal, so:
+
+- **Do not hand-write a byline, bio or disclosure into a report file.** The
+  serving route injects the byline under the first `<h1>` and an author box
+  (bio, disclosure, follow links, corrections) at the end of the page, from
+  `lib/intelligence/author.js` and the report's entry in
+  `lib/intelligence/reports.js`. Every report must therefore have exactly one
+  `<h1>`, the headline.
+- **"I" for analytical judgement** ("I used three-year averages because…").
+  Never "we" or "our": the company is not the author.
+- **Neutral voice for method steps**, and name YouMine for platform facts
+  ("In YouMine's ingestion of the BGS data…"), because those are the
+  pipeline's work, not the analyst's.
+- The footer credit reads "Analysis by James Blue for YouMine Intelligence".
+- **Corrections are public.** On publication set `publishedAt`; every later
+  fix to a figure or claim gets a dated entry in `corrections`, which the page
+  shows. Do not silently edit a published number.
 
 ---
 
@@ -212,3 +236,9 @@ stop looking like the product.
       licence condition, not a courtesy)
 - [ ] No commercial price series republished
       (`core.price_series.provider_is_commercial`)
+- [ ] First person ("I") for judgement, no "we"/"our"; one `<h1>` only
+- [ ] Byline and author box render (preview it via the admin raw route)
+- [ ] Every open issue in `db/intelligence/ISSUES_LOG.md` that touches this
+      report's data is fixed or stated on the page
+- [ ] Licence for every source is confirmed in writing (BGS: see issue 8)
+- [ ] `publishedAt` set; social kit copy rechecked against the final numbers

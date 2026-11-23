@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireIntelligenceAdmin } from "@/lib/intelligence/adminPage";
 import { CHARTS, REPORTS, REPORT_SOURCES } from "@/lib/intelligence/reports";
+import { AUTHOR } from "@/lib/intelligence/author";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,8 @@ export default async function IntelligenceReportsPage() {
                 <span>{SECTOR_LABEL[report.sector] || report.sector}</span>
                 <span aria-hidden="true">·</span>
                 <span>{report.kicker}</span>
+                <span aria-hidden="true">·</span>
+                <span>By {AUTHOR.name}</span>
                 <span className="yi-tag yi-tag--draft">{report.status}</span>
               </div>
               <h2>{report.title}</h2>

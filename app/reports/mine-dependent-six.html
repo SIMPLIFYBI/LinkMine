@@ -47,6 +47,8 @@ body{
   padding-block:0 4rem;
 }
 .col{max-width:36rem}
+.col ul{margin:0 0 1.125rem; padding-left:1.25rem}
+.col li{margin-bottom:.375rem}
 
 /* ---- masthead ---- */
 .mast{
@@ -207,60 +209,69 @@ td.miss{color:var(--ink-3)}
   <h1>The Mine-Dependent Six</h1>
 
   <p class="standfirst">Ask which countries depend on mining and you get a long list.
-  Ask two World Bank measures to agree, in every period we tested, and the list
-  is <b>six</b>: Mongolia, DR Congo, Zambia, Papua New Guinea, Chile and Peru. Two
-  more, Mali and Burkina Faso, earn mineral rents on a par with the six, but only
-  one measure can see it.</p>
+  Make the test tougher and it shrinks to <b>six</b>. I asked two questions of
+  every country: is mining a big share of what it sells to the world, and is
+  mining a big share of its whole economy? Only Mongolia, DR Congo, Zambia,
+  Papua New Guinea, Chile and Peru say yes to both, in every period I checked
+  between 2015 and 2023. Two gold producers, Mali and Burkina Faso, rely on mining just as
+  heavily, but miss the first test because the World Bank's export figures
+  leave out gold.</p>
 
   <div class="stats" id="stats"></div>
 
   <div class="col">
-    <p>Both measures are blunt. One is trade: ores and metals as a share of what
-    a country sells abroad. The other is mineral rents, which is what mining earns
-    after costs, as a share of the whole economy. A country can look dependent on
-    one and not the other, and the tables below show many that do. The six here clear both bars in every period
-    tested: ores and metals at least a quarter of goods exports, and mineral rents
-    at least 3% of GDP.</p>
+    <p>Each question is a pass-or-fail test, using World Bank figures:</p>
+    <ul>
+      <li><b>The export test:</b> ores and metals are at least a quarter of the
+      goods a country sells abroad.</li>
+      <li><b>The economy test:</b> mining&#8217;s profits (the World Bank calls them
+      mineral rents) are at least 3% of the whole economy, or GDP.</li>
+    </ul>
+    <p>Plenty of countries pass one test. The six pass both, every time.</p>
 
-    <p>The two gold economies are the other half of the story. The World Bank's
-    trade measure leaves gold out, so Mali and Burkina Faso, which earn 6.8% and
-    5.3% of GDP in mineral rents on average, show ores and metals at under 2% of
-    their exports. In our BGS data Mali mined 73 tonnes of gold in 2023 and Burkina
-    Faso 57.</p>
+    <p>Mali and Burkina Faso are the other half of the story. Mining profits there
+    average 6.8% and 5.3% of GDP, in line with the six. But the World Bank&#8217;s
+    export figures don&#8217;t count gold, so on paper their mining exports are under
+    2%. In fact Mali mined 73 tonnes of gold in 2023 and Burkina Faso 57 (BGS
+    figures).</p>
   </div>
 
-  <h2>Eight economies, two measures</h2>
-  <p class="col" style="color:var(--ink-2)">One row per country. Left: mineral rents
-  as a share of GDP over 2015&#8211;21, with the average and the range of years.
-  Right: ores and metals as a share of goods exports, then and now.</p>
+  <h2>The six, and the two gold producers</h2>
+  <p class="col" style="color:var(--ink-2)">One row per country. Left: mining profits
+  as a share of the economy, 2015&#8211;21. The dot is the average; the bar runs from
+  the weakest year to the strongest. Right: ores and metals as a share of exports,
+  then and now. The dashed lines are the pass marks.</p>
 
   <div class="legend-note">
-    <span><i class="k-bar rent"></i> Range of years, 2015&#8211;21</span>
+    <span><i class="k-bar rent"></i> Weakest to strongest year</span>
     <span><i class="k-dot rent"></i> Average</span>
     <span><i class="k-dot hollow"></i> Exports 2015&#8211;19</span>
     <span><i class="k-dot trade"></i> Exports 2021&#8211;23</span>
-    <span><i class="k-line"></i> The 3% and 25% lines</span>
+    <span><i class="k-line"></i> Pass marks: 3% and 25%</span>
   </div>
 
   <div class="fig" id="fig"></div>
 
   <div class="aside">
-    <div class="h">Why the rents are shown as a range</div>
-    <p>Mineral rents move with commodity prices, and 2021 was a peak. DR Congo's
-    rents were <span class="n" id="a-drc-lo"></span> of GDP in its lowest year of
-    2015&#8211;21 and <span class="n" id="a-drc-hi"></span> in its highest.
-    Zambia's went from <span class="n" id="a-zmb-lo"></span> to
-    <span class="n" id="a-zmb-hi"></span>. A ranking on a single year would mostly
-    measure the price. The data ends in 2021, so these figures are a 2015&#8211;21
-    average, not a current reading.</p>
+    <div class="h">Why mining profits are shown as a range</div>
+    <p>Mining profits rise and fall with commodity prices, and 2021 was a price
+    peak. DR Congo&#8217;s were <span class="n" id="a-drc-lo"></span> of GDP in its
+    weakest year and <span class="n" id="a-drc-hi"></span> in its strongest.
+    Zambia&#8217;s ran from <span class="n" id="a-zmb-lo"></span> to
+    <span class="n" id="a-zmb-hi"></span>. Ranking on one year would mostly be
+    ranking the price. The World Bank figures stop at 2021, so these are
+    2015&#8211;21 averages, not today&#8217;s numbers.</p>
   </div>
 
   <h2>Everyone who came close</h2>
+  <p class="col" style="color:var(--ink-2)">Every country where mining profits
+  averaged 3% of GDP or more, and why each one did or didn&#8217;t make the list.
+  Australia, Tajikistan and Mauritania pass the export test easily but dip just
+  under 3% in 2015&#8211;19.</p>
 
   <div class="tablewrap">
     <table>
-      <caption>Every country with average mineral rents of 3% of GDP or more in 2015&#8211;21,
-      and the test each one met or missed. Rents in percent of GDP, exports in percent of goods exports.</caption>
+      <caption>Rents: mining profits, % of GDP. Exports: ores and metals, % of goods exports.</caption>
       <thead>
         <tr>
           <th class="l">Country</th>
@@ -274,14 +285,16 @@ td.miss{color:var(--ink-3)}
     </table>
   </div>
 
-  <h2>Dependent on trade, not on rents</h2>
-  <p class="col" style="color:var(--ink-2)">Sixteen more countries have ores and metals
-  at 25% or more of exports in 2021&#8211;23 but average mineral rents under 3% of GDP. They
-  are not claims of mining dependence.</p>
+  <h2>Big metal exporters, small mining profits</h2>
+  <p class="col" style="color:var(--ink-2)">Sixteen more countries pass the export
+  test but not the economy test: ores and metals are a quarter or more of their
+  exports, but mining profits are under 3% of GDP. Some of these process or smelt
+  metal rather than mine it (see the method). I don&#8217;t count them as
+  mining-dependent.</p>
 
   <div class="tablewrap">
     <table class="sm">
-      <caption>Ores and metals exports of 25% or more, mineral rents under 3% of GDP.</caption>
+      <caption>Exports: ores and metals, % of goods exports. Rents: mining profits, % of GDP.</caption>
       <thead>
         <tr><th class="l">Country</th><th>Exports<br>2021&#8211;23</th><th>Exports<br>2015&#8211;19</th><th>Rents<br>2015&#8211;21</th></tr>
       </thead>
@@ -315,18 +328,18 @@ td.miss{color:var(--ink-3)}
     exports. Australia, Tajikistan and Mauritania miss the 3% line in 2015&#8211;19 (2.8%,
     2.9% and 2.5%), so they are not in the six. The table shows every miss.</p>
 
-    <h3>What the trade measure counts</h3>
+    <h3>What the export test counts</h3>
     <p>By the World Bank's definition the category covers ores, concentrates and
     non-ferrous metals. It
     includes refined metal, so economies built on smelting appear alongside miners,
-    and it excludes gold. Several countries in the trade-only table are known for
+    and it excludes gold. Several countries in the big-metal-exporters table are known for
     aluminium smelting or processing, such as Iceland, Bahrain and Montenegro. That is
     background knowledge from outside this data, not something the figures show.
     The measure is also volatile: Panama went from 10.6% in 2015&#8211;19 to 78.5% in
     2021&#8211;23.</p>
 
-    <h3>What rents count</h3>
-    <p>Mineral rents are the value of mineral production at world prices less the cost
+    <h3>What the economy test counts</h3>
+    <p>&#8220;Mining profits&#8221; on this page means the World Bank&#8217;s mineral rents: the value of mineral production at world prices less the cost
     of producing it, as a share of GDP, for the World Bank's list of ten minerals: tin, gold,
     lead, zinc, iron ore, copper, nickel, silver, bauxite and phosphate. Diamonds, cobalt,
     uranium and lithium are not on the list, and coal, oil and gas are reported separately,
@@ -339,7 +352,7 @@ td.miss{color:var(--ink-3)}
 
     <p class="credit">Source: World Bank Open Data (CC BY 4.0). Indicators NY.GDP.MINR.RT.ZS
     and TX.VAL.MMTL.ZS.UN. Gold production: World Mineral Statistics contributed by
-    permission of the British Geological Survey. Analysis by YouMine Intelligence,
+    permission of the British Geological Survey. Analysis by James Blue for YouMine Intelligence,
     November 2026.</p>
   </div>
 </div>
@@ -400,13 +413,13 @@ td.miss{color:var(--ink-3)}
     if (r.r1 < 3) miss.push('2015\u201321');
     if (r.r2 < 3) miss.push('2015\u201319');
     if (r.r3 < 3) miss.push('2017\u201321');
-    if (!rentsOk) return { tier: 0, why: 'Rents below 3% in ' + miss.join(' and ') + ' (' +
+    if (!rentsOk) return { tier: 0, why: 'Misses the economy test: mining profits under 3% in ' + miss.join(' and ') + ' (' +
       f1(Math.min(r.r1, r.r2, r.r3)) + '% at the lowest).' };
-    if (r.e1 == null) return { tier: 0, why: 'No exports figure for 2021\u201323, so the trade test cannot be applied.' };
-    if (r.e1 >= 25 && r.e2 >= 25) return { tier: 1, why: 'Passes both tests in every period.' };
-    if (r.e1 < 5 && r.e2 < 5) return { tier: 2, why: 'Rents pass; ores and metals under 5% of exports (gold is not counted).' };
-    return { tier: 0, why: 'Rents pass; exports are ' + f1(r.e1) + '% (2021\u201323) and ' + f1(r.e2) +
-      '% (2015\u201319), which meets neither the 25% line nor the 5% line in both.' };
+    if (r.e1 == null) return { tier: 0, why: 'No export figure for 2021\u201323, so the export test can\u2019t be applied.' };
+    if (r.e1 >= 25 && r.e2 >= 25) return { tier: 1, why: 'Passes both tests in every period. One of the six.' };
+    if (r.e1 < 5 && r.e2 < 5) return { tier: 2, why: 'Passes the economy test. Exports under 5% because gold isn\u2019t counted.' };
+    return { tier: 0, why: 'Passes the economy test, misses the export test: ' + f1(r.e1) + '% in 2021\u201323, ' + f1(r.e2) +
+      '% in 2015\u201319.' };
   }
   D.near.forEach(function(r){ var v = verdict(r); r.tier = v.tier; r.why = v.why; });
   var six = D.near.filter(function(r){ return r.tier === 1; });
@@ -416,10 +429,10 @@ td.miss{color:var(--ink-3)}
   var e1s = six.map(function(r){ return r.e1; });
   var drc = by('DR Congo'), mali = by('Mali');
   var stats = [
-    [String(six.length), 'countries pass both tests in every period tested'],
-    [Math.round(Math.min.apply(null, e1s)) + '\u2013' + Math.round(Math.max.apply(null, e1s)) + '%', 'of goods exports are ores and metals across those six (2021\u201323)'],
-    [pc(drc.lo) + ' \u2192 ' + pc(drc.hi), 'DR Congo\u2019s mineral rents as a share of GDP, lowest to highest year of 2015\u201321'],
-    [pc(mali.e1), 'ores and metals in Mali\u2019s exports, against mineral rents of ' + pc(mali.r1) + ' of GDP']
+    [String(six.length), 'countries pass both tests, every time'],
+    [Math.round(Math.min.apply(null, e1s)) + '\u2013' + Math.round(Math.max.apply(null, e1s)) + '%', 'of the six\u2019s exports are ores and metals (2021\u201323)'],
+    [pc(drc.lo) + ' \u2192 ' + pc(drc.hi), 'DR Congo\u2019s mining profits as a share of GDP, weakest to strongest year, 2015\u201321'],
+    [pc(mali.e1), 'of Mali\u2019s exports count as ores and metals, though mining profits are ' + pc(mali.r1) + ' of GDP']
   ];
   var sEl = document.getElementById('stats');
   stats.forEach(function(s){
@@ -447,7 +460,7 @@ td.miss{color:var(--ink-3)}
   }
   function row(r){
     var rent = track(30, 3, {
-      label: r.n + ': mineral rents averaged ' + f1(r.r1) + ' percent of GDP over 2015 to 2021, range ' + f1(r.lo) + ' to ' + f1(r.hi) + '.',
+      label: r.n + ': mining profits averaged ' + f1(r.r1) + ' percent of GDP over 2015 to 2021, range ' + f1(r.lo) + ' to ' + f1(r.hi) + '.',
       body: function(sx){
         return '<rect x="' + sx(r.lo).toFixed(1) + '" y="' + (H/2 - 4) + '" width="' + Math.max(1, sx(r.hi) - sx(r.lo)).toFixed(1) +
           '" height="8" fill="var(--rent-fill)" stroke="var(--rent)" stroke-width="1"/>' +
@@ -474,13 +487,13 @@ td.miss{color:var(--ink-3)}
   var fig = document.getElementById('fig');
   var head = document.createElement('div');
   head.className = 'head';
-  head.innerHTML = '<span></span><span>Mineral rents, % of GDP<small>scale 0 to 30%</small></span>' +
+  head.innerHTML = '<span></span><span>Mining profits, % of GDP<small>scale 0 to 30%</small></span>' +
     '<span>Ores and metals, % of goods exports<small>scale 0 to 100%</small></span>';
   fig.appendChild(head);
   function tierHead(t){ var h = document.createElement('h3'); h.className = 'tier'; h.textContent = t; fig.appendChild(h); }
-  tierHead('Both measures agree');
+  tierHead('Pass both tests');
   six.sort(function(a, b){ return b.r1 - a.r1; }).forEach(function(r){ fig.appendChild(row(r)); });
-  tierHead('Mineral rents only: the trade measure cannot see gold');
+  tierHead('Pass the economy test only: gold isn’t counted in exports');
   gold.sort(function(a, b){ return b.r1 - a.r1; }).forEach(function(r){ fig.appendChild(row(r)); });
 
   /* ---- tables ---- */

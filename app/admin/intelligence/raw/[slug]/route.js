@@ -3,6 +3,7 @@ import path from "node:path";
 import { NextResponse } from "next/server";
 import { getAnalyticsAdminContext } from "@/lib/adminAnalyticsAuth";
 import { getReport } from "@/lib/intelligence/reports";
+import { injectAuthor } from "@/lib/intelligence/byline";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -17,7 +18,7 @@ const CSP = [
   "script-src 'unsafe-inline'",
   "style-src 'unsafe-inline' https://fonts.googleapis.com",
   "font-src https://fonts.gstatic.com",
-  "img-src data:",
+  "img-src 'self' data:",
   "base-uri 'none'",
   "form-action 'none'",
   "frame-ancestors 'self'",
@@ -33,6 +34,7 @@ export async function GET(_request, { params }) {
 
   let html = await readFile(path.join(process.cwd(), "app", "reports", report.file), "utf8");
   if (!/^\s*<!doctype/i.test(html)) html = FRAGMENT_PREFIX + html;
+  html = injectAuthor(html, report);
 
   return new NextResponse(html, {
     headers: {
