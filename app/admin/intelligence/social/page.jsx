@@ -36,7 +36,7 @@ export default async function IntelligenceSocialPage({ searchParams }) {
       <p className="yi-kicker">Social · Admin only</p>
       <h1 className="yi-title yi-title--sm">Social posts</h1>
       <p className="yi-lede">
-        A post kit for each report: three highlight images and a closing call to action, the post text for LinkedIn and X, alt text, and
+        A post kit for each report with highlight images, a closing call to action, post text for LinkedIn and X, alt text, and
         tracked links. Edit any text here before you copy it; changes are not saved.
       </p>
 

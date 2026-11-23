@@ -1,0 +1,355 @@
+.page {
+  --diagram: #101b28;
+  --node: #18283a;
+  --line: #385066;
+  --light: #f1f7ff;
+  --muted: #b3c6d8;
+  --accent: #79e6ca;
+}
+
+.explorer {
+  margin-top: 1.75rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--diagram);
+  color: var(--light);
+  color-scheme: dark;
+  overflow: hidden;
+}
+
+.toolbar,
+.mode,
+.toolbar label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .75rem;
+}
+
+.toolbar {
+  justify-content: space-between;
+  padding: .85rem 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.mode > span,
+.toolbar label {
+  color: var(--muted);
+  font-size: .875rem;
+}
+
+.mode button,
+.toolbar select,
+.catalogue select {
+  padding: .5rem .75rem;
+  border: 1px solid var(--line);
+  border-radius: .45rem;
+  background: var(--node);
+  color: var(--light);
+  font: inherit;
+}
+
+.mode button {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.mode button[aria-pressed="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.toolbar label,
+.catalogue label {
+  min-width: 0;
+}
+
+.toolbar select,
+.catalogue select {
+  width: 100%;
+  max-width: 24rem;
+}
+
+.toolbar select {
+  width: min(20rem, 75vw);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 26%);
+}
+
+.scroll,
+.reportGraph {
+  background-image: radial-gradient(#31465a 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.scroll {
+  overflow: auto;
+}
+
+.canvas {
+  position: relative;
+  width: 720px;
+  height: 348px;
+  margin-inline: auto;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: .9rem 0 0 16px;
+  color: var(--muted);
+  font: 500 .8rem var(--yi-mono);
+}
+
+.edges {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  pointer-events: none;
+  fill: none;
+  stroke: #58748e;
+  stroke-width: 1.25;
+}
+
+.edges .activeEdge {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.node {
+  display: grid;
+  align-content: center;
+  gap: .3rem;
+  min-height: 72px;
+  padding: .55rem .7rem;
+  border: 1px solid #54708a;
+  border-radius: .65rem;
+  background: var(--node);
+  color: var(--light);
+  text-align: left;
+  box-shadow: 0 4px 12px #08121e80;
+}
+
+.table {
+  position: absolute;
+  width: 208px;
+  height: 72px;
+}
+
+.node[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: #173c40;
+  box-shadow: 0 0 16px #79e6ca22;
+}
+
+.node:hover {
+  border-color: var(--accent);
+}
+
+.node span {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  font-size: .95rem;
+  font-weight: 600;
+}
+
+.node code,
+.inspector > code {
+  font: .75rem/1.2 var(--yi-mono);
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.inspector {
+  border-left: 1px solid var(--line);
+  background: #142231;
+  padding: 1.1rem;
+  overflow-wrap: anywhere;
+}
+
+.inspector h2,
+.catalogue h2 {
+  margin: 0;
+  font: 600 1.35rem/1.2 var(--yi-serif);
+}
+
+.inspector p {
+  margin: .65rem 0;
+  color: var(--muted);
+}
+
+.inspector h3,
+.catalogue h3 {
+  margin: 1rem 0 .4rem;
+  font-weight: 600;
+}
+
+.inspector a,
+.connections button {
+  color: var(--accent);
+}
+
+.connections {
+  display: grid;
+  gap: .4rem;
+  list-style: none;
+  margin: 0 0 .85rem;
+  padding: 0;
+}
+
+.connections small {
+  display: block;
+  color: var(--muted);
+  font-size: .8rem;
+}
+
+.connections button,
+.catalogueDetails button {
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+
+.reportGraph {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 2rem;
+  align-items: center;
+  min-height: 348px;
+  padding: 1rem 1.5rem;
+}
+
+.reportNode {
+  position: relative;
+  display: flex;
+  gap: .65rem;
+  align-items: center;
+  padding: .8rem;
+  border: 1px solid var(--line);
+  border-radius: .65rem;
+  background: var(--node);
+}
+
+.reportNode svg {
+  flex-shrink: 0;
+}
+
+.reportNode::after,
+.reportGraph li::before {
+  position: absolute;
+  top: 50%;
+  height: 1px;
+  width: 1rem;
+  background: var(--accent);
+  content: "";
+}
+
+.reportNode::after {
+  left: 100%;
+}
+
+.reportGraph ul {
+  display: grid;
+  gap: .75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.reportGraph li {
+  position: relative;
+}
+
+.reportGraph li::before {
+  right: 100%;
+}
+
+.reportGraph li:not(:only-child)::after {
+  position: absolute;
+  top: -.4rem;
+  bottom: -.4rem;
+  left: -1rem;
+  border-left: 1px solid var(--accent);
+  content: "";
+}
+
+.reportGraph li:first-child::after {
+  top: 50%;
+}
+
+.reportGraph li:last-child::after {
+  bottom: 50%;
+}
+
+.reportGraph .node {
+  width: 100%;
+}
+
+.fields {
+  margin: .75rem 0 0;
+}
+
+.fields dt {
+  margin-top: .65rem;
+  font-weight: 600;
+  font-size: .875rem;
+}
+
+.fields dd {
+  margin: 0;
+}
+
+.catalogue {
+  margin-top: 2rem;
+}
+
+.catalogue label {
+  display: grid;
+  gap: .35rem;
+  margin-top: .75rem;
+}
+
+.catalogue select,
+.catalogueDetails {
+  background: var(--yi-raised);
+  color: var(--yi-ink);
+  border: 1px solid var(--yi-rule-2);
+}
+
+.catalogueDetails {
+  margin-top: .85rem;
+  padding: 1rem;
+  border-radius: .65rem;
+}
+
+@media (max-width: 1020px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .inspector {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+}
+
+@media (max-width: 480px) {
+  .reportGraph {
+    gap: 1rem;
+    padding-inline: .65rem;
+  }
+
+  .reportNode::after,
+  .reportGraph li::before {
+    width: .5rem;
+  }
+
+  .reportGraph li:not(:only-child)::after {
+    left: -.5rem;
+  }
+}

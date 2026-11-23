@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Australia Nearly Caught Qatar on Gas</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+:root {
+  --bg: #f6f7f9; --surface: #fff; --surface-2: #eef1f4;
+  --ink: #14181d; --ink-2: #48515b; --ink-3: #59636e;
+  --rule: #dde2e7; --rule-2: #c9d1d8;
+  --gain: #2a78d6; --lost: #eb6834; --band: #eef3fa;
+  --font-display: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Serif", Georgia, serif;
+  --font-data: "IBM Plex Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1116; --surface: #161a20; --surface-2: #1d232a;
+    --ink: #e9ecef; --ink-2: #a6aeb7; --ink-3: #a0aab5;
+    --rule: #262d35; --rule-2: #333c45;
+    --gain: #3987e5; --lost: #d95926; --band: #1b2634;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1116; --surface: #161a20; --surface-2: #1d232a;
+  --ink: #e9ecef; --ink-2: #a6aeb7; --ink-3: #a0aab5;
+  --rule: #262d35; --rule-2: #333c45;
+  --gain: #3987e5; --lost: #d95926; --band: #1b2634;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 1.0625rem/1.65 var(--font-body);
+}
+.wrap {
+  max-width: 60rem; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 2.5rem;
+}
+.col { max-width: 36rem; }
+.mast {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem 1rem;
+  align-items: baseline; padding-block: 1.5rem .875rem;
+  border-bottom: 1px solid var(--rule); margin-bottom: 2.5rem;
+  font: 600 .75rem var(--font-display); text-transform: uppercase; letter-spacing: .11em;
+}
+.kicker { color: var(--ink-3); }
+.lead-rule { width: 3.5rem; height: 3px; background: var(--ink); margin-bottom: 1.75rem; }
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: -.02em; }
+h1 { max-width: 48rem; font-size: clamp(2.1rem, 7vw, 3.75rem); line-height: 1.05; margin: 0; text-wrap: balance; }
+h2 { font-size: clamp(1.35rem, 3vw, 1.75rem); line-height: 1.2; margin: 2.75rem 0 .75rem; }
+h3 { font-size: 1rem; margin: 0; }
+p { margin: 0 0 1.125rem; }
+.standfirst { font-size: clamp(1.15rem, 2.65vw, 1.375rem); line-height: 1.5; color: var(--ink-2); }
+.num, td { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+.standfirst strong { color: var(--ink); font-weight: 600; }
+.stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: 1px; border: 1px solid var(--rule); background: var(--rule); margin: 1.75rem 0 2rem;
+}
+.stat { background: var(--surface); padding: .875rem 1rem; min-width: 0; }
+.stat .num { display: block; font-size: 1.5rem; font-weight: 600; }
+.stat-label, figcaption, caption, summary, .credit { font-family: var(--font-display); color: var(--ink-2); font-size: .8125rem; }
+figure { margin: 1.25rem 0 2rem; }
+figcaption { margin-top: .625rem; }
+.panel { min-width: 0; background: var(--surface); padding: .875rem; }
+svg { display: block; width: 100%; height: auto; }
+svg text { fill: var(--ink); font: 600 14px var(--font-display); }
+svg .value, svg .tick { font-family: var(--font-data); }
+svg .tick { font-weight: 400; fill: var(--ink-3); }
+.gridline { stroke: var(--rule-2); stroke-width: 1; }
+.table-scroll { overflow-x: auto; }
+.wide-chart { max-width: 50rem; margin: auto; }
+@media (max-width: 600px) {
+  .wide-chart text { font-size: 18px; }
+}
+.series { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.gain { stroke: var(--gain); }
+.lost { stroke: var(--lost); stroke-dasharray: 5 4; }
+details { margin: 1.5rem 0; }
+summary { cursor: pointer; font-weight: 600; }
+.table-scroll { margin: .75rem 0 1.5rem; border: 1px solid var(--rule); }
+table { width: 100%; border-collapse: collapse; background: var(--surface); }
+.comparison-table { min-width: 36rem; }
+caption { text-align: left; padding: .75rem; background: var(--surface-2); }
+th, td { text-align: right; padding: .55rem .75rem; border-bottom: 1px solid var(--rule); font-size: .8125rem; }
+th { font-family: var(--font-display); line-height: 1.25; }
+th:first-child { text-align: left; }
+tbody tr:last-child > * { border-bottom: 0; }
+.method { border-top: 1px solid var(--rule); padding-top: 1.5rem; margin-top: 2.75rem; }
+.method h2 { margin-top: 0; }
+.method p { color: var(--ink-2); font-size: .9375rem; }
+.credit { border-top: 1px solid var(--rule); padding-top: 1rem; margin-top: 1.5rem; }
+a { color: inherit; text-underline-offset: .15em; }
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <header class="mast">
+    <span>YouMine Intelligence</span>
+    <span class="kicker">Dry natural gas · 2000–24</span>
+  </header>
+  <div class="lead-rule"></div>
+  <h1>Australia Nearly Caught Qatar on Gas</h1>
+  <p class="standfirst col">In <span class="num">2013–15</span>, Australia was producing about <strong class="num">40%</strong> as much natural gas as Qatar. By <span class="num">2022–24</span>, it was at <strong class="num">90%</strong>. Almost all of that catch-up happened in just a few years.</p>
+
+  <div class="stats">
+    <div class="stat"><span class="num">65 → 152</span><span class="stat-label">Australia’s average annual output</span></div>
+    <div class="stat"><span class="num">163 → 170</span><span class="stat-label">Qatar’s average annual output</span></div>
+    <div class="stat"><span class="num">97 → 17</span><span class="stat-label">The gap, in billion cubic metres a year</span></div>
+  </div>
+
+  <div class="col">
+    <p>The two countries started remarkably close. In <span class="num">2000</span>, Australia produced about <span class="num">33</span> billion cubic metres of dry gas, just ahead of Qatar’s <span class="num">29</span>. Qatar then pulled away. By <span class="num">2013–15</span>, it was producing roughly two and a half times as much gas as Australia.</p>
+    <p>Then came Australia’s turn. Queensland began exporting liquefied natural gas, or LNG, in <span class="num">2015</span> after developing gas from coal seams. New export facilities opened during the decade. In four years, Australian dry gas output went from <span class="num">72</span> billion cubic metres to <span class="num">145</span>. Qatar’s output stayed near the level it had already reached.</p>
+  </div>
+
+  <h2>First Qatar pulled away. Then Australia closed most of the gap.</h2>
+  <figure>
+    <div class="panel">
+      <svg class="wide-chart" viewBox="0 0 625 322" role="img" aria-labelledby="gas-chart-title gas-chart-description">
+        <title id="gas-chart-title">Dry natural gas production in Australia and Qatar, 2000 to 2024</title>
+        <desc id="gas-chart-description">Qatar’s production pulled ahead during the 2000s. Australia then narrowed the gap sharply from 2015 to 2019. In 2024 Qatar produced 168 billion cubic metres and Australia 152.</desc>
+        <text x="58" y="19">Billion cubic metres a year</text>
+        <rect x="284" y="32" width="52" height="246" fill="var(--band)"/>
+        <rect x="446" y="32" width="52" height="246" fill="var(--band)"/>
+        <line class="gridline" x1="58" y1="278" x2="498" y2="278"/>
+        <text class="tick" x="49" y="282" text-anchor="end">0</text>
+        <line class="gridline" x1="58" y1="226" x2="498" y2="226"/>
+        <text class="tick" x="49" y="230" text-anchor="end">40</text>
+        <line class="gridline" x1="58" y1="174" x2="498" y2="174"/>
+        <text class="tick" x="49" y="178" text-anchor="end">80</text>
+        <line class="gridline" x1="58" y1="122" x2="498" y2="122"/>
+        <text class="tick" x="49" y="126" text-anchor="end">120</text>
+        <line class="gridline" x1="58" y1="70" x2="498" y2="70"/>
+        <text class="tick" x="49" y="74" text-anchor="end">160</text>
+        <text class="tick" x="58" y="303" text-anchor="middle">2000</text>
+        <text class="tick" x="148" y="303" text-anchor="middle">2005</text>
+        <text class="tick" x="238" y="303" text-anchor="middle">2010</text>
+        <text class="tick" x="328" y="303" text-anchor="middle">2015</text>
+        <text class="tick" x="418" y="303" text-anchor="middle">2020</text>
+        <text class="tick" x="490" y="303" text-anchor="middle">2024</text>
+        <path class="series lost" d="M58,240.17 L76,243.42 L94,239.65 L112,237.18 L130,227.08 L148,218.46 L166,212.09 L184,195.84 L202,177.92 L220,161.91 L238,126.29 L256,89.15 L274,73.83 L292,64.51 L310,70.01 L328,64.73 L346,61.96 L364,61.74 L382,62.90 L400,60.30 L418,59.81 L436,57.24 L454,56.68 L472,55.94 L490,59.26"/>
+        <path class="series gain" d="M58,235.33 L76,234.37 L94,232.54 L112,233.66 L130,233.44 L148,231.41 L166,229.27 L184,226.57 L202,225.08 L220,223.06 L238,209.55 L256,204.68 L274,207.78 L292,197.76 L310,196.56 L328,184.29 L346,157.66 L364,136.23 L382,113.64 L400,89.34 L418,89.81 L436,86.75 L454,78.08 L472,81.29 L490,80.17"/>
+        <text x="500" y="55">Qatar <tspan class="value">168</tspan></text>
+        <text x="500" y="92">Australia <tspan class="value">152</tspan></text>
+      </svg>
+    </div>
+    <figcaption>Annual production, <span class="num">2000–24</span>. Shading marks the two three-year windows used in the headline comparison.</figcaption>
+  </figure>
+
+  <h2>Australia caught up by growing faster</h2>
+  <div class="col">
+    <p>Australia added nearly <span class="num">87</span> billion cubic metres a year between the two comparison periods. Qatar added about <span class="num">7</span>. Subtract one from the other and the gap narrowed by about <span class="num">80</span> billion cubic metres a year. Qatar was still producing more at the end. Australia had grown much faster.</p>
+    <p>The annual figures show how compressed that change was. The gap fell from about <span class="num">92</span> billion cubic metres in <span class="num">2015</span> to <span class="num">22</span> in <span class="num">2019</span> and <span class="num">16</span> in <span class="num">2024</span>. About nine tenths of the narrowing between <span class="num">2015</span> and <span class="num">2024</span> had already happened by <span class="num">2019</span>.</p>
+    <p>Only the United States, China and Iran added more annual output than Australia among the <span class="num">162</span> countries with EIA figures for all six years. Qatar makes a useful benchmark for the catch-up, while the broader ranking shows how unusual Australia’s growth was.</p>
+  </div>
+  <figure>
+    <div class="panel">
+      <svg class="wide-chart" viewBox="0 0 510 194" role="img" aria-labelledby="gas-growth-title">
+        <title id="gas-growth-title">The four largest increases in average annual dry gas output, plus Qatar. United States 325, China 115, Iran 97, Australia 87 and Qatar 7 billion cubic metres.</title>
+        <text x="8" y="30">United States</text>
+        <line class="gridline" x1="130" x2="454" y1="26" y2="26"/>
+        <rect x="130" y="21" width="309.11" height="10" fill="var(--ink-3)"/>
+        <text class="value" x="448.11" y="30">+325</text>
+        <text x="8" y="68">China</text>
+        <line class="gridline" x1="130" x2="454" y1="64" y2="64"/>
+        <rect x="130" y="59" width="109.36" height="10" fill="var(--ink-3)"/>
+        <text class="value" x="248.36" y="68">+115</text>
+        <text x="8" y="106">Iran</text>
+        <line class="gridline" x1="130" x2="454" y1="102" y2="102"/>
+        <rect x="130" y="97" width="92.25" height="10" fill="var(--ink-3)"/>
+        <text class="value" x="231.25" y="106">+97</text>
+        <text x="8" y="144">Australia</text>
+        <line class="gridline" x1="130" x2="454" y1="140" y2="140"/>
+        <rect x="130" y="135" width="82.59" height="10" fill="var(--gain)"/>
+        <text class="value" x="221.59" y="144">+87</text>
+        <text x="8" y="182">Qatar</text>
+        <line class="gridline" x1="130" x2="454" y1="178" y2="178"/>
+        <rect x="130" y="173" width="6.67" height="10" fill="var(--lost)"/>
+        <text class="value" x="145.67" y="182">+7</text>
+      </svg>
+    </div>
+    <figcaption>Change in average annual dry gas output, <span class="num">2013–15</span> to <span class="num">2022–24</span>, in billion cubic metres. The four biggest increases are shown with Qatar for comparison. Source: EIA.</figcaption>
+  </figure>
+
+  <h2>The ten biggest gas producers</h2>
+  <p class="col">Australia moved into the same league as Qatar, but the next rung was still some distance away. Canada, in fifth place, produced about <span class="num">47</span> billion cubic metres more than Australia in <span class="num">2024</span>, nearly three times the gap between Australia and Qatar.</p>
+  <div class="table-scroll" role="region" tabindex="0" aria-label="Top ten dry natural gas producers">
+    <table class="comparison-table">
+      <caption>Ranked by <span class="num">2024</span> output. All figures are billion cubic metres a year. Changes use unrounded values.</caption>
+      <thead><tr><th scope="col">Country</th><th scope="col">2024 rank</th><th scope="col">2024 output</th><th scope="col">2013–15 average</th><th scope="col">2022–24 average</th><th scope="col">Change in average</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">United States</th><td>1</td><td>1,068.3</td><td>728.3</td><td>1,053.7</td><td>+325.4</td></tr>
+        <tr><th scope="row">Russia</th><td>2</td><td>642</td><td>614.8</td><td>629.5</td><td>+14.7</td></tr>
+        <tr><th scope="row">Iran</th><td>3</td><td>276.7</td><td>173.5</td><td>270.6</td><td>+97.1</td></tr>
+        <tr><th scope="row">China</th><td>4</td><td>258.4</td><td>126.3</td><td>241.4</td><td>+115.1</td></tr>
+        <tr><th scope="row">Canada</th><td>5</td><td>199</td><td>169.5</td><td>193.6</td><td>+24.1</td></tr>
+        <tr><th scope="row">Qatar</th><td>6</td><td>168.3</td><td>162.8</td><td>169.8</td><td>+7</td></tr>
+        <tr><th scope="row">Australia</th><td>7</td><td>152.2</td><td>65.5</td><td>152.4</td><td>+86.9</td></tr>
+        <tr><th scope="row">Norway</th><td>8</td><td>130.7</td><td>115.1</td><td>127.7</td><td>+12.5</td></tr>
+        <tr><th scope="row">Saudi Arabia</th><td>9</td><td>122.9</td><td>100.3</td><td>122</td><td>+21.7</td></tr>
+        <tr><th scope="row">Algeria</th><td>10</td><td>103.7</td><td>82</td><td>103.4</td><td>+21.4</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Why all that gas doesn’t settle the local supply question</h2>
+  <div class="col">
+    <p>Geoscience Australia estimates that about <span class="num">70%</span> of the country’s gas production was exported in <span class="num">2024</span>, chiefly as LNG. That is a separate measure from the dry gas comparison above. It helps explain why a country can be a big producer and still face a different supply picture in each region.</p>
+    <p>Western Australia has no gas pipeline to the east coast. On the east coast itself, declining Bass Strait output changes where southern buyers can source their gas. A national total can show the scale of production. To understand a local market, you also need to know where the gas is and how it can reach buyers. <a href="https://www.industry.gov.au/publications/future-gas-strategy/3-finding-new-sources-gas-meet-demand" target="_blank" rel="noopener">Australian Government Future Gas Strategy</a></p>
+  </div>
+
+  <details>
+    <summary>See the annual production figures</summary>
+    <div class="table-scroll" role="region" tabindex="0" aria-label="Annual gas production figures">
+      <table>
+        <caption>Billion cubic metres of dry natural gas</caption>
+        <thead><tr><th scope="col">Year</th><th scope="col">Australia</th><th scope="col">Qatar</th></tr></thead>
+        <tbody>
+          <tr><th scope="row" class="num">2000</th><td>32.8</td><td>29.1</td></tr>
+          <tr><th scope="row" class="num">2001</th><td>33.6</td><td>26.6</td></tr>
+          <tr><th scope="row" class="num">2002</th><td>35.0</td><td>29.5</td></tr>
+          <tr><th scope="row" class="num">2003</th><td>34.1</td><td>31.4</td></tr>
+          <tr><th scope="row" class="num">2004</th><td>34.3</td><td>39.2</td></tr>
+          <tr><th scope="row" class="num">2005</th><td>35.8</td><td>45.8</td></tr>
+          <tr><th scope="row" class="num">2006</th><td>37.5</td><td>50.7</td></tr>
+          <tr><th scope="row" class="num">2007</th><td>39.6</td><td>63.2</td></tr>
+          <tr><th scope="row" class="num">2008</th><td>40.7</td><td>77.0</td></tr>
+          <tr><th scope="row" class="num">2009</th><td>42.3</td><td>89.3</td></tr>
+          <tr><th scope="row" class="num">2010</th><td>52.7</td><td>116.7</td></tr>
+          <tr><th scope="row" class="num">2011</th><td>56.4</td><td>145.3</td></tr>
+          <tr><th scope="row" class="num">2012</th><td>54.0</td><td>157.1</td></tr>
+          <tr><th scope="row" class="num">2013</th><td>61.7</td><td>164.2</td></tr>
+          <tr><th scope="row" class="num">2014</th><td>62.6</td><td>160.0</td></tr>
+          <tr><th scope="row" class="num">2015</th><td>72.1</td><td>164.1</td></tr>
+          <tr><th scope="row" class="num">2016</th><td>92.6</td><td>166.2</td></tr>
+          <tr><th scope="row" class="num">2017</th><td>109.1</td><td>166.4</td></tr>
+          <tr><th scope="row" class="num">2018</th><td>126.4</td><td>165.5</td></tr>
+          <tr><th scope="row" class="num">2019</th><td>145.1</td><td>167.5</td></tr>
+          <tr><th scope="row" class="num">2020</th><td>144.8</td><td>167.8</td></tr>
+          <tr><th scope="row" class="num">2021</th><td>147.1</td><td>169.8</td></tr>
+          <tr><th scope="row" class="num">2022</th><td>153.8</td><td>170.2</td></tr>
+          <tr><th scope="row" class="num">2023</th><td>151.3</td><td>170.8</td></tr>
+          <tr><th scope="row" class="num">2024</th><td>152.2</td><td>168.3</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <section class="method col">
+    <h2>How I measured it</h2>
+    <p>I used the EIA’s annual dry natural gas production series as loaded in YouMine. The chart starts in <span class="num">2000</span> to show both countries before the gap opened up. The headline compares the average of <span class="num">2013–15</span>, before the steepest part of Australia’s climb, with <span class="num">2022–24</span>, after it had levelled off.</p>
+    <p>I divided Australia’s average output by Qatar’s for each period and rounded after calculation. The production ranks use the most recent year shown in the chart, <span class="num">2024</span>.</p>
+    <p>I ranked the growth figures using the difference between the two three-year averages. A country needed a recorded figure in all six years to be included in that comparison. The <span class="num">2024</span> production table ranks all countries with a figure in that year. The export share comes from Geoscience Australia’s national energy accounts.</p>
+    <p><a href="https://www.eia.gov/international/data/" target="_blank" rel="noopener">EIA International Energy Statistics, annual natural gas</a> · <a href="https://www.ga.gov.au/aecr2026/gas" target="_blank" rel="noopener">Geoscience Australia’s gas report</a> · <a href="https://www.industry.gov.au/sites/default/files/2022-08/review-of-the-australian-domestic-gas-security-mechanism-2019.pdf" target="_blank" rel="noopener">Australian Government review of Queensland’s LNG expansion</a></p>
+    <p class="credit">Analysis by James Blue for YouMine Intelligence.</p>
+  </section>
+</main>
+</body>
+</html>

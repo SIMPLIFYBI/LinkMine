@@ -37,7 +37,7 @@ export async function GET(_request, { params }) {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-store",
-      "Content-Security-Policy": CSP,
+      "Content-Security-Policy": slug === "bauxite-to-aluminium" ? `${CSP}; connect-src 'self'` : CSP,
       "X-Content-Type-Options": "nosniff",
       "X-Robots-Tag": "noindex, nofollow",
     },

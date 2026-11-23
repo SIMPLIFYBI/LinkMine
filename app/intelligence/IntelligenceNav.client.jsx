@@ -10,6 +10,7 @@ const ITEMS = [
   { href: "/intelligence", label: "Discover", match: (p) => p === "/intelligence" },
   { href: "/intelligence/reports", label: "Reports", match: (p) => p.startsWith("/intelligence/reports") || REPORT_PATH.test(p) },
   { href: "/intelligence/data", label: "Data", match: (p) => p.startsWith("/intelligence/data") || p.startsWith("/intelligence/reserves") },
+  { href: "/intelligence/sources", label: "Sources", match: (p) => p === "/intelligence/sources" },
   { label: "Atlas", soon: true },
   { label: "My work", soon: true },
 ];

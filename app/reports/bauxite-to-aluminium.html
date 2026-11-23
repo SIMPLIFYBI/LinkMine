@@ -1,0 +1,777 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>The World’s Biggest Bauxite Miner Barely Refines It</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+:root {
+  --bg: #f6f7f9; --surface: #fff; --surface-2: #eef1f4;
+  --ink: #14181d; --ink-2: #48515b; --ink-3: #59636e;
+  --rule: #dde2e7; --rule-2: #c9d1d8;
+  --gain: #2a78d6; --lost: #eb6834;
+  --map-water: #f3f7fc; --map-land: #e1e5ea; --map-border: #f7faff;
+  --map-1: #c1ddf3; --map-2: #88bcea; --map-3: #559cdb; --map-4: #246eb4; --map-5: #15477d;
+  --font-display: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Serif", Georgia, serif;
+  --font-data: "IBM Plex Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1116; --surface: #161a20; --surface-2: #1d232a;
+    --ink: #e9ecef; --ink-2: #a6aeb7; --ink-3: #a0aab5;
+    --rule: #262d35; --rule-2: #333c45;
+    --gain: #3987e5; --lost: #d95926;
+    --map-water: #141c26; --map-land: #303944; --map-border: #141c26;
+    --map-1: #3b6083; --map-2: #427cab; --map-3: #5196ce; --map-4: #75b9ed; --map-5: #a3d8ff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1116; --surface: #161a20; --surface-2: #1d232a;
+  --ink: #e9ecef; --ink-2: #a6aeb7; --ink-3: #a0aab5;
+  --rule: #262d35; --rule-2: #333c45;
+  --gain: #3987e5; --lost: #d95926;
+  --map-water: #141c26; --map-land: #303944; --map-border: #141c26;
+  --map-1: #3b6083; --map-2: #427cab; --map-3: #5196ce; --map-4: #75b9ed; --map-5: #a3d8ff;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 1.0625rem/1.65 var(--font-body);
+}
+.wrap {
+  max-width: 60rem; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 2.5rem;
+}
+.col { max-width: 36rem; }
+.mast {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem 1rem;
+  align-items: baseline; padding-block: 1.5rem .875rem;
+  border-bottom: 1px solid var(--rule); margin-bottom: 2.5rem;
+  font: 600 .75rem var(--font-display); text-transform: uppercase; letter-spacing: .11em;
+}
+.kicker { color: var(--ink-3); }
+.lead-rule { width: 3.5rem; height: 3px; background: var(--ink); margin-bottom: 1.75rem; }
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: -.02em; }
+h1 { max-width: 48rem; font-size: clamp(2.1rem, 7vw, 3.75rem); line-height: 1.05; margin: 0; text-wrap: balance; }
+h2 { font-size: clamp(1.35rem, 3vw, 1.75rem); line-height: 1.2; margin: 2.75rem 0 .75rem; }
+h3 { font-size: 1rem; margin: 0; }
+p { margin: 0 0 1.125rem; }
+.standfirst { font-size: clamp(1.15rem, 2.65vw, 1.375rem); line-height: 1.5; color: var(--ink-2); }
+.num, td { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+.standfirst strong { color: var(--ink); font-weight: 600; }
+.stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: 1px; border: 1px solid var(--rule); background: var(--rule); margin: 1.75rem 0 2rem;
+}
+.stat { background: var(--surface); padding: .875rem 1rem; min-width: 0; }
+.stat .num { display: block; font-size: 1.5rem; font-weight: 600; }
+.stat-label, figcaption, caption, summary, .credit { font-family: var(--font-display); color: var(--ink-2); font-size: .8125rem; }
+figure { margin: 1.25rem 0 2rem; }
+figcaption { margin-top: .625rem; }
+.panel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.panel { min-width: 0; background: var(--surface); padding: .875rem; }
+.panel h3 { margin-bottom: .5rem; }
+svg { display: block; width: 100%; height: auto; }
+svg text { fill: var(--ink); font: 600 14px var(--font-display); }
+svg .value { font-family: var(--font-data); }
+.gridline { stroke: var(--rule-2); stroke-width: 1; }
+.map-explorer[hidden], .map-explorer [hidden] { display: none; }
+.map-card { border: 1px solid var(--rule); background: var(--surface); }
+.map-toolbar {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+  gap: .625rem 1rem; padding: .875rem 1rem; border-bottom: 1px solid var(--rule);
+}
+.map-stages { display: flex; flex-wrap: wrap; gap: .375rem; }
+.map-button, .map-select {
+  font: 600 .875rem/1.2 var(--font-display); color: var(--ink); background: var(--surface);
+  border: 1px solid var(--rule-2); border-radius: .25rem; padding: .5rem .7rem; min-height: 2.75rem;
+}
+.map-button { cursor: pointer; }
+.map-button:disabled { cursor: default; opacity: .65; }
+.map-button:hover, .map-button[aria-pressed="true"] { background: var(--surface-2); }
+.map-button[aria-pressed="true"] { box-shadow: inset 0 -2px var(--gain); }
+.map-button:focus-visible, .map-select:focus-visible { outline: 2px solid var(--gain); outline-offset: 2px; }
+.map-timeline {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) 4ch; align-items: center;
+  gap: .75rem; padding: .75rem 1rem; border-bottom: 1px solid var(--rule);
+  font: 600 .875rem/1.2 var(--font-display);
+}
+.map-timeline input { width: 100%; min-height: 1.75rem; margin: 0; accent-color: var(--gain); }
+.map-story { padding: .875rem 1rem .625rem; }
+.map-story h3 { font-size: 1.125rem; }
+.map-story p, .map-summary { margin: .15rem 0 0; font-size: .875rem; color: var(--ink-2); }
+.map-area {
+  position: relative; aspect-ratio: 951 / 422; background: var(--map-water);
+  border-block: 1px solid var(--rule);
+}
+.map-message {
+  position: absolute; inset: 0; display: grid; place-content: center; justify-items: center;
+  gap: .375rem; padding: .75rem; text-align: center; font: .875rem var(--font-display);
+  color: var(--ink-2);
+}
+.map-message p { margin: 0; }
+[data-tone="1"] { --map-fill: var(--map-1); }
+[data-tone="2"] { --map-fill: var(--map-2); }
+[data-tone="3"] { --map-fill: var(--map-3); }
+[data-tone="4"] { --map-fill: var(--map-4); }
+[data-tone="5"] { --map-fill: var(--map-5); }
+.map-shapes [data-iso] {
+  fill: var(--map-fill, var(--map-land)); stroke: var(--map-border); stroke-width: .7;
+  stroke-linejoin: round; transition: fill 360ms ease;
+}
+.map-shapes [data-pickable] { cursor: pointer; }
+.map-shapes [data-pickable]:hover, .map-shapes [data-selected] { stroke: var(--ink); stroke-width: 1.6; }
+.map-annotations { pointer-events: none; }
+.map-annotations text {
+  font-size: 18px; paint-order: stroke fill; stroke: var(--map-water); stroke-width: 5; stroke-linejoin: round;
+}
+.map-annotations path, .map-annotations circle { stroke: var(--ink-2); stroke-width: 1.25; }
+.map-annotations circle { fill: var(--map-water); }
+.map-legend {
+  display: flex; flex-wrap: wrap; gap: .375rem .875rem; align-items: center;
+  list-style: none; padding: .75rem 1rem; margin: 0; font: .75rem var(--font-display); color: var(--ink-2);
+}
+.map-legend li { display: flex; gap: .3rem; align-items: center; }
+.map-legend .num { white-space: nowrap; }
+.map-swatch {
+  width: .85rem; height: .65rem; flex: none; background: var(--map-fill, var(--map-land));
+  border: 1px solid var(--rule-2);
+}
+.map-countries {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .625rem 1rem;
+  border-top: 1px solid var(--rule); padding: .75rem 1rem;
+  font-family: var(--font-display);
+}
+.map-country-picker { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; font-size: .875rem; }
+.map-select { max-width: 100%; min-width: 0; }
+.map-summary { margin: 0; }
+.map-readouts { display: none; }
+@media (max-width: 600px) {
+  .map-annotations text { display: none; }
+  .map-annotations path { display: none; }
+  .map-readouts {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px;
+    background: var(--rule); border-block: 1px solid var(--rule); margin: 0;
+    font: .8125rem/1.35 var(--font-display);
+  }
+  .map-readouts div { padding: .625rem .75rem; background: var(--surface); }
+  .map-readouts dd { margin: .125rem 0 0; font-weight: 600; }
+  .map-readouts .map-pinned { grid-column: 1 / -1; display: flex; align-items: baseline; gap: .625rem; }
+  .map-readouts .map-pinned dd { margin: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .map-shapes [data-iso] { transition: none; }
+}
+.table-scroll { overflow-x: auto; }
+details { margin: 1.5rem 0; }
+summary { cursor: pointer; font-weight: 600; }
+.table-scroll { margin: .75rem 0 1.5rem; border: 1px solid var(--rule); }
+table { width: 100%; border-collapse: collapse; background: var(--surface); }
+.comparison-table { min-width: 39rem; }
+caption { text-align: left; padding: .75rem; background: var(--surface-2); }
+th, td { text-align: right; padding: .55rem .75rem; border-bottom: 1px solid var(--rule); font-size: .8125rem; }
+th { font-family: var(--font-display); line-height: 1.25; }
+th:first-child { text-align: left; }
+tbody tr:last-child > * { border-bottom: 0; }
+.method { border-top: 1px solid var(--rule); padding-top: 1.5rem; margin-top: 2.75rem; }
+.method h2 { margin-top: 0; }
+.method p { color: var(--ink-2); font-size: .9375rem; }
+.credit { border-top: 1px solid var(--rule); padding-top: 1rem; margin-top: 1.5rem; }
+a { color: inherit; text-underline-offset: .15em; }
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <header class="mast">
+    <span>YouMine Intelligence</span>
+    <span class="kicker">Mining and processing · 2024</span>
+  </header>
+  <div class="lead-rule"></div>
+  <h1>The World’s Biggest Bauxite Miner Barely Refines It</h1>
+  <p class="standfirst col">Guinea mined <strong class="num">a third</strong> of the world’s bauxite in <span class="num">2024</span>. It made just <strong class="num">0.25%</strong> of the world’s alumina, the next step on the way to aluminium. By the time you get to the metal, the country at the top of the list is China.</p>
+
+  <div class="stats">
+    <div class="stat"><span class="num">33%</span><span class="stat-label">Guinea’s share of bauxite mining</span></div>
+    <div class="stat"><span class="num">0.25%</span><span class="stat-label">Guinea’s share of alumina refining</span></div>
+    <div class="stat"><span class="num">60%</span><span class="stat-label">China’s share of primary aluminium production</span></div>
+  </div>
+
+  <div class="col">
+    <p>Think of an aluminium can. Before there was metal to roll into a sheet, there was a reddish rock called bauxite. A refinery turns the rock into alumina, a white powder. A smelter uses electricity to turn the powder into new metal. Each step can happen in a different country.</p>
+    <p>Guinea’s split was more than a curiosity in a table. In October <span class="num">2024</span>, its customs authorities halted bauxite exports from one operator’s mine near Boké. The USGS identifies a dispute over a promised local alumina refinery as a major reason. A country that already led the world in mining the rock wanted more of the processing to happen at home.</p>
+  </div>
+
+  <h2>Follow the rock to the metal</h2>
+  <figure id="bauxite-map" class="map-explorer" hidden>
+    <div class="map-card">
+      <div class="map-toolbar">
+        <div class="map-stages" role="group" aria-label="Production stage">
+          <button class="map-button" type="button" data-stage="0" aria-pressed="true" disabled>Mine</button>
+          <button class="map-button" type="button" data-stage="1" aria-pressed="false" disabled>Refine</button>
+          <button class="map-button" type="button" data-stage="2" aria-pressed="false" disabled>Smelt</button>
+        </div>
+        <button class="map-button" id="bauxite-map-play" type="button" disabled>Play years</button>
+      </div>
+      <div class="map-timeline">
+        <label for="bauxite-map-year">Year</label>
+        <input id="bauxite-map-year" type="range" min="2000" max="2024" step="1" value="2024" disabled>
+        <span class="num" id="bauxite-map-year-label" aria-hidden="true">2024</span>
+      </div>
+      <div class="map-story">
+        <h3 id="bauxite-map-step">Mine the rock</h3>
+        <p id="bauxite-map-story">Annual production from <span class="num">2000</span> to <span class="num">2024</span>.</p>
+      </div>
+      <div class="map-area" id="bauxite-map-area">
+        <svg id="bauxite-map-picture" viewBox="4 14 951 422" role="img" aria-labelledby="bauxite-map-title bauxite-map-description" hidden>
+          <title id="bauxite-map-title">Where the world produces bauxite, alumina and aluminium</title>
+          <desc id="bauxite-map-description"></desc>
+          <g class="map-shapes" id="bauxite-map-shapes"></g>
+          <g class="map-annotations" aria-hidden="true">
+            <g>
+              <path fill="none"/>
+              <circle r="4"/>
+              <text><tspan></tspan><tspan class="value"></tspan></text>
+            </g>
+            <g>
+              <path fill="none"/>
+              <circle r="4"/>
+              <text><tspan></tspan><tspan class="value"></tspan></text>
+            </g>
+            <g>
+              <path fill="none"/>
+              <circle r="4"/>
+              <text><tspan></tspan><tspan class="value"></tspan></text>
+            </g>
+            <g hidden>
+              <path fill="none"/>
+              <circle r="4"/>
+              <text><tspan></tspan><tspan class="value"></tspan></text>
+            </g>
+            <g hidden>
+              <path fill="none"/>
+              <circle r="4"/>
+              <text><tspan></tspan><tspan class="value"></tspan></text>
+            </g>
+          </g>
+        </svg>
+        <div class="map-message" id="bauxite-map-message">
+          <p id="bauxite-map-status" role="status">Loading the world map…</p>
+          <button class="map-button" id="bauxite-map-retry" type="button" hidden>Retry map</button>
+        </div>
+      </div>
+      <ul class="map-legend" id="bauxite-map-legend" aria-label="Share of world production"></ul>
+      <dl class="map-readouts" aria-label="Top three producers, Guinea and the selected country">
+        <div><dt></dt><dd class="num"></dd></div>
+        <div><dt></dt><dd class="num"></dd></div>
+        <div><dt></dt><dd class="num"></dd></div>
+        <div class="map-pinned" hidden><dt></dt><dd class="num"></dd></div>
+        <div class="map-pinned" hidden><dt></dt><dd class="num"></dd></div>
+      </dl>
+      <div class="map-countries">
+        <label class="map-country-picker">
+          Country
+          <select class="map-select" id="bauxite-map-country" disabled></select>
+        </label>
+        <p class="map-summary" aria-live="polite">
+          <strong class="num" id="bauxite-map-share"></strong>
+          <span id="bauxite-map-quantity"></span>
+        </p>
+      </div>
+    </div>
+    <figcaption>Share of output reported to BGS from <span class="num">2000</span> to <span class="num">2024</span>. Grey means no figure is available for that country and year. The article’s <span class="num">2024</span> figures use USGS world totals.</figcaption>
+  </figure>
+
+  <div class="col">
+    <p>Australia starts ahead of China at the mine and stays a major refiner. Its share drops to <span class="num">2%</span> at the smelter. China goes the other way, from <span class="num">19%</span> of the ore to around <span class="num">60%</span> of both the powder and the metal. If you stopped at the mine, you’d miss where the supply chain is most concentrated.</p>
+    <p>The map shows where production happened. Individual shipments, ownership and how much of the value stays in the country are separate questions. Recycled aluminium sits outside the primary-metal figures.</p>
+  </div>
+
+  <details>
+    <summary>Compare the production figures</summary>
+  <figure>
+    <div class="panel-grid">
+      <div class="panel">
+        <h3>Bauxite mined</h3>
+        <svg viewBox="-4 0 298 127" role="img" aria-labelledby="stage-0">
+          <title id="stage-0">Bauxite mined. Guinea 33%, China 19%, Australia 23%.</title>
+          <text x="0" y="25">Guinea</text>
+          <text class="value" x="290" y="25" text-anchor="end">33%</text>
+          <line class="gridline" x1="0" y1="34" x2="290" y2="34"/>
+          <rect x="0" y="30" width="96.21" height="8" fill="var(--lost)"/>
+          <text x="0" y="63">China</text>
+          <text class="value" x="290" y="63" text-anchor="end">19%</text>
+          <line class="gridline" x1="0" y1="72" x2="290" y2="72"/>
+          <rect x="0" y="68" width="54.54" height="8" fill="var(--gain)"/>
+          <text x="0" y="101">Australia</text>
+          <text class="value" x="290" y="101" text-anchor="end">23%</text>
+          <line class="gridline" x1="0" y1="110" x2="290" y2="110"/>
+          <rect x="0" y="106" width="67.76" height="8" fill="var(--gain)"/>
+        </svg>
+      </div>
+      <div class="panel">
+        <h3>Alumina refined</h3>
+        <svg viewBox="-4 0 298 127" role="img" aria-labelledby="stage-1">
+          <title id="stage-1">Alumina refined. Guinea 0.25%, China 60%, Australia 12%.</title>
+          <text x="0" y="25">Guinea</text>
+          <text class="value" x="290" y="25" text-anchor="end">0.25%</text>
+          <line class="gridline" x1="0" y1="34" x2="290" y2="34"/>
+          <rect x="0" y="30" width="0.72" height="8" fill="var(--lost)"/>
+          <text x="0" y="63">China</text>
+          <text class="value" x="290" y="63" text-anchor="end">60%</text>
+          <line class="gridline" x1="0" y1="72" x2="290" y2="72"/>
+          <rect x="0" y="68" width="174.61" height="8" fill="var(--gain)"/>
+          <text x="0" y="101">Australia</text>
+          <text class="value" x="290" y="101" text-anchor="end">12%</text>
+          <line class="gridline" x1="0" y1="110" x2="290" y2="110"/>
+          <rect x="0" y="106" width="34.92" height="8" fill="var(--gain)"/>
+        </svg>
+      </div>
+      <div class="panel">
+        <h3>Primary aluminium smelted</h3>
+        <svg viewBox="-4 0 298 127" role="img" aria-labelledby="stage-2">
+          <title id="stage-2">Primary aluminium smelted. Guinea Not listed, China 60%, Australia 2%.</title>
+          <text x="0" y="25">Guinea</text>
+          <text class="value" x="290" y="25" text-anchor="end">Not listed</text>
+          <line class="gridline" x1="0" y1="34" x2="290" y2="34"/>
+          <text x="0" y="63">China</text>
+          <text class="value" x="290" y="63" text-anchor="end">60%</text>
+          <line class="gridline" x1="0" y1="72" x2="290" y2="72"/>
+          <rect x="0" y="68" width="175.27" height="8" fill="var(--gain)"/>
+          <text x="0" y="101">Australia</text>
+          <text class="value" x="290" y="101" text-anchor="end">2%</text>
+          <line class="gridline" x1="0" y1="110" x2="290" y2="110"/>
+          <rect x="0" y="106" width="6.25" height="8" fill="var(--gain)"/>
+        </svg>
+      </div>
+    </div>
+    <figcaption>Share of world output by stage, <span class="num">2024</span>. Every bar uses the same <span class="num">0–100%</span> scale. The USGS smelter table does not list Guinea separately.</figcaption>
+  </figure>
+
+    <div class="table-scroll" role="region" tabindex="0" aria-label="Aluminium production by stage">
+      <table>
+        <caption>Million metric tonnes at each stage, <span class="num">2024</span></caption>
+        <thead><tr><th scope="col">Country</th><th scope="col">Bauxite</th><th scope="col">Alumina</th><th scope="col">Primary aluminium</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Guinea</th><td>142</td><td>0.351</td><td>Not listed</td></tr>
+          <tr><th scope="row">China</th><td>80.5</td><td>85.5</td><td>44</td></tr>
+          <tr><th scope="row">Australia</th><td>100</td><td>17.1</td><td>1.57</td></tr>
+          <tr><th scope="row">World</th><td>428</td><td>142</td><td>72.8</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <h2>The processing map got more concentrated</h2>
+  <div class="col">
+    <p>At the start of the century, the three biggest smelting countries made about <span class="num">40%</span> of the primary aluminium in the BGS figures. By <span class="num">2022–24</span>, the top three made <span class="num">71%</span>. Refining was even more concentrated, with almost four fifths of reported alumina output coming from just three countries.</p>
+    <p>Mining concentrated too, but the biggest increases happened in different places. Guinea added about <span class="num">105</span> million tonnes a year of bauxite between the two periods. China added about <span class="num">78</span> million tonnes a year of alumina and <span class="num">38</span> million tonnes of primary aluminium. Each was the largest increase at its stage among countries with figures in all six years.</p>
+  </div>
+  <figure>
+    <div class="panel-grid">
+      <div class="panel">
+        <h3>Bauxite mined</h3>
+        <svg viewBox="-3 0 296 95" role="img" aria-labelledby="concentration-0">
+          <title id="concentration-0">Bauxite mined. Top three share rose from 59.7% to 72.5%.</title>
+          <text x="0" y="19">2000–02</text>
+          <text class="value" x="290" y="19" text-anchor="end">59.7%</text>
+          <line class="gridline" x1="0" x2="290" y1="29" y2="29"/>
+          <rect x="0" y="25" width="173.23" height="8" fill="var(--ink-3)"/>
+          <text x="0" y="61">2022–24</text>
+          <text class="value" x="290" y="61" text-anchor="end">72.5%</text>
+          <line class="gridline" x1="0" x2="290" y1="71" y2="71"/>
+          <rect x="0" y="67" width="210.14" height="8" fill="var(--gain)"/>
+        </svg>
+      </div>
+      <div class="panel">
+        <h3>Alumina refined</h3>
+        <svg viewBox="-3 0 296 95" role="img" aria-labelledby="concentration-1">
+          <title id="concentration-1">Alumina refined. Top three share rose from 47.3% to 79.4%.</title>
+          <text x="0" y="19">2000–02</text>
+          <text class="value" x="290" y="19" text-anchor="end">47.3%</text>
+          <line class="gridline" x1="0" x2="290" y1="29" y2="29"/>
+          <rect x="0" y="25" width="137.28" height="8" fill="var(--ink-3)"/>
+          <text x="0" y="61">2022–24</text>
+          <text class="value" x="290" y="61" text-anchor="end">79.4%</text>
+          <line class="gridline" x1="0" x2="290" y1="71" y2="71"/>
+          <rect x="0" y="67" width="230.39" height="8" fill="var(--gain)"/>
+        </svg>
+      </div>
+      <div class="panel">
+        <h3>Primary aluminium smelted</h3>
+        <svg viewBox="-3 0 296 95" role="img" aria-labelledby="concentration-2">
+          <title id="concentration-2">Primary aluminium smelted. Top three share rose from 39.5% to 70.6%.</title>
+          <text x="0" y="19">2000–02</text>
+          <text class="value" x="290" y="19" text-anchor="end">39.5%</text>
+          <line class="gridline" x1="0" x2="290" y1="29" y2="29"/>
+          <rect x="0" y="25" width="114.68" height="8" fill="var(--ink-3)"/>
+          <text x="0" y="61">2022–24</text>
+          <text class="value" x="290" y="61" text-anchor="end">70.6%</text>
+          <line class="gridline" x1="0" x2="290" y1="71" y2="71"/>
+          <rect x="0" y="67" width="204.66" height="8" fill="var(--gain)"/>
+        </svg>
+      </div>
+    </div>
+    <figcaption>Share of reported output made by the three biggest producers at each stage. Rankings are recalculated for each period. Bars share a <span class="num">0–100%</span> scale. Source: British Geological Survey.</figcaption>
+  </figure>
+  <div class="table-scroll" role="region" tabindex="0" aria-label="Production growth by stage">
+    <table class="comparison-table">
+      <caption>Change in annual output between <span class="num">2000–02</span> and <span class="num">2022–24</span>, million tonnes. Each stage measures a different material.</caption>
+      <thead><tr><th scope="col">Stage</th><th scope="col">Change in total reported output</th><th scope="col">Country with the largest increase</th><th scope="col">Its earlier output</th><th scope="col">Its later output</th><th scope="col">Its share of the increase</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Bauxite mined</th><td>+259.3</td><td>Guinea</td><td>17.6</td><td>122.9</td><td>41%</td></tr>
+        <tr><th scope="row">Alumina refined</th><td>+87.6</td><td>China</td><td>4.8</td><td>83.3</td><td>89%</td></tr>
+        <tr><th scope="row">Primary aluminium smelted</th><td>+45.9</td><td>China</td><td>3.6</td><td>41.9</td><td>83%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col">
+    <p>Guinea accounted for about <span class="num">41%</span> of the increase in reported bauxite output. China accounted for about <span class="num">89%</span> of the increase in alumina output. That helps explain why looking at the mine gives such a different picture from looking at the refinery. Shares can move when countries appear or disappear from the figures. I repeated the comparison using just the countries with figures in all six years, and the top three gained share at every stage even there.</p>
+    <p>Trade links the two stories. China was the main destination for Guinea’s bauxite and alumina exports, according to the USGS. The production figures show where the ore and the processed products were made. They leave open how much of China’s own output came from Guinean ore. <a href="https://www.usgs.gov/centers/national-minerals-information-center/guinea" target="_blank" rel="noopener">USGS country profile for Guinea</a></p>
+  </div>
+
+  <section class="method col">
+    <h2>How I measured it</h2>
+    <p>I used the <span class="num">2024</span> country figures from the USGS <em>Mineral Commodity Summaries <span class="num">2026</span></em>, as loaded in YouMine. Each share divides a country’s output by the USGS world total for that stage, including the USGS estimate for countries it groups together. The world totals are rounded, and some country figures are estimates.</p>
+    <p>The three stages have different products and denominators. A tonne of bauxite is a tonne of ore, while a tonne of aluminium is a tonne of metal. The shares compare the geography of production at each step.</p>
+    <p>For the timeline, I used the British Geological Survey’s annual bauxite, alumina and primary aluminium series. Each share is relative to the total of the country figures available for that stage and year. Reporting coverage changes, and some estimates differ from the USGS snapshot. Figures for the former Serbia and Montenegro count toward the historical totals and can be viewed in the country selector.</p>
+    <p>For the two-period comparison, I averaged the three annual BGS totals in each window. A country’s share is its average output divided by that period’s reported total. I ranked the countries by those averages and added the first three shares. The growth table names the largest increase among countries with all six annual figures and compares it with the change across everyone who reported. Unreported values stay blank in the map. They contribute no amount to the totals of reported output.</p>
+    <p><a href="https://pubs.usgs.gov/publication/mcs2026" target="_blank" rel="noopener">USGS production tables for bauxite, alumina and aluminium</a> · <a href="https://www.usgs.gov/centers/national-minerals-information-center/guinea" target="_blank" rel="noopener">USGS country profile for Guinea</a></p>
+    <p><a href="https://www.bgs.ac.uk/mineralsuk/statistics/world-mineral-statistics/" target="_blank" rel="noopener">World Mineral Statistics</a> contributed by permission of the British Geological Survey.</p>
+    <p class="credit">Analysis by James Blue for YouMine Intelligence.</p>
+  </section>
+</main>
+<script>
+(() => {
+  const stages = ["Mine the rock", "Refine it into powder", "Smelt it into metal"];
+  const stageNames = ["bauxite", "alumina", "primary aluminium"];
+  const bands = [
+    { below: 1, label: "Under 1%" },
+    { below: 5, label: "1–<5%" },
+    { below: 20, label: "5–<20%" },
+    { below: 40, label: "20–<40%" },
+    { below: Infinity, label: "40% or more" },
+  ];
+  const millions = new Intl.NumberFormat("en-AU", { maximumFractionDigits: 3 });
+
+  const figure = document.getElementById("bauxite-map");
+  const picture = document.getElementById("bauxite-map-picture");
+  const shapes = document.getElementById("bauxite-map-shapes");
+  const stageButtons = [...figure.querySelectorAll("[data-stage]")];
+  const labels = [...figure.querySelectorAll(".map-annotations > g")].map((group) => ({
+    group,
+    line: group.querySelector("path"),
+    dot: group.querySelector("circle"),
+    text: group.querySelector("text"),
+    name: group.querySelector("tspan"),
+    share: group.querySelector(".value"),
+  }));
+  const readouts = [...figure.querySelectorAll(".map-readouts > div")];
+  const labelPositions = {
+    AUS: [841, 409, "middle"],
+    BRA: [278, 330, "end"],
+    CAN: [338, 42, "start"],
+    CHN: [776, 105, "start"],
+    GIN: [409, 199, "end"],
+    IDN: [932, 278, "end"],
+    IND: [615, 194, "end"],
+    RUS: [632, 42, "end"],
+    USA: [82, 151, "start"],
+  };
+  const play = document.getElementById("bauxite-map-play");
+  const yearSlider = document.getElementById("bauxite-map-year");
+  const yearLabel = document.getElementById("bauxite-map-year-label");
+  const country = document.getElementById("bauxite-map-country");
+  const mapArea = document.getElementById("bauxite-map-area");
+  const mapMessage = document.getElementById("bauxite-map-message");
+  const status = document.getElementById("bauxite-map-status");
+  const retry = document.getElementById("bauxite-map-retry");
+  const story = document.getElementById("bauxite-map-story");
+  const step = document.getElementById("bauxite-map-step");
+  const description = document.getElementById("bauxite-map-description");
+  const selectedShare = document.getElementById("bauxite-map-share");
+  const selectedQuantity = document.getElementById("bauxite-map-quantity");
+  const legend = document.getElementById("bauxite-map-legend");
+
+  const countriesOnMap = new Map();
+  let observer;
+  let mapLoading = false;
+  let position = 0;
+  let history;
+  let year;
+  let production;
+  let total;
+  let timer = null;
+
+  function shareOf(iso) {
+    const tonnes = production.get(iso);
+    return tonnes === undefined ? null : 100 * tonnes / total;
+  }
+
+  function shareLabel(share) {
+    if (share === null) return "No figure";
+    if (share > 0 && share < 0.01) return "<0.01%";
+    return Number(share.toFixed(share < 1 ? 2 : 1)) + "%";
+  }
+
+  function highlightCountry() {
+    const iso = country.value;
+    const share = shareOf(iso);
+    selectedShare.textContent = shareLabel(share);
+    selectedQuantity.textContent = share === null
+      ? "published for this stage and year"
+      : "of reported output · " + millions.format(production.get(iso) / 1_000_000) + " million tonnes";
+
+    for (const [code, { shape }] of countriesOnMap) {
+      shape.toggleAttribute("data-selected", code === iso);
+    }
+  }
+
+  function paintMap() {
+    for (const [iso, { shape, title }] of countriesOnMap) {
+      const share = shareOf(iso);
+      if (share === null) {
+        delete shape.dataset.tone;
+      } else {
+        shape.dataset.tone = String(bands.findIndex(({ below }) => share < below) + 1);
+      }
+      title.textContent = history.countries[iso] + " · " + shareLabel(share);
+    }
+    highlightCountry();
+  }
+
+  function updatePlay() {
+    play.textContent = timer !== null ? "Pause" : "Play years";
+  }
+
+  function placeLabel(label, point, x, y, anchor) {
+    label.text.setAttribute("x", x);
+    label.text.setAttribute("y", y);
+    label.text.setAttribute("text-anchor", anchor);
+    const endX = anchor === "end" ? x + 7 : anchor === "start" ? x - 7 : x;
+    label.line.setAttribute("d", "M" + point.cx + " " + point.cy + " L" + endX + " " + (y - 5));
+  }
+
+  function placeSelectedLabel(label, point, index) {
+    const width = label.text.getComputedTextLength();
+    if (!width) return;
+    const view = picture.viewBox.baseVal;
+    const occupied = labels.slice(0, index).filter(({ group }) => !group.hasAttribute("hidden"))
+      .map(({ text }) => text.getBBox());
+    const { cx, cy } = point;
+    const candidates = [
+      [cx + 23, cy - 13], [cx - width - 23, cy - 13],
+      [cx + 23, cy + 28], [cx - width - 23, cy + 28],
+      [cx - width / 2, cy - 39], [cx - width / 2, cy + 49],
+      [view.x + 12, view.y + view.height - 12],
+    ];
+    for (const [left, baseline] of candidates) {
+      const x = Math.max(view.x + 8, Math.min(left, view.x + view.width - width - 8));
+      const y = Math.max(view.y + 24, Math.min(baseline, view.y + view.height - 9));
+      placeLabel(label, point, x, y, "start");
+      const box = label.text.getBBox();
+      if (occupied.every((b) => box.x + box.width + 6 < b.x || b.x + b.width + 6 < box.x
+        || box.y + box.height + 6 < b.y || b.y + b.height + 6 < box.y)) return;
+    }
+  }
+
+  function labelCountries(countries) {
+    labels.forEach((label, index) => {
+      const iso = countries[index];
+      const point = countriesOnMap.get(iso);
+      label.group.toggleAttribute("hidden", !point);
+      readouts[index].hidden = !iso;
+      if (!iso) return;
+
+      const name = history.countries[iso];
+      const value = shareLabel(shareOf(iso));
+      const [term, detail] = readouts[index].children;
+      term.textContent = name;
+      detail.textContent = value;
+
+      if (!point) return;
+      const { cx, cy } = point;
+      const [x, y, anchor] = labelPositions[iso] || [cx, cy - 22, "middle"];
+      label.dot.setAttribute("cx", cx);
+      label.dot.setAttribute("cy", cy);
+      label.name.textContent = name + "\u00a0";
+      label.share.textContent = value;
+      placeLabel(label, point, x, y, anchor);
+      if (iso === country.value && iso !== "GIN" && index >= 3) placeSelectedLabel(label, point, index);
+    });
+  }
+
+  function showFrame() {
+    production = new Map();
+    total = 0;
+    const offset = year - history.firstYear;
+    for (const [iso, annual] of Object.entries(history.production[position])) {
+      const tonnes = annual[offset];
+      if (tonnes === null) continue;
+      production.set(iso, tonnes);
+      total += tonnes;
+    }
+    const leaders = [...production].filter(([, tonnes]) => tonnes > 0)
+      .sort(([, a], [, b]) => b - a).slice(0, 3).map(([iso]) => iso);
+    const [leader] = leaders;
+    const labelledCountries = leaders.includes("GIN") ? leaders : [...leaders, "GIN"];
+    if (!labelledCountries.includes(country.value)) labelledCountries.push(country.value);
+
+    yearSlider.value = year;
+    yearLabel.textContent = year;
+    step.textContent = stages[position];
+    story.textContent = history.countries[leader] + " led in " + stageNames[position] + " production with "
+      + shareLabel(shareOf(leader)) + " of reported output.";
+    description.textContent = year + ". " + story.textContent + " " + labelledCountries
+      .map((iso) => history.countries[iso] + ": " + shareLabel(shareOf(iso))).join(". ") + ".";
+    for (const button of stageButtons) {
+      button.setAttribute("aria-pressed", String(Number(button.dataset.stage) === position));
+    }
+    labelCountries(labelledCountries);
+    paintMap();
+  }
+
+  function stop() {
+    window.clearInterval(timer);
+    timer = null;
+    updatePlay();
+  }
+
+  function drawMap(world) {
+    const svgNS = "http://www.w3.org/2000/svg";
+    const fragment = document.createDocumentFragment();
+    for (const { iso, d, cx, cy } of [...world.countries, ...world.dots]) {
+      const shape = document.createElementNS(svgNS, d ? "path" : "circle");
+      shape.dataset.iso = iso;
+      if (d) {
+        shape.setAttribute("d", d);
+      } else {
+        shape.setAttribute("cx", cx);
+        shape.setAttribute("cy", cy);
+        shape.setAttribute("r", "3.2");
+      }
+      if (Object.hasOwn(history.countries, iso)) {
+        const title = document.createElementNS(svgNS, "title");
+        shape.append(title);
+        shape.setAttribute("data-pickable", "");
+        countriesOnMap.set(iso, { shape, title, cx, cy });
+      }
+      fragment.append(shape);
+    }
+    picture.setAttribute("viewBox", world.viewBox.join(" "));
+    shapes.replaceChildren(fragment);
+  }
+
+  async function fetchJson(url) {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Map data unavailable");
+    return response.json();
+  }
+
+  async function loadMap() {
+    if (mapLoading || !picture.hasAttribute("hidden")) return;
+    observer?.disconnect();
+    mapLoading = true;
+    retry.hidden = true;
+    status.textContent = "Loading the world map…";
+    try {
+      const [world, data] = await Promise.all([
+        fetchJson("/api/intelligence/world-map"),
+        fetchJson("/intelligence/bauxite-output-2000-2024.json"),
+      ]);
+      history = data;
+      year = history.lastYear;
+      yearSlider.min = history.firstYear;
+      yearSlider.max = history.lastYear;
+      country.replaceChildren();
+      for (const [iso, name] of Object.entries(history.countries).sort(([, a], [, b]) => a.localeCompare(b))) {
+        country.add(new Option(name, iso));
+      }
+      country.value = "GIN";
+      drawMap(world);
+      picture.removeAttribute("hidden");
+      showFrame();
+      mapMessage.hidden = true;
+      for (const control of [...stageButtons, play, yearSlider, country]) control.disabled = false;
+    } catch {
+      status.textContent = "The map couldn’t load. You can still compare production below.";
+      retry.hidden = false;
+    } finally {
+      mapLoading = false;
+    }
+  }
+
+  for (const [index, { label }] of [...bands, { label: "No figure" }].entries()) {
+    const item = document.createElement("li");
+    const swatch = document.createElement("span");
+    const key = document.createElement("span");
+    swatch.className = "map-swatch";
+    key.textContent = label;
+    if (index < bands.length) {
+      swatch.dataset.tone = String(index + 1);
+      key.className = "num";
+    }
+    item.append(swatch, key);
+    legend.append(item);
+  }
+
+  for (const button of stageButtons) {
+    button.addEventListener("click", () => {
+      position = Number(button.dataset.stage);
+      showFrame();
+    });
+  }
+  play.addEventListener("click", () => {
+    if (timer !== null) {
+      stop();
+      return;
+    }
+    if (year === history.lastYear) {
+      year = history.firstYear;
+      showFrame();
+    }
+    timer = window.setInterval(() => {
+      year += 1;
+      showFrame();
+      if (year === history.lastYear) stop();
+    }, 900);
+    updatePlay();
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && timer !== null) stop();
+  });
+  yearSlider.addEventListener("input", () => {
+    stop();
+    year = Number(yearSlider.value);
+    showFrame();
+  });
+  country.addEventListener("change", showFrame);
+  matchMedia("(max-width: 600px)").addEventListener("change", () => {
+    if (!picture.hasAttribute("hidden")) showFrame();
+  });
+  shapes.addEventListener("click", (event) => {
+    const iso = event.target.closest("[data-pickable]")?.dataset.iso;
+    if (!iso) return;
+    country.value = iso;
+    showFrame();
+  });
+  retry.addEventListener("click", loadMap);
+
+  figure.hidden = false;
+  if ("IntersectionObserver" in window) {
+    observer = new IntersectionObserver((entries) => {
+      if (entries.some(({ isIntersecting }) => isIntersecting)) loadMap();
+    }, { rootMargin: "200px 0px" });
+    observer.observe(mapArea);
+  } else {
+    loadMap();
+  }
+})();
+</script>
+</body>
+</html>

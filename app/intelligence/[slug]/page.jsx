@@ -32,9 +32,14 @@ export default async function IntelligenceReportPage({ params }) {
           </Link>
           <h1 className="yi-title yi-title--sm">{report.title}</h1>
         </div>
-        <a href={rawHref} target="_blank" rel="noopener noreferrer" className="yi-btn">
-          Open full page
-        </a>
+        <div className="yi-actions">
+          <Link href={`/intelligence/sources?report=${report.slug}`} className="yi-btn">
+            Explore sources
+          </Link>
+          <a href={rawHref} target="_blank" rel="noopener noreferrer" className="yi-btn">
+            Open full page
+          </a>
+        </div>
       </div>
 
       <iframe title={report.title} src={rawHref} className="yi-frame" />
