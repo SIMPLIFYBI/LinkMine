@@ -102,6 +102,8 @@ function Stat({ s, kicker }) {
 
 function Bars({ s, h }) {
   const accent = ACCENT[s.accent] || ACCENT.rent;
+  const fromColor = s.fromColor || RULE;
+  const fromHeight = s.fromColor ? 24 : 14;
   const portrait = h > 1200;
   const k = portrait ? 1.22 : 1;
   const labelW = 340;
@@ -113,8 +115,9 @@ function Bars({ s, h }) {
     <div style={{ ...flex, flexDirection: "column", flex: 1, justifyContent: "space-between", paddingTop: 30, paddingBottom: 6 }}>
       <div style={{ ...flex, flexDirection: "column" }}>
         <div style={{ ...flex, fontSize: 54, fontWeight: 700, lineHeight: 1.1 }}>{s.title}</div>
+        {s.subtitle && <div style={{ ...flex, fontSize: 28, color: INK2, marginTop: 12 }}>{s.subtitle}</div>}
         <div style={{ ...flex, alignItems: "center", marginTop: 20, fontSize: 26, color: INK2 }}>
-          <div style={{ ...flex, width: 28, height: 14, background: RULE, marginRight: 10 }} />
+          <div style={{ ...flex, width: 28, height: s.fromColor ? 22 : 14, background: fromColor, marginRight: 10 }} />
           <div style={{ ...flex, marginRight: 34 }}>{s.fromLabel}</div>
           <div style={{ ...flex, width: 28, height: 22, background: accent, marginRight: 10 }} />
           <div style={{ ...flex }}>{s.toLabel}</div>
@@ -128,12 +131,12 @@ function Bars({ s, h }) {
               <div style={{ ...flex, fontSize: Math.round(23 * k), color: INK3, lineHeight: 1.2 }}>{r.detail}</div>
             </div>
             <div style={{ ...flex, flexDirection: "column", width: trackW }}>
-              <div style={{ ...flex, width: px(r.from), height: Math.round(14 * k), background: RULE }} />
+              <div style={{ ...flex, width: px(r.from), height: Math.round(fromHeight * k), background: fromColor }} />
               <div style={{ ...flex, width: px(r.to), height: Math.round(24 * k), background: accent, marginTop: 6 }} />
             </div>
             <div style={{ ...flex, flexDirection: "column", width: valW, alignItems: "flex-end" }}>
-              <div style={{ ...flex, fontFamily: "Plex Mono", fontSize: Math.round(22 * k), color: INK3, lineHeight: 1.1 }}>{`${r.from}${s.unit ?? "%"}`}</div>
-              <div style={{ ...flex, fontFamily: "Plex Mono", fontWeight: 600, fontSize: Math.round(30 * k), lineHeight: 1.1, marginTop: 6 }}>{`${r.to}${s.unit ?? "%"}`}</div>
+              <div style={{ ...flex, fontFamily: "Plex Mono", fontWeight: s.fromColor ? 600 : 500, fontSize: Math.round((s.fromColor ? 30 : 22) * k), color: s.fromColor || INK3, lineHeight: 1.1 }}>{`${r.from}${s.unit ?? "%"}`}</div>
+              <div style={{ ...flex, fontFamily: "Plex Mono", fontWeight: 600, fontSize: Math.round(30 * k), color: s.fromColor ? accent : INK, lineHeight: 1.1, marginTop: 6 }}>{`${r.to}${s.unit ?? "%"}`}</div>
             </div>
           </div>
         ))}
