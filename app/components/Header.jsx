@@ -46,9 +46,10 @@ export default function Header({ currentMarket = "mining" }) {
           </div>
 
           {/* Center (desktop) */}
-          <nav className="hidden md:flex flex-1 items-center justify-center gap-6">
+          <nav className="hidden md:flex flex-1 items-center justify-center gap-1 lg:gap-3 xl:gap-6">
             {(navTabs ?? []).map((t) => {
               const active = pathname === t.href || pathname?.startsWith(t.href + "/");
+              const Icon = t.icon;
 
               return (
                 <Link
@@ -56,7 +57,7 @@ export default function Header({ currentMarket = "mining" }) {
                   href={t.href}
                   aria-current={active ? "page" : undefined}
                   className={[
-                    "relative rounded-md px-2.5 py-1 text-sm font-medium tracking-tight transition",
+                    "relative inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-sm font-medium tracking-tight transition lg:px-2.5",
                     isLight ? "text-slate-600 hover:text-slate-950 hover:bg-slate-100/80" : "text-slate-300 hover:text-white",
                     active
                       ? (isLight
@@ -71,7 +72,8 @@ export default function Header({ currentMarket = "mining" }) {
                       : "after:absolute after:left-0 after:right-0 after:-bottom-2 after:h-px after:bg-white/0 after:opacity-0 hover:after:bg-white/20 hover:after:opacity-100",
                   ].join(" ")}
                 >
-                  {t.label}
+                  {Icon && <Icon size={17} aria-hidden="true" />}
+                  <span className={Icon ? "sr-only lg:not-sr-only" : undefined}>{t.label}</span>
                 </Link>
               );
             })}

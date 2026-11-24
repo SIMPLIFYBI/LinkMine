@@ -2,17 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { REPORTS } from "@/lib/intelligence/reports";
-
-const REPORT_PATH = new RegExp(`^/intelligence/(${REPORTS.map((r) => r.slug).join("|")})(/|$)`);
 
 const ITEMS = [
   { href: "/intelligence", label: "Discover", match: (p) => p === "/intelligence" },
-  { href: "/intelligence/reports", label: "Reports", match: (p) => p.startsWith("/intelligence/reports") || REPORT_PATH.test(p) },
+  { href: "/intelligence/reports", label: "Reports", match: (p) => p === "/intelligence/reports" },
   { href: "/intelligence/data", label: "Data", match: (p) => p.startsWith("/intelligence/data") || p.startsWith("/intelligence/reserves") },
   { href: "/intelligence/sources", label: "Sources", match: (p) => p === "/intelligence/sources" },
-  { label: "Atlas", soon: true },
-  { label: "My work", soon: true },
 ];
 
 // Editorial tooling stays under /admin and only appears in the nav there.
@@ -22,23 +17,16 @@ const ADMIN_ITEMS = [
 
 export default function IntelligenceNav({ admin = false }) {
   const pathname = usePathname() || "";
-  const items = admin ? [...ITEMS.slice(0, 3), ...ADMIN_ITEMS, ...ITEMS.slice(3)] : ITEMS;
+  const items = admin ? [...ITEMS, ...ADMIN_ITEMS] : ITEMS;
   return (
     <nav className="yi-nav" aria-label="Intelligence">
       <div className="yi-nav__in">
         <span className="yi-nav__brand">YouMine Intelligence</span>
-        {items.map((item) =>
-          item.soon ? (
-            <span key={item.label} className="is-soon">
-              {item.label}
-              <small>soon</small>
-            </span>
-          ) : (
-            <Link key={item.href} href={item.href} aria-current={item.match(pathname) ? "page" : undefined}>
-              {item.label}
-            </Link>
-          )
-        )}
+        {items.map((item) => (
+          <Link key={item.href} href={item.href} aria-current={item.match(pathname) ? "page" : undefined}>
+            {item.label}
+          </Link>
+        ))}
       </div>
     </nav>
   );

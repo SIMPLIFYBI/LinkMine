@@ -178,7 +178,7 @@ export default function MobileNav() {
             >
               {(navTabs ?? []).map((tab) => {
                 const active = isActive(tab.href);
-                const iconName = pickIconForTab(tab);
+                const TabIcon = tab.icon;
 
                 return (
                   <Link
@@ -203,7 +203,11 @@ export default function MobileNav() {
                   >
                     <div className="flex flex-col items-center justify-center leading-none">
                       <div className="relative">
-                        <Icon name={iconName} active={active} />
+                        {TabIcon ? (
+                          <TabIcon size={18} aria-hidden="true" className={active && isLight ? "text-slate-900" : "text-slate-300"} />
+                        ) : (
+                          <Icon name={pickIconForTab(tab)} active={active} />
+                        )}
                         {/* removed the active blue dot */}
                       </div>
 

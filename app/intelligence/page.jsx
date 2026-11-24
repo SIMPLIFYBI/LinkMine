@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { getHomeData, PublishedDataError } from "@/lib/intelligence/published";
+import { getHomeData } from "@/lib/intelligence/published";
+import { intelligenceMetadata } from "@/lib/intelligence/seo";
 import { sustainedCrossing } from "@/lib/intelligence/frames";
 import { fmt, sparkPath, stamp, tonnes } from "@/lib/intelligence/format";
 import { REPORTS } from "@/lib/intelligence/reports";
@@ -10,18 +11,31 @@ import YourCountryTile from "@/app/intelligence/YourCountryTile.client";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Discover · YouMine Intelligence",
-  robots: { index: false, follow: false },
-};
+export const metadata = intelligenceMetadata(
+  "/intelligence",
+  "Mining and Energy Data & Analysis | YouMine Intelligence",
+  "Explore mining and energy production, mineral reserves and energy self-sufficiency by country, with interactive maps, original reports and source attribution.",
+);
 
 const FLIPPERS = ["CHN", "GBR", "BRA", "USA"];
 const FEATURED = "CU";
 
-const PROBLEM = {
-  schema_not_exposed: "The published schema is not exposed to the API yet (Settings, API, Exposed schemas).",
-  missing_config: "The intelligence project connection is not configured. Set INTEL_SUPABASE_URL and INTEL_SUPABASE_ANON_KEY.",
-};
+function ReportCards() {
+  return (
+    <>
+      <h2 className="yi-section">Reports</h2>
+      <div className="yi-tiles">
+        {REPORTS.filter((report) => report.publishedAt).map((report) => (
+          <article key={report.slug} className="yi-tile">
+            <p className="yi-kicker">{report.kicker}</p>
+            <h3><a href={`/intelligence/raw/${report.slug}`}>{report.title}</a></h3>
+            <p className="yi-fresh">{report.summary}</p>
+          </article>
+        ))}
+      </div>
+    </>
+  );
+}
 
 function Bars({ items, max, unit }) {
   return (
@@ -42,24 +56,22 @@ function Bars({ items, max, unit }) {
 export default async function IntelligenceHome({ searchParams }) {
   const { map: requestedMap } = await searchParams;
   const { market } = await getResolvedSiteMarket();
-
   let data = null;
-  let problem = null;
   try {
     data = await getHomeData();
   } catch (error) {
-    const code = error instanceof PublishedDataError ? error.code : "query_failed";
-    problem = PROBLEM[code] || `The published data could not be read: ${error.message}`;
+    console.error("Intelligence Discover data unavailable", error);
   }
 
-  if (problem) {
+  if (!data) {
     return (
-      <main className="yi-wrap">
+      <main className="yi-wrap yi-wrap--wide">
         <p className="yi-kicker">Discover</p>
         <h1 className="yi-title">YouMine Intelligence</h1>
         <p className="yi-flag" role="alert">
-          {problem}
+          The maps and rankings are temporarily unavailable. You can still read the reports below.
         </p>
+        <ReportCards />
       </main>
     );
   }
@@ -120,7 +132,7 @@ export default async function IntelligenceHome({ searchParams }) {
         unit={(item) => `${(item.value / 1000).toFixed(1)} Mb/d · ${fmt(item.pct)}%`}
       />
       <p className="yi-tile__foot">
-        {hero.lastYear} (estimate), million barrels a day against own demand. <Link href="/intelligence/energy-flip">Read the report</Link>
+        {hero.lastYear} (estimate), million barrels a day against own demand. <a href="/intelligence/raw/energy-flip">Read The Energy Flip</a>
       </p>
     </article>,
     <article key="crossings" className="yi-tile">
@@ -156,7 +168,7 @@ export default async function IntelligenceHome({ searchParams }) {
       <p className="yi-kicker">Discover</p>
       <h1 className="yi-title">The numbers that move mining and energy</h1>
       <p className="yi-lede">
-        Live maps and rankings built from open data. Open anything to explore it, embed it or build on it.
+        Explore mining and energy through interactive maps, country rankings and published reports. See the source and reporting period for each chart.
       </p>
 
       <MapReports reports={mapReports} charts={charts} initialId={requestedMap} />
@@ -169,30 +181,18 @@ export default async function IntelligenceHome({ searchParams }) {
         <Link className="yi-btn" href="/intelligence/reserves?c=NI&h=AUS">
           Who holds the most nickel?
         </Link>
-        <Link className="yi-btn" href="/intelligence/energy-flip">
+        <a className="yi-btn" href="/intelligence/raw/energy-flip">
           Who flipped from exporter to importer?
-        </Link>
+        </a>
         <Link className="yi-btn yi-btn--primary" href={`/intelligence/reserves?c=${surprise}`}>
           Surprise me
         </Link>
       </div>
 
-      <h2 className="yi-section">Moving now</h2>
+      <h2 className="yi-section">Mining and energy rankings</h2>
       <div className="yi-tiles">{tiles}</div>
 
-      <h2 className="yi-section">Reports</h2>
-      <div className="yi-tiles">
-        {REPORTS.map((report) => (
-          <article key={report.slug} className="yi-tile">
-            <p className="yi-kicker">{report.kicker}</p>
-            <h3>{report.title}</h3>
-            <p className="yi-fresh">{report.summary}</p>
-            <p className="yi-tile__foot">
-              <a href={`/intelligence/raw/${report.slug}`}>Read the report</a>
-            </p>
-          </article>
-        ))}
-      </div>
+      <ReportCards />
 
       <footer className="yi-sourcebar">
         <p>

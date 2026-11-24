@@ -3,16 +3,17 @@ import path from "node:path";
 import { NextResponse } from "next/server";
 import { getReport } from "@/lib/intelligence/reports";
 import { injectAuthor } from "@/lib/intelligence/byline";
+import { reportHead } from "@/lib/intelligence/seo";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 // Report fragments need a doctype and viewport for standards mode and mobile layout.
 const FRAGMENT_PREFIX =
-  '<!doctype html><html lang="en"><meta charset="utf-8">' +
+  '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
   '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">';
 
-function withReportNavigation(html, report) {
+function buildReportDocument(html, report) {
   const bar = `<style>
 .ym-report-nav {
   position: sticky;
@@ -49,11 +50,14 @@ function withReportNavigation(html, report) {
   </div>
 </nav>`;
 
-  if (/^\s*<!doctype/i.test(html)) {
-    return html.replace(/<body\b[^>]*>/i, (body) => `${body}\n${bar}`);
+  const document = html.replace(/<title\b[^>]*>[\s\S]*?<\/title>/i, () => reportHead(report));
+  if (/^\s*<!doctype/i.test(document)) {
+    return document.replace(/<body\b[^>]*>/i, (body) => `${body}\n${bar}`);
   }
-  // Keep the fragment's title, font links and styles before the first content element.
-  return FRAGMENT_PREFIX + html.replace(/^<(?:main|div)\b/im, (start) => `${bar}\n${start}`);
+  // The fragment starts with head metadata and styles, followed by its content wrapper.
+  return FRAGMENT_PREFIX
+    + document.replace(/^<(?:main|div)\b/im, (start) => `</head><body>\n${bar}\n${start}`)
+    + "</body></html>";
 }
 
 const CSP = [
@@ -75,13 +79,13 @@ export async function GET(_request, { params }) {
 
   const html = await readFile(path.join(process.cwd(), "app", "reports", report.file), "utf8");
 
-  return new NextResponse(injectAuthor(withReportNavigation(html, report), report), {
+  return new NextResponse(injectAuthor(buildReportDocument(html, report), report), {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-store",
       "Content-Security-Policy": slug === "bauxite-to-aluminium" ? `${CSP}; connect-src 'self'` : CSP,
       "X-Content-Type-Options": "nosniff",
-      "X-Robots-Tag": "noindex, nofollow",
+      ...(!report.publishedAt && { "X-Robots-Tag": "noindex, nofollow" }),
     },
   });
 }

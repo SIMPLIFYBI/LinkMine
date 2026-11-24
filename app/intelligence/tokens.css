@@ -133,22 +133,6 @@
   color: var(--yi-ink-3);
 }
 
-.yi-tag {
-  font-family: var(--yi-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--yi-ink);
-  border: 1px solid var(--yi-rule-2);
-  border-radius: 999px;
-  padding: 0.1rem 0.55rem;
-}
-
-.yi-tag--draft {
-  background: var(--yi-lost-soft);
-  border-color: var(--yi-lost);
-}
-
 .yi-actions {
   display: flex;
   flex-wrap: wrap;
@@ -625,8 +609,7 @@
   white-space: nowrap;
 }
 
-.yi-nav a,
-.yi-nav span.is-soon {
+.yi-nav a {
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--yi-ink-2);
@@ -643,20 +626,6 @@
 .yi-nav a[aria-current="page"] {
   color: var(--yi-ink);
   border-bottom-color: var(--yi-ink);
-}
-
-.yi-nav span.is-soon {
-  color: var(--yi-ink-3);
-  cursor: default;
-}
-
-.yi-nav small {
-  font-family: var(--yi-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin-left: 0.35rem;
-  color: var(--yi-ink-3);
 }
 
 /* ---------- data builder ---------- */

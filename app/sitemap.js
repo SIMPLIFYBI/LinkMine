@@ -2,6 +2,7 @@ import { supabasePublicServer } from "@/lib/supabasePublicServer";
 import { hasSupabasePublicConfig } from "@/lib/supabaseEnv";
 import { siteUrl } from "@/lib/siteUrl";
 import { landingPages } from "@/app/landing/registry";
+import { REPORTS, reportPath } from "@/lib/intelligence/reports";
 
 export const revalidate = 86400; // 24h
 
@@ -17,6 +18,11 @@ export default async function sitemap() {
     "/vault",
     "/vault/resources",
     "/vault/resources/directory",
+    "/intelligence",
+    "/intelligence/reports",
+    "/intelligence/data",
+    "/intelligence/reserves",
+    "/intelligence/sources",
   ].map((p) => ({
     url: siteUrl(p),
     changefreq: "weekly",
@@ -29,8 +35,14 @@ export default async function sitemap() {
     priority: 0.7,
   }));
 
+  const reportEntries = REPORTS.filter((report) => report.publishedAt).map((report) => ({
+    url: siteUrl(reportPath(report.slug)),
+    lastModified: report.corrections.at(-1)?.date || report.publishedAt,
+  }));
+  const publicEntries = [...core, ...landingEntries, ...reportEntries];
+
   if (!hasSupabasePublicConfig()) {
-    return [...core, ...landingEntries];
+    return publicEntries;
   }
 
   const sb = supabasePublicServer();
@@ -56,7 +68,7 @@ export default async function sitemap() {
     consultants = consultantsResult?.data || [];
     jobs = jobsResult?.data || [];
   } catch {
-    return [...core, ...landingEntries];
+    return publicEntries;
   }
 
   try {
@@ -100,5 +112,5 @@ export default async function sitemap() {
     priority: 0.6,
   }));
 
-  return [...core, ...landingEntries, ...consultantEntries, ...jobEntries, ...resourceEntries];
+  return [...publicEntries, ...consultantEntries, ...jobEntries, ...resourceEntries];
 }

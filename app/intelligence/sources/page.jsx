@@ -1,18 +1,22 @@
 import { getPublishedSources } from "@/lib/intelligence/published";
 import { REPORTS, REPORT_SOURCES } from "@/lib/intelligence/reports";
+import { intelligenceMetadata } from "@/lib/intelligence/seo";
 import SourceExplorer from "./SourceExplorer.client";
 import styles from "./sources.module.css";
 
 export const dynamic = "force-dynamic";
-export const metadata = {
-  title: "Source explorer · YouMine Intelligence",
-  description: "Explore the database relationships and sources behind YouMine Intelligence reports.",
-  robots: { index: false, follow: false },
-};
+export const metadata = intelligenceMetadata(
+  "/intelligence/sources",
+  "Mining and Energy Data Sources | YouMine Intelligence",
+  "Trace mining and energy reports to their datasets, publishers and licences. Explore how YouMine Intelligence connects and attributes the data.",
+);
 
 export default async function SourcesPage({ searchParams }) {
   const { report } = await searchParams;
-  const catalogue = await getPublishedSources().catch(() => null);
+  const catalogue = await getPublishedSources().catch((error) => {
+    console.error("Intelligence source catalogue unavailable", error);
+    return null;
+  });
   const sources = { ...REPORT_SOURCES };
   for (const row of catalogue || []) {
     const registered = sources[row.source_code];
@@ -25,7 +29,8 @@ export default async function SourcesPage({ searchParams }) {
     };
   }
 
-  const reports = REPORTS.map(({ slug, title, sources: codes }) => ({ slug, title, codes }));
+  const reports = REPORTS.filter((item) => item.publishedAt || item.slug === report)
+    .map(({ slug, title, sources: codes }) => ({ slug, title, codes }));
   const activeReport = reports.find(({ slug }) => slug === report);
 
   return (

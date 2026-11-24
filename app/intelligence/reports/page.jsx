@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { CHARTS, REPORTS, REPORT_SOURCES } from "@/lib/intelligence/reports";
 import { AUTHOR } from "@/lib/intelligence/author";
+import { intelligenceMetadata } from "@/lib/intelligence/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Intelligence reports · YouMine",
-  robots: { index: false, follow: false },
-};
+export const metadata = intelligenceMetadata(
+  "/intelligence/reports",
+  "Mining and Energy Reports | YouMine Intelligence",
+  "Read original analysis of global mineral reserves, mining production and energy supply, with methods, source credits and interactive charts.",
+);
 
 const SECTOR_LABEL = { mining: "Mining", "oil-gas": "Oil & gas" };
 
@@ -15,13 +17,13 @@ export default async function IntelligenceReportsPage() {
   return (
     <main className="yi-wrap">
       <p className="yi-kicker">YouMine Intelligence</p>
-      <h1 className="yi-title">Reports</h1>
+      <h1 className="yi-title">Mining and energy reports</h1>
       <p className="yi-lede">
         Data-led reports on mining and energy, with the method, sources and caveats on every page.
       </p>
 
       <ul className="yi-list">
-        {REPORTS.map((report) => (
+        {REPORTS.filter((report) => report.publishedAt).map((report) => (
           <li key={report.slug} className="yi-item">
             <div className="yi-item__body">
               <div className="yi-meta">
@@ -30,14 +32,13 @@ export default async function IntelligenceReportsPage() {
                 <span>{report.kicker}</span>
                 <span aria-hidden="true">·</span>
                 <span>By {AUTHOR.name}</span>
-                <span className="yi-tag yi-tag--draft">{report.status}</span>
               </div>
               <h2>{report.title}</h2>
               <p>{report.summary}</p>
             </div>
 
             <div className="yi-actions">
-              <a href={`/intelligence/raw/${report.slug}`} className="yi-btn yi-btn--primary">
+              <a href={`/intelligence/raw/${report.slug}`} aria-label={`Read ${report.title}`} className="yi-btn yi-btn--primary">
                 Read
               </a>
             </div>
@@ -57,7 +58,7 @@ export default async function IntelligenceReportsPage() {
         ))}
       </ul>
 
-      <h2 className="yi-section">Native charts</h2>
+      <h2 className="yi-section">Interactive charts</h2>
       <ul className="yi-list">
         {CHARTS.map((chart) => (
           <li key={chart.href} className="yi-item">

@@ -3,7 +3,7 @@ import "@/app/intelligence/social/social.css";
 import SocialKit from "@/app/intelligence/social/SocialKit.client";
 import { requireIntelligenceAdmin } from "@/lib/intelligence/adminPage";
 import { REPORTS } from "@/lib/intelligence/reports";
-import { PUBLIC_BASE, fillUrl, getKit, reportUrl } from "@/lib/intelligence/social";
+import { fillUrl, getKit, reportUrl } from "@/lib/intelligence/social";
 
 export const dynamic = "force-dynamic";
 
@@ -40,10 +40,9 @@ export default async function IntelligenceSocialPage({ searchParams }) {
         tracked links. Edit any text here before you copy it; changes are not saved.
       </p>
 
-      <p className="yi-flag" role="note">
-        The links below ({PUBLIC_BASE}/&hellip;) open the public report pages once this is deployed. The reports are still drafts and
-        kept out of search: do not post until each one is cleared for publication.
-      </p>
+      {report && !report.publishedAt && (
+        <p className="yi-flag" role="note">This report is a draft. Share its social posts after publication.</p>
+      )}
 
       <div className="yi-chips yis-pick" role="group" aria-label="Choose a report">
         {ready.map((item) => (

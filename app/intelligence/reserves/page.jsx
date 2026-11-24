@@ -1,18 +1,15 @@
-import { getReservesToProduction, PublishedDataError } from "@/lib/intelligence/published";
+import Link from "next/link";
+import { getReservesToProduction } from "@/lib/intelligence/published";
+import { intelligenceMetadata } from "@/lib/intelligence/seo";
 import ReservesExplorer from "./ReservesExplorer.client";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Years of reserves remaining · Intelligence",
-  robots: { index: false, follow: false },
-};
-
-const PROBLEM = {
-  schema_not_exposed:
-    "The published schema is not exposed to the API yet. In the Supabase dashboard for project wfelikvlymtvkmljkvri, open Settings, then API, then Exposed schemas, and add published.",
-  missing_config: "The intelligence project connection is not configured. Set INTEL_SUPABASE_URL and INTEL_SUPABASE_ANON_KEY in .env.local and restart the dev server.",
-};
+export const metadata = intelligenceMetadata(
+  "/intelligence/reserves",
+  "Mineral Reserves and Mine Production by Country | YouMine Intelligence",
+  "Compare reported mineral reserves with annual mine production by country. Explore reserves-to-production rankings, data sources and reporting years.",
+);
 
 const one = (value) => (Array.isArray(value) ? value[0] : value);
 
@@ -22,12 +19,10 @@ export default async function ReservesPage({ searchParams }) {
   const initial = { code: state.c, highlight: state.h, view: state.v };
 
   let data = null;
-  let problem = null;
   try {
     data = await getReservesToProduction();
   } catch (error) {
-    const code = error instanceof PublishedDataError ? error.code : "query_failed";
-    problem = PROBLEM[code] || `The published data could not be read: ${error.message}`;
+    console.error("Intelligence reserves data unavailable", error);
   }
 
   return (
@@ -39,9 +34,9 @@ export default async function ReservesPage({ searchParams }) {
         because the range runs from a couple of years to tens of thousands.
       </p>
 
-      {problem ? (
+      {!data ? (
         <p className="yi-flag" role="alert">
-          {problem}
+          The reserves explorer is temporarily unavailable. <a href="/intelligence/raw/reserve-report">Read the reserves analysis</a> or <Link href="/intelligence/reports">browse the reports</Link>.
         </p>
       ) : (
         <ReservesExplorer
