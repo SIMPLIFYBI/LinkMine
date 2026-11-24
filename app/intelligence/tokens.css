@@ -581,6 +581,9 @@
 
 /* ---------- app shell ---------- */
 .yi-nav {
+  position: sticky;
+  top: var(--site-header-height);
+  z-index: 30;
   border-bottom: 1px solid var(--yi-rule);
   background: var(--yi-surface);
 }

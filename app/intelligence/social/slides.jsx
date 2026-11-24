@@ -39,10 +39,10 @@ const PAD = 72;
 
 const flex = { display: "flex" };
 
-function Frame({ w, h, page, total, source, dark, avatar, children }) {
+function Frame({ w, h, page, total, source, dark, lead, avatar, children }) {
   const muted = dark ? "#a9a99f" : INK3;
   return (
-    <div style={{ ...flex, flexDirection: "column", width: w, height: h, padding: PAD, background: dark ? INK : PAPER, color: dark ? PAPER : INK, fontFamily: "Plex Sans" }}>
+    <div style={{ ...flex, flexDirection: "column", width: w, height: h, padding: PAD, background: lead ? "linear-gradient(145deg, #101b28, #173c43)" : dark ? INK : PAPER, color: dark ? PAPER : INK, fontFamily: "Plex Sans" }}>
       <div style={{ ...flex, justifyContent: "space-between", alignItems: "center", paddingBottom: 22, borderBottom: `2px solid ${dark ? "#4a4a42" : INK}` }}>
         <div style={{ ...flex, alignItems: "center" }}>
           {avatar ? <img src={avatar} width={60} height={60} style={{ borderRadius: 30, marginRight: 18 }} /> : null}
@@ -57,6 +57,31 @@ function Frame({ w, h, page, total, source, dark, avatar, children }) {
       </div>
       <div style={{ ...flex, flexDirection: "column", flex: 1, justifyContent: "center" }}>{children}</div>
       <div style={{ ...flex, fontSize: 21, lineHeight: 1.3, color: muted, paddingTop: 18, borderTop: `1px solid ${dark ? "#4a4a42" : RULE}` }}>{source}</div>
+    </div>
+  );
+}
+
+function Lead({ s, h }) {
+  const trackWidth = SIZES.square.width - PAD * 2;
+  const portrait = h > 1200;
+  return (
+    <div style={{ ...flex, flexDirection: "column" }}>
+      <div style={{ ...flex, width: 76, height: 5, background: "#79e6ca", marginBottom: 22 }} />
+      <div style={{ ...flex, fontWeight: 700, fontSize: portrait ? 74 : 64, lineHeight: 1.05, letterSpacing: -2 }}>{s.title}</div>
+      <div style={{ ...flex, color: "#c4d4df", fontSize: 28, lineHeight: 1.25, marginTop: 20 }}>{s.context}</div>
+      <div style={{ ...flex, flexDirection: "column", marginTop: portrait ? 58 : 32, gap: portrait ? 32 : 18 }}>
+        {s.bars.map(([label, value], i) => (
+          <div key={label} style={{ ...flex, flexDirection: "column" }}>
+            <div style={{ ...flex, alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
+              <div style={{ ...flex, fontSize: 30, fontWeight: 600 }}>{label}</div>
+              <div style={{ ...flex, fontFamily: "Plex Mono", fontSize: 44, fontWeight: 600, color: i === 0 ? "#79e6ca" : "#ffb579" }}>{`${value}${s.unit}`}</div>
+            </div>
+            <div style={{ ...flex, width: trackWidth, height: 14, background: "#36515b", borderRadius: 7 }}>
+              <div style={{ ...flex, width: trackWidth * value / s.max, height: 14, background: i === 0 ? "#79e6ca" : "#ffb579", borderRadius: 7 }} />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -163,8 +188,10 @@ export function buildSlide(kit, index, fmt, avatar = null) {
   const total = slideCount(kit);
   const isCta = index === total;
   const s = kit.slides[index - 1];
+  const isLead = s?.type === "lead";
   let body;
   if (isCta) body = <Cta kit={kit} />;
+  else if (isLead) body = <Lead s={s} h={h} />;
   else if (s.type === "stat") body = <Stat s={s} kicker={kit.kicker} />;
   else if (s.type === "bars") body = <Bars s={s} h={h} />;
   else body = <Points s={s} h={h} />;
@@ -172,7 +199,7 @@ export function buildSlide(kit, index, fmt, avatar = null) {
     width: w,
     height: h,
     element: (
-      <Frame w={w} h={h} page={index} total={total} source={kit.sourceLine} dark={isCta} avatar={avatar}>
+      <Frame w={w} h={h} page={index} total={total} source={kit.sourceLine} dark={isCta || isLead} lead={isLead} avatar={avatar}>
         {body}
       </Frame>
     ),

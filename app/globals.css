@@ -9,7 +9,12 @@
 /* Box sizing + prevent horizontal overflow */
 *,*::before,*::after{ box-sizing:border-box; }
 html,body{ width:100%; max-width:100%; }
-body{ overflow-x:hidden; }
+body {
+  overflow-x: hidden;
+  overflow-x: clip;
+  --site-header-row-height: 3.5rem;
+  --site-header-height: calc(var(--site-header-row-height) + 1px + env(safe-area-inset-top, 0px));
+}
 
 /* iOS Safari zooms the visual viewport when focused form text is smaller than 16px. */
 @media (max-width: 767px) {

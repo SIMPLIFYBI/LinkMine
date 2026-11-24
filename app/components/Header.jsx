@@ -32,7 +32,7 @@ export default function Header({ currentMarket = "mining" }) {
           ? "border-b border-slate-200/80 bg-white/78 backdrop-blur-xl shadow-[0_1px_0_0_rgba(148,163,184,0.18)]"
           : "border-b border-white/10 bg-slate-950/60 backdrop-blur-xl shadow-[0_1px_0_0_rgba(255,255,255,0.06)]"}
       >
-        <div className="mx-auto flex h-14 max-w-screen-xl items-center gap-3 px-4">
+        <div className="mx-auto flex h-(--site-header-row-height) max-w-screen-xl items-center gap-3 px-4">
           {/* Left */}
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             {isMarketplaceRoute ? (

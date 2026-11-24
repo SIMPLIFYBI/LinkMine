@@ -6,8 +6,8 @@ import { usePathname } from "next/navigation";
 const ITEMS = [
   { href: "/intelligence", label: "Discover", match: (p) => p === "/intelligence" },
   { href: "/intelligence/reports", label: "Reports", match: (p) => p === "/intelligence/reports" },
-  { href: "/intelligence/data", label: "Data", match: (p) => p.startsWith("/intelligence/data") || p.startsWith("/intelligence/reserves") },
-  { href: "/intelligence/sources", label: "Sources", match: (p) => p === "/intelligence/sources" },
+  { href: "/intelligence/data", label: "Custom Charts", match: (p) => p.startsWith("/intelligence/data") || p.startsWith("/intelligence/reserves") },
+  { href: "/intelligence/sources", label: "Data", match: (p) => p === "/intelligence/sources" },
 ];
 
 // Editorial tooling stays under /admin and only appears in the nav there.
