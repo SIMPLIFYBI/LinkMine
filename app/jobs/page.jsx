@@ -1,3 +1,4 @@
+import { socialOpenGraph } from "@/lib/socialMetadata";
 import JobsPageTabs from "@/app/jobs/tabs";
 import Image from "next/image";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
@@ -32,17 +33,7 @@ export async function generateMetadata({ searchParams }) {
     alternates: {
       canonical,
     },
-    openGraph: {
-      title,
-      description,
-      url: canonical,
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: ["/og-image.png"],
-    },
+    openGraph: socialOpenGraph({ url: canonical }),
   };
 }
 

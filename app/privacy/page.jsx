@@ -1,15 +1,10 @@
+import { socialOpenGraph } from "@/lib/socialMetadata";
 export const metadata = {
-  title: "Privacy Policy · YouMine",
+  title: "Privacy Policy",
   description:
     "Learn how YouMine collects, uses, and protects your data. Read about what we collect, why, legal bases, cookies, analytics, retention, and your privacy rights.",
   alternates: { canonical: "/privacy" },
-  openGraph: {
-    title: "Privacy Policy · YouMine",
-    description:
-      "Learn how YouMine collects, uses, and protects your data. Read about what we collect, why, legal bases, cookies, analytics, retention, and your privacy rights.",
-    url: "/privacy",
-    type: "website",
-  },
+  openGraph: socialOpenGraph({ url: "/privacy" }),
 };
 
 function Section({ id, title, children }) {

@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Vault",
-  description: "Browse hosted files, external industry resources, and requests in the YouMine vault.",
+  description: "Explore software, templates and practical resources for mining and oil & gas in the YouMine Vault.",
   alternates: { canonical: siteUrl("/vault") },
 };
 

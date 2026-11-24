@@ -13,18 +13,14 @@ import GA4 from "@/app/components/GA4.client";
 import ThemeProvider from "@/app/components/ThemeProvider";
 import NativeAppUrlListener from "@/app/components/NativeAppUrlListener.client";
 import { getResolvedSiteMarket } from "@/lib/siteMarketServer";
+import { getBaseUrl } from "@/lib/siteUrl";
+import { SITE_TITLE, SITE_DESCRIPTION, socialOpenGraph } from "@/lib/socialMetadata";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 function getMetadataBase() {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
-    "https://youmine.io";
-
   try {
-    return new URL(baseUrl);
+    return new URL(getBaseUrl());
   } catch {
     return new URL("https://youmine.io");
   }
@@ -32,7 +28,10 @@ function getMetadataBase() {
 
 export const metadata = {
   metadataBase: getMetadataBase(),
-  title: { default: "YouMine", template: "%s · YouMine " },
+  title: { default: SITE_TITLE, template: "%s · YouMine" },
+  description: SITE_DESCRIPTION,
+  openGraph: socialOpenGraph(),
+  twitter: { card: "summary_large_image" },
 };
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;

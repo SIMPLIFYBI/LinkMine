@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Training Hub — YouMine",
-  description: "Centralise mining training across providers, schedules, and teams.",
+  title: "Mining and Oil & Gas Training",
+  description: "Find and organise training for mining and oil & gas across providers, schedules and teams.",
 };
 
 export default function TrainingHomePage() {

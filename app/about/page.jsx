@@ -1,3 +1,4 @@
+import { socialOpenGraph } from "@/lib/socialMetadata";
 import Link from "next/link";
 import { ArrowRight, BriefcaseBusiness, Compass, GraduationCap, Layers3, UsersRound, Wrench } from "lucide-react";
 import YouMineExplainer from "@/app/components/YouMineExplainer.client";
@@ -96,17 +97,12 @@ const journeys = [
   },
 ];
 
-export async function generateMetadata() {
-  const { market } = await getResolvedSiteMarket();
-  const content = getAboutContent(market);
-  const description = `Learn how YouMine connects ${content.industry} expertise, opportunities, events, and practical digital resources.`;
-  return {
-    title: "About YouMine",
-    description,
-    alternates: { canonical: "/about" },
-    openGraph: { title: "About YouMine", description, url: "/about" },
-  };
-}
+export const metadata = {
+  title: "About",
+  description: "Learn how YouMine connects mining and oil & gas professionals with consultants, opportunities, events and practical digital resources.",
+  alternates: { canonical: "/about" },
+  openGraph: socialOpenGraph({ url: "/about" }),
+};
 
 export default async function AboutPage() {
   const { market } = await getResolvedSiteMarket();

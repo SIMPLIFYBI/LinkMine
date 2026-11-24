@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Talent Hub",
-  description: "Browse mining talent in a deck-style format and review concise worker CV snapshots.",
+  description: "Browse worker profiles and CV snapshots for roles across the resources industry.",
 };
 
 function formatAvailability(availability) {

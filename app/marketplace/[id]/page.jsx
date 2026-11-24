@@ -1,3 +1,4 @@
+import { socialOpenGraph } from "@/lib/socialMetadata";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -168,26 +169,12 @@ export async function generateMetadata({ params }) {
     ? `${descriptionText.slice(0, 157).trimEnd()}...`
     : descriptionText;
   const canonical = siteUrl(`/vault/${resource.id}`);
-  const image = siteUrl("/og-image.png");
 
   return {
     title,
     description,
     alternates: { canonical },
-    openGraph: {
-      title,
-      description,
-      url: canonical,
-      siteName: "YouMine",
-      type: "website",
-      images: [{ url: image, alt: `${resource.title} on YouMine` }],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [image],
-    },
+    openGraph: socialOpenGraph({ url: canonical }),
   };
 }
 

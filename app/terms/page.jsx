@@ -1,15 +1,10 @@
+import { socialOpenGraph } from "@/lib/socialMetadata";
 export const metadata = {
-  title: "Terms & Conditions · YouMine",
+  title: "Terms & Conditions",
   description:
     "Read YouMine’s Terms & Conditions covering account use, marketplace roles, acceptable use, intellectual property, warranties, liability, and dispute resolution.",
   alternates: { canonical: "/terms" },
-  openGraph: {
-    title: "Terms & Conditions · YouMine",
-    description:
-      "Read YouMine’s Terms & Conditions covering account use, marketplace roles, acceptable use, intellectual property, warranties, liability, and dispute resolution.",
-    url: "/terms",
-    type: "website",
-  },
+  openGraph: socialOpenGraph({ url: "/terms" }),
 };
 
 function Section({ id, title, children }) {

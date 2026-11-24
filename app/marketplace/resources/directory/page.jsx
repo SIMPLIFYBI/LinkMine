@@ -1,3 +1,4 @@
+import { socialOpenGraph } from "@/lib/socialMetadata";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
@@ -21,14 +22,14 @@ function directoryHref(page) {
 
 export async function generateMetadata({ searchParams }) {
   const page = getPage(await searchParams);
-  const title = page > 1 ? `Mining Resource Directory - Page ${page}` : "Mining Resource Directory";
-  const description = "Browse mining software, templates, training and other industry resources in the YouMine Vault.";
+  const title = page > 1 ? `Resources Directory - Page ${page}` : "Mining and Oil & Gas Resources Directory";
+  const description = "Browse software, templates, training and other resources for mining and oil & gas in the YouMine Vault.";
   const canonical = siteUrl(directoryHref(page));
   return {
     title,
     description,
     alternates: { canonical },
-    openGraph: { title, description, url: canonical, siteName: "YouMine", type: "website" },
+    openGraph: socialOpenGraph({ url: canonical }),
   };
 }
 

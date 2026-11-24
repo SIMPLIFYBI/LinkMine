@@ -1,3 +1,4 @@
+import { socialOpenGraph } from "@/lib/socialMetadata";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -24,20 +25,7 @@ export async function generateMetadata({ params }) {
     title: entry.title,
     description: entry.description,
     alternates: { canonical: `/landing/${entry.slug}` },
-    openGraph: {
-      title: entry.title,
-      description: entry.description,
-      url: `/landing/${entry.slug}`,
-      siteName: "YouMine",
-      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "YouMine" }],
-      type: "article"
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: entry.title,
-      description: entry.description,
-      images: ["/og-image.png"]
-    }
+    openGraph: socialOpenGraph({ url: `/landing/${entry.slug}`, type: "article" }),
   };
 }
 

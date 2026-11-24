@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { getBaseUrl } from "@/lib/siteUrl";
+import { DEFAULT_SHARE_IMAGE } from "@/lib/socialMetadata";
 import { getReservesToProduction } from "@/lib/intelligence/published";
 
 export const runtime = "nodejs";
@@ -167,17 +168,31 @@ export async function GET(request) {
   const payload = JSON.stringify({ rows, highlight: highlightRow ? highlight : "" }).replace(/</g, "\\u003c");
   const css = (await loadTokens()) + EMBED_CSS;
   const title = `Years of reserves remaining: ${lead.commodity_name}`;
+  const description = `Compare reported ${lead.commodity_name.toLowerCase()} reserves and annual mine production by country.`;
 
   const html = `<!doctype html>
 <html lang="en">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>${esc(title)} · YouMine Intelligence</title>
+<meta name="description" content="${esc(description)}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="YouMine Intelligence">
+<meta property="og:title" content="${esc(title)}">
+<meta property="og:description" content="${esc(description)}">
+<meta property="og:image" content="${esc(DEFAULT_SHARE_IMAGE.url)}">
+<meta property="og:image:alt" content="${esc(DEFAULT_SHARE_IMAGE.alt)}">
+<meta property="og:image:width" content="${DEFAULT_SHARE_IMAGE.width}">
+<meta property="og:image:height" content="${DEFAULT_SHARE_IMAGE.height}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="${esc(DEFAULT_SHARE_IMAGE.url)}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@600&display=swap">
 <style>${css}</style>
+</head>
 <body class="yi" data-theme="${theme}">
 <main class="yi-embed">
   <p class="yi-kicker">YouMine Intelligence</p>

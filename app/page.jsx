@@ -16,15 +16,14 @@ import {
   siteMarketLabel,
 } from "@/lib/siteMarket";
 import { getResolvedSiteMarket } from "@/lib/siteMarketServer";
+import { siteUrl } from "@/lib/siteUrl";
+import { SITE_TITLE, SITE_DESCRIPTION, socialOpenGraph } from "@/lib/socialMetadata";
 
 const heroImage = "/Pictures/pexels-urtimud-89-76108288-14263363.jpg";
 
 function getHomeCopy(market) {
   if (market === "oil_gas") {
     return {
-      title: "Oil & Gas Consultants, Jobs and Resources | YouMine",
-      description:
-        "Find oil and gas consultants, contract opportunities, industry training, events and practical digital resources on YouMine.",
       heroAlt: "YouMine — consultants and contractors in oil and gas",
       heroTitle: "The resources industry, connected.",
       heroDescription:
@@ -39,9 +38,6 @@ function getHomeCopy(market) {
 
   if (market === "both") {
     return {
-      title: "Mining & Oil and Gas Consultants, Jobs and Resources | YouMine",
-      description:
-        "Find mining and oil and gas consultants, contract opportunities, industry training, events and practical digital resources on YouMine.",
       heroAlt: "YouMine — consultants and contractors across mining and oil and gas",
       heroTitle: "The resources industry, connected.",
       heroDescription:
@@ -55,9 +51,6 @@ function getHomeCopy(market) {
   }
 
   return {
-    title: "Mining Consultants, Jobs and Resources | YouMine",
-    description:
-      "Find mining consultants, contract opportunities, industry training, events and practical digital resources on YouMine.",
     heroAlt: "YouMine — consultants and contractors in mining",
     heroTitle: "The resources industry, connected.",
     heroDescription:
@@ -70,30 +63,12 @@ function getHomeCopy(market) {
   };
 }
 
-export async function generateMetadata() {
-  const { market } = await getResolvedSiteMarket();
-  const copy = getHomeCopy(market);
-
-  return {
-    title: copy.title,
-    description: copy.description,
-    alternates: { canonical: "/" },
-    openGraph: {
-      title: copy.title,
-      description: copy.description,
-      url: "/",
-      siteName: "YouMine",
-      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "YouMine" }],
-      type: "website",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: copy.title,
-      description: copy.description,
-      images: ["/og-image.png"],
-    },
-  };
-}
+export const metadata = {
+  title: { absolute: SITE_TITLE },
+  description: SITE_DESCRIPTION,
+  alternates: { canonical: "/" },
+  openGraph: socialOpenGraph({ url: siteUrl("/") }),
+};
 
 function interleaveLists(lists) {
   const merged = [];

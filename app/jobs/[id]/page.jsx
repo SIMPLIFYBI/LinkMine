@@ -1,3 +1,4 @@
+import { socialOpenGraph } from "@/lib/socialMetadata";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabasePublicServer } from "@/lib/supabasePublicServer";
@@ -92,7 +93,6 @@ export async function generateMetadata({ params }) {
 
   const description = buildJobDescription(job);
   const canonical = `/jobs/${job.id}`;
-  const image = "/og-image.png";
   const title = titleParts.join(" · ");
 
   return {
@@ -101,25 +101,7 @@ export async function generateMetadata({ params }) {
     alternates: {
       canonical,
     },
-    openGraph: {
-      title,
-      description,
-      url: canonical,
-      siteName: "YouMine",
-      type: "article",
-      images: [
-        {
-          url: image,
-          alt: `${job.title} on YouMine Jobs`,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [image],
-    },
+    openGraph: socialOpenGraph({ url: canonical, type: "article" }),
   };
 }
 

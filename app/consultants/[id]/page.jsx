@@ -1,3 +1,4 @@
+import { socialOpenGraph } from "@/lib/socialMetadata";
 export const runtime = "nodejs";
 export const revalidate = 180; // 3 minutes
 
@@ -172,7 +173,7 @@ export async function generateMetadata(props) {
   }
 
   const description = buildConsultantDescription(consultant, services);
-  const image = consultant?.metadata?.logo?.url || "/og-image.png";
+  const image = consultant?.metadata?.logo?.url;
   const canonical = `/consultants/${consultant.id}`;
 
   return {
@@ -181,25 +182,11 @@ export async function generateMetadata(props) {
     alternates: {
       canonical,
     },
-    openGraph: {
-      title: titleParts.join(" · "),
-      description,
+    openGraph: socialOpenGraph({
       url: canonical,
-      siteName: "YouMine",
       type: "profile",
-      images: [
-        {
-          url: image,
-          alt: `${consultant.display_name} on YouMine`,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: titleParts.join(" · "),
-      description,
-      images: [image],
-    },
+      image: image ? { url: image, alt: `${consultant.display_name} on YouMine` } : undefined,
+    }),
   };
 }
 
