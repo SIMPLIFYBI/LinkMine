@@ -44,6 +44,8 @@ export default function SocialKit({ slug, title, slides, linkedin, linkedinComme
   const [liComment, setLiComment] = useState(linkedinComment);
   const [xPost, setXPost] = useState(x);
   const [xThread, setXThread] = useState(xReply);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState(false);
 
   const src = (i) => `/admin/intelligence/social/image/${slug}/${i}?fmt=${fmt}`;
   const name = (i) => `${slug}-${i}-${fmt}.png`;
@@ -61,6 +63,36 @@ export default function SocialKit({ slug, title, slides, linkedin, linkedinComme
     });
   }
 
+  async function downloadPdf() {
+    setExportingPdf(true);
+    setPdfError(false);
+    try {
+      const { PDFDocument } = await import("pdf-lib");
+      const pdf = await PDFDocument.create();
+      pdf.setTitle(title);
+      for (let index = 1; index <= slides.length; index++) {
+        const response = await fetch(src(index));
+        if (!response.ok) throw new Error(`Could not load slide ${index}`);
+        const image = await pdf.embedPng(await response.arrayBuffer());
+        const { width, height } = image.scale(0.5);
+        pdf.addPage([width, height]).drawImage(image, { x: 0, y: 0, width, height });
+      }
+
+      const url = URL.createObjectURL(new Blob([await pdf.save()], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${slug}-linkedin-${fmt}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      setPdfError(true);
+    } finally {
+      setExportingPdf(false);
+    }
+  }
+
   return (
     <div className="yis">
       <section className="yis-sec" aria-labelledby="yis-img">
@@ -69,13 +101,17 @@ export default function SocialKit({ slug, title, slides, linkedin, linkedinComme
           <div className="yi-seg" role="group" aria-label="Image shape">
             <button type="button" className="yi-btn" aria-pressed={fmt === "square"} onClick={() => setFmt("square")}>Square 1:1</button>
             <button type="button" className="yi-btn" aria-pressed={fmt === "portrait"} onClick={() => setFmt("portrait")}>Portrait 4:5</button>
-            <button type="button" className="yi-btn" onClick={downloadAll}>Download all</button>
+            <button type="button" className="yi-btn" onClick={downloadAll}>Download PNGs</button>
+            <button type="button" className="yi-btn yi-btn--primary" disabled={exportingPdf} onClick={downloadPdf}>
+              {exportingPdf ? "Preparing PDF…" : "Download LinkedIn PDF"}
+            </button>
           </div>
         </div>
         <p className="yis-hint">
           Post them in this order. Square 1:1 is the default; portrait 4:5 takes more room on LinkedIn.
           The last slide is the call to action.
         </p>
+        {pdfError && <p className="yi-flag" role="alert">The PDF couldn’t be created. Try again or reload the social kit if your sign-in has expired.</p>}
         <ol className="yis-slides">
           {slides.map((s, idx) => (
             <li key={`${fmt}-${idx}`} className="yis-slide">
@@ -98,7 +134,7 @@ export default function SocialKit({ slug, title, slides, linkedin, linkedinComme
         <h2 id="yis-li" className="yi-section">LinkedIn</h2>
         <div className="yis-cols">
           <Field id="li-post" label="Post" value={liPost} onChange={setLiPost} rows={18} count={Array.from(liPost).length} limit={LINKEDIN_LIMIT}
-            hint="Attach all images, in order. The link goes in the first comment, as the last image says." />
+            hint="Upload the PDF as a LinkedIn document post. Put the article link in the first comment." />
           <Field id="li-comment" label="First comment" value={liComment} onChange={setLiComment} rows={5} count={Array.from(liComment).length}
             hint="Post this straight after publishing. The image says the link is in the comments." />
         </div>
