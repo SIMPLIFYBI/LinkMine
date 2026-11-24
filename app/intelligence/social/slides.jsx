@@ -202,7 +202,7 @@ export function buildSlide(kit, index, fmt, avatar = null) {
     width: w,
     height: h,
     element: (
-      <Frame w={w} h={h} page={index} total={total} source={kit.sourceLine} dark={isCta || isLead} lead={isLead} avatar={avatar}>
+      <Frame w={w} h={h} page={index} total={total} source={s?.sourceLine || kit.sourceLine} dark={isCta || isLead} lead={isLead} avatar={avatar}>
         {body}
       </Frame>
     ),
