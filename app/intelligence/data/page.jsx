@@ -34,8 +34,14 @@ export default async function DataPage({ searchParams }) {
         combinations that have data are offered.
       </p>
       <p className="yi-fresh">
-        <Link href="/intelligence/reserves">Years of reserves remaining</Link> ranks countries with both reserves and production figures.
+        Compare reported mineral reserves and annual mine production by country.
       </p>
+      <div className="yi-actions">
+        <Link className="yi-btn yi-btn--primary" href="/intelligence/reserves/rows" prefetch={false}>
+          Browse reserves data
+        </Link>
+        <Link className="yi-btn" href="/intelligence/reserves">View reserves chart</Link>
+      </div>
 
       {!catalog ? (
         <p className="yi-flag" role="alert">
