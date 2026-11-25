@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { buildConsultantApprovedEmail } from "@/lib/emails/consultantApproved";
+import { sendConsultantListingIntro } from "@/lib/emails/sendConsultantListingIntro";
 
 export const runtime = "nodejs";
 
@@ -82,7 +83,7 @@ export async function PATCH(req, { params }) {
   }
 
   // FIX: param folder is [consultantId], not [id]
-  const consultantId = params?.consultantId;
+  const consultantId = (await params)?.consultantId;
   if (!consultantId) {
     return NextResponse.json({ ok: false, error: "Missing consultant id." }, { status: 400 });
   }
@@ -125,12 +126,19 @@ export async function PATCH(req, { params }) {
     .update(updates)
     .eq("id", consultantId)
     .select(
-      "id, status, display_name, contact_email, reviewed_at, reviewed_by, reviewer_notes"
+      "id, status, visibility, profile_type, claimed_by, claimed_at, display_name, contact_email, reviewed_at, reviewed_by, reviewer_notes"
     )
     .single();
 
   if (error) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+  }
+
+  if (data.status === "approved" && data.profile_type !== "creator" && !data.claimed_by && !data.claimed_at) {
+    const result = data.visibility === "public"
+      ? await sendConsultantListingIntro({ sb, consultantId, req })
+      : { emailStatus: "deferred_until_public" };
+    return NextResponse.json({ ok: true, consultant: data, ...result });
   }
 
   if (data.status === "approved" && data.contact_email) {

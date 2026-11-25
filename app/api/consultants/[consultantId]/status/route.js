@@ -4,11 +4,25 @@ import { ServerClient as Postmark } from "postmark";
 import { siteUrl } from "@/lib/siteUrl";
 import { buildConsultantApprovedEmail } from "@/lib/emails/consultantApproved";
 import { buildConsultantRejectedEmail } from "@/lib/emails/consultantRejected";
+import { sendConsultantListingIntro } from "@/lib/emails/sendConsultantListingIntro";
 
 const POSTMARK_TOKEN = process.env.POSTMARK_TOKEN || process.env.POSTMARK_SERVER_TOKEN;
 const FROM_EMAIL = process.env.POSTMARK_FROM_EMAIL || "info@youmine.com.au";
 const FROM_NAME = process.env.POSTMARK_FROM_NAME || "YouMine";
 const BCC_EMAIL = process.env.POSTMARK_BCC_EMAIL || "info@youmine.com.au";
+
+export async function POST(req, context) {
+  const sb = await supabaseServerClient({
+    global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
+  });
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+  const { consultantId } = await context.params;
+  const result = await sendConsultantListingIntro({ sb, consultantId, req });
+  return NextResponse.json(result);
+}
 
 export async function PATCH(req, context) {
   const sb = await supabaseServerClient({
@@ -66,7 +80,7 @@ export async function PATCH(req, context) {
       reviewed_at: new Date().toISOString(),
     })
     .eq("id", consultantId)
-    .select("id, status, reviewed_by, reviewed_at, reviewer_notes")
+    .select("id, status, visibility, profile_type, claimed_by, claimed_at, reviewed_by, reviewed_at, reviewer_notes")
     .maybeSingle();
 
   if (error) {
@@ -77,6 +91,13 @@ export async function PATCH(req, context) {
       { ok: false, error: "Consultant not found or update prevented by policy." },
       { status: 404 }
     );
+  }
+
+  if (nextStatus === "approved" && data.profile_type !== "creator" && !data.claimed_by && !data.claimed_at) {
+    const result = data.visibility === "public"
+      ? await sendConsultantListingIntro({ sb, consultantId, req })
+      : { emailStatus: "deferred_until_public" };
+    return NextResponse.json({ ok: true, consultant: data, ...result });
   }
 
   // Email side-effects (best effort)

@@ -7,7 +7,7 @@ import EventReviewList from "./EventReviewList";
 import JobReviewList from "./JobReviewList";
 
 const CONSULTANT_FIELDS =
-  "id, display_name, headline, bio, company, location, country_code, global_region, created_at, reviewer_notes, status, metadata, claimed_by, user_id";
+  "id, display_name, headline, bio, company, contact_email, location, country_code, global_region, created_at, reviewer_notes, status, metadata, claimed_by, user_id";
 
 const EVENT_FIELDS =
   "id, submitted_at, submitted_by, title, summary, starts_at, ends_at, timezone, delivery_method, location_name, suburb, state, country, join_url, external_url, organizer_name, organizer_url, tags, status";

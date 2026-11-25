@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { supabaseServerClient } from "@/lib/supabaseServerClient";
 import { siteUrl } from "@/lib/siteUrl";
 import { buildConsultantApprovedEmail } from "@/lib/emails/consultantApproved";
+import { buildConsultantListingIntroEmail } from "@/lib/emails/consultantListingIntro";
 import { buildConsultantRejectedEmail } from "@/lib/emails/consultantRejected";
 import { buildClaimProfileHtml, buildClaimProfileText } from "@/lib/emails/claimProfile";
 import { WELCOME_SUBJECT, buildWelcomeEmailHtml, buildWelcomeEmailText } from "@/lib/emails/welcomeEmail";
@@ -270,6 +271,7 @@ export async function GET(req) {
     const loginUrl = `${base}/login`;
 
     const approved = buildConsultantApprovedEmail({ consultantName, profileUrl });
+    const listingIntro = buildConsultantListingIntroEmail({ consultantName, profileUrl });
     const rejected = buildConsultantRejectedEmail({
       consultantName,
       editUrl,
@@ -399,12 +401,22 @@ export async function GET(req) {
       {
         id: "consultant-approved",
         label: "Consultant Approved",
-        trigger: "When consultant status changes to approved",
+        trigger: "When a claimed consultant profile is approved",
         source: "app/api/consultants/[consultantId]/status/route.js",
         recipient: "Consultant contact email",
         subject: approved.Subject,
         html: approved.HtmlBody,
         text: approved.TextBody,
+      },
+      {
+        id: "consultant-listing-intro",
+        label: "YouMine Listing Introduction",
+        trigger: "When an unclaimed consultant profile first becomes approved and public",
+        source: "lib/emails/consultantListingIntro.js",
+        recipient: "Consultant contact email (BCC to info@youmine.com.au)",
+        subject: listingIntro.Subject,
+        html: listingIntro.HtmlBody,
+        text: listingIntro.TextBody,
       },
       {
         id: "consultant-rejected",

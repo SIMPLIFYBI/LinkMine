@@ -15,9 +15,11 @@ export default function ReviewList({ initialConsultants }) {
   const [items, setItems] = useState(initialConsultants ?? []);
   const [submittingId, setSubmittingId] = useState(null);
   const [error, setError] = useState("");
+  const [emailNotice, setEmailNotice] = useState("");
 
   async function updateStatus(id, status, reviewerNotes = "") {
     setError("");
+    setEmailNotice("");
     setSubmittingId(id);
 
     try {
@@ -52,6 +54,13 @@ export default function ReviewList({ initialConsultants }) {
       }
 
       setItems((prev) => prev.filter((item) => item.id !== id));
+      if (body.emailWarning) {
+        setEmailNotice(body.emailWarning);
+      } else if (body.emailStatus === "deferred_until_public") {
+        setEmailNotice("Approved. The listing email will be sent when you make the profile public.");
+      } else if (body.emailStatus === "sent_intro") {
+        setEmailNotice("Approved. The listing email was sent to the consultant with a copy to info@youmine.com.au.");
+      }
     } catch (err) {
       setError(err.message || "Unable to update consultant status.");
     } finally {
@@ -59,19 +68,21 @@ export default function ReviewList({ initialConsultants }) {
     }
   }
 
-  if (!items.length) {
-    return (
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center text-sm text-slate-300">
-        No pending consultant submissions.
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {error && (
         <div className="rounded-2xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
           {error}
+        </div>
+      )}
+      {emailNotice && (
+        <div role="status" className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          {emailNotice}
+        </div>
+      )}
+      {!items.length && (
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center text-sm text-slate-300">
+          No pending consultant submissions.
         </div>
       )}
 

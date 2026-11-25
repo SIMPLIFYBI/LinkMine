@@ -34,6 +34,26 @@ const initial = {
   logo_mime: "",
 };
 
+async function deliverListingIntro(consultant) {
+  if (consultant.status !== "approved" || consultant.visibility !== "public" || consultant.claimed_by) {
+    return "";
+  }
+
+  try {
+    const sb = supabaseBrowser();
+    const { data: { session } } = await sb.auth.getSession();
+    const response = await fetch(`/api/consultants/${consultant.id}/status`, {
+      method: "POST",
+      headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error("Listing email request failed.");
+    return result.emailWarning || "";
+  } catch {
+    return "Profile saved. Could not check the listing email. Check Postmark activity before retrying.";
+  }
+}
+
 function asObject(value) {
   if (!value) return null;
   if (typeof value === "object") return value;
@@ -169,7 +189,7 @@ export default function InProgressClient() {
     setMessage("");
     try {
       const sb = supabaseBrowser();
-      const { logo_url, logo_path, logo_mime, ...restForm } = form;
+      const { logo_url, logo_path, logo_mime, claimed_by, ...restForm } = form;
 
       const baseMetadata = asObject(restForm.metadata) || {};
       const cleanLogoUrl = (logo_url || "").trim();
@@ -207,8 +227,10 @@ export default function InProgressClient() {
       }
       if (res.error) throw new Error(res.error.message);
 
+      const emailWarning = await deliverListingIntro(res.data);
       setMessage(editing?.id ? "Consultant updated." : "Draft created.");
       await loadList();
+      if (emailWarning) setError(emailWarning);
       setEditing(res.data);
       // keep form open for further edits; optionally close:
       // closeForm();
@@ -277,12 +299,16 @@ export default function InProgressClient() {
     try {
       const sb = supabaseBrowser();
       const next = item.visibility === "public" ? "private" : "public";
-      const { error: err } = await sb
+      const { data, error: err } = await sb
         .from("consultants")
         .update({ visibility: next })
-        .eq("id", item.id);
+        .eq("id", item.id)
+        .select("id, status, visibility, claimed_by")
+        .single();
       if (err) throw new Error(err.message);
+      const emailWarning = await deliverListingIntro(data);
       await loadList();
+      if (emailWarning) setError(emailWarning);
     } catch (e) {
       setError(e.message);
     }
