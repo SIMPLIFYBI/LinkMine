@@ -169,7 +169,12 @@ export default function SourceExplorer({ reports, initialReport, sources, catalo
                     );
                   })}
                 </ul>
-                {href && <Link href={href}>Open {name.toLowerCase()}</Link>}
+                <div className="yi-actions">
+                  {href && <Link href={href}>Open {name.toLowerCase()}</Link>}
+                  {selectedTable === "reserves" && (
+                    <Link href="/intelligence/reserves/rows" prefetch={false}>Browse rows</Link>
+                  )}
+                </div>
               </>
             )}
           </aside>

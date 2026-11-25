@@ -33,6 +33,9 @@ export default async function ReservesPage({ searchParams }) {
         Reported reserves divided by one year of mine production, for every country that publishes both. A log scale,
         because the range runs from a couple of years to tens of thousands.
       </p>
+      <p className="yi-fresh">
+        <Link href="/intelligence/reserves/rows" prefetch={false}>Browse rows and inspect their inputs</Link>
+      </p>
 
       {!data ? (
         <p className="yi-flag" role="alert">
