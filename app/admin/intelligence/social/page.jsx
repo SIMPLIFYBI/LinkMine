@@ -2,7 +2,7 @@ import Link from "next/link";
 import "@/app/intelligence/social/social.css";
 import SocialKit from "@/app/intelligence/social/SocialKit.client";
 import { requireIntelligenceAdmin } from "@/lib/intelligence/adminPage";
-import { REPORTS } from "@/lib/intelligence/reports";
+import { getReport, REPORTS } from "@/lib/intelligence/reports";
 import { fillUrl, getKit, reportUrl } from "@/lib/intelligence/social";
 
 export const dynamic = "force-dynamic";
@@ -13,12 +13,15 @@ export const metadata = {
 };
 
 export default async function IntelligenceSocialPage({ searchParams }) {
-  await requireIntelligenceAdmin("/admin/intelligence/social");
-
   const { r } = await searchParams;
+  const requestedReport = getReport(r);
+  await requireIntelligenceAdmin(
+    requestedReport ? `/admin/intelligence/social?r=${encodeURIComponent(requestedReport.slug)}` : "/admin/intelligence/social",
+  );
+
   const ready = REPORTS.filter((report) => getKit(report.slug));
   const waiting = REPORTS.filter((report) => !getKit(report.slug));
-  const report = ready.find((item) => item.slug === r) || ready[0] || null;
+  const report = ready.find((item) => item === requestedReport) || ready[0] || null;
   const kit = report ? getKit(report.slug) : null;
 
   const liUrl = report ? reportUrl(report.slug, "linkedin") : "";
