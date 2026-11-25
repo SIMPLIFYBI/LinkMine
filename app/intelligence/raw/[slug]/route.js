@@ -5,6 +5,7 @@ import { getReport } from "@/lib/intelligence/reports";
 import { injectAuthor } from "@/lib/intelligence/byline";
 import { reportHead } from "@/lib/intelligence/seo";
 import { campaignParameters } from "@/lib/ga4Client";
+import { INTELLIGENCE_NAV_BRAND, INTELLIGENCE_NAV_ITEMS } from "@/lib/intelligence/navigation";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -48,6 +49,9 @@ const analytics = analyticsEnabled ? `<script>
 <script async src="${tagHost}/gtag/js?id=${measurementId}"></script>` : "";
 
 function buildReportDocument(html, report) {
+  const links = INTELLIGENCE_NAV_ITEMS.map(({ href, label }) =>
+    `<a href="${href}"${href === "/intelligence/reports" ? ' aria-current="location"' : ""}>${label}</a>`
+  ).join("\n");
   const bar = `<style>
 .ym-report-nav {
   position: sticky;
@@ -57,30 +61,64 @@ function buildReportDocument(html, report) {
   border-bottom: 1px solid var(--rule, #e2e1dc);
 }
 .ym-report-nav__links {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "brand tabs sources";
   align-items: center;
-  justify-content: space-between;
-  gap: 0 1rem;
+  gap: 0 clamp(.75rem, 3vw, 2rem);
   max-width: 76rem;
   margin: 0 auto;
+  padding-top: env(safe-area-inset-top, 0px);
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.ym-report-nav__brand {
+  grid-area: brand;
+  font: 600 1rem/1.2 var(--serif, var(--font-body, Georgia, serif));
+  color: var(--ink, #16160f);
+}
+.ym-report-nav__tabs {
+  grid-area: tabs;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 clamp(.75rem, 2.2vw, 1.5rem);
 }
 .ym-report-nav a {
   display: inline-flex;
   align-items: center;
-  min-height: 40px;
+  min-height: 44px;
   color: var(--ink, #16160f);
   font: 600 .875rem/1.25 system-ui, sans-serif;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ym-report-nav__tabs a {
+  border-bottom: 2px solid transparent;
+}
+.ym-report-nav__tabs a[aria-current="location"] {
+  border-bottom-color: currentColor;
+}
+.ym-report-nav .ym-report-nav__sources {
+  grid-area: sources;
+  justify-self: end;
+}
+.ym-report-nav a:hover,
+.ym-report-nav .ym-report-nav__sources {
   text-decoration: underline;
   text-underline-offset: .2em;
 }
+@media (max-width: 670px) {
+  .ym-report-nav__links {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "brand sources" "tabs tabs";
+  }
+}
 </style>
-<nav class="ym-report-nav" aria-label="Report navigation">
+<nav class="ym-report-nav" aria-label="Intelligence">
   <div class="ym-report-nav__links">
-    <a href="/intelligence/reports">All reports</a>
-    <a href="/intelligence/sources?report=${encodeURIComponent(report.slug)}">Explore sources</a>
+    <span class="ym-report-nav__brand">${INTELLIGENCE_NAV_BRAND}</span>
+    <div class="ym-report-nav__tabs">${links}</div>
+    <a class="ym-report-nav__sources" href="/intelligence/sources?report=${encodeURIComponent(report.slug)}">Explore sources</a>
   </div>
 </nav>`;
 
